@@ -392,6 +392,8 @@ class HaaLimits(Limits):
     ###################
     def addSystematics(self):
         self._addLumiSystematic()
+        self._addMuonSystematic()
+        self._addTauSystematic()
 
     def _addLumiSystematic(self):
         # lumi: 2.5% 2016
@@ -400,6 +402,27 @@ class HaaLimits(Limits):
             (lumiproc,tuple(self.REGIONS)) : 1.025,
         }
         self.addSystematic('lumi','lnN',systematics=lumisyst)
+
+    def _addMuonSystematic(self):
+        # from z: 1 % + 0.5 % + 0.5 % per muon for id + iso + trig (pt>20)
+        muproc = tuple([self.SPLINENAME.format(h=h) for h in self.HMASSES])
+        musyst = {
+            (muproc,tuple(self.REGIONS)) : 1+math.sqrt(sum([0.01**2,0.005**2]*2+[0.01**2])), # 2 lead have iso, tau_mu doesnt
+        }
+        self.addSystematic('muid','lnN',systematics=musyst)
+        
+        musyst = {
+            (muproc,tuple(self.REGIONS)) : 1.005, # 1 triggering muon
+        }
+        self.addSystematic('mutrig','lnN',systematics=musyst)
+        
+    def _addTauSystematic(self):
+        # 5% on sf 0.99 (VL/L) 0.97 (M) 0.95 (T) 0.93 (VT)
+        tauproc = tuple([self.SPLINENAME.format(h=h) for h in self.HMASSES])
+        tausyst = {
+            (tauproc,tuple(self.REGIONS)) : 1.05,
+        }
+        self.addSystematic('tauid','lnN',systematics=tausyst)
         
     ###################################
     ### Save workspace and datacard ###

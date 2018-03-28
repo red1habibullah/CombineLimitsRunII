@@ -449,9 +449,10 @@ class Limits(object):
         # now write to file
         logging.info('Writing {0}{1}.txt'.format(filename,suffix))
         with open(filename+suffix+'.txt','w') as f:
+            allRows = [binRows,observations,binsForRates,processNames,processNumbers,rates]+systRows
             lineWidth = 80
-            firstWidth = 40
-            restWidth = 30
+            firstWidth = max([len(x[0]) for x in allRows])
+            restWidth = max([max([len(y) for y in x[1:]]) for x in allRows])
             def getline(row):
                 try:
                     return '{0} {1}\n'.format(row[0][:firstWidth]+' '*max(0,firstWidth-len(row[0])), ''.join([r[:restWidth]+' '*max(0,restWidth-len(r)) for r in row[1:]]))
