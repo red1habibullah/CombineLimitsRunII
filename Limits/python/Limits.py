@@ -25,6 +25,7 @@ class Limits(object):
         self.models = {}      # models to add
         self.expected = {}    # expected yield, one per process/era/analysis/chanel combination
         self.systematics = {} # systematic uncertainties
+        self.rates = {}
         self.name = name
         self.workspace = ROOT.RooWorkspace(self.name)
 
@@ -141,6 +142,13 @@ class Limits(object):
     def addGroup(self,groupname,*systnames):
         '''Add a group name for a list of systematics'''
         self.groups[groupname] = systnames
+
+    def addRateParam(self,ratename,bin,process):
+        self.rates[ratename] = {
+            'bin': bin,
+            'process': process,
+        }
+        
 
     def getSystematic(self,systname,process,bin):
         '''Return the systematic value for a given systematic/process/bin combination.'''
@@ -340,7 +348,7 @@ class Limits(object):
         processNames = ['process','']+['']*totalColumns
         processNumbers = ['process','']+['']*totalColumns
         rates = ['rate','']+['']*totalColumns
-        #norms = []
+        norms = []
         colpos = 1
         for bin in bins:
             for process in processesOrdered:
@@ -372,6 +380,13 @@ class Limits(object):
                     raise
                 # TODO: unbinned handling
                 rates[colpos] = '{0:<10.4g}'.format(exp)
+
+        # other rateParams
+        for ratename in self.rates:
+            b = self.rates[ratename]['bin']
+            p = self.rates[ratename]['process']
+            if b in bins and p in processes:
+                norms += [[ratename,'rateParam',b,p,'{}.root:{}'.format(filename,self.name)]]
 
         # setup nuissances
         logging.debug('Systs available: {0}'.format([str(x) for x in sorted(self.systematics.keys())]))
@@ -509,9 +524,9 @@ class Limits(object):
             f.write('-'*lineWidth+'\n')
 
             # rateParams
-            #for norm in norms:
-            #    logging.debug('Rate param: {0}'.format([str(x) for x in norm]))
-            #    f.write(getparamline(norm))
+            for norm in norms:
+                logging.debug('Rate param: {0}'.format([str(x) for x in norm]))
+                f.write(getparamline(norm))
 
             # nuissance categories
             for group in self.groups:

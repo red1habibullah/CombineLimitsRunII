@@ -74,14 +74,11 @@ class ModelSpline(Model):
         self.masses = masses
         self.integrals = integrals
 
-    def getIntegral(self,ws):
-        if not hasattr(self,'integrals'): return 1
-        integralName = '{0}_integral'.format(self.name)
-        integralSpline  = ROOT.RooSpline1D(integralName,  integralName,  ws.var(self.MH), len(self.masses), array('d',self.masses), array('d',self.integrals))
+    def buildIntegral(self,ws,label):
+        if not hasattr(self,'integrals'): return 
+        integralSpline  = ROOT.RooSpline1D(label,  label,  ws.var(self.MH), len(self.masses), array('d',self.masses), array('d',self.integrals))
         # import to workspace
         getattr(ws, "import")(integralSpline, ROOT.RooFit.RecycleConflictNodes())
-        # return name
-        return 1
 
 class SplineParam(object):
 

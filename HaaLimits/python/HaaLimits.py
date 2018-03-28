@@ -295,6 +295,7 @@ class HaaLimits(Limits):
         integrals = [histMap[self.SIGNAME.format(h=h,a=a)].Integral() for a in self.AMASSES]
         model.setIntegral(self.AMASSES,integrals)
         model.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag))
+        model.buildIntegral(self.workspace,'integral_{}_{}'.format(self.SPLINENAME.format(h=h),tag))
 
     def fitBackground(self,region='PP',shift=''):
         model = self.workspace.pdf('bg_{}'.format(region))
@@ -382,6 +383,7 @@ class HaaLimits(Limits):
 
             for proc in [self.SPLINENAME.format(h=h) for h in self.HMASSES]:
                 self.setExpected(proc,region,1) # TODO: how to handle different integrals
+                self.addRateParam('integral_{}_{}'.format(proc,region),region,proc)
                 
             self.setObserved(region,-1) # reads from histogram
 
