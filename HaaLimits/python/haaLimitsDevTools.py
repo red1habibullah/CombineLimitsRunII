@@ -18,6 +18,23 @@ from CombineLimits.HaaLimits.HaaLimitsHMass import HaaLimitsHMass
 
 logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
+#xRange = [2,25] # with jpsi
+xRange = [4,25] # no jpsi
+#xRange = [2.5,4.5] # jpsi only
+
+hmasses = [125,300,750]
+#hmasses = [125]
+amasses = [5,7,9,11,13,15,17,19,21]
+#amasses = [5,11,15,21]
+    
+signame = 'HToAAH{h}A{a}'
+
+shiftTypes = ['lep','pu','fake','trig']
+shiftTypes = []
+shifts = []
+for s in shiftTypes:
+    shifts += [s+'Up', s+'Down']
+
 varHists = {
     'mm' : 'ammMass',
     'tt' : 'attMass',
@@ -26,6 +43,9 @@ varHists = {
 }
 varDatasets = {
     'mm' : 'ammMass_dataset',
+}
+selDatasets = {
+    'mm': 'x>{} && x<{}'.format(*xRange),
 }
 varNames = {
     'mm' : 'amm_mass',
@@ -45,22 +65,6 @@ rebinning = {
     'h'  : 1, # 1 GeV -> 1 GeV
     'hkf': 1, # 1 GeV -> 5 GeV
 }
-#xRange = [2,25] # with jpsi
-xRange = [4,25] # no jpsi
-#xRange = [2.5,4.5] # jpsi only
-
-hmasses = [125,300,750]
-#hmasses = [125]
-amasses = [5,7,9,11,13,15,17,19,21]
-#amasses = [5,11,15,21]
-    
-signame = 'HToAAH{h}A{a}'
-
-shiftTypes = ['lep','pu','fake','trig']
-shiftTypes = []
-shifts = []
-for s in shiftTypes:
-    shifts += [s+'Up', s+'Down']
 
 #################
 ### Utilities ###
@@ -83,7 +87,7 @@ def getHist(proc,**kwargs):
     if do2D:
         hists = [wrappers[s+shift].getHist2D(plotname) for s in sampleMap[proc]]
     elif doUnbinned:
-        hists = [wrappers[s+shift].getDataset(plotname) for s in sampleMap[proc]]
+        hists = [wrappers[s+shift].getDataset(plotname,selection=selDatasets[var[0]]) for s in sampleMap[proc]]
     else:
         hists = [wrappers[s+shift].getHist(plotname) for s in sampleMap[proc]]
     if doUnbinned:
@@ -111,7 +115,7 @@ def getDatadrivenHist(**kwargs):
     if do2D:
         hists = [wrappers[s+shift].getHist2D(plotname) for s in sampleMap['data']]
     elif doUnbinned:
-        hists = [wrappers[s+shift].getDataset(plotname) for s in sampleMap['data']]
+        hists = [wrappers[s+shift].getDataset(plotname,selection=selDatasets[var[0]]) for s in sampleMap['data']]
     else:
         hists = [wrappers[s+shift].getHist(plotname) for s in sampleMap['data']]
     if doUnbinned:
@@ -145,8 +149,8 @@ def getMatrixHist(proc,**kwargs):
             if doPrompt: hists += [wrappers[s+shift].getHist2D(plotname) for plotname in applot]
             if doFake: hists += [wrappers[s+shift].getHist2D(plotname) for plotname in afplot]
         elif doUnbinned:
-            if doPrompt: hists += [wrappers[s+shift].getDataset(plotname) for plotname in applot]
-            if doFake: hists += [wrappers[s+shift].getDataset(plotname) for plotname in afplot]
+            if doPrompt: hists += [wrappers[s+shift].getDataset(plotname,selection=selDatasets[var[0]]) for plotname in applot]
+            if doFake: hists += [wrappers[s+shift].getDataset(plotname,selection=selDatasets[var[0]]) for plotname in afplot]
         else:
             if doPrompt: hists += [wrappers[s+shift].getHist(plotname) for plotname in applot]
             if doFake: hists += [wrappers[s+shift].getHist(plotname) for plotname in afplot]
@@ -183,8 +187,8 @@ def getMatrixDatadrivenHist(**kwargs):
             if doPrompt: hists += [wrappers[s+shift].getHist2D(plotname) for plotname in bpplot]
             if doFake: hists += [wrappers[s+shift].getHist2D(plotname) for plotname in bfplot]
         elif doUnbinned:
-            if doPrompt: hists += [wrappers[s+shift].getDataset(plotname) for plotname in bpplot]
-            if doFake: hists += [wrappers[s+shift].getDataset(plotname) for plotname in bfplot]
+            if doPrompt: hists += [wrappers[s+shift].getDataset(plotname,selection=selDatasets[var[0]]) for plotname in bpplot]
+            if doFake: hists += [wrappers[s+shift].getDataset(plotname,selection=selDatasets[var[0]]) for plotname in bfplot]
         else:
             if doPrompt: hists += [wrappers[s+shift].getHist(plotname) for plotname in bpplot]
             if doFake: hists += [wrappers[s+shift].getHist(plotname) for plotname in bfplot]
