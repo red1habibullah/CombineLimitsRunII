@@ -64,6 +64,12 @@ class Limits(object):
         if label: self.workspace.var('x').setPlotLabel(label)
         if label: self.workspace.var('x').SetTitle(label)
 
+    def addY(self, yMin, yMax, unit='', label=''):
+        self.workspace.factory('y[{0}, {1}]'.format(yMin,yMax))
+        if unit: self.workspace.var('y').setUnit(unit)
+        if label: self.workspace.var('y').setPlotLabel(label)
+        if label: self.workspace.var('y').SetTitle(label)
+
     def __check(self,test,stored,name='Object'):
         goodToAdd = True
         if 'all' in test: return goodToAdd

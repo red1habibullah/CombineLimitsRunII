@@ -28,11 +28,13 @@ class HaaLimits(Limits):
     SPLINENAME = 'sig{h}'
 
     XRANGE = [4,25]
+    XLABEL = 'm_{#mu#mu}'
 
     REGIONS = ['FP','PP']
     SHIFTS = []
 
-    def __init__(self,histMap):
+
+    def __init__(self,histMap,tag=''):
         '''
         Required arguments:
             histMap = histogram map. the structure should be:
@@ -52,8 +54,11 @@ class HaaLimits(Limits):
         super(HaaLimits,self).__init__()
 
         self.histMap = histMap
+        self.tag = tag
 
-        self.plotDir = 'figures/HaaLimits'
+        self.binned = self.histMap['PP']['']['data'].InheritsFrom('TH1')
+
+        self.plotDir = 'figures/HaaLimits{}'.format('_'+tag if tag else '')
         python_mkdir(self.plotDir)
 
 
@@ -61,7 +66,7 @@ class HaaLimits(Limits):
     ### Workspace utilities ###
     ###########################
     def initializeWorkspace(self):
-        self.addX(*self.XRANGE,unit='GeV',label='m_{#mu#mu}')
+        self.addX(*self.XRANGE,unit='GeV',label=self.XLABEL)
         self.addMH(*self.XRANGE,unit='GeV',label='m_{a}')
 
     def buildModel(self,region='PP',**kwargs):
@@ -246,8 +251,8 @@ class HaaLimits(Limits):
             ws = ROOT.RooWorkspace('sig')
             ws.factory('x[{0}, {1}]'.format(*self.XRANGE))
             ws.var('x').setUnit('GeV')
-            ws.var('x').setPlotLabel('m_{#mu#mu}')
-            ws.var('x').SetTitle('m_{#mu#mu}')
+            ws.var('x').setPlotLabel(self.XLABEL)
+            ws.var('x').SetTitle(self.XLABEL)
             model = Models.Voigtian('sig',
                 mean  = [a,0,30],
                 width = [0.01*a,0,5],
@@ -267,8 +272,8 @@ class HaaLimits(Limits):
             ws = ROOT.RooWorkspace(param)
             ws.factory('x[{},{}]'.format(*self.XRANGE))
             ws.var('x').setUnit('GeV')
-            ws.var('x').setPlotLabel('m_{#mu#mu}')
-            ws.var('x').SetTitle('m_{#mu#mu}')
+            ws.var('x').setPlotLabel(self.XLABEL)
+            ws.var('x').SetTitle(self.XLABEL)
             model = models[param]
             model.build(ws, param)
             name = '{}_{}{}'.format(param,h,tag)
@@ -292,7 +297,10 @@ class HaaLimits(Limits):
                 'sigmas' : [results[h][a]['sigma_h{0}_a{1}_{2}'.format(h,a,tag)] for a in self.AMASSES],
             }
         )
-        integrals = [histMap[self.SIGNAME.format(h=h,a=a)].Integral() for a in self.AMASSES]
+        if self.binned:
+            integrals = [histMap[self.SIGNAME.format(h=h,a=a)].Integral() for a in self.AMASSES]
+        else:
+            integrals = [histMap[self.SIGNAME.format(h=h,a=a)].sumEntries('x>{} && x<{}'.format(*self.XRANGE)) for a in self.AMASSES]
         model.setIntegral(self.AMASSES,integrals)
         model.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag))
         model.buildIntegral(self.workspace,'integral_{}_{}'.format(self.SPLINENAME.format(h=h),tag))
@@ -300,7 +308,11 @@ class HaaLimits(Limits):
     def fitBackground(self,region='PP',shift=''):
         model = self.workspace.pdf('bg_{}'.format(region))
         name = 'data_prefit_{}{}'.format(region,'_'+shift if shift else '')
-        data = ROOT.RooDataHist(name,name,ROOT.RooArgList(self.workspace.var('x')),self.histMap[region][shift]['dataNoSig'])
+        hist = self.histMap[region][shift]['dataNoSig']
+        if self.binned:
+            data = ROOT.RooDataHist(name,name,ROOT.RooArgList(self.workspace.var('x')),hist)
+        else:
+            data = hist.Clone(name)
 
         fr = model.fitTo(data,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True))
 
@@ -344,7 +356,11 @@ class HaaLimits(Limits):
     def addData(self):
         for region in self.REGIONS:
             name = 'data_obs_{}'.format(region)
-            data_obs = ROOT.RooDataHist(name,name,ROOT.RooArgList(self.workspace.var('x')),self.histMap[region]['']['data'])
+            hist = self.histMap[region]['']['data']
+            if self.binned:
+                data_obs = ROOT.RooDataHist(name,name,ROOT.RooArgList(self.workspace.var('x')),self.histMap[region]['']['data'])
+            else:
+                data_obs = hist.Clone(name)
             self.wsimport(data_obs)
 
     def addBackgroundModels(self):
@@ -378,7 +394,10 @@ class HaaLimits(Limits):
         # set expected
         for region in self.REGIONS:
             h = self.histMap[region]['']['dataNoSig']
-            integral = h.Integral(h.FindBin(self.XRANGE[0]),h.FindBin(self.XRANGE[1]))
+            if self.binned:
+                integral = h.Integral(h.FindBin(self.XRANGE[0]),h.FindBin(self.XRANGE[1]))
+            else:
+                integral = h.sumEntries('x>{} && x<{}'.format(*self.XRANGE))
             self.setExpected('bg',region,integral)
 
             for proc in [self.SPLINENAME.format(h=h) for h in self.HMASSES]:
@@ -393,13 +412,14 @@ class HaaLimits(Limits):
     ### Systematics ###
     ###################
     def addSystematics(self):
+        self.sigProcesses = tuple([self.SPLINENAME.format(h=h) for h in self.HMASSES])
         self._addLumiSystematic()
         self._addMuonSystematic()
         self._addTauSystematic()
 
     def _addLumiSystematic(self):
         # lumi: 2.5% 2016
-        lumiproc = tuple([self.SPLINENAME.format(h=h) for h in self.HMASSES])
+        lumiproc = self.sigProcesses
         lumisyst = {
             (lumiproc,tuple(self.REGIONS)) : 1.025,
         }
@@ -407,7 +427,7 @@ class HaaLimits(Limits):
 
     def _addMuonSystematic(self):
         # from z: 1 % + 0.5 % + 0.5 % per muon for id + iso + trig (pt>20)
-        muproc = tuple([self.SPLINENAME.format(h=h) for h in self.HMASSES])
+        muproc = self.sigProcesses
         musyst = {
             (muproc,tuple(self.REGIONS)) : 1+math.sqrt(sum([0.01**2,0.005**2]*2+[0.01**2])), # 2 lead have iso, tau_mu doesnt
         }
@@ -420,7 +440,7 @@ class HaaLimits(Limits):
         
     def _addTauSystematic(self):
         # 5% on sf 0.99 (VL/L) 0.97 (M) 0.95 (T) 0.93 (VT)
-        tauproc = tuple([self.SPLINENAME.format(h=h) for h in self.HMASSES])
+        tauproc = self.sigProcesses
         tausyst = {
             (tauproc,tuple(self.REGIONS)) : 1.05,
         }
