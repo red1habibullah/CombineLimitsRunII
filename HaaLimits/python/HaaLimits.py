@@ -218,18 +218,29 @@ class HaaLimits(Limits):
             )
         else:
             # only upsilon
-            bg = Models.Sum('bg',
-                **{
-                    #nameC : [0.1,0,1],
-                    nameC1: [0.5,0,1],
-                    nameC2: [0.7,0,1],
-                    #nameU : [0.5,0,1],
-                    nameU1: [0.5,0,1],
-                    nameU2: [0.5,0,1],
-                    nameU3: [0.5,0,1],
-                    'recursive' : True,
-                }
-            )
+            if self.binned:
+                bg = Models.Sum('bg',
+                    **{
+                        #nameC : [0.1,0,1],
+                        nameC1: [0.5,0,1],
+                        nameC2: [0.7,0,1],
+                        #nameU : [0.5,0,1],
+                        nameU1: [0.5,0,1],
+                        nameU2: [0.5,0,1],
+                        nameU3: [0.5,0,1],
+                        'recursive' : True,
+                    }
+                )
+            else:
+                bg = Models.Sum('bg',
+                    **{
+                        nameC1: [0.1,0,1],
+                        nameU1: [0.5,0,1],
+                        nameU2: [0.5,0,1],
+                        nameU3: [0.5,0,1],
+                        'recursive' : True,
+                    }
+                )
         name = 'bg_{}'.format(region)
         bg.build(self.workspace,name)
 
