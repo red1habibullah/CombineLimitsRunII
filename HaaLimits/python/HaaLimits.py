@@ -365,14 +365,35 @@ class HaaLimits(Limits):
     ###############################
     ### Add things to workspace ###
     ###############################
-    def addData(self):
+    def addData(self,asimov=False,addSignal=False,**kwargs):
+        mh = kwargs.pop('h',125)
+        ma = kwargs.pop('a',15)
         for region in self.REGIONS:
             name = 'data_obs_{}'.format(region)
             hist = self.histMap[region]['']['data']
-            if self.binned:
-                data_obs = ROOT.RooDataHist(name,name,ROOT.RooArgList(self.workspace.var('x')),self.histMap[region]['']['data'])
+            if asimov:
+                # generate a toy data observation from the model
+                # TODO addSignal
+                model = self.workspace.pdf('bg_{}'.format(region))
+                h = self.histMap[region]['']['dataNoSig']
+                if self.binned:
+                    integral = h.Integral(h.FindBin(self.XRANGE[0]),h.FindBin(self.XRANGE[1]))
+                else:
+                    integral = h.sumEntries('x>{} && x<{}'.format(*self.XRANGE))
+                data_obs = model.generate(ROOT.RooArgSet(self.workspace.var('x')),int(integral))
+                if addSignal:
+                    self.workspace.var('MH').setVal(ma)
+                    model = self.workspace.pdf('{}_{}'.format(self.SPLINENAME.format(h=mh),region))
+                    integral = self.workspace.function('integral_{}_{}'.format(self.SPLINENAME.format(h=mh),region)).getVal()
+                    sig_obs = model.generate(ROOT.RooArgSet(self.workspace.var('x')),int(integral))
+                    data_obs.append(sig_obs)
+                data_obs.SetName(name)
             else:
-                data_obs = hist.Clone(name)
+                # use the provided data
+                if self.binned:
+                    data_obs = ROOT.RooDataHist(name,name,ROOT.RooArgList(self.workspace.var('x')),self.histMap[region]['']['data'])
+                else:
+                    data_obs = hist.Clone(name)
             self.wsimport(data_obs)
 
     def addBackgroundModels(self):
@@ -413,7 +434,7 @@ class HaaLimits(Limits):
             self.setExpected('bg',region,integral)
 
             for proc in [self.SPLINENAME.format(h=h) for h in self.HMASSES]:
-                self.setExpected(proc,region,1) # TODO: how to handle different integrals
+                self.setExpected(proc,region,1)
                 self.addRateParam('integral_{}_{}'.format(proc,region),region,proc)
                 
             self.setObserved(region,-1) # reads from histogram

@@ -69,6 +69,9 @@ rebinning = {
 #################
 ### Utilities ###
 #################
+def getDataset(wrapper,plotname):
+    return wrapper.getDataset(plotname,selection=selDatasets['mm'],xRange=xRange,weight='_weight_')
+
 def getHist(proc,**kwargs):
     scale = kwargs.pop('scale',1)
     shift = kwargs.pop('shift','')
@@ -87,7 +90,7 @@ def getHist(proc,**kwargs):
     if do2D:
         hists = [wrappers[s+shift].getHist2D(plotname) for s in sampleMap[proc]]
     elif doUnbinned:
-        hists = [wrappers[s+shift].getDataset(plotname,selection=selDatasets[var[0]]) for s in sampleMap[proc]]
+        hists = [getDataset(wrappers[s+shift],plotname) for s in sampleMap[proc]]
     else:
         hists = [wrappers[s+shift].getHist(plotname) for s in sampleMap[proc]]
     if doUnbinned:
@@ -115,7 +118,7 @@ def getDatadrivenHist(**kwargs):
     if do2D:
         hists = [wrappers[s+shift].getHist2D(plotname) for s in sampleMap['data']]
     elif doUnbinned:
-        hists = [wrappers[s+shift].getDataset(plotname,selection=selDatasets[var[0]]) for s in sampleMap['data']]
+        hists = [getDataset(wrappers[s+shift],plotname) for s in sampleMap['data']]
     else:
         hists = [wrappers[s+shift].getHist(plotname) for s in sampleMap['data']]
     if doUnbinned:
@@ -149,8 +152,8 @@ def getMatrixHist(proc,**kwargs):
             if doPrompt: hists += [wrappers[s+shift].getHist2D(plotname) for plotname in applot]
             if doFake: hists += [wrappers[s+shift].getHist2D(plotname) for plotname in afplot]
         elif doUnbinned:
-            if doPrompt: hists += [wrappers[s+shift].getDataset(plotname,selection=selDatasets[var[0]]) for plotname in applot]
-            if doFake: hists += [wrappers[s+shift].getDataset(plotname,selection=selDatasets[var[0]]) for plotname in afplot]
+            if doPrompt: hists += [getDataset(wrappers[s+shift],plotname) for plotname in applot]
+            if doFake: hists += [getDataset(wrappers[s+shift],plotname) for plotname in afplot]
         else:
             if doPrompt: hists += [wrappers[s+shift].getHist(plotname) for plotname in applot]
             if doFake: hists += [wrappers[s+shift].getHist(plotname) for plotname in afplot]
@@ -187,8 +190,8 @@ def getMatrixDatadrivenHist(**kwargs):
             if doPrompt: hists += [wrappers[s+shift].getHist2D(plotname) for plotname in bpplot]
             if doFake: hists += [wrappers[s+shift].getHist2D(plotname) for plotname in bfplot]
         elif doUnbinned:
-            if doPrompt: hists += [wrappers[s+shift].getDataset(plotname,selection=selDatasets[var[0]]) for plotname in bpplot]
-            if doFake: hists += [wrappers[s+shift].getDataset(plotname,selection=selDatasets[var[0]]) for plotname in bfplot]
+            if doPrompt: hists += [getDataset(wrappers[s+shift],plotname) for plotname in bpplot]
+            if doFake: hists += [getDataset(wrappers[s+shift],plotname) for plotname in bfplot]
         else:
             if doPrompt: hists += [wrappers[s+shift].getHist(plotname) for plotname in bpplot]
             if doFake: hists += [wrappers[s+shift].getHist(plotname) for plotname in bfplot]
@@ -341,7 +344,7 @@ def create_datacard(args):
     haaLimits.initializeWorkspace()
     haaLimits.addBackgroundModels()
     haaLimits.addSignalModels()
-    haaLimits.addData()
+    haaLimits.addData(asimov=blind,addSignal=addSignal,**signalParams)
     haaLimits.setupDatacard()
     haaLimits.addSystematics()
     name = 'mmmt_{}_parametric'.format('_'.join(var))
