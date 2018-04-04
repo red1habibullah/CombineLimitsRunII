@@ -76,7 +76,7 @@ def getDataset(wrapper,plotname):
     if 'hMass' in plotname:
         return wrapper.getDataset(plotname,selection=' && '.join([selDatasets['x'],selDatasets['y']]),xRange=xRange,weight='w',yRange=yRange)
     else:
-        return wrapper.getDataset(plotname,selection=selDatasets['y'],xRange=xRange,weight='w')
+        return wrapper.getDataset(plotname,selection=selDatasets['x'],xRange=xRange,weight='w')
 
 def getHist(proc,**kwargs):
     scale = kwargs.pop('scale',1)
