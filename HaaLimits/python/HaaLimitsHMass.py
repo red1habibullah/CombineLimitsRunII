@@ -46,7 +46,7 @@ class HaaLimitsHMass(HaaLimits):
         '''
         super(HaaLimitsHMass,self).__init__(histMap)
 
-        self.plotDir = 'figures/HaaLimitsHMass'
+        self.plotDir = 'figures/HaaLimitsHMass{}'.format('_'+tag if tag else '')
         python_mkdir(self.plotDir)
 
 

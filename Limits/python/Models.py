@@ -57,6 +57,60 @@ class Model(object):
             return vals, errs
         return vals
 
+    def fit2D(self,ws,hist,name,save=False,doErrors=False,saveDir=''):
+        '''Fit the model to a histogram and return the fit values'''
+
+        if isinstance(hist,ROOT.TH1):
+            dhname = 'dh_{0}'.format(name)
+            hist = ROOT.RooDataHist(dhname, dhname, ROOT.RooArgList(ws.var(self.x),ws.var(self.y)), hist)
+        self.build(ws,name)
+        model = ws.pdf(name)
+        fr = model.fitTo(hist,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True))
+        pars = fr.floatParsFinal()
+        vals = {}
+        errs = {}
+        for p in range(pars.getSize()):
+            vals[pars.at(p).GetName()] = pars.at(p).getValV()
+            errs[pars.at(p).GetName()] = pars.at(p).getError()
+
+        if save:
+            if saveDir: python_mkdir(saveDir)
+            savename = '{}/{}_{}'.format(saveDir,self.name,name) if saveDir else '{}_{}'.format(self.name,name)
+            x = ws.var(self.x)
+            xFrame = x.frame()
+            xFrame.SetTitle('')
+            hist.plotOn(xFrame)
+            model.plotOn(xFrame)
+            model.paramOn(xFrame)
+            canvas = ROOT.TCanvas(savename,savename,800,800)
+            xFrame.Draw()
+            canvas.Print('{0}_xproj.png'.format(savename))
+
+            y = ws.var(self.y)
+            yFrame = y.frame()
+            yFrame.SetTitle('')
+            hist.plotOn(yFrame)
+            model.plotOn(yFrame)
+            model.paramOn(yFrame)
+            yFrame.Draw()
+            canvas.Print('{0}_yproj.png'.format(savename))
+
+            histM = model.createHistogram('x,y',100,100)
+            histM.SetLineColor(ROOT.kBlue)
+            histM.Draw('surf')
+            canvas.Print('{0}_model.png'.format(savename))
+
+            if isinstance(hist,ROOT.RooDataSet):
+                histD = hist.createHistogram(x,y,20,20,'1','{}_hist'.format(savename))
+                histD.SetLineColor(ROOT.kBlack)
+                histD.Draw('surf')
+                canvas.Print('{0}_dataset.png'.format(savename))
+
+
+        if doErrors:
+            return vals, errs
+        return vals
+
     def setIntegral(self,integral):
         self.integral = integral
 
@@ -319,6 +373,26 @@ class Exponential(Model):
         ws.factory("Exponential::{0}({1}, {2})".format(label,self.x,lambdaName))
         self.params = [lambdaName]
 
+class Erf(Model):
+
+    def __init__(self,name,**kwargs):
+        super(Erf,self).__init__(name,**kwargs)
+
+    def build(self,ws,label):
+        erfScaleName = 'erfScale_{0}'.format(label)
+        erfShiftName = 'erfShift_{0}'.format(label)
+        erfScale = self.kwargs.get('erfScale', [1,0,10])
+        erfShift = self.kwargs.get('erfShift', [0,0,100])
+        # variables
+        ws.factory('{0}[{1}, {2}, {3}]'.format(erfScaleName,*erfScale))
+        ws.factory('{0}[{1}, {2}, {3}]'.format(erfShiftName,*erfShift))
+        # build model
+        ws.factory("EXPR::{0}('0.5*(TMath::Erf({2}*({1}-{3}))+1)', {1}, {2}, {3})".format(
+            label,self.x,erfScaleName,erfShiftName)
+        )
+        self.params = [erfScaleName,erfShiftName]
+
+
 class Sum(Model):
 
     def __init__(self,name,**kwargs):
@@ -361,6 +435,16 @@ class Prod(Model):
 
     def __init__(self,name,*args,**kwargs):
         super(Prod,self).__init__(name,**kwargs)
+        self.args = args
+
+    def build(self,ws,label):
+        ws.factory("PROD::{0}({1})".format(label, ', '.join(self.args)))
+        self.params = []
+
+class ProdSpline(ModelSpline):
+
+    def __init__(self,name,*args,**kwargs):
+        super(ProdSpline,self).__init__(name,**kwargs)
         self.args = args
 
     def build(self,ws,label):

@@ -15,12 +15,17 @@ from DevTools.Utilities.utilities import *
 from DevTools.Plotter.haaUtils import *
 from CombineLimits.HaaLimits.HaaLimits import HaaLimits
 from CombineLimits.HaaLimits.HaaLimitsHMass import HaaLimitsHMass
+from CombineLimits.HaaLimits.HaaLimits2D import HaaLimits2D
 
 logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
 #xRange = [2,25] # with jpsi
 xRange = [4,25] # no jpsi
 #xRange = [2.5,4.5] # jpsi only
+
+yRange = [0,1000] # h, hkf
+#yRange = [0,60] # tt
+#yRange = []
 
 hmasses = [125,300,750]
 #hmasses = [125]
@@ -41,11 +46,9 @@ varHists = {
     'h'  : 'hMass',
     'hkf': 'hMassKinFit',
 }
-varDatasets = {
-    'mm' : 'ammMass_dataset',
-}
 selDatasets = {
-    'mm': 'x>{} && x<{}'.format(*xRange),
+    'x' : 'x>{} && x<{}'.format(*xRange),
+    'y' : 'y>{} && y<{}'.format(*yRange),
 }
 varNames = {
     'mm' : 'amm_mass',
@@ -70,7 +73,10 @@ rebinning = {
 ### Utilities ###
 #################
 def getDataset(wrapper,plotname):
-    return wrapper.getDataset(plotname,selection=selDatasets['mm'],xRange=xRange,weight='_weight_')
+    if 'hMass' in plotname:
+        return wrapper.getDataset(plotname,selection=' && '.join([selDatasets['x'],selDatasets['y']]),xRange=xRange,weight='w',yRange=yRange)
+    else:
+        return wrapper.getDataset(plotname,selection=selDatasets['y'],xRange=xRange,weight='w')
 
 def getHist(proc,**kwargs):
     scale = kwargs.pop('scale',1)
@@ -82,20 +88,19 @@ def getHist(proc,**kwargs):
     wrappers = kwargs.pop('wrappers',{})
     if do2D:
         plot = '{}_{}'.format(*[varHists[v] for v in var])
-    elif doUnbinned:
-        plot = varDatasets[var[0]]
     else:
         plot = varHists[var[0]]
-    plotname = 'region{}/{}'.format(region,plot)
-    if do2D:
-        hists = [wrappers[s+shift].getHist2D(plotname) for s in sampleMap[proc]]
-    elif doUnbinned:
-        hists = [getDataset(wrappers[s+shift],plotname) for s in sampleMap[proc]]
-    else:
-        hists = [wrappers[s+shift].getHist(plotname) for s in sampleMap[proc]]
     if doUnbinned:
+        plot += '_dataset'
+    plotname = 'region{}/{}'.format(region,plot)
+    if doUnbinned:
+        hists = [getDataset(wrappers[s+shift],plotname) for s in sampleMap[proc]]
         hist = sumDatasets(proc+region,*hists)
     else:
+        if do2D:
+            hists = [wrappers[s+shift].getHist2D(plotname) for s in sampleMap[proc]]
+        else:
+            hists = [wrappers[s+shift].getHist(plotname) for s in sampleMap[proc]]
         hist = sumHists(proc+region,*hists)
         hist.Scale(scale)
     return hist
@@ -110,20 +115,19 @@ def getDatadrivenHist(**kwargs):
     wrappers = kwargs.pop('wrappers',{})
     if do2D:
         plot = '{}_{}'.format(*[varHists[v] for v in var])
-    elif doUnbinned:
-        plot = varDatasets[var[0]]
     else:
         plot = varHists[var[0]]
-    plotname = 'region{}_fakeFor{}/{}'.format(source,region,plot)
-    if do2D:
-        hists = [wrappers[s+shift].getHist2D(plotname) for s in sampleMap['data']]
-    elif doUnbinned:
-        hists = [getDataset(wrappers[s+shift],plotname) for s in sampleMap['data']]
-    else:
-        hists = [wrappers[s+shift].getHist(plotname) for s in sampleMap['data']]
     if doUnbinned:
+        plot += '_dataset'
+    plotname = 'region{}_fakeFor{}/{}'.format(source,region,plot)
+    if doUnbinned:
+        hists = [getDataset(wrappers[s+shift],plotname) for s in sampleMap['data']]
         hist = sumDatasets('data'+region+source,*hists)
     else:
+        if do2D:
+            hists = [wrappers[s+shift].getHist2D(plotname) for s in sampleMap['data']]
+        else:
+            hists = [wrappers[s+shift].getHist(plotname) for s in sampleMap['data']]
         hist = sumHists('data'+region+source,*hists)
     return hist
 
@@ -140,23 +144,24 @@ def getMatrixHist(proc,**kwargs):
     wrappers = kwargs.pop('wrappers',{})
     if do2D:
         plot = '{}_{}'.format(*[varHists[v] for v in var])
-    elif doUnbinned:
-        plot = varDatasets[var[0]]
     else:
         plot = varHists[var[0]]
+    if doUnbinned:
+        plot += '_dataset'
     applot = ['matrixP/region{}_for{}/{}'.format(source,region,plot) for source in sources]
     afplot = ['matrixF/region{}_for{}/{}'.format(source,region,plot) for source in sources]
     hists = []
     for s in sampleMap[proc]:
-        if do2D:
-            if doPrompt: hists += [wrappers[s+shift].getHist2D(plotname) for plotname in applot]
-            if doFake: hists += [wrappers[s+shift].getHist2D(plotname) for plotname in afplot]
-        elif doUnbinned:
+        if doUnbinned:
             if doPrompt: hists += [getDataset(wrappers[s+shift],plotname) for plotname in applot]
             if doFake: hists += [getDataset(wrappers[s+shift],plotname) for plotname in afplot]
         else:
-            if doPrompt: hists += [wrappers[s+shift].getHist(plotname) for plotname in applot]
-            if doFake: hists += [wrappers[s+shift].getHist(plotname) for plotname in afplot]
+            if do2D:
+                if doPrompt: hists += [wrappers[s+shift].getHist2D(plotname) for plotname in applot]
+                if doFake: hists += [wrappers[s+shift].getHist2D(plotname) for plotname in afplot]
+            else:
+                if doPrompt: hists += [wrappers[s+shift].getHist(plotname) for plotname in applot]
+                if doFake: hists += [wrappers[s+shift].getHist(plotname) for plotname in afplot]
     if doUnbinned:
         hist = sumDatasets(proc+region+source,*hists)
     else:
@@ -178,23 +183,24 @@ def getMatrixDatadrivenHist(**kwargs):
     wrappers = kwargs.pop('wrappers',{})
     if do2D:
         plot = '{}_{}'.format(*[varHists[v] for v in var])
-    elif doUnbinned:
-        plot = varDatasets[var[0]]
     else:
         plot = varHists[var[0]]
+    if doUnbinned:
+        plot += '_dataset'
     bpplot = ['matrixP/region{}_for{}_fakeFor{}/{}'.format(source,fakeRegion,region,plot) for source in fakeSources]
     bfplot = ['matrixF/region{}_for{}_fakeFor{}/{}'.format(source,fakeRegion,region,plot) for source in fakeSources]
     hists = []
     for s in sampleMap['data']:
-        if do2D:
-            if doPrompt: hists += [wrappers[s+shift].getHist2D(plotname) for plotname in bpplot]
-            if doFake: hists += [wrappers[s+shift].getHist2D(plotname) for plotname in bfplot]
-        elif doUnbinned:
+        if doUnbinned:
             if doPrompt: hists += [getDataset(wrappers[s+shift],plotname) for plotname in bpplot]
             if doFake: hists += [getDataset(wrappers[s+shift],plotname) for plotname in bfplot]
         else:
-            if doPrompt: hists += [wrappers[s+shift].getHist(plotname) for plotname in bpplot]
-            if doFake: hists += [wrappers[s+shift].getHist(plotname) for plotname in bfplot]
+            if do2D:
+                if doPrompt: hists += [wrappers[s+shift].getHist2D(plotname) for plotname in bpplot]
+                if doFake: hists += [wrappers[s+shift].getHist2D(plotname) for plotname in bfplot]
+            else:
+                if doPrompt: hists += [wrappers[s+shift].getHist(plotname) for plotname in bpplot]
+                if doFake: hists += [wrappers[s+shift].getHist(plotname) for plotname in bfplot]
     if doUnbinned:
         hist = sumDatasets('data'+region+source,*hists)
     else:
@@ -232,10 +238,6 @@ def create_datacard(args):
     wsname = 'w'
     var = args.fitVars
     
-    if do2D and doParametric:
-       logging.error('Parametric 2D fits are not yet supported')
-       raise
-
     if doUnbinned and not doParametric:
         logging.error('Unbinned only supported with parametric option')
         raise
@@ -332,19 +334,29 @@ def create_datacard(args):
                     histMap[mode][shift]['data'].Rebin(rebinning[var[0]])
                     histMap[mode][shift]['dataNoSig'].Rebin(rebinning[var[0]])
 
+    name = []
+    if args.unbinned: name += ['unbinned']
+    if do2D: name += [var[1]]
+    if args.addSignal: name += ['wSig']
+    name = '_'.join(name)
     if var == ['mm']:
-        haaLimits = HaaLimits(histMap,'unbinned' if args.unbinned else '')
+        haaLimits = HaaLimits(histMap,name)
     elif var == ['h'] or var == ['hkf']:
-        haaLimits = HaaLimitsHMass(histMap,'unbinned' if args.unbinned else '')
+        haaLimits = HaaLimitsHMass(histMap,name)
+    elif do2D:
+        haaLimits = HaaLimits2D(histMap,name)
     else:
         logging.error('Unsupported fit vars: ',var)
         raise
     haaLimits.AMASSES = amasses
     haaLimits.HMASSES = hmasses
+    haaLimits.XRANGE = xRange
+    if do2D: haaLimits.YRANGE = yRange
     haaLimits.initializeWorkspace()
     haaLimits.addBackgroundModels()
     haaLimits.addSignalModels()
-    haaLimits.addData(asimov=blind,addSignal=addSignal,**signalParams)
+    #haaLimits.addData() # this will use "data" as the observed dataset
+    haaLimits.addData(asimov=blind,addSignal=addSignal,**signalParams) # this will generate a dataset based on the fitted model
     haaLimits.setupDatacard()
     haaLimits.addSystematics()
     name = 'mmmt_{}_parametric'.format('_'.join(var))

@@ -313,6 +313,7 @@ class HaaLimits(Limits):
             integrals = [histMap[self.SIGNAME.format(h=h,a=a)].Integral() for a in self.AMASSES]
         else:
             integrals = [histMap[self.SIGNAME.format(h=h,a=a)].sumEntries('x>{} && x<{}'.format(*self.XRANGE)) for a in self.AMASSES]
+        print 'Integrals', tag, h, integrals
         model.setIntegral(self.AMASSES,integrals)
         model.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag))
         model.buildIntegral(self.workspace,'integral_{}_{}'.format(self.SPLINENAME.format(h=h),tag))
