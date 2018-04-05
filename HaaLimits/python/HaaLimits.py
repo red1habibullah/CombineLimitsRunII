@@ -223,7 +223,7 @@ class HaaLimits(Limits):
                     **{
                         #nameC : [0.1,0,1],
                         nameC1: [0.5,0,1],
-                        nameC2: [0.7,0,1],
+                        #nameC2: [0.7,0,1],
                         #nameU : [0.5,0,1],
                         nameU1: [0.5,0,1],
                         nameU2: [0.5,0,1],
@@ -235,7 +235,7 @@ class HaaLimits(Limits):
                 bg = Models.Sum('bg',
                     **{
                         nameC1: [0.5,0,1],
-                        nameC2: [0.7,0,1],
+                        #nameC2: [0.7,0,1],
                         nameU1: [0.5,0,1],
                         nameU2: [0.5,0,1],
                         nameU3: [0.5,0,1],
