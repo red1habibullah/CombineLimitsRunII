@@ -24,8 +24,7 @@ xRange = [4,25] # no jpsi
 #xRange = [2.5,4.5] # jpsi only
 
 yRange = [0,1000] # h, hkf
-#yRange = [0,60] # tt
-#yRange = []
+yRangett = [0,60] # tt
 
 hmasses = [125,300,750]
 #hmasses = [125]
@@ -49,6 +48,7 @@ varHists = {
 selDatasets = {
     'x' : 'x>{} && x<{}'.format(*xRange),
     'y' : 'y>{} && y<{}'.format(*yRange),
+    'ytt' : 'y>{} && y<{}'.format(*yRangett),
 }
 varNames = {
     'mm' : 'amm_mass',
@@ -75,6 +75,8 @@ rebinning = {
 def getDataset(wrapper,plotname):
     if 'hMass' in plotname:
         return wrapper.getDataset(plotname,selection=' && '.join([selDatasets['x'],selDatasets['y']]),xRange=xRange,weight='w',yRange=yRange)
+    elif 'attMass' in plotname:
+        return wrapper.getDataset(plotname,selection=' && '.join([selDatasets['x'],selDatasets['ytt']]),xRange=xRange,weight='w',yRange=yRangett)
     else:
         return wrapper.getDataset(plotname,selection=selDatasets['x'],xRange=xRange,weight='w')
 
@@ -351,7 +353,7 @@ def create_datacard(args):
     haaLimits.AMASSES = amasses
     haaLimits.HMASSES = hmasses
     haaLimits.XRANGE = xRange
-    if do2D: haaLimits.YRANGE = yRange
+    if do2D: haaLimits.YRANGE = yRangett if 'tt' in var else yRange
     haaLimits.initializeWorkspace()
     haaLimits.addBackgroundModels()
     haaLimits.addSignalModels()

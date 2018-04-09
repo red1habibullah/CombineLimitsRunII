@@ -66,18 +66,54 @@ class HaaLimits2D(HaaLimits):
         nameC1 = 'cont1{}'.format('_'+tag if tag else '')
         cont1.build(self.workspace,nameC1)
 
-        erf1 = Models.Erf('erf1',
-            x = 'y',
-            erfScale = [0.01,0,1],
-            erfShift = [100,0,1000],
-        )
-        nameE1 = 'erf1{}'.format('_'+tag if tag else '')
-        erf1.build(self.workspace,nameE1)
+        # higgs fit (mmtt)
+        if self.YRANGE[1]>100:
+            erf1 = Models.Erf('erf1',
+                x = 'y',
+                erfScale = [0.01,0,1],
+                erfShift = [100,0,1000],
+            )
+            nameE1 = 'erf1{}'.format('_'+tag if tag else '')
+            erf1.build(self.workspace,nameE1)
 
-        bg = Models.Prod('bg',
-            nameE1,
-            nameC1,
-        )
+            bg = Models.Prod('bg',
+                nameE1,
+                nameC1,
+            )
+        # pseudo fit (tt)
+        else:
+            erf1 = Models.Erf('erf1',
+                x = 'y',
+                erfScale = [0.01,0,1],
+                erfShift = [1,0,20],
+            )
+            nameE1 = 'erf1{}'.format('_'+tag if tag else '')
+            erf1.build(self.workspace,nameE1)
+
+            erfc1 = Models.Prod('erfc1',
+                nameE1,
+                nameC1,
+            )
+            nameEC1 = 'erfc1{}'.format('_'+tag if tag else '')
+            erfc1.build(self.workspace,nameEC1)
+
+            # add a guassian summed for tt ?
+            gaus1 = Models.Gaussian('gaus1',
+                x = 'y',
+                mean = [2,0,20],
+                sigma = [0.1,0,2],
+            )
+            nameG1 = 'gaus1{}'.format('_'+tag if tag else '')
+            gaus1.build(self.workspace,nameG1)
+
+            bg = Models.Sum('bg',
+                **{ 
+                    nameEC1    : [0.5,0,1],
+                    nameG1     : [0.5,0,1],
+                    'recursive': True,
+                }
+            )
+
         name = 'bg_{}'.format(region)
         bg.build(self.workspace,name)
 

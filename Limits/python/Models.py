@@ -22,7 +22,7 @@ class Model(object):
 
     def build(self,ws,label):
         '''Dummy method to add model to workspace'''
-        pass
+        logging.debug('Building {}'.format(label))
 
     def fit(self,ws,hist,name,save=False,doErrors=False,saveDir=''):
         '''Fit the model to a histogram and return the fit values'''
@@ -141,6 +141,7 @@ class SplineParam(object):
         self.kwargs = kwargs
 
     def build(self,ws,label):
+        logging.debug('Building {}'.format(label))
         paramName = '{0}'.format(label) 
         ws.factory('{0}[0,-10,10]'.format(paramName))
 
@@ -152,6 +153,7 @@ class Spline(object):
         self.kwargs = kwargs
 
     def build(self,ws,label):
+        logging.debug('Building {}'.format(label))
         masses = self.kwargs.get('masses', [])
         values = self.kwargs.get('values', [])
         shifts = self.kwargs.get('shifts', {})
@@ -182,6 +184,7 @@ class Polynomial(Model):
         super(Chebychev,self).__init__(name,**kwargs)
 
     def build(self,ws,label):
+        logging.debug('Building {}'.format(label))
         order = self.kwargs.get('order',1)
         params = ['p{}_{}'.format(o,label) for o in range(order)]
         ranges = [self.kwargs.get('p{}'.format(o),[0,-1,1]) for o in range(order)]
@@ -194,6 +197,7 @@ class PolynomialSpline(ModelSpline):
         super(ChebychevSpline,self).__init__(name,**kwargs)
 
     def build(self,ws,label):
+        logging.debug('Building {}'.format(label))
         order = self.kwargs.get('order',1)
         masses = self.kwargs.get('masses',[])
         paramSplines = {}
@@ -213,6 +217,7 @@ class Chebychev(Model):
         super(Chebychev,self).__init__(name,**kwargs)
 
     def build(self,ws,label):
+        logging.debug('Building {}'.format(label))
         order = self.kwargs.get('order',1)
         params = ['p{}_{}'.format(o,label) for o in range(order)]
         ranges = [self.kwargs.get('p{}'.format(o),[0,-1,1]) for o in range(order)]
@@ -225,6 +230,7 @@ class ChebychevSpline(ModelSpline):
         super(ChebychevSpline,self).__init__(name,**kwargs)
 
     def build(self,ws,label):
+        logging.debug('Building {}'.format(label))
         order = self.kwargs.get('order',1)
         masses = self.kwargs.get('masses',[])
         paramSplines = {}
@@ -244,6 +250,7 @@ class Gaussian(Model):
         super(Gaussian,self).__init__(name,**kwargs)
 
     def build(self,ws,label):
+        logging.debug('Building {}'.format(label))
         meanName = 'mean_{0}'.format(label)
         sigmaName = 'sigma_{0}'.format(label)
         mean = self.kwargs.get('mean',[1,0,1000])
@@ -261,6 +268,7 @@ class GaussianSpline(ModelSpline):
         super(GaussianSpline,self).__init__(name,**kwargs)
 
     def build(self,ws,label):
+        logging.debug('Building {}'.format(label))
         meanName = 'mean_{0}'.format(label)
         sigmaName = 'sigma_{0}'.format(label)
         masses = self.kwargs.get('masses', [])
@@ -282,6 +290,7 @@ class BreitWigner(Model):
         super(BreitWigner,self).__init__(name,**kwargs)
 
     def build(self,ws,label):
+        logging.debug('Building {}'.format(label))
         meanName = 'mean_{0}'.format(label)
         widthName = 'width_{0}'.format(label)
         mean  = self.kwargs.get('mean',  [1,0,1000])
@@ -299,6 +308,7 @@ class BreitWignerSpline(ModelSpline):
         super(BreitWignerSpline,self).__init__(name,**kwargs)
 
     def build(self,ws,label):
+        logging.debug('Building {}'.format(label))
         meanName = 'mean_{0}'.format(label)
         widthName = 'width_{0}'.format(label)
         masses = self.kwargs.get('masses', [])
@@ -320,6 +330,7 @@ class Voigtian(Model):
         super(Voigtian,self).__init__(name,**kwargs)
 
     def build(self,ws,label):
+        logging.debug('Building {}'.format(label))
         meanName = 'mean_{0}'.format(label)
         widthName = 'width_{0}'.format(label)
         sigmaName = 'sigma_{0}'.format(label)
@@ -340,6 +351,7 @@ class VoigtianSpline(ModelSpline):
         super(VoigtianSpline,self).__init__(name,**kwargs)
 
     def build(self,ws,label):
+        logging.debug('Building {}'.format(label))
         meanName = 'mean_{0}'.format(label)
         widthName = 'width_{0}'.format(label)
         sigmaName = 'sigma_{0}'.format(label)
@@ -365,6 +377,7 @@ class Exponential(Model):
         super(Exponential,self).__init__(name,**kwargs)
 
     def build(self,ws,label):
+        logging.debug('Building {}'.format(label))
         lambdaName = 'lambda_{0}'.format(label)
         lamb = self.kwargs.get('lamb',  [-1,-5,0])
         # variables
@@ -379,6 +392,7 @@ class Erf(Model):
         super(Erf,self).__init__(name,**kwargs)
 
     def build(self,ws,label):
+        logging.debug('Building {}'.format(label))
         erfScaleName = 'erfScale_{0}'.format(label)
         erfShiftName = 'erfShift_{0}'.format(label)
         erfScale = self.kwargs.get('erfScale', [1,0,10])
@@ -407,6 +421,7 @@ class Sum(Model):
     #        return '{0}_frac*{0}'.format(curr)
 
     def build(self,ws,label):
+        logging.debug('Building {}'.format(label))
         pdfs = []
         sumpdfs = []
         for n, (pdf, r) in enumerate(sorted(self.kwargs.iteritems())):
@@ -438,6 +453,7 @@ class Prod(Model):
         self.args = args
 
     def build(self,ws,label):
+        logging.debug('Building {}'.format(label))
         ws.factory("PROD::{0}({1})".format(label, ', '.join(self.args)))
         self.params = []
 
@@ -448,5 +464,6 @@ class ProdSpline(ModelSpline):
         self.args = args
 
     def build(self,ws,label):
+        logging.debug('Building {}'.format(label))
         ws.factory("PROD::{0}({1})".format(label, ', '.join(self.args)))
         self.params = []
