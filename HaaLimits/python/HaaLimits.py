@@ -184,64 +184,20 @@ class HaaLimits(Limits):
         #cont.build(self.workspace,nameC)
     
         # sum
-        if self.XRANGE[0]<4 and self.XRANGE[1]>10:
-            # jpsi and upsilon
-            bg = Models.Sum('bg',
-                **{
-                    #nameC : [0.1,0,1],
-                    nameC1: [0.2,0,1],
-                    nameC2: [0.5,0,1],
-                    nameC3: [0.8,0,1],
-                    #nameC4: [0.1,0,1],
-                    #nameJ : [0.9,0,1],
-                    nameJ1: [0.9,0,1],
-                    nameJ2: [0.9,0,1],
-                    #nameU : [0.1,0,1],
-                    nameU1: [0.1,0,1],
-                    nameU2: [0.1,0,1],
-                    nameU3: [0.1,0,1],
-                    'recursive' : True,
-                }
-            )
-        elif self.XRANGE[0]<4:
-            # only jpsi
-            bg = Models.Sum('bg',
-                **{
-                    #nameC : [0.1,0,1],
-                    nameC3: [0.1,0,1],
-                    nameC2: [0.1,0,1],
-                    #nameJ : [0.9,0,1],
-                    nameJ1: [0.9,0,1],
-                    nameJ2: [0.9,0,1],
-                    'recursive' : True,
-                }
-            )
-        else:
-            # only upsilon
-            if self.binned:
-                bg = Models.Sum('bg',
-                    **{
-                        #nameC : [0.1,0,1],
-                        nameC1: [0.5,0,1],
-                        #nameC2: [0.7,0,1],
-                        #nameU : [0.5,0,1],
-                        nameU1: [0.5,0,1],
-                        nameU2: [0.5,0,1],
-                        nameU3: [0.5,0,1],
-                        'recursive' : True,
-                    }
-                )
-            else:
-                bg = Models.Sum('bg',
-                    **{
-                        nameC1: [0.5,0,1],
-                        #nameC2: [0.7,0,1],
-                        nameU1: [0.5,0,1],
-                        nameU2: [0.5,0,1],
-                        nameU3: [0.5,0,1],
-                        'recursive' : True,
-                    }
-                )
+        bgs = {'recursive': True}
+        # continuum background
+        bgs[nameC1] = [0.5,0,1]
+        # jpsi
+        if self.XRANGE[0]<=4:
+            bgs[nameJ1] = [0.9,0,1]
+            bgs[nameJ2] = [0.9,0,1]
+            bgs[nameC3] = [0.5,0,1]
+        # upsilon
+        if self.XRANGE[0]<=9 and self.XRANGE[1]>=11:
+            bgs[nameU1] = [0.9,0,1]
+            bgs[nameU2] = [0.9,0,1]
+            bgs[nameU3] = [0.9,0,1]
+        bg = Models.Sum('bg', **bgs)
         name = 'bg_{}'.format(region)
         bg.build(self.workspace,name)
 
