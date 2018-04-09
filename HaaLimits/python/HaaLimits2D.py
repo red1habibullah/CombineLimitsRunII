@@ -168,13 +168,21 @@ class HaaLimits2D(HaaLimits):
                 sigma = [0.01*a,0.001,5],
             )
             modelx.build(ws, 'sigx')
-            modely = Models.Voigtian('sigy',
-                x = 'y',
-                #mean  = [h,0.75*h,1.25*h], # kinfit
-                mean  = [0.75*h,0,1.25*h], # visible
-                width = [0.1*h,0.1,0.5*h],
-                sigma = [0.1*h,0.1,0.5*h],
-            )
+            if self.YRANGE[1]>100: # y variable is h mass
+                modely = Models.Voigtian('sigy',
+                    x = 'y',
+                    #mean  = [h,0.75*h,1.25*h], # kinfit
+                    mean  = [0.75*h,0,1.25*h], # visible
+                    width = [0.1*h,0.1,0.5*h],
+                    sigma = [0.1*h,0.1,0.5*h],
+                )
+            else: # y variable is tt
+                modely = Models.Voigtian('sigy',
+                    x = 'y',
+                    mean  = [0.5*a,0,1.25*a], # visible
+                    width = [0.1*a,0,0.5*a],
+                    sigma = [0.1*a,0,0.5*a],
+                )
             modely.build(ws, 'sigy')
             model = Models.Prod('sig',
                 'sigx',
