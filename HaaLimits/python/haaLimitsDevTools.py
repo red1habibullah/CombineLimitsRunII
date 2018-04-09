@@ -24,7 +24,6 @@ xRange = [4,25] # no jpsi
 #xRange = [2.5,4.5] # jpsi only
 
 yRange = [0,1000] # h, hkf
-yRangett = [0,60] # tt
 
 hmasses = [125,300,750]
 #hmasses = [125]
@@ -45,22 +44,11 @@ varHists = {
     'h'  : 'hMass',
     'hkf': 'hMassKinFit',
 }
-selDatasets = {
-    'x' : 'x>{} && x<{}'.format(*xRange),
-    'y' : 'y>{} && y<{}'.format(*yRange),
-    'ytt' : 'y>{} && y<{}'.format(*yRangett),
-}
 varNames = {
     'mm' : 'amm_mass',
     'tt' : 'att_mass',
     'h'  : 'h_mass',
     'hkf': 'h_massKinFit',
-}
-varBinning = {
-    'mm' : [42,4,25],
-    'tt' : [60,0,60],
-    'h'  : [50,0,1000],
-    'hkf': [50,0,1000],
 }
 rebinning = {
     'mm' : 5, # 10 MeV -> 50 MeV
@@ -73,10 +61,12 @@ rebinning = {
 ### Utilities ###
 #################
 def getDataset(wrapper,plotname):
-    if 'hMass' in plotname:
+    selDatasets = {
+        'x' : 'x>{} && x<{}'.format(*xRange),
+        'y' : 'y>{} && y<{}'.format(*yRange),
+    }
+    if 'hMass' in plotname or 'attMass' in plotname:
         return wrapper.getDataset(plotname,selection=' && '.join([selDatasets['x'],selDatasets['y']]),xRange=xRange,weight='w',yRange=yRange)
-    elif 'attMass' in plotname:
-        return wrapper.getDataset(plotname,selection=' && '.join([selDatasets['x'],selDatasets['ytt']]),xRange=xRange,weight='w',yRange=yRangett)
     else:
         return wrapper.getDataset(plotname,selection=selDatasets['x'],xRange=xRange,weight='w')
 
@@ -244,6 +234,11 @@ def create_datacard(args):
         logging.error('Unbinned only supported with parametric option')
         raise
 
+    global xRange
+    global yRange
+    if do2D and var[1]=='tt': yRange = [0,30]
+    xRange = args.xRange
+
     #############
     ### Setup ###
     #############
@@ -294,10 +289,13 @@ def create_datacard(args):
                         else:
                             histMap[mode][shift][proc] = getHist('data',doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,**regionArgs[mode])
                 else:
+                    # override xRange for signal only
+                    xRange = [0,30]
                     if doMatrix:
                         histMap[mode][shift][proc] = getMatrixHist(proc,doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,**regionArgs[mode])
                     else:
                         histMap[mode][shift][proc] = getHist(proc,doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,**regionArgs[mode])
+                    xRange = args.xRange
                 if do2D or doUnbinned:
                     pass # TODO, figure out how to rebin 2D
                 else:
@@ -339,6 +337,7 @@ def create_datacard(args):
     name = []
     if args.unbinned: name += ['unbinned']
     if do2D: name += [var[1]]
+    if args.tag: name += [args.tag]
     if args.addSignal: name += ['wSig']
     name = '_'.join(name)
     if var == ['mm']:
@@ -356,13 +355,16 @@ def create_datacard(args):
     if do2D: haaLimits.YRANGE = yRangett if 'tt' in var else yRange
     haaLimits.initializeWorkspace()
     haaLimits.addBackgroundModels()
+    haaLimits.XRANGE = [0,30] # override for signal splines
     haaLimits.addSignalModels()
+    haaLimits.XRANGE = xRange
     #haaLimits.addData() # this will use "data" as the observed dataset
     haaLimits.addData(asimov=blind,addSignal=addSignal,**signalParams) # this will generate a dataset based on the fitted model
     haaLimits.setupDatacard()
     haaLimits.addSystematics()
     name = 'mmmt_{}_parametric'.format('_'.join(var))
     if args.unbinned: name += '_unbinned'
+    if args.tag: name += '_{}'.format(args.tag)
     if args.addSignal: name += '_wSig'
     haaLimits.save(name=name)
 
@@ -377,6 +379,7 @@ def parse_command_line(argv):
     parser.add_argument('--addSignal', action='store_true', help='Insert fake signal')
     parser.add_argument('--higgs', type=int, default=125, choices=[125,300,750])
     parser.add_argument('--pseudoscalar', type=int, default=15, choices=[5,7,9,11,13,15,17,19,21])
+    parser.add_argument('--xRange', type=float, nargs='*', default=[4,25])
     parser.add_argument('--tag', type=str, default='')
 
     return parser.parse_args(argv)
