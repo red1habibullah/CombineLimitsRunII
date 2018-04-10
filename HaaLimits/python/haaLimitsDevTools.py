@@ -352,7 +352,9 @@ def create_datacard(args):
     haaLimits.AMASSES = amasses
     haaLimits.HMASSES = hmasses
     haaLimits.XRANGE = xRange
-    if do2D: haaLimits.YRANGE = yRangett if 'tt' in var else yRange
+    if do2D: haaLimits.YRANGE = yRange
+    if 'tt' in var: haaLimits.YLABEL = 'm_{#tau_{#mu}#tau_{h}}'
+    if 'h' in var or 'hkf' in var: haaLimits.YLABEL = 'm_{#mu#mu#tau_{#mu}#tau_{h}}'
     haaLimits.initializeWorkspace()
     haaLimits.addBackgroundModels()
     haaLimits.XRANGE = [0,30] # override for signal splines

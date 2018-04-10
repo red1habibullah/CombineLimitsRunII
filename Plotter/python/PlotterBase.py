@@ -32,6 +32,8 @@ class PlotterBase(object):
         entryArgs = kwargs.pop('entries',[])
         position = kwargs.pop('position',33)
         numcol = kwargs.pop('numcol',1)
+        widthScale = kwargs.pop('widthScale',1)
+        heightScale = kwargs.pop('heightScale',1)
         # programatically decide position
         # ----------------
         # | 14 | 24 | 34 |
@@ -42,9 +44,9 @@ class PlotterBase(object):
         # ----------------
         # | 11 | 21 | 31 |
         # ----------------
-        width = 0.17*numcol+0.1
+        width = widthScale*(0.17*numcol+0.1)
         numentries = len(entryArgs)
-        height = math.ceil(float(numentries)/numcol)*0.07+0.04
+        height = heightScale*(math.ceil(float(numentries)/numcol)*0.07+0.04)
         if position % 10 == 1:   # bottom
             ystart = 0.16
             yend = ystart+height

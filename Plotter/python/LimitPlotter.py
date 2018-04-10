@@ -16,6 +16,7 @@ ROOT.gROOT.SetBatch(ROOT.kTRUE)
 ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 1001;")
 tdrstyle.setTDRStyle()
 ROOT.gStyle.SetPalette(1)
+ROOT.TGaxis.SetMaxDigits(3)
 
 class LimitPlotter(PlotterBase):
     '''Basic limit plotter utilities'''
@@ -161,8 +162,8 @@ class LimitPlotter(PlotterBase):
         expected.GetYaxis().SetTitleOffset(1.6)
 
         expected.Draw()
-        if ymin: expected.SetMinimum(ymin)
-        if ymax: expected.SetMaximum(ymax)
+        if ymin is not None: expected.SetMinimum(ymin)
+        if ymax is not None: expected.SetMaximum(ymax)
         twoSigma.Draw('f')
         oneSigma.Draw('f')
 
@@ -266,6 +267,89 @@ class LimitPlotter(PlotterBase):
         ]
         if not blind: entries = [[observed,'Observed','l']] + entries
         legend = self._getLegend(entries=entries,numcol=numcol,position=legendpos)
+        legend.Draw()
+
+        # cms lumi styling
+        self._setStyle(canvas,position=lumipos,preliminary=isprelim)
+
+        self._save(canvas,savename)
+
+    def plotMultiExpected(self,xvals,quartiles,labels,savename,**kwargs):
+        '''Plot limits'''
+        xaxis = kwargs.pop('xaxis','x')
+        yaxis = kwargs.pop('yaxis','95% CLs Upper Limit on #sigma/#sigma_{model}')
+        blind = kwargs.pop('blind',True)
+        lumipos = kwargs.pop('lumipos',11)
+        isprelim = kwargs.pop('isprelim',True)
+        legendpos = kwargs.pop('legendpos',31)
+        numcol = kwargs.pop('numcol',1)
+        asymptoticFilenames = kwargs.pop('asymptoticFilenames',[])
+        smooth = kwargs.pop('smooth',False)
+        ymin = kwargs.pop('ymin',None)
+        ymax = kwargs.pop('ymax',None)
+        logy = kwargs.pop('logy',1)
+        colors = kwargs.pop('colors',[])
+        plotunity = kwargs.pop('plotunity',True)
+        leftmargin = kwargs.pop('leftmargin',None)
+
+        logging.info('Plotting {0}'.format(savename))
+
+        canvas = ROOT.TCanvas(savename,savename,50,50,600,600)
+        canvas.SetLogy(logy)
+        if leftmargin: canvas.SetLeftMargin(leftmargin)
+
+        expected = {}
+        observed = {}
+
+        for x in range(len(xvals)):
+            limits = quartiles[x]
+
+            n = len(xvals[x])
+            expected[x] = ROOT.TGraph(n)
+            observed[x] = ROOT.TGraph(n)
+
+            for i in range(len(xvals[x])):
+                if not all(limits[xvals[x][i]]):
+                    print i, xvals[x][i], limits[xvals[x][i]]
+                    continue
+                expected[x].SetPoint(     i,   xvals[x][i],     limits[xvals[x][i]][2]) # 0.5
+                observed[x].SetPoint(     i,   xvals[x][i],     limits[xvals[x][i]][5]) # obs
+
+            expected[x].SetLineStyle(7)
+            expected[x].SetLineWidth(2)
+            expected[x].SetMarkerStyle(0)
+            expected[x].SetFillStyle(0)
+            observed[x].SetMarkerStyle(0)
+            observed[x].SetFillStyle(0)
+            observed[x].SetLineWidth(2)
+            if len(colors)>=x:
+                expected[x].SetLineColor(colors[x])
+                observed[x].SetLineColor(colors[x])
+
+            expected[x].GetXaxis().SetLimits(xvals[x][0],xvals[x][-1])
+            expected[x].GetXaxis().SetTitle(xaxis)
+            expected[x].GetYaxis().SetTitle(yaxis)
+            expected[x].GetYaxis().SetTitleSize(0.05)
+            expected[x].GetYaxis().SetTitleOffset(1.6)
+
+            if x:
+                expected[x].Draw('same')
+            else:
+                expected[x].Draw()
+                if ymin is not None: expected[x].SetMinimum(ymin)
+                if ymax is not None: expected[x].SetMaximum(ymax)
+
+            if not blind: observed[x].Draw('same')
+
+        ratiounity = ROOT.TLine(expected[0].GetXaxis().GetXmin(),1,expected[0].GetXaxis().GetXmax(),1)
+        if plotunity: ratiounity.Draw()
+
+        # get the legend
+        entries = []
+        for x in range(len(xvals)):
+            entries += [[expected[x],'#splitline{'+labels[x]+'}{Expected}', 'l']]
+            if not blind: entries += [[observed[x],'#splitline{'+labels[x]+'}{Observed}','l']]
+        legend = self._getLegend(entries=entries,numcol=numcol,position=legendpos,widthScale=1.2)
         legend.Draw()
 
         # cms lumi styling
