@@ -176,18 +176,70 @@ class HaaLimits2D(HaaLimits):
                     width = [0.1*h,0.1,0.5*h],
                     sigma = [0.1*h,0.1,0.5*h],
                 )
-            else: # y variable is tt
-                modely = Models.Voigtian('sigy',
-                    x = 'y',
-                    mean  = [0.5*a,0,1.25*a], # visible
-                    width = [0.1*a,0,0.5*a],
-                    sigma = [0.1*a,0,0.5*a],
+                modely.build(ws, 'sigy')
+
+                model = Models.Prod('sig',
+                    'sigx',
+                    'sigy',
                 )
-            modely.build(ws, 'sigy')
-            model = Models.Prod('sig',
-                'sigx',
-                'sigy',
-            )
+            else: # y variable is tt
+                if region=='PP':
+                    # simple voitian
+                    voity = Models.Voigtian('sigy',
+                        x = 'y',
+                        mean  = [0.5*a,0,1.25*a], # visible
+                        width = [0.1*a,0,0.5*a],
+                        sigma = [0.1*a,0,0.5*a],
+                    )
+                    voity.build(ws, 'sigy')
+
+                    model = Models.Prod('sig',
+                        'sigx',
+                        'sigy',
+                    )
+                else:
+                    # add a mistagged jet background
+                    voity = Models.Voigtian('sigy',
+                        x = 'y',
+                        mean  = [0.5*a,0,1.25*a], # visible
+                        width = [0.1*a,0,0.5*a],
+                        sigma = [0.1*a,0,0.5*a],
+                    )
+                    voity.build(ws, 'sigy')
+
+                    conty = Models.Exponential('conty',
+                        x = 'y',
+                        lamb = [-0.25,-1,-0.001], # visible
+                    )
+                    conty.build(ws,'conty')
+
+                    erfy = Models.Erf('erfy',
+                        x = 'y',
+                        erfScale = [0.1,0.01,10],
+                        erfShift = [2,0,10],
+                    )
+                    erfy.build(ws,'erfy')
+
+                    erfc = Models.Prod('erfcy',
+                        'erfy',
+                        'conty',
+                    )
+                    erfc.build(ws,'erfcy')
+
+                    modely = Models.Sum('bgsigy',
+                        **{ 
+                            'erfcy'    : [0.5,0,1],
+                            'sigy'     : [0.5,0,1],
+                            'recursive': True,
+                        }
+                    )
+                    modely.build(ws,'bgsigy')
+
+                    model = Models.Prod('sig',
+                        'sigx',
+                        'bgsigy',
+                    )
+
             model.build(ws, 'sig')
             hist = histMap[self.SIGNAME.format(h=h,a=a)]
             results[h][a], errors[h][a] = model.fit2D(ws, hist, 'h{}_a{}_{}'.format(h,a,tag), saveDir=self.plotDir, save=True, doErrors=True)
