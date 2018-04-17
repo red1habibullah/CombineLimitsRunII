@@ -404,7 +404,26 @@ class HaaLimits2D(HaaLimits):
         else:
             integrals = [histMap[self.SIGNAME.format(h=h,a=a)].sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE)) for a in self.AMASSES]
         print 'Integrals', tag, h, integrals
-        model.setIntegral(self.AMASSES,integrals)
+
+        if fit:
+            param = 'integral'
+            name = '{}_{}{}'.format(param,h,tag)
+            hist = ROOT.TH1D(name, name, len(self.AMASSES), 4, 22)
+            vals = integrals
+            for i,a in enumerate(self.AMASSES):
+                b = hist.FindBin(a)
+                hist.SetBinContent(b,vals[i])
+            savename = '{}/{}_Fit'.format(self.plotDir,name)
+            canvas = ROOT.TCanvas(savename,savename,800,800)
+            hist.Draw()
+            fit = hist.Fit('pol2')
+            canvas.Print('{}.png'.format(savename))
+            func = hist.GetFunction('pol2')
+            newintegrals = [func.Eval(x) for x in xs]
+            model.setIntegral(xs,newintegrals)
+        else:
+            model.setIntegral(self.AMASSES,integrals)
+
         model.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag))
         model.buildIntegral(self.workspace,'integral_{}_{}'.format(self.SPLINENAME.format(h=h),tag))
 
