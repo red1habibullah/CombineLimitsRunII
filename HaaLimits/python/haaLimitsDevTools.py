@@ -358,7 +358,7 @@ def create_datacard(args):
     haaLimits.initializeWorkspace()
     haaLimits.addBackgroundModels()
     haaLimits.XRANGE = [0,30] # override for signal splines
-    haaLimits.addSignalModels()
+    haaLimits.addSignalModels(fit=True)
     haaLimits.XRANGE = xRange
     #haaLimits.addData() # this will use "data" as the observed dataset
     haaLimits.addData(asimov=blind,addSignal=addSignal,**signalParams) # this will generate a dataset based on the fitted model

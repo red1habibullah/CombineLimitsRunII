@@ -67,7 +67,7 @@ class HaaLimits(Limits):
     ###########################
     def initializeWorkspace(self):
         self.addX(*self.XRANGE,unit='GeV',label=self.XLABEL)
-        self.addMH(*self.XRANGE,unit='GeV',label='m_{a}')
+        self.addMH(0,30,unit='GeV',label='m_{a}')
 
     def buildModel(self,region='PP',**kwargs):
         tag = kwargs.pop('tag',region)
@@ -75,8 +75,8 @@ class HaaLimits(Limits):
         # jpsi
         jpsi1S = Models.Voigtian('jpsi1S',
             mean  = [3.1,2.9,3.2],
-            sigma = [0.1,0,1],
-            width = [0.1,0.01,1],
+            sigma = [0.1,0,0.5],
+            width = [0.1,0.01,0.5],
         )
         #nameJ1 = 'jpsi1S{}'.format('_'+tag if tag else '')
         nameJ1 = 'jpsi1S'
@@ -84,8 +84,8 @@ class HaaLimits(Limits):
     
         jpsi2S = Models.Gaussian('jpsi2S',
             mean  = [3.7,3.6,3.8],
-            sigma = [0.1,0.01,1],
-            width = [0.1,0.01,1],
+            sigma = [0.1,0.01,0.5],
+            width = [0.1,0.01,0.5],
         )
         #nameJ2 = 'jpsi2S{}'.format('_'+tag if tag else '')
         nameJ2 = 'jpsi2S'
@@ -191,7 +191,7 @@ class HaaLimits(Limits):
         if self.XRANGE[0]<=4:
             bgs[nameJ1] = [0.9,0,1]
             bgs[nameJ2] = [0.9,0,1]
-            bgs[nameC3] = [0.5,0,1]
+            #bgs[nameC3] = [0.5,0,1]
         # upsilon
         if self.XRANGE[0]<=9 and self.XRANGE[1]>=11:
             bgs[nameU1] = [0.9,0,1]
@@ -202,12 +202,13 @@ class HaaLimits(Limits):
         bg.build(self.workspace,name)
 
 
-    def buildSpline(self,h,region='PP',shift=''):
+    def buildSpline(self,h,region='PP',shift='',**kwargs):
         '''
         Get the signal spline for a given Higgs mass.
         Required arguments:
             h = higgs mass
         '''
+        fit = kwargs.get('fit',False)      # will fit the spline parameters rather than a simple spline
         histMap = self.histMap[region][shift]
         tag= '{}{}'.format(region,'_'+shift if shift else '')
         # initial fit
@@ -235,7 +236,7 @@ class HaaLimits(Limits):
             'width': Models.Chebychev('width', order = 1, p0 = [0,-1,1], p1 = [0.1,-1,1], p2 = [0.03,-1,1]),
             'sigma': Models.Chebychev('sigma', order = 1, p0 = [0,-1,1], p1 = [0.1,-1,1], p2 = [0.03,-1,1]),
         }
-    
+
         for param in ['mean', 'width', 'sigma']:
             ws = ROOT.RooWorkspace(param)
             ws.factory('x[{},{}]'.format(*self.XRANGE))
@@ -253,18 +254,59 @@ class HaaLimits(Limits):
                 hist.SetBinContent(b,vals[i])
                 hist.SetBinError(b,errs[i])
             model.fit(ws, hist, name, saveDir=self.plotDir, save=True)
+
+        # Fit using ROOT rather than RooFit for the splines
+        fitFuncs = {
+            'mean' : 'pol1',
+            'width': 'pol1',
+            'sigma': 'pol1',
+        }
+
+        xs = []
+        x = self.XRANGE[0]
+        while x<=self.XRANGE[1]:
+            xs += [x]
+            x += float(self.XRANGE[1]-self.XRANGE[0])/100
+        fittedParams = {}
+        for param in ['mean','width','sigma']:
+            name = '{}_{}{}'.format(param,h,tag)
+            hist = ROOT.TH1D(name, name, len(self.AMASSES), 4, 22)
+            vals = [results[h][a]['{}_h{}_a{}_{}'.format(param,h,a,tag)] for a in self.AMASSES]
+            errs = [errors[h][a]['{}_h{}_a{}_{}'.format(param,h,a,tag)] for a in self.AMASSES]
+            for i,a in enumerate(self.AMASSES):
+                b = hist.FindBin(a)
+                hist.SetBinContent(b,vals[i])
+                hist.SetBinError(b,errs[i])
+            savename = '{}/{}_Fit'.format(self.plotDir,name)
+            canvas = ROOT.TCanvas(savename,savename,800,800)
+            hist.Draw()
+            fit = hist.Fit(fitFuncs[param])
+            canvas.Print('{}.png'.format(savename))
+            func = hist.GetFunction(fitFuncs[param])
+            fittedParams[param] = [func.Eval(x) for x in xs]
+
     
         # create model
         for a in self.AMASSES:
             print h, a, results[h][a]
-        model = Models.VoigtianSpline(self.SPLINENAME.format(h=h),
-            **{
-                'masses' : self.AMASSES,
-                'means'  : [results[h][a]['mean_h{0}_a{1}_{2}'.format(h,a,tag)] for a in self.AMASSES],
-                'widths' : [results[h][a]['width_h{0}_a{1}_{2}'.format(h,a,tag)] for a in self.AMASSES],
-                'sigmas' : [results[h][a]['sigma_h{0}_a{1}_{2}'.format(h,a,tag)] for a in self.AMASSES],
-            }
-        )
+        if fit:
+            model = Models.VoigtianSpline(self.SPLINENAME.format(h=h),
+                **{
+                    'masses' : xs,
+                    'means'  : fittedParams['mean'],
+                    'widths' : fittedParams['width'],
+                    'sigmas' : fittedParams['sigma'],
+                }
+            )
+        else:
+            model = Models.VoigtianSpline(self.SPLINENAME.format(h=h),
+                **{
+                    'masses' : self.AMASSES,
+                    'means'  : [results[h][a]['mean_h{0}_a{1}_{2}'.format(h,a,tag)] for a in self.AMASSES],
+                    'widths' : [results[h][a]['width_h{0}_a{1}_{2}'.format(h,a,tag)] for a in self.AMASSES],
+                    'sigmas' : [results[h][a]['sigma_h{0}_a{1}_{2}'.format(h,a,tag)] for a in self.AMASSES],
+                }
+            )
         if self.binned:
             integrals = [histMap[self.SIGNAME.format(h=h,a=a)].Integral() for a in self.AMASSES]
         else:
@@ -295,8 +337,8 @@ class HaaLimits(Limits):
             model.plotOn(xFrame,ROOT.RooFit.Components('cont3_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
             model.plotOn(xFrame,ROOT.RooFit.Components('cont4_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
             # jpsi
-            model.plotOn(xFrame,ROOT.RooFit.Components('jpsi1S'),ROOT.RooFit.LineColor(ROOT.kGreen))
-            model.plotOn(xFrame,ROOT.RooFit.Components('jpsi2S'),ROOT.RooFit.LineColor(ROOT.kGreen))
+            model.plotOn(xFrame,ROOT.RooFit.Components('jpsi1S'),ROOT.RooFit.LineColor(ROOT.kRed))
+            model.plotOn(xFrame,ROOT.RooFit.Components('jpsi2S'),ROOT.RooFit.LineColor(ROOT.kRed))
         # upsilon
         model.plotOn(xFrame,ROOT.RooFit.Components('upsilon1S'),ROOT.RooFit.LineColor(ROOT.kRed))
         model.plotOn(xFrame,ROOT.RooFit.Components('upsilon2S'),ROOT.RooFit.LineColor(ROOT.kRed))
@@ -359,11 +401,11 @@ class HaaLimits(Limits):
             self.workspace.factory('bg_{}_norm[1,0,2]'.format(region))
             self.fitBackground(region=region)
 
-    def addSignalModels(self):
+    def addSignalModels(self,**kwargs):
         for region in self.REGIONS:
             for shift in ['']+self.SHIFTS:
                 for h in self.HMASSES:
-                    self.buildSpline(h,region=region,shift=shift)
+                    self.buildSpline(h,region=region,shift=shift,**kwargs)
             self.workspace.factory('{}_{}_norm[1,0,9999]'.format(self.SPLINENAME.format(h=h),region))
 
     ######################

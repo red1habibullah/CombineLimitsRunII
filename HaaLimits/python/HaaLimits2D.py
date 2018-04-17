@@ -139,12 +139,14 @@ class HaaLimits2D(HaaLimits):
         bg.build(self.workspace,name)
 
 
-    def buildSpline(self,h,region='PP',shift=''):
+    def buildSpline(self,h,region='PP',shift='',**kwargs):
         '''
         Get the signal spline for a given Higgs mass.
         Required arguments:
             h = higgs mass
         '''
+        fit = kwargs.get('fit',False)
+        dobgsig = kwargs.get('doBackgroundSignal',False)
         histMap = self.histMap[region][shift]
         tag= '{}{}'.format(region,'_'+shift if shift else '')
         # initial fit
@@ -207,38 +209,44 @@ class HaaLimits2D(HaaLimits):
                     )
                     voity.build(ws, 'sigy')
 
-                    conty = Models.Exponential('conty',
-                        x = 'y',
-                        lamb = [-0.25,-1,-0.001], # visible
-                    )
-                    conty.build(ws,'conty')
+                    if dobgsig:
+                        conty = Models.Exponential('conty',
+                            x = 'y',
+                            lamb = [-0.25,-1,-0.001], # visible
+                        )
+                        conty.build(ws,'conty')
 
-                    erfy = Models.Erf('erfy',
-                        x = 'y',
-                        erfScale = [0.1,0.01,10],
-                        erfShift = [2,0,10],
-                    )
-                    erfy.build(ws,'erfy')
+                        erfy = Models.Erf('erfy',
+                            x = 'y',
+                            erfScale = [0.1,0.01,10],
+                            erfShift = [2,0,10],
+                        )
+                        erfy.build(ws,'erfy')
 
-                    erfc = Models.Prod('erfcy',
-                        'erfy',
-                        'conty',
-                    )
-                    erfc.build(ws,'erfcy')
+                        erfc = Models.Prod('erfcy',
+                            'erfy',
+                            'conty',
+                        )
+                        erfc.build(ws,'erfcy')
 
-                    modely = Models.Sum('bgsigy',
-                        **{ 
-                            'erfcy'    : [0.5,0,1],
-                            'sigy'     : [0.5,0,1],
-                            'recursive': True,
-                        }
-                    )
-                    modely.build(ws,'bgsigy')
+                        modely = Models.Sum('bgsigy',
+                            **{ 
+                                'erfcy'    : [0.5,0,1],
+                                'sigy'     : [0.5,0,1],
+                                'recursive': True,
+                            }
+                        )
+                        modely.build(ws,'bgsigy')
 
-                    model = Models.Prod('sig',
-                        'sigx',
-                        'bgsigy',
-                    )
+                        model = Models.Prod('sig',
+                            'sigx',
+                            'bgsigy',
+                        )
+                    else:
+                        model = Models.Prod('sig',
+                            'sigx',
+                            'sigy',
+                        )
 
             model.build(ws, 'sig')
             hist = histMap[self.SIGNAME.format(h=h,a=a)]
@@ -288,28 +296,103 @@ class HaaLimits2D(HaaLimits):
                 hist.SetBinContent(b,vals[i])
                 hist.SetBinError(b,errs[i])
             model.fit(ws, hist, name, saveDir=self.plotDir, save=True)
+
+        # Fit using ROOT rather than RooFit for the splines
+        fitFuncs = {
+            'xmean' : 'pol1',
+            'xwidth': 'pol1',
+            'xsigma': 'pol1',
+            'ymean' : 'pol1',
+            'ywidth': 'pol1',
+            'ysigma': 'pol1',
+        }
+
+        xs = []
+        x = self.XRANGE[0]
+        while x<=self.XRANGE[1]:
+            xs += [x]
+            x += float(self.XRANGE[1]-self.XRANGE[0])/100
+        ys = []
+        y = self.YRANGE[0]
+        while y<=self.YRANGE[1]:
+            ys += [y]
+            y += float(self.YRANGE[1]-self.YRANGE[0])/100
+        fittedParams = {}
+        for param in ['mean','width','sigma']:
+            name = '{}_{}{}'.format('x'+param,h,tag)
+            hist = ROOT.TH1D(name, name, len(self.AMASSES), 4, 22)
+            vals = [results[h][a]['{}_sigx'.format(param)] for a in self.AMASSES]
+            errs = [errors[h][a]['{}_sigx'.format(param)] for a in self.AMASSES]
+            for i,a in enumerate(self.AMASSES):
+                b = hist.FindBin(a)
+                hist.SetBinContent(b,vals[i])
+                hist.SetBinError(b,errs[i])
+            savename = '{}/{}_Fit'.format(self.plotDir,name)
+            canvas = ROOT.TCanvas(savename,savename,800,800)
+            hist.Draw()
+            fit = hist.Fit(fitFuncs['x'+param])
+            canvas.Print('{}.png'.format(savename))
+            func = hist.GetFunction(fitFuncs['x'+param])
+            fittedParams['x'+param] = [func.Eval(x) for x in xs]
+
+            name = '{}_{}{}'.format('y'+param,h,tag)
+            hist = ROOT.TH1D(name, name, len(self.AMASSES), 4, 22)
+            vals = [results[h][a]['{}_sigy'.format(param)] for a in self.AMASSES]
+            errs = [errors[h][a]['{}_sigy'.format(param)] for a in self.AMASSES]
+            for i,a in enumerate(self.AMASSES):
+                b = hist.FindBin(a)
+                hist.SetBinContent(b,vals[i])
+                hist.SetBinError(b,errs[i])
+            savename = '{}/{}_Fit'.format(self.plotDir,name)
+            canvas = ROOT.TCanvas(savename,savename,800,800)
+            hist.Draw()
+            fit = hist.Fit(fitFuncs['y'+param])
+            canvas.Print('{}.png'.format(savename))
+            func = hist.GetFunction(fitFuncs['y'+param])
+            fittedParams['y'+param] = [func.Eval(y) for y in ys]
     
         # create model
         for a in self.AMASSES:
             print h, a, results[h][a]
-        modelx = Models.VoigtianSpline(self.SPLINENAME.format(h=h)+'_x',
-            **{
-                'masses' : self.AMASSES,
-                'means'  : [results[h][a]['mean_sigx'] for a in self.AMASSES],
-                'widths' : [results[h][a]['width_sigx'] for a in self.AMASSES],
-                'sigmas' : [results[h][a]['sigma_sigx'] for a in self.AMASSES],
-            }
-        )
+        if fit:
+            modelx = Models.VoigtianSpline(self.SPLINENAME.format(h=h)+'_x',
+                **{
+                    'masses' : xs,
+                    'means'  : fittedParams['xmean'],
+                    'widths' : fittedParams['xwidth'],
+                    'sigmas' : fittedParams['xsigma'],
+                }
+            )
+        else:
+            modelx = Models.VoigtianSpline(self.SPLINENAME.format(h=h)+'_x',
+                **{
+                    'masses' : self.AMASSES,
+                    'means'  : [results[h][a]['mean_sigx'] for a in self.AMASSES],
+                    'widths' : [results[h][a]['width_sigx'] for a in self.AMASSES],
+                    'sigmas' : [results[h][a]['sigma_sigx'] for a in self.AMASSES],
+                }
+            )
         modelx.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_x'))
-        modely = Models.VoigtianSpline(self.SPLINENAME.format(h=h)+'_y',
-            **{
-                'x'      : 'y',
-                'masses' : self.AMASSES,
-                'means'  : [results[h][a]['mean_sigy'] for a in self.AMASSES],
-                'widths' : [results[h][a]['width_sigy'] for a in self.AMASSES],
-                'sigmas' : [results[h][a]['sigma_sigy'] for a in self.AMASSES],
-            }
-        )
+        if fit:
+            modely = Models.VoigtianSpline(self.SPLINENAME.format(h=h)+'_y',
+                **{
+                    'x'      : 'y',
+                    'masses' : ys,
+                    'means'  : fittedParams['ymean'],
+                    'widths' : fittedParams['ywidth'],
+                    'sigmas' : fittedParams['ysigma'],
+                }
+            )
+        else:
+            modely = Models.VoigtianSpline(self.SPLINENAME.format(h=h)+'_y',
+                **{
+                    'x'      : 'y',
+                    'masses' : self.AMASSES,
+                    'means'  : [results[h][a]['mean_sigy'] for a in self.AMASSES],
+                    'widths' : [results[h][a]['width_sigy'] for a in self.AMASSES],
+                    'sigmas' : [results[h][a]['sigma_sigy'] for a in self.AMASSES],
+                }
+            )
         modely.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_y'))
         model = Models.ProdSpline(self.SPLINENAME.format(h=h),
             '{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_x'),
@@ -346,8 +429,8 @@ class HaaLimits2D(HaaLimits):
             model.plotOn(xFrame,ROOT.RooFit.Components('cont3_{}_x'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
             model.plotOn(xFrame,ROOT.RooFit.Components('cont4_{}_x'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
             # jpsi
-            model.plotOn(xFrame,ROOT.RooFit.Components('jpsi1S'),ROOT.RooFit.LineColor(ROOT.kGreen))
-            model.plotOn(xFrame,ROOT.RooFit.Components('jpsi2S'),ROOT.RooFit.LineColor(ROOT.kGreen))
+            model.plotOn(xFrame,ROOT.RooFit.Components('jpsi1S'),ROOT.RooFit.LineColor(ROOT.kRed))
+            model.plotOn(xFrame,ROOT.RooFit.Components('jpsi2S'),ROOT.RooFit.LineColor(ROOT.kRed))
         # upsilon
         model.plotOn(xFrame,ROOT.RooFit.Components('upsilon1S'),ROOT.RooFit.LineColor(ROOT.kRed))
         model.plotOn(xFrame,ROOT.RooFit.Components('upsilon2S'),ROOT.RooFit.LineColor(ROOT.kRed))
@@ -422,11 +505,11 @@ class HaaLimits2D(HaaLimits):
             self.workspace.factory('bg_{}_norm[1,0,2]'.format(region))
             self.fitBackground(region=region)
 
-    def addSignalModels(self):
+    def addSignalModels(self,**kwargs):
         for region in self.REGIONS:
             for shift in ['']+self.SHIFTS:
                 for h in self.HMASSES:
-                    self.buildSpline(h,region=region,shift=shift)
+                    self.buildSpline(h,region=region,shift=shift,**kwargs)
             self.workspace.factory('{}_{}_norm[1,0,9999]'.format(self.SPLINENAME.format(h=h),region))
 
     ######################
