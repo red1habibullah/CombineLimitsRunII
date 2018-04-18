@@ -73,7 +73,7 @@ class HaaLimits(Limits):
         tag = kwargs.pop('tag',region)
     
         # jpsi
-        jpsi1S = Models.Voigtian('jpsi1S',
+        jpsi1S = Models.Gaussian('jpsi1S',
             mean  = [3.1,2.9,3.2],
             sigma = [0.1,0,0.5],
             width = [0.1,0.01,0.5],
@@ -191,7 +191,7 @@ class HaaLimits(Limits):
         if self.XRANGE[0]<=4:
             bgs[nameJ1] = [0.9,0,1]
             bgs[nameJ2] = [0.9,0,1]
-            #bgs[nameC3] = [0.5,0,1]
+            bgs[nameC3] = [0.5,0,1]
         # upsilon
         if self.XRANGE[0]<=9 and self.XRANGE[1]>=11:
             bgs[nameU1] = [0.9,0,1]
