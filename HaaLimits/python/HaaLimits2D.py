@@ -302,9 +302,9 @@ class HaaLimits2D(HaaLimits):
             'xmean' : 'pol1',
             'xwidth': 'pol1',
             'xsigma': 'pol1',
-            'ymean' : 'pol1',
-            'ywidth': 'pol1',
-            'ysigma': 'pol1',
+            'ymean' : 'pol4',
+            'ywidth': 'pol4',
+            'ysigma': 'pol4',
         }
 
         xs = []
@@ -407,6 +407,7 @@ class HaaLimits2D(HaaLimits):
 
         if fit:
             param = 'integral'
+            funcname = 'pol2'
             name = '{}_{}{}'.format(param,h,tag)
             hist = ROOT.TH1D(name, name, len(self.AMASSES), 4, 22)
             vals = integrals
@@ -416,9 +417,9 @@ class HaaLimits2D(HaaLimits):
             savename = '{}/{}_Fit'.format(self.plotDir,name)
             canvas = ROOT.TCanvas(savename,savename,800,800)
             hist.Draw()
-            fit = hist.Fit('pol2')
+            fit = hist.Fit(funcname)
             canvas.Print('{}.png'.format(savename))
-            func = hist.GetFunction('pol2')
+            func = hist.GetFunction(funcname)
             newintegrals = [func.Eval(x) for x in xs]
             model.setIntegral(xs,newintegrals)
         else:

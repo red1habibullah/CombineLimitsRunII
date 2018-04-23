@@ -315,6 +315,7 @@ class HaaLimits(Limits):
 
         if fit:
             param = 'integral'
+            funcname = 'pol2'
             name = '{}_{}{}'.format(param,h,tag)
             hist = ROOT.TH1D(name, name, len(self.AMASSES), 4, 22)
             vals = integrals
@@ -324,9 +325,9 @@ class HaaLimits(Limits):
             savename = '{}/{}_Fit'.format(self.plotDir,name)
             canvas = ROOT.TCanvas(savename,savename,800,800)
             hist.Draw()
-            fit = hist.Fit('pol2')
+            fit = hist.Fit(funcname)
             canvas.Print('{}.png'.format(savename))
-            func = hist.GetFunction('pol2')
+            func = hist.GetFunction(funcname)
             newintegrals = [func.Eval(x) for x in xs]
             model.setIntegral(xs,newintegrals)
         else:
