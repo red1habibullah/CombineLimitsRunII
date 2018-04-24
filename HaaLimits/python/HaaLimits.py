@@ -27,11 +27,13 @@ class HaaLimits(Limits):
     SIGNAME = 'HToAAH{h}A{a}'
     SPLINENAME = 'sig{h}'
 
-    XRANGE = [4,25]
+    #XRANGE = [4.01, 8.99]
+    XRANGE = [6.5, 14]
+    #XRANGE = [11,25]
     XLABEL = 'm_{#mu#mu}'
 
     REGIONS = ['FP','PP']
-    SHIFTS = []
+    SHIFTS = ['PileupUp', 'PileupDown', 'IDUp', 'IDDown', 'IsoUp', 'IsoDown']
 
 
     def __init__(self,histMap,tag=''):
@@ -69,16 +71,14 @@ class HaaLimits(Limits):
         self.addX(*self.XRANGE,unit='GeV',label=self.XLABEL)
         self.addMH(*self.XRANGE,unit='GeV',label='m_{a}')
 
-    def buildModel(self,region='PP',**kwargs):
+    def buildModel(self, region='PP', setUpsilonLambda=[], **kwargs):
         tag = kwargs.pop('tag',region)
-    
         # jpsi
         jpsi1S = Models.Voigtian('jpsi1S',
             mean  = [3.1,2.9,3.2],
             sigma = [0.1,0,1],
             width = [0.1,0.01,1],
         )
-        #nameJ1 = 'jpsi1S{}'.format('_'+tag if tag else '')
         nameJ1 = 'jpsi1S'
         jpsi1S.build(self.workspace,nameJ1)
     
@@ -87,57 +87,53 @@ class HaaLimits(Limits):
             sigma = [0.1,0.01,1],
             width = [0.1,0.01,1],
         )
-        #nameJ2 = 'jpsi2S{}'.format('_'+tag if tag else '')
         nameJ2 = 'jpsi2S'
         jpsi2S.build(self.workspace,nameJ2)
     
-        #jpsi = Models.Sum('jpsi',
-        #    **{
-        #        nameJ1 : [0.5,0,1] if tag=='PP' else [0.5,0,1],
-        #        nameJ2 : [0.6,0,1] if tag=='PP' else [0.2,0,1],
-        #        'recursive' : True,
-        #    }
-        #)
-        ##nameJ = 'jpsi{}'.format('_'+tag if tag else '')
-        #nameJ= 'jpsi'
-        #jpsi.build(self.workspace,nameJ)
-    
         # upsilon
+#        if not fixUpsilonValues:
         upsilon1S = Models.Gaussian('upsilon1S',
             mean  = [9.5,9.3,9.7],
             sigma = [0.1,0.01,0.3],
         )
-        #nameU1 = 'upsilon1S{}'.format('_'+tag if tag else '')
         nameU1 = 'upsilon1S'
         upsilon1S.build(self.workspace,nameU1)
     
         upsilon2S = Models.Gaussian('upsilon2S',
             mean  = [10.0,9.8,10.2],
-            sigma = [0.1,0.01,0.3],
+            sigma = [0.1,0.01,0.8],
         )
-        #nameU2 = 'upsilon2S{}'.format('_'+tag if tag else '')
         nameU2 = 'upsilon2S'
         upsilon2S.build(self.workspace,nameU2)
     
         upsilon3S = Models.Gaussian('upsilon3S',
             mean  = [10.3,10.2,10.5],
-            sigma = [0.1,0.02,0.3],
+            sigma = [0.1,0.04,0.3],
         )
-        #nameU3 = 'upsilon3S{}'.format('_'+tag if tag else '')
         nameU3 = 'upsilon3S'
         upsilon3S.build(self.workspace,nameU3)
-    
-        #upsilon = Models.Sum('upsilon',
-        #    **{
-        #        nameU1 : [0.43,0,1],
-        #        nameU2 : [0.20,0,1],
-        #        nameU3 : [1,0,1],
-        #        'recursive' : True,
-        #    }
-        #)
-        ##nameU = 'upsilon{}'.format('_'+tag if tag else '')
-        #nameU= 'upsilon'
-        #upsilon.build(self.workspace,nameU)
+# 	else:
+#            upsilon1S = Models.Gaussian('upsilon1S',
+#                mean  = [changedValues['sigma_upsilon1S'], changedValues['sigma_upsilon1S'], changedValues['sigma_upsilon1S'] ],
+#                sigma = [changedValues['mean_upsilon1S'], changedValues['mean_upsilon1S'], changedValues['mean_upsilon1S'] ],
+#            )
+#            nameU1 = 'upsilon1S'
+#            upsilon1S.build(self.workspace,nameU1)
+#        
+#            upsilon2S = Models.Gaussian('upsilon2S',
+#                mean  = [changedValues['sigma_upsilon2S'], changedValues['sigma_upsilon2S'], changedValues['sigma_upsilon2S'] ],
+#                sigma = [changedValues['mean_upsilon2S'], changedValues['mean_upsilon2S'], changedValues['mean_upsilon2S'] ],
+#            )
+#            nameU2 = 'upsilon2S'
+#            upsilon2S.build(self.workspace,nameU2)
+#        
+#            upsilon3S = Models.Gaussian('upsilon3S',
+#                mean  = [changedValues['sigma_upsilon3S'], changedValues['sigma_upsilon3S'], changedValues['sigma_upsilon3S'] ],
+#                sigma = [changedValues['mean_upsilon3S'], changedValues['mean_upsilon3S'], changedValues['mean_upsilon3S'] ],
+#            )
+#            nameU3 = 'upsilon3S'
+#            upsilon3S.build(self.workspace,nameU3)
+
     
         # continuum background
         cont = Models.Chebychev('cont',
@@ -149,9 +145,13 @@ class HaaLimits(Limits):
         nameC = 'cont{}'.format('_'+tag if tag else '')
         cont.build(self.workspace,nameC)
     
-        cont1 = Models.Exponential('cont1',
-            lamb = [-0.20,-1,0],
-        )
+        if len(setUpsilonLambda) > 0 and self.XRANGE[0]<=9 and self.XRANGE[1]>=11:
+	  averageLambda = sum(setUpsilonLambda) / len(setUpsilonLambda)
+	  print "Use Average of", len(setUpsilonLambda), "regions around the Upsilon region as the continum in Upsilon region, which is: lambd=", averageLambda
+          cont1 = Models.Exponential('cont1', lamb = [averageLambda,averageLambda,averageLambda],  )
+        else:
+	  print "Normal Finding upsilon region lambda"
+          cont1 = Models.Exponential('cont1', lamb = [-0.20,-1,0],  )
         nameC1 = 'cont1{}'.format('_'+tag if tag else '')
         cont1.build(self.workspace,nameC1)
     
@@ -172,16 +172,6 @@ class HaaLimits(Limits):
         )
         nameC4 = 'cont4{}'.format('_'+tag if tag else '')
         cont4.build(self.workspace,nameC4)
-    
-        #cont = Models.Sum('cont',
-        #    **{
-        #        nameC1 : [0.95,0,1],
-        #        nameC2 : [0.05,0,1],
-        #        'recursive' : True,
-        #    }
-        #)
-        #nameC = 'cont{}'.format('_'+tag if tag else '')
-        #cont.build(self.workspace,nameC)
     
         # sum
         bgs = {'recursive': True}
@@ -353,11 +343,39 @@ class HaaLimits(Limits):
                     data_obs = hist.Clone(name)
             self.wsimport(data_obs)
 
-    def addBackgroundModels(self):
+    def addBackgroundModels(self, fixAfterFP=False, setUpsilonLambda=[]):
         for region in self.REGIONS:
-            self.buildModel(region=region)
+	    print "HELLOPOPPIT"
+            if region == 'PP' and fixAfterFP:
+	        self.workspace.arg("mean_upsilon1S").setConstant(True)
+	        self.workspace.arg("mean_upsilon2S").setConstant(True)
+	        self.workspace.arg("mean_upsilon3S").setConstant(True)
+	        self.workspace.arg("sigma_upsilon1S").setConstant(True)
+	        self.workspace.arg("sigma_upsilon2S").setConstant(True)
+	        self.workspace.arg("sigma_upsilon3S").setConstant(True)
+                if self.XRANGE[0]<=9 and self.XRANGE[1]>=11:
+  	            self.workspace.arg("upsilon1S_frac").setConstant(True) #bg_FP_recursive_fraction_upsilon1S").setConstant(True)
+  	            self.workspace.arg("upsilon2S_frac").setConstant(True) #bg_FP_recursive_fraction_upsilon2S").setConstant(True)
+	            self.workspace.arg("upsilon3S_frac").setConstant(True) #bg_FP_recursive_fraction_upsilon3S").setConstant(True)
+#                self.fixUpMeanSigma(changedValues=valuesToChange)
+#                self.buildModel(region=region, fixUpsilonValues=True, changedValues=valuesToChange)
+            self.buildModel(region=region, setUpsilonLambda=setUpsilonLambda)
             self.workspace.factory('bg_{}_norm[1,0,2]'.format(region))
             self.fitBackground(region=region)
+    
+#    def fixUpMeanSigma(self, changedValues):
+#        changedValues['mean_upsilon1S'] = self.workspace.argSet("mean_upsilon1S").getRealValue("mean_upsilon1S")
+#        changedValues['mean_upsilon2S'] = self.workspace.argSet("mean_upsilon2S").getRealValue("mean_upsilon2S")
+#        changedValues['mean_upsilon3S'] = self.workspace.argSet("mean_upsilon3S").getRealValue("mean_upsilon3S")
+#        changedValues['sigma_upsilon1S'] = self.workspace.argSet("sigma_upsilon1S").getRealValue("sigma_upsilon1S")
+#        changedValues['sigma_upsilon2S'] = self.workspace.argSet("sigma_upsilon2S").getRealValue("sigma_upsilon2S")
+#        changedValues['sigma_upsilon3S'] = self.workspace.argSet("sigma_upsilon3S").getRealValue("sigma_upsilon3S")
+#        for k,v, in changedValues.items():
+#   	  print k, v
+        #print type(sigma3S.ls()), sigma3S.ls(), sigma3S, self.workspace.argSet("mean_upsilon1S").getRealValue("mean_upsilon.getRealValue("mean_upsilon1S").getRealValue("mean_upsilon
+        #print "VALUES TO BE SET\n1S", mean1S.getRealValue("mean1S"), sigma1S.getRealValue("sigma1S")
+        #print "2S", mean2S.getRealValue("mean2S"), sigma2S.getRealValue("sigma2S")
+        #print "3S", mean3S.getRealValue("mean3S"), sigma3S.getRealValue("sigma3S")
 
     def addSignalModels(self):
         for region in self.REGIONS:
@@ -406,7 +424,15 @@ class HaaLimits(Limits):
         self._addLumiSystematic()
         self._addMuonSystematic()
         self._addTauSystematic()
+        self._addShapeSystematic()
 
+    def _addShapeSystematic(self):
+        for shift in self.SHIFTS:
+            shapeproc = self.sigProcesses
+            shapesyst = { (shapeproc, tuple( shift)) : 1, }
+            #self.addSystematic(shift, 'shape', systematics=shapesyst)
+ 	    print "shift=", shift
+	    
     def _addLumiSystematic(self):
         # lumi: 2.5% 2016
         lumiproc = self.sigProcesses
@@ -439,10 +465,25 @@ class HaaLimits(Limits):
     ###################################
     ### Save workspace and datacard ###
     ###################################
-    def save(self,name='mmmt'):
+    def save(self,name='mmmt', subdirectory=''):
         processes = {}
         for h in self.HMASSES:
             processes[self.SIGNAME.format(h=h,a='X')] = [self.SPLINENAME.format(h=h)] + ['bg']
-        self.printCard('datacards_shape/MuMuTauTau/{}'.format(name),processes=processes,blind=False,saveWorkspace=True)
+        if subdirectory == '':
+          self.printCard('datacards_shape/MuMuTauTau/{}'.format(name),processes=processes,blind=False,saveWorkspace=True)
+        else:
+          self.printCard('datacards_shape/MuMuTauTau/' + subdirectory + '{}'.format(name),processes=processes,blind=False,saveWorkspace=True)
+          
+def GetWorkspaceValue(filename, variable):
+    f = ROOT.TFile.Open(filename)
+    workspace = f.Get("w")
+    lam = workspace.argSet(variable)
+    return lam.getRealValue(variable)
+
+	
+
+
+
+
 
 
