@@ -26,6 +26,8 @@ class HaaLimits(Limits):
 
     SIGNAME = 'HToAAH{h}A{a}'
     SPLINENAME = 'sig{h}'
+    SPLINELABEL = 'm_{a}'
+    SPLINERANGE = [0,30]
 
     XRANGE = [4,25]
     XLABEL = 'm_{#mu#mu}'
@@ -67,7 +69,7 @@ class HaaLimits(Limits):
     ###########################
     def initializeWorkspace(self):
         self.addX(*self.XRANGE,unit='GeV',label=self.XLABEL)
-        self.addMH(0,30,unit='GeV',label='m_{a}')
+        self.addMH(*self.SPLINERANGE,unit='GeV',label=self.SPLINELABEL)
 
     def buildModel(self,region='PP',**kwargs):
         tag = kwargs.pop('tag',region)
@@ -241,8 +243,8 @@ class HaaLimits(Limits):
             ws = ROOT.RooWorkspace(param)
             ws.factory('x[{},{}]'.format(*self.XRANGE))
             ws.var('x').setUnit('GeV')
-            ws.var('x').setPlotLabel('m_{a}')
-            ws.var('x').SetTitle('m_{a}')
+            ws.var('x').setPlotLabel(self.SPLINELABEL)
+            ws.var('x').SetTitle(self.SPLINELABEL)
             model = models[param]
             model.build(ws, param)
             name = '{}_{}{}'.format(param,h,tag)
@@ -280,7 +282,8 @@ class HaaLimits(Limits):
             savename = '{}/{}_Fit'.format(self.plotDir,name)
             canvas = ROOT.TCanvas(savename,savename,800,800)
             hist.Draw()
-            hist.GetXaxis().SetTitle('m_{a}')
+            hist.SetTitle('')
+            hist.GetXaxis().SetTitle(self.SPLINELABEL)
             fit = hist.Fit(fitFuncs[param])
             canvas.Print('{}.png'.format(savename))
             func = hist.GetFunction(fitFuncs[param])
@@ -326,7 +329,8 @@ class HaaLimits(Limits):
             savename = '{}/{}_Fit'.format(self.plotDir,name)
             canvas = ROOT.TCanvas(savename,savename,800,800)
             hist.Draw()
-            hist.GetXaxis().SetTitle('m_{a}')
+            hist.SetTitle('')
+            hist.GetXaxis().SetTitle(self.SPLINELABEL)
             fit = hist.Fit(funcname)
             canvas.Print('{}.png'.format(savename))
             func = hist.GetFunction(funcname)
