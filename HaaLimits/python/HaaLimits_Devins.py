@@ -29,13 +29,11 @@ class HaaLimits(Limits):
     SPLINELABEL = 'm_{a}'
     SPLINERANGE = [0,30]
 
-    #XRANGE = [4.01, 8.99]
-    XRANGE = [6.5, 14]
-    #XRANGE = [11,25]
+    XRANGE = [4,25]
     XLABEL = 'm_{#mu#mu}'
 
     REGIONS = ['FP','PP']
-    SHIFTS = ['PileupUp', 'PileupDown', 'IDUp', 'IDDown', 'IsoUp', 'IsoDown']
+    SHIFTS = []
 
 
     def __init__(self,histMap,tag=''):
@@ -73,14 +71,16 @@ class HaaLimits(Limits):
         self.addX(*self.XRANGE,unit='GeV',label=self.XLABEL)
         self.addMH(*self.SPLINERANGE,unit='GeV',label=self.SPLINELABEL)
 
-    def buildModel(self, region='PP', setUpsilonLambda=[], **kwargs):
+    def buildModel(self,region='PP',**kwargs):
         tag = kwargs.pop('tag',region)
+    
         # jpsi
         jpsi1S = Models.Gaussian('jpsi1S',
             mean  = [3.1,2.9,3.2],
             sigma = [0.1,0,0.5],
             width = [0.1,0.01,0.5],
         )
+        #nameJ1 = 'jpsi1S{}'.format('_'+tag if tag else '')
         nameJ1 = 'jpsi1S'
         jpsi1S.build(self.workspace,nameJ1)
     
@@ -89,32 +89,58 @@ class HaaLimits(Limits):
             sigma = [0.1,0.01,0.5],
             width = [0.1,0.01,0.5],
         )
+        #nameJ2 = 'jpsi2S{}'.format('_'+tag if tag else '')
         nameJ2 = 'jpsi2S'
         jpsi2S.build(self.workspace,nameJ2)
+    
+        #jpsi = Models.Sum('jpsi',
+        #    **{
+        #        nameJ1 : [0.5,0,1] if tag=='PP' else [0.5,0,1],
+        #        nameJ2 : [0.6,0,1] if tag=='PP' else [0.2,0,1],
+        #        'recursive' : True,
+        #    }
+        #)
+        ##nameJ = 'jpsi{}'.format('_'+tag if tag else '')
+        #nameJ= 'jpsi'
+        #jpsi.build(self.workspace,nameJ)
     
         # upsilon
         upsilon1S = Models.Gaussian('upsilon1S',
             mean  = [9.5,9.3,9.7],
             sigma = [0.1,0.01,0.3],
         )
+        #nameU1 = 'upsilon1S{}'.format('_'+tag if tag else '')
         nameU1 = 'upsilon1S'
         upsilon1S.build(self.workspace,nameU1)
     
         upsilon2S = Models.Gaussian('upsilon2S',
             mean  = [10.0,9.8,10.2],
-            sigma = [0.1,0.01,0.8],
+            sigma = [0.1,0.01,0.3],
         )
+        #nameU2 = 'upsilon2S{}'.format('_'+tag if tag else '')
         nameU2 = 'upsilon2S'
         upsilon2S.build(self.workspace,nameU2)
     
         upsilon3S = Models.Gaussian('upsilon3S',
             mean  = [10.3,10.2,10.5],
-            sigma = [0.1,0.04,0.3],
+            sigma = [0.1,0.02,0.3],
         )
+        #nameU3 = 'upsilon3S{}'.format('_'+tag if tag else '')
         nameU3 = 'upsilon3S'
         upsilon3S.build(self.workspace,nameU3)
-
-
+    
+        #upsilon = Models.Sum('upsilon',
+        #    **{
+        #        nameU1 : [0.43,0,1],
+        #        nameU2 : [0.20,0,1],
+        #        nameU3 : [1,0,1],
+        #        'recursive' : True,
+        #    }
+        #)
+        ##nameU = 'upsilon{}'.format('_'+tag if tag else '')
+        #nameU= 'upsilon'
+        #upsilon.build(self.workspace,nameU)
+    
         # continuum background
         cont = Models.Chebychev('cont',
             order = 2,
@@ -125,13 +151,9 @@ class HaaLimits(Limits):
         nameC = 'cont{}'.format('_'+tag if tag else '')
         cont.build(self.workspace,nameC)
     
-        if len(setUpsilonLambda) > 0 and self.XRANGE[0]<=9 and self.XRANGE[1]>=11:
-	  averageLambda = sum(setUpsilonLambda) / len(setUpsilonLambda)
-	  print "Use Average of", len(setUpsilonLambda), "regions around the Upsilon region as the continum in Upsilon region, which is: lambd=", averageLambda
-          cont1 = Models.Exponential('cont1', lamb = [averageLambda,averageLambda,averageLambda],  )
-        else:
-	  print "Normal Finding upsilon region lambda"
-          cont1 = Models.Exponential('cont1', lamb = [-0.20,-1,0],  )
+        cont1 = Models.Exponential('cont1',
+            lamb = [-0.20,-1,0],
+        )
         nameC1 = 'cont1{}'.format('_'+tag if tag else '')
         cont1.build(self.workspace,nameC1)
     
@@ -152,6 +174,16 @@ class HaaLimits(Limits):
         )
         nameC4 = 'cont4{}'.format('_'+tag if tag else '')
         cont4.build(self.workspace,nameC4)
+    
+        #cont = Models.Sum('cont',
+        #    **{
+        #        nameC1 : [0.95,0,1],
+        #        nameC2 : [0.05,0,1],
+        #        'recursive' : True,
+        #    }
+        #)
+        #nameC = 'cont{}'.format('_'+tag if tag else '')
+        #cont.build(self.workspace,nameC)
     
         # sum
         bgs = {'recursive': True}
@@ -389,21 +421,9 @@ class HaaLimits(Limits):
                     data_obs = hist.Clone(name)
             self.wsimport(data_obs)
 
-    def addBackgroundModels(self, fixAfterFP=False, setUpsilonLambda=[]):
+    def addBackgroundModels(self):
         for region in self.REGIONS:
-            if region == 'PP' and fixAfterFP:
-		print "Setting mean sigma and fraction of Upsilon 1S, 2S, 3S constant after fitting to FP"
-	        self.workspace.arg("mean_upsilon1S").setConstant(True)
-	        self.workspace.arg("mean_upsilon2S").setConstant(True)
-	        self.workspace.arg("mean_upsilon3S").setConstant(True)
-	        self.workspace.arg("sigma_upsilon1S").setConstant(True)
-	        self.workspace.arg("sigma_upsilon2S").setConstant(True)
-	        self.workspace.arg("sigma_upsilon3S").setConstant(True)
-                if self.XRANGE[0]<=9 and self.XRANGE[1]>=11:
-  	            self.workspace.arg("upsilon1S_frac").setConstant(True) #bg_FP_recursive_fraction_upsilon1S").setConstant(True)
-  	            self.workspace.arg("upsilon2S_frac").setConstant(True) #bg_FP_recursive_fraction_upsilon2S").setConstant(True)
-	            self.workspace.arg("upsilon3S_frac").setConstant(True) #bg_FP_recursive_fraction_upsilon3S").setConstant(True)
-            self.buildModel(region=region, setUpsilonLambda=setUpsilonLambda)
+            self.buildModel(region=region)
             self.workspace.factory('bg_{}_norm[1,0,2]'.format(region))
             self.fitBackground(region=region)
 
@@ -454,15 +474,7 @@ class HaaLimits(Limits):
         self._addLumiSystematic()
         self._addMuonSystematic()
         self._addTauSystematic()
-        self._addShapeSystematic()
 
-    def _addShapeSystematic(self):
-        for shift in self.SHIFTS:
-            shapeproc = self.sigProcesses
-            shapesyst = { (shapeproc, tuple( shift)) : 1, }
-            self.addSystematic(shift, 'shape', systematics=shapesyst)
- 	    print "shift=", shift
-	    
     def _addLumiSystematic(self):
         # lumi: 2.5% 2016
         lumiproc = self.sigProcesses
@@ -495,25 +507,10 @@ class HaaLimits(Limits):
     ###################################
     ### Save workspace and datacard ###
     ###################################
-    def save(self,name='mmmt', subdirectory=''):
+    def save(self,name='mmmt'):
         processes = {}
         for h in self.HMASSES:
             processes[self.SIGNAME.format(h=h,a='X')] = [self.SPLINENAME.format(h=h)] + ['bg']
-        if subdirectory == '':
-          self.printCard('datacards_shape/MuMuTauTau/{}'.format(name),processes=processes,blind=False,saveWorkspace=True)
-        else:
-          self.printCard('datacards_shape/MuMuTauTau/' + subdirectory + '{}'.format(name),processes=processes,blind=False,saveWorkspace=True)
-          
-def GetWorkspaceValue(filename, variable):
-    f = ROOT.TFile.Open(filename)
-    workspace = f.Get("w")
-    lam = workspace.argSet(variable)
-    return lam.getRealValue(variable)
-
-	
-
-
-
-
+        self.printCard('datacards_shape/MuMuTauTau/{}'.format(name),processes=processes,blind=False,saveWorkspace=True)
 
 

@@ -26,8 +26,6 @@ class HaaLimits(Limits):
 
     SIGNAME = 'HToAAH{h}A{a}'
     SPLINENAME = 'sig{h}'
-    SPLINELABEL = 'm_{a}'
-    SPLINERANGE = [0,30]
 
     #XRANGE = [4.01, 8.99]
     XRANGE = [6.5, 14]
@@ -71,28 +69,29 @@ class HaaLimits(Limits):
     ###########################
     def initializeWorkspace(self):
         self.addX(*self.XRANGE,unit='GeV',label=self.XLABEL)
-        self.addMH(*self.SPLINERANGE,unit='GeV',label=self.SPLINELABEL)
+        self.addMH(*self.XRANGE,unit='GeV',label='m_{a}')
 
     def buildModel(self, region='PP', setUpsilonLambda=[], **kwargs):
         tag = kwargs.pop('tag',region)
         # jpsi
-        jpsi1S = Models.Gaussian('jpsi1S',
+        jpsi1S = Models.Voigtian('jpsi1S',
             mean  = [3.1,2.9,3.2],
-            sigma = [0.1,0,0.5],
-            width = [0.1,0.01,0.5],
+            sigma = [0.1,0,1],
+            width = [0.1,0.01,1],
         )
         nameJ1 = 'jpsi1S'
         jpsi1S.build(self.workspace,nameJ1)
     
         jpsi2S = Models.Gaussian('jpsi2S',
             mean  = [3.7,3.6,3.8],
-            sigma = [0.1,0.01,0.5],
-            width = [0.1,0.01,0.5],
+            sigma = [0.1,0.01,1],
+            width = [0.1,0.01,1],
         )
         nameJ2 = 'jpsi2S'
         jpsi2S.build(self.workspace,nameJ2)
     
         # upsilon
+#        if not fixUpsilonValues:
         upsilon1S = Models.Gaussian('upsilon1S',
             mean  = [9.5,9.3,9.7],
             sigma = [0.1,0.01,0.3],
@@ -113,8 +112,29 @@ class HaaLimits(Limits):
         )
         nameU3 = 'upsilon3S'
         upsilon3S.build(self.workspace,nameU3)
+# 	else:
+#            upsilon1S = Models.Gaussian('upsilon1S',
+#                mean  = [changedValues['sigma_upsilon1S'], changedValues['sigma_upsilon1S'], changedValues['sigma_upsilon1S'] ],
+#                sigma = [changedValues['mean_upsilon1S'], changedValues['mean_upsilon1S'], changedValues['mean_upsilon1S'] ],
+#            )
+#            nameU1 = 'upsilon1S'
+#            upsilon1S.build(self.workspace,nameU1)
+#        
+#            upsilon2S = Models.Gaussian('upsilon2S',
+#                mean  = [changedValues['sigma_upsilon2S'], changedValues['sigma_upsilon2S'], changedValues['sigma_upsilon2S'] ],
+#                sigma = [changedValues['mean_upsilon2S'], changedValues['mean_upsilon2S'], changedValues['mean_upsilon2S'] ],
+#            )
+#            nameU2 = 'upsilon2S'
+#            upsilon2S.build(self.workspace,nameU2)
+#        
+#            upsilon3S = Models.Gaussian('upsilon3S',
+#                mean  = [changedValues['sigma_upsilon3S'], changedValues['sigma_upsilon3S'], changedValues['sigma_upsilon3S'] ],
+#                sigma = [changedValues['mean_upsilon3S'], changedValues['mean_upsilon3S'], changedValues['mean_upsilon3S'] ],
+#            )
+#            nameU3 = 'upsilon3S'
+#            upsilon3S.build(self.workspace,nameU3)
 
-
+    
         # continuum background
         cont = Models.Chebychev('cont',
             order = 2,
@@ -172,13 +192,12 @@ class HaaLimits(Limits):
         bg.build(self.workspace,name)
 
 
-    def buildSpline(self,h,region='PP',shift='',**kwargs):
+    def buildSpline(self,h,region='PP',shift=''):
         '''
         Get the signal spline for a given Higgs mass.
         Required arguments:
             h = higgs mass
         '''
-        fit = kwargs.get('fit',False)      # will fit the spline parameters rather than a simple spline
         histMap = self.histMap[region][shift]
         tag= '{}{}'.format(region,'_'+shift if shift else '')
         # initial fit
@@ -206,13 +225,13 @@ class HaaLimits(Limits):
             'width': Models.Chebychev('width', order = 1, p0 = [0,-1,1], p1 = [0.1,-1,1], p2 = [0.03,-1,1]),
             'sigma': Models.Chebychev('sigma', order = 1, p0 = [0,-1,1], p1 = [0.1,-1,1], p2 = [0.03,-1,1]),
         }
-
+    
         for param in ['mean', 'width', 'sigma']:
             ws = ROOT.RooWorkspace(param)
             ws.factory('x[{},{}]'.format(*self.XRANGE))
             ws.var('x').setUnit('GeV')
-            ws.var('x').setPlotLabel(self.SPLINELABEL)
-            ws.var('x').SetTitle(self.SPLINELABEL)
+            ws.var('x').setPlotLabel(self.XLABEL)
+            ws.var('x').SetTitle(self.XLABEL)
             model = models[param]
             model.build(ws, param)
             name = '{}_{}{}'.format(param,h,tag)
@@ -224,89 +243,24 @@ class HaaLimits(Limits):
                 hist.SetBinContent(b,vals[i])
                 hist.SetBinError(b,errs[i])
             model.fit(ws, hist, name, saveDir=self.plotDir, save=True)
-
-        # Fit using ROOT rather than RooFit for the splines
-        fitFuncs = {
-            'mean' : 'pol1',
-            'width': 'pol1',
-            'sigma': 'pol1',
-        }
-
-        xs = []
-        x = self.XRANGE[0]
-        while x<=self.XRANGE[1]:
-            xs += [x]
-            x += float(self.XRANGE[1]-self.XRANGE[0])/100
-        fittedParams = {}
-        for param in ['mean','width','sigma']:
-            name = '{}_{}{}'.format(param,h,tag)
-            hist = ROOT.TH1D(name, name, len(self.AMASSES), 4, 22)
-            vals = [results[h][a]['{}_h{}_a{}_{}'.format(param,h,a,tag)] for a in self.AMASSES]
-            errs = [errors[h][a]['{}_h{}_a{}_{}'.format(param,h,a,tag)] for a in self.AMASSES]
-            for i,a in enumerate(self.AMASSES):
-                b = hist.FindBin(a)
-                hist.SetBinContent(b,vals[i])
-                hist.SetBinError(b,errs[i])
-            savename = '{}/{}_Fit'.format(self.plotDir,name)
-            canvas = ROOT.TCanvas(savename,savename,800,800)
-            hist.Draw()
-            hist.SetTitle('')
-            hist.GetXaxis().SetTitle(self.SPLINELABEL)
-            fit = hist.Fit(fitFuncs[param])
-            canvas.Print('{}.png'.format(savename))
-            func = hist.GetFunction(fitFuncs[param])
-            fittedParams[param] = [func.Eval(x) for x in xs]
-
     
         # create model
         for a in self.AMASSES:
             print h, a, results[h][a]
-        if fit:
-            model = Models.VoigtianSpline(self.SPLINENAME.format(h=h),
-                **{
-                    'masses' : xs,
-                    'means'  : fittedParams['mean'],
-                    'widths' : fittedParams['width'],
-                    'sigmas' : fittedParams['sigma'],
-                }
-            )
-        else:
-            model = Models.VoigtianSpline(self.SPLINENAME.format(h=h),
-                **{
-                    'masses' : self.AMASSES,
-                    'means'  : [results[h][a]['mean_h{0}_a{1}_{2}'.format(h,a,tag)] for a in self.AMASSES],
-                    'widths' : [results[h][a]['width_h{0}_a{1}_{2}'.format(h,a,tag)] for a in self.AMASSES],
-                    'sigmas' : [results[h][a]['sigma_h{0}_a{1}_{2}'.format(h,a,tag)] for a in self.AMASSES],
-                }
-            )
+        model = Models.VoigtianSpline(self.SPLINENAME.format(h=h),
+            **{
+                'masses' : self.AMASSES,
+                'means'  : [results[h][a]['mean_h{0}_a{1}_{2}'.format(h,a,tag)] for a in self.AMASSES],
+                'widths' : [results[h][a]['width_h{0}_a{1}_{2}'.format(h,a,tag)] for a in self.AMASSES],
+                'sigmas' : [results[h][a]['sigma_h{0}_a{1}_{2}'.format(h,a,tag)] for a in self.AMASSES],
+            }
+        )
         if self.binned:
             integrals = [histMap[self.SIGNAME.format(h=h,a=a)].Integral() for a in self.AMASSES]
         else:
             integrals = [histMap[self.SIGNAME.format(h=h,a=a)].sumEntries('x>{} && x<{}'.format(*self.XRANGE)) for a in self.AMASSES]
         print 'Integrals', tag, h, integrals
-
-        if fit:
-            param = 'integral'
-            funcname = 'pol2'
-            name = '{}_{}{}'.format(param,h,tag)
-            hist = ROOT.TH1D(name, name, len(self.AMASSES), 4, 22)
-            vals = integrals
-            for i,a in enumerate(self.AMASSES):
-                b = hist.FindBin(a)
-                hist.SetBinContent(b,vals[i])
-            savename = '{}/{}_Fit'.format(self.plotDir,name)
-            canvas = ROOT.TCanvas(savename,savename,800,800)
-            hist.Draw()
-            hist.SetTitle('')
-            hist.GetXaxis().SetTitle(self.SPLINELABEL)
-            fit = hist.Fit(funcname)
-            canvas.Print('{}.png'.format(savename))
-            func = hist.GetFunction(funcname)
-            newintegrals = [func.Eval(x) for x in xs]
-            model.setIntegral(xs,newintegrals)
-        else:
-            model.setIntegral(self.AMASSES,integrals)
-
+        model.setIntegral(self.AMASSES,integrals)
         model.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag))
         model.buildIntegral(self.workspace,'integral_{}_{}'.format(self.SPLINENAME.format(h=h),tag))
 
@@ -331,8 +285,8 @@ class HaaLimits(Limits):
             model.plotOn(xFrame,ROOT.RooFit.Components('cont3_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
             model.plotOn(xFrame,ROOT.RooFit.Components('cont4_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
             # jpsi
-            model.plotOn(xFrame,ROOT.RooFit.Components('jpsi1S'),ROOT.RooFit.LineColor(ROOT.kRed))
-            model.plotOn(xFrame,ROOT.RooFit.Components('jpsi2S'),ROOT.RooFit.LineColor(ROOT.kRed))
+            model.plotOn(xFrame,ROOT.RooFit.Components('jpsi1S'),ROOT.RooFit.LineColor(ROOT.kGreen))
+            model.plotOn(xFrame,ROOT.RooFit.Components('jpsi2S'),ROOT.RooFit.LineColor(ROOT.kGreen))
         # upsilon
         model.plotOn(xFrame,ROOT.RooFit.Components('upsilon1S'),ROOT.RooFit.LineColor(ROOT.kRed))
         model.plotOn(xFrame,ROOT.RooFit.Components('upsilon2S'),ROOT.RooFit.LineColor(ROOT.kRed))
@@ -391,8 +345,8 @@ class HaaLimits(Limits):
 
     def addBackgroundModels(self, fixAfterFP=False, setUpsilonLambda=[]):
         for region in self.REGIONS:
+	    print "HELLOPOPPIT"
             if region == 'PP' and fixAfterFP:
-		print "Setting mean sigma and fraction of Upsilon 1S, 2S, 3S constant after fitting to FP"
 	        self.workspace.arg("mean_upsilon1S").setConstant(True)
 	        self.workspace.arg("mean_upsilon2S").setConstant(True)
 	        self.workspace.arg("mean_upsilon3S").setConstant(True)
@@ -403,15 +357,31 @@ class HaaLimits(Limits):
   	            self.workspace.arg("upsilon1S_frac").setConstant(True) #bg_FP_recursive_fraction_upsilon1S").setConstant(True)
   	            self.workspace.arg("upsilon2S_frac").setConstant(True) #bg_FP_recursive_fraction_upsilon2S").setConstant(True)
 	            self.workspace.arg("upsilon3S_frac").setConstant(True) #bg_FP_recursive_fraction_upsilon3S").setConstant(True)
+#                self.fixUpMeanSigma(changedValues=valuesToChange)
+#                self.buildModel(region=region, fixUpsilonValues=True, changedValues=valuesToChange)
             self.buildModel(region=region, setUpsilonLambda=setUpsilonLambda)
             self.workspace.factory('bg_{}_norm[1,0,2]'.format(region))
             self.fitBackground(region=region)
+    
+#    def fixUpMeanSigma(self, changedValues):
+#        changedValues['mean_upsilon1S'] = self.workspace.argSet("mean_upsilon1S").getRealValue("mean_upsilon1S")
+#        changedValues['mean_upsilon2S'] = self.workspace.argSet("mean_upsilon2S").getRealValue("mean_upsilon2S")
+#        changedValues['mean_upsilon3S'] = self.workspace.argSet("mean_upsilon3S").getRealValue("mean_upsilon3S")
+#        changedValues['sigma_upsilon1S'] = self.workspace.argSet("sigma_upsilon1S").getRealValue("sigma_upsilon1S")
+#        changedValues['sigma_upsilon2S'] = self.workspace.argSet("sigma_upsilon2S").getRealValue("sigma_upsilon2S")
+#        changedValues['sigma_upsilon3S'] = self.workspace.argSet("sigma_upsilon3S").getRealValue("sigma_upsilon3S")
+#        for k,v, in changedValues.items():
+#   	  print k, v
+        #print type(sigma3S.ls()), sigma3S.ls(), sigma3S, self.workspace.argSet("mean_upsilon1S").getRealValue("mean_upsilon.getRealValue("mean_upsilon1S").getRealValue("mean_upsilon
+        #print "VALUES TO BE SET\n1S", mean1S.getRealValue("mean1S"), sigma1S.getRealValue("sigma1S")
+        #print "2S", mean2S.getRealValue("mean2S"), sigma2S.getRealValue("sigma2S")
+        #print "3S", mean3S.getRealValue("mean3S"), sigma3S.getRealValue("sigma3S")
 
-    def addSignalModels(self,**kwargs):
+    def addSignalModels(self):
         for region in self.REGIONS:
             for shift in ['']+self.SHIFTS:
                 for h in self.HMASSES:
-                    self.buildSpline(h,region=region,shift=shift,**kwargs)
+                    self.buildSpline(h,region=region,shift=shift)
             self.workspace.factory('{}_{}_norm[1,0,9999]'.format(self.SPLINENAME.format(h=h),region))
 
     ######################
@@ -460,7 +430,7 @@ class HaaLimits(Limits):
         for shift in self.SHIFTS:
             shapeproc = self.sigProcesses
             shapesyst = { (shapeproc, tuple( shift)) : 1, }
-            self.addSystematic(shift, 'shape', systematics=shapesyst)
+            #self.addSystematic(shift, 'shape', systematics=shapesyst)
  	    print "shift=", shift
 	    
     def _addLumiSystematic(self):
