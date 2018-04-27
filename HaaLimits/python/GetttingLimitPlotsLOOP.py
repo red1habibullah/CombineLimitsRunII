@@ -19,11 +19,12 @@ from HaaLimits import HaaLimits
 
 Ma_list = []
 quantiles = {}
-for filename in os.listdir('/afs/cern.ch/work/k/ktos/public/Plotting/CMSSW_8_1_0/src/CombineLimits/HaaLimits/python/rValueFiles/DIRNAME/SAMPLE/'):
+for filename in os.listdir('/afs/cern.ch/work/k/ktos/public/Plotting/CMSSW_8_1_0/src/CombineLimits/HaaLimits/python/rValueFiles/DIRNAME/'):
+  print "\n", filename
   if not filename.endswith(".root"):
     continue
   print filename
-  fullFileName = "/afs/cern.ch/work/k/ktos/public/Plotting/CMSSW_8_1_0/src/CombineLimits/HaaLimits/python/rValueFiles/DIRNAME/SAMPLE/" + filename
+  fullFileName = "/afs/cern.ch/work/k/ktos/public/Plotting/CMSSW_8_1_0/src/CombineLimits/HaaLimits/python/rValueFiles/DIRNAME/" + filename
   f = ROOT.TFile.Open(fullFileName )
   tree = f.Get("limit")
   quants = []
@@ -40,4 +41,4 @@ Ma_list = sorted(Ma_list)
 #for k,v in quantiles.items():
 #  print k, v
 myplot = LimitPlotter()
-myplot.plotLimit(xvals=Ma_list, quartiles=quantiles, savename="H125_MeanSigFracConst_OverlapDIRNAME_CalcSAMPLE", xaxis="M(mu mu)")
+myplot.plotLimit(xvals=Ma_list, quartiles=quantiles, savename="h125_UpConst_100MeV_Upsilon7to11", xaxis="M(mu mu)")
