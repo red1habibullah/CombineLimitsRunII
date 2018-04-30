@@ -41,4 +41,4 @@ Ma_list = sorted(Ma_list)
 #for k,v in quantiles.items():
 #  print k, v
 myplot = LimitPlotter()
-myplot.plotLimit(xvals=Ma_list, quartiles=quantiles, savename="h125_UpConst_100MeV_Upsilon7to11", xaxis="M(mu mu)")
+myplot.plotLimit(xvals=Ma_list, quartiles=quantiles, savename="h125_100MeV_DIRNAME", xaxis="M(mu mu)")

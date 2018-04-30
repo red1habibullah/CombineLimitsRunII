@@ -17,9 +17,9 @@ from CombineLimits.Limits.utilities import *
 
 from HaaLimits import *
 
-XRANGE = [5, 30]
-UPSILONRANGE = [7,12]
-subdirectoryName='UpConst_SetLambda_7p0to12p0/'
+XRANGE = [5, 25]
+UPSILONRANGE = [8.5,11]
+subdirectoryName='UpConst_SetLambda_8p5to11p0_v4/'
 name = 'mmmt_mm_parametric'
 
 def ScaleRooDataSets(ds, scale=1):
@@ -2066,11 +2066,10 @@ LimitsClass.initializeWorkspace()
 ####################################
 # Devin's code
 ####################################
-LimitsClass.addBackgroundModels(fixAfterFP=True, addUpsilon=False, setUpsilonLambda=None, fitBeforeAfterUpSimult=True)
+LimitsClass.addBackgroundModels(fixAfterFP=False, addUpsilon=False, setUpsilonLambda=False, sidesModeled=False)
 
-Lambda = LimitsClass.GetWorkspaceValue(variable='lambda_cont1_FP')
-print "LAMBDA=", Lambda
-LimitsClass.addBackgroundModels(fixAfterFP=True, addUpsilon=True, setUpsilonLambda=Lambda, fitBeforeAfterUpSimult=False)
+print "\n\n\n\n\n\n\n\n\n\n\n\n\nHELLOO"
+LimitsClass.addBackgroundModels(fixAfterFP=True, addUpsilon=True,  setUpsilonLambda=True,  sidesModeled=True)
 
 LimitsClass.addSignalModels()
 LimitsClass.addData(asimov=True)#,addSignal=True)
