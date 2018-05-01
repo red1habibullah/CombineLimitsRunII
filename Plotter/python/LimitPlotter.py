@@ -74,6 +74,7 @@ class LimitPlotter(PlotterBase):
             if not all(limits[xvals[i]]):
                 print i, xvals[i], limits[xvals[i]]
                 continue
+            print xvals[i], "\t", limits[xvals[i]]
             twoSigma.SetPoint(     i,   xvals[i],     limits[xvals[i]][0]) # 0.025
             oneSigma.SetPoint(     i,   xvals[i],     limits[xvals[i]][1]) # 0.16
             expected.SetPoint(     i,   xvals[i],     limits[xvals[i]][2]) # 0.5
