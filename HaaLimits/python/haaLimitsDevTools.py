@@ -349,6 +349,7 @@ def create_datacard(args):
     else:
         logging.error('Unsupported fit vars: ',var)
         raise
+    haaLimits.SHIFTS = shiftTypes
     haaLimits.AMASSES = amasses
     haaLimits.HMASSES = hmasses
     haaLimits.XRANGE = xRange
