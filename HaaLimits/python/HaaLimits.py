@@ -190,7 +190,7 @@ class HaaLimits(Limits):
         # continuum background
         bgs[nameC1] = [0.5,0,1]
         # jpsi
-        if self.XRANGE[0]<=4:
+        if self.XRANGE[0]<4:
             bgs[nameJ1] = [0.9,0,1]
             bgs[nameJ2] = [0.9,0,1]
             bgs[nameC3] = [0.5,0,1]

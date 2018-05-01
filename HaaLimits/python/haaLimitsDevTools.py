@@ -23,10 +23,10 @@ logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format='%(asctime)s.
 xRange = [4,25] # no jpsi
 #xRange = [2.5,4.5] # jpsi only
 
-yRange = [0,1000] # h, hkf
+yRange = [0,1200] # h, hkf
 
 hmasses = [125,300,750]
-#hmasses = [125]
+hmasses = [125]
 amasses = [5,7,9,11,13,15,17,19,21]
 #amasses = [5,11,15,21]
     
@@ -358,10 +358,10 @@ def create_datacard(args):
     haaLimits.initializeWorkspace()
     haaLimits.addBackgroundModels()
     haaLimits.XRANGE = [0,30] # override for signal splines
-    haaLimits.addSignalModels(fit=True)
+    haaLimits.addSignalModels(fit=True)#,ygausOnly=True)
     haaLimits.XRANGE = xRange
     #haaLimits.addData() # this will use "data" as the observed dataset
-    haaLimits.addData(asimov=blind,addSignal=addSignal,**signalParams) # this will generate a dataset based on the fitted model
+    haaLimits.addData(asimov=(blind and not doMatrix),addSignal=addSignal,**signalParams) # this will generate a dataset based on the fitted model
     haaLimits.setupDatacard()
     haaLimits.addSystematics()
     name = 'mmmt_{}_parametric'.format('_'.join(var))

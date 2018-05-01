@@ -53,7 +53,7 @@ class HaaLimits2D(HaaLimits):
     def initializeWorkspace(self):
         self.addX(*self.XRANGE,unit='GeV',label=self.XLABEL)
         self.addY(*self.YRANGE,unit='GeV',label=self.YLABEL)
-        self.addMH(*self.SPLINERANGE,unit='GeV',label=self.SPLINERANGE)
+        self.addMH(*self.SPLINERANGE,unit='GeV',label=self.SPLINELABEL)
 
     def _buildYModel(self,region='PP',**kwargs):
         tag = kwargs.pop('tag',region)
@@ -145,6 +145,7 @@ class HaaLimits2D(HaaLimits):
         Required arguments:
             h = higgs mass
         '''
+        ygausOnly = kwargs.get('ygausOnly',False)
         fit = kwargs.get('fit',False)
         dobgsig = kwargs.get('doBackgroundSignal',False)
         histMap = self.histMap[region][shift]
@@ -170,11 +171,12 @@ class HaaLimits2D(HaaLimits):
                 sigma = [0.01*a,0.001,5],
             )
             modelx.build(ws, 'sigx')
+            ym = Models.Gaussian if ygausOnly else Models.Voigtian
             if self.YRANGE[1]>100: # y variable is h mass
-                modely = Models.Voigtian('sigy',
+                modely = ym('sigy',
                     x = 'y',
                     #mean  = [h,0.75*h,1.25*h], # kinfit
-                    mean  = [0.75*h,0,1.25*h], # visible
+                    mean  = [h,0,1.25*h],
                     width = [0.1*h,0.1,0.5*h],
                     sigma = [0.1*h,0.1,0.5*h],
                 )
@@ -187,7 +189,7 @@ class HaaLimits2D(HaaLimits):
             else: # y variable is tt
                 if region=='PP':
                     # simple voitian
-                    voity = Models.Voigtian('sigy',
+                    voity = ym('sigy',
                         x = 'y',
                         mean  = [0.5*a,0,1.25*a], # visible
                         width = [0.1*a,0,0.5*a],
@@ -201,7 +203,7 @@ class HaaLimits2D(HaaLimits):
                     )
                 else:
                     # add a mistagged jet background
-                    voity = Models.Voigtian('sigy',
+                    voity = ym('sigy',
                         x = 'y',
                         mean  = [0.5*a,0,1.25*a], # visible
                         width = [0.1*a,0,0.5*a],
@@ -280,6 +282,8 @@ class HaaLimits2D(HaaLimits):
                 hist.SetBinError(b,errs[i])
             model.fit(ws, hist, name, saveDir=self.plotDir, save=True)
     
+            if param=='width' and ygausOnly: continue
+
             ws = ROOT.RooWorkspace(param)
             ws.factory('y[{},{}]'.format(*self.YRANGE))
             ws.var('y').setUnit('GeV')
@@ -302,9 +306,9 @@ class HaaLimits2D(HaaLimits):
             'xmean' : 'pol1',
             'xwidth': 'pol1',
             'xsigma': 'pol1',
-            'ymean' : 'pol4',
-            'ywidth': 'pol4',
-            'ysigma': 'pol4',
+            'ymean' : 'pol2',
+            'ywidth': 'pol2',
+            'ysigma': 'pol2',
         }
 
         xs = []
@@ -334,6 +338,8 @@ class HaaLimits2D(HaaLimits):
             canvas.Print('{}.png'.format(savename))
             func = hist.GetFunction(fitFuncs['x'+param])
             fittedParams['x'+param] = [func.Eval(x) for x in xs]
+
+            if param=='width' and ygausOnly: continue
 
             name = '{}_{}{}'.format('y'+param,h,tag)
             hist = ROOT.TH1D(name, name, len(self.AMASSES), 4, 22)
@@ -375,23 +381,24 @@ class HaaLimits2D(HaaLimits):
                 }
             )
         modelx.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_x'))
+        ym = Models.GaussianSpline if ygausOnly else Models.VoigtianSpline
         if fit:
-            modely = Models.VoigtianSpline(self.SPLINENAME.format(h=h)+'_y',
+            modely = ym(self.SPLINENAME.format(h=h)+'_y',
                 **{
                     'x'      : 'y',
                     'masses' : ys,
                     'means'  : fittedParams['ymean'],
-                    'widths' : fittedParams['ywidth'],
+                    'widths' : [] if ygausOnly else fittedParams['ywidth'],
                     'sigmas' : fittedParams['ysigma'],
                 }
             )
         else:
-            modely = Models.VoigtianSpline(self.SPLINENAME.format(h=h)+'_y',
+            modely = ym(self.SPLINENAME.format(h=h)+'_y',
                 **{
                     'x'      : 'y',
                     'masses' : self.AMASSES,
                     'means'  : [results[h][a]['mean_sigy'] for a in self.AMASSES],
-                    'widths' : [results[h][a]['width_sigy'] for a in self.AMASSES],
+                    'widths' : [] if ygausOnly else [results[h][a]['width_sigy'] for a in self.AMASSES],
                     'sigmas' : [results[h][a]['sigma_sigy'] for a in self.AMASSES],
                 }
             )

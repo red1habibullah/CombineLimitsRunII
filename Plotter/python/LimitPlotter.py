@@ -42,6 +42,8 @@ class LimitPlotter(PlotterBase):
         logy = kwargs.pop('logy',1)
         plotunity = kwargs.pop('plotunity',True)
         leftmargin = kwargs.pop('leftmargin',None)
+        model = kwargs.pop('model',None)
+        xVar = kwargs.pop('x',None)
 
         logging.info('Plotting {0}'.format(savename))
 
@@ -70,6 +72,14 @@ class LimitPlotter(PlotterBase):
         expected_asym = ROOT.TGraph(n)
         observed_asym = ROOT.TGraph(n)
 
+        if xVar:
+            w = ROOT.RooRealVar('w','w',0,10000)
+            twoSigmaDS_low  = ROOT.RooDataSet('twoSigmaLow', 'twoSigmaLow', ROOT.RooArgSet(xVar,w),w.GetName())
+            twoSigmaDS_high = ROOT.RooDataSet('twoSigmaHigh','twoSigmaHigh',ROOT.RooArgSet(xVar,w),w.GetName())
+            oneSigmaDS_low  = ROOT.RooDataSet('oneSigmaLow', 'oneSigmaLow', ROOT.RooArgSet(xVar,w),w.GetName())
+            oneSigmaDS_high = ROOT.RooDataSet('oneSigmaHigh','oneSigmaHigh',ROOT.RooArgSet(xVar,w),w.GetName())
+            expectedDS      = ROOT.RooDataSet('expected',    'expected',    ROOT.RooArgSet(xVar,w),w.GetName())
+
         for i in range(len(xvals)):
             if not all(limits[xvals[i]]):
                 print i, xvals[i], limits[xvals[i]]
@@ -96,9 +106,42 @@ class LimitPlotter(PlotterBase):
                 oneSigma_asym.SetPoint(2*n-i-1,xvals[i], limits_asym[xvals[i]][3]) # 0.84
                 twoSigma_asym.SetPoint(2*n-i-1,xvals[i], limits_asym[xvals[i]][4]) # 0.975
                 observed_asym.SetPoint(i,  xvals[i],     limits_asym[xvals[i]][5]) # obs
+            if xVar:
+                xVar.setVal(xvals[i])
+                w.setVal(limits[xvals[i]][0])
+                twoSigmaDS_high.add(ROOT.RooArgSet(xVar,w))
+                w.setVal(limits[xvals[i]][1])
+                oneSigmaDS_high.add(ROOT.RooArgSet(xVar,w))
+                w.setVal(limits[xvals[i]][2])
+                expectedDS.add(ROOT.RooArgSet(xVar,w))
+                w.setVal(limits[xvals[i]][3])
+                oneSigmaDS_low.add(ROOT.RooArgSet(xVar,w))
+                w.setVal(limits[xvals[i]][4])
+                twoSigmaDS_low.add(ROOT.RooArgSet(xVar,w))
+
+        
+        def fit(savename,ds):
+            model.fitTo(ds,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True))
+            xFrame = xVar.frame()
+            ds.plotOn(xFrame)
+            model.plotOn(xFrame)
+            canvas = ROOT.TCanvas(savename,savename,800,800)
+            xFrame.Draw()
+            canvas.Print('{0}.png'.format(savename))
+            
+        if model and xVar:
+            # smooth to a pdf
+            fit('twoSigma_low', twoSigmaDS_low)
+            fit('oneSigma_low', oneSigmaDS_low)
+            fit('expected',     expectedDS)
+            fit('oneSigma_high',oneSigmaDS_high)
+            fit('twoSigma_high',twoSigmaDS_high)
+
 
         smoothlog = False
         if smooth: # smooth out the expected bands
+
+            # smooth via function
             twoSigmaSmoother_low  = ROOT.TGraphSmooth()
             twoSigmaSmoother_high = ROOT.TGraphSmooth()
             oneSigmaSmoother_low  = ROOT.TGraphSmooth()
@@ -143,6 +186,7 @@ class LimitPlotter(PlotterBase):
                     oneSigma_high.SetPoint(i+1,   oneSigmaSmooth_high.GetX()[i+1],    oneSigmaSmooth_high.GetY()[i+1])
                     oneSigma_low.SetPoint( i+1,   oneSigmaSmooth_low.GetX()[i+1],     oneSigmaSmooth_low.GetY()[i+1])
                     expected.SetPoint(     i+1,   expectedSmooth.GetX()[i+1],         expectedSmooth.GetY()[i+1])
+
             for i in range(n-2):
                 twoSigma.SetPoint(     i+1,   twoSigma_high.GetX()[i+1],    twoSigma_high.GetY()[i+1])
                 twoSigma.SetPoint(     n+i+1, twoSigma_low.GetX()[n-1-i-1], twoSigma_low.GetY()[n-1-i-1])
