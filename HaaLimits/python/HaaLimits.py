@@ -6,6 +6,7 @@ import numpy as np
 import argparse
 import math
 import errno
+from array import array
 
 import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
@@ -22,7 +23,7 @@ class HaaLimits(Limits):
 
     # permanent parameters
     HMASSES = [125,300,750]
-    AMASSES = [5,7,9,11,13,15,17,19,21]
+    AMASSES = ['3p6',4,5,6,7,9,11,13,15,17,19,21]
 
     SIGNAME = 'HToAAH{h}A{a}'
     SPLINENAME = 'sig{h}'
@@ -174,6 +175,7 @@ class HaaLimits(Limits):
             h = higgs mass
         '''
         fit = kwargs.get('fit',False)      # will fit the spline parameters rather than a simple spline
+        avals = [float(str(x).replace('p','.')) for x in self.AMASSES]
         histMap = self.histMap[region][shift]
         tag= '{}{}'.format(region,'_'+shift if shift else '')
         # initial fit
@@ -182,49 +184,52 @@ class HaaLimits(Limits):
         results[h] = {}
         errors[h] = {}
         for a in self.AMASSES:
+            aval = float(str(a).replace('p','.'))
             ws = ROOT.RooWorkspace('sig')
             ws.factory('x[{0}, {1}]'.format(*self.XRANGE))
             ws.var('x').setUnit('GeV')
             ws.var('x').setPlotLabel(self.XLABEL)
             ws.var('x').SetTitle(self.XLABEL)
             model = Models.Voigtian('sig',
-                mean  = [a,0,30],
-                width = [0.01*a,0,5],
-                sigma = [0.01*a,0,5],
+                mean  = [aval,0,30],
+                width = [0.01*aval,0,5],
+                sigma = [0.01*aval,0,5],
             )
             model.build(ws, 'sig')
             hist = histMap[self.SIGNAME.format(h=h,a=a)]
-            results[h][a], errors[h][a] = model.fit(ws, hist, 'h{}_a{}_{}'.format(h,a,tag), saveDir=self.plotDir, save=True, doErrors=True)
+            saveDir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
+            results[h][a], errors[h][a] = model.fit(ws, hist, 'h{}_a{}_{}'.format(h,a,tag), saveDir=saveDir, save=True, doErrors=True)
     
-        models = {
-            'mean' : Models.Chebychev('mean',  order = 1, p0 = [0,-1,1], p1 = [0.1,-1,1], p2 = [0.03,-1,1]),
-            'width': Models.Chebychev('width', order = 1, p0 = [0,-1,1], p1 = [0.1,-1,1], p2 = [0.03,-1,1]),
-            'sigma': Models.Chebychev('sigma', order = 1, p0 = [0,-1,1], p1 = [0.1,-1,1], p2 = [0.03,-1,1]),
-        }
+        #models = {
+        #    'mean' : Models.Chebychev('mean',  order = 1, p0 = [0,-1,1], p1 = [0.1,-1,1], p2 = [0.03,-1,1]),
+        #    'width': Models.Chebychev('width', order = 1, p0 = [0,-1,1], p1 = [0.1,-1,1], p2 = [0.03,-1,1]),
+        #    'sigma': Models.Chebychev('sigma', order = 1, p0 = [0,-1,1], p1 = [0.1,-1,1], p2 = [0.03,-1,1]),
+        #}
 
-        for param in ['mean', 'width', 'sigma']:
-            ws = ROOT.RooWorkspace(param)
-            ws.factory('x[{},{}]'.format(*self.XRANGE))
-            ws.var('x').setUnit('GeV')
-            ws.var('x').setPlotLabel(self.SPLINELABEL)
-            ws.var('x').SetTitle(self.SPLINELABEL)
-            model = models[param]
-            model.build(ws, param)
-            name = '{}_{}{}'.format(param,h,tag)
-            hist = ROOT.TH1D(name, name, len(self.AMASSES), 4, 22)
-            vals = [results[h][a]['{}_h{}_a{}_{}'.format(param,h,a,tag)] for a in self.AMASSES]
-            errs = [errors[h][a]['{}_h{}_a{}_{}'.format(param,h,a,tag)] for a in self.AMASSES]
-            for i,a in enumerate(self.AMASSES):
-                b = hist.FindBin(a)
-                hist.SetBinContent(b,vals[i])
-                hist.SetBinError(b,errs[i])
-            model.fit(ws, hist, name, saveDir=self.plotDir, save=True)
+        #for param in ['mean', 'width', 'sigma']:
+        #    ws = ROOT.RooWorkspace(param)
+        #    ws.factory('x[{},{}]'.format(*self.XRANGE))
+        #    ws.var('x').setUnit('GeV')
+        #    ws.var('x').setPlotLabel(self.SPLINELABEL)
+        #    ws.var('x').SetTitle(self.SPLINELABEL)
+        #    model = models[param]
+        #    model.build(ws, param)
+        #    name = '{}_{}{}'.format(param,h,tag)
+        #    hist = ROOT.TH1D(name, name, len(self.AMASSES), 4, 22)
+        #    vals = [results[h][a]['{}_h{}_a{}_{}'.format(param,h,a,tag)] for a in self.AMASSES]
+        #    errs = [errors[h][a]['{}_h{}_a{}_{}'.format(param,h,a,tag)] for a in self.AMASSES]
+        #    for i,a in enumerate(self.AMASSES):
+        #        b = hist.FindBin(a)
+        #        hist.SetBinContent(b,vals[i])
+        #        hist.SetBinError(b,errs[i])
+        #    saveDir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
+        #    model.fit(ws, hist, name, saveDir=saveDir, save=True)
 
         # Fit using ROOT rather than RooFit for the splines
         fitFuncs = {
             'mean' : 'pol1',
-            'width': 'pol1',
-            'sigma': 'pol1',
+            'width': 'pol2',
+            'sigma': 'pol2',
         }
 
         xs = []
@@ -235,21 +240,19 @@ class HaaLimits(Limits):
         fittedParams = {}
         for param in ['mean','width','sigma']:
             name = '{}_{}{}'.format(param,h,tag)
-            hist = ROOT.TH1D(name, name, len(self.AMASSES), 4, 22)
+            xerrs = [0]*len(self.AMASSES)
             vals = [results[h][a]['{}_h{}_a{}_{}'.format(param,h,a,tag)] for a in self.AMASSES]
             errs = [errors[h][a]['{}_h{}_a{}_{}'.format(param,h,a,tag)] for a in self.AMASSES]
-            for i,a in enumerate(self.AMASSES):
-                b = hist.FindBin(a)
-                hist.SetBinContent(b,vals[i])
-                hist.SetBinError(b,errs[i])
-            savename = '{}/{}_Fit'.format(self.plotDir,name)
+            graph = ROOT.TGraphErrors(len(avals),array('d',avals),array('d',vals),array('d',xerrs),array('d',errs))
+            savename = '{}/{}/{}_Fit'.format(self.plotDir,shift if shift else 'central',name)
             canvas = ROOT.TCanvas(savename,savename,800,800)
-            hist.Draw()
-            hist.SetTitle('')
-            hist.GetXaxis().SetTitle(self.SPLINELABEL)
-            fit = hist.Fit(fitFuncs[param])
+            graph.Draw()
+            graph.SetTitle('')
+            graph.GetHistogram().GetXaxis().SetTitle(self.SPLINELABEL)
+            graph.GetHistogram().GetYaxis().SetTitle(param)
+            fit = graph.Fit(fitFuncs[param])
             canvas.Print('{}.png'.format(savename))
-            func = hist.GetFunction(fitFuncs[param])
+            func = graph.GetFunction(fitFuncs[param])
             fittedParams[param] = [func.Eval(x) for x in xs]
 
     
@@ -268,7 +271,7 @@ class HaaLimits(Limits):
         else:
             model = Models.VoigtianSpline(self.SPLINENAME.format(h=h),
                 **{
-                    'masses' : self.AMASSES,
+                    'masses' : avals,
                     'means'  : [results[h][a]['mean_h{0}_a{1}_{2}'.format(h,a,tag)] for a in self.AMASSES],
                     'widths' : [results[h][a]['width_h{0}_a{1}_{2}'.format(h,a,tag)] for a in self.AMASSES],
                     'sigmas' : [results[h][a]['sigma_h{0}_a{1}_{2}'.format(h,a,tag)] for a in self.AMASSES],
@@ -284,23 +287,21 @@ class HaaLimits(Limits):
             param = 'integral'
             funcname = 'pol2'
             name = '{}_{}{}'.format(param,h,tag)
-            hist = ROOT.TH1D(name, name, len(self.AMASSES), 4, 22)
             vals = integrals
-            for i,a in enumerate(self.AMASSES):
-                b = hist.FindBin(a)
-                hist.SetBinContent(b,vals[i])
-            savename = '{}/{}_Fit'.format(self.plotDir,name)
+            graph = ROOT.TGraph(len(avals),array('d',avals),array('d',vals))
+            savename = '{}/{}/{}_Fit'.format(self.plotDir,shift if shift else 'central',name)
             canvas = ROOT.TCanvas(savename,savename,800,800)
-            hist.Draw()
-            hist.SetTitle('')
-            hist.GetXaxis().SetTitle(self.SPLINELABEL)
-            fit = hist.Fit(funcname)
+            graph.Draw()
+            graph.SetTitle('')
+            graph.GetHistogram().GetXaxis().SetTitle(self.SPLINELABEL)
+            graph.GetHistogram().GetYaxis().SetTitle('integral')
+            fit = graph.Fit(funcname)
             canvas.Print('{}.png'.format(savename))
-            func = hist.GetFunction(funcname)
+            func = graph.GetFunction(funcname)
             newintegrals = [func.Eval(x) for x in xs]
-            model.setIntegral(xs,newintegrals)
-        else:
-            model.setIntegral(self.AMASSES,integrals)
+            # dont fit integrals
+            #model.setIntegral(xs,newintegrals)
+        model.setIntegral(avals,integrals)
 
         model.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag))
         model.buildIntegral(self.workspace,'integral_{}_{}'.format(self.SPLINENAME.format(h=h),tag))
@@ -427,8 +428,8 @@ class HaaLimits(Limits):
                     if shift == '':
                         self.buildSpline(h,region=region,shift=shift,**kwargs)
                     else:
-                      self.buildSpline(h,region=region,shift=shift+'Up',**kwargs)
-                      self.buildSpline(h,region=region,shift=shift+'Down',**kwargs)
+                        self.buildSpline(h,region=region,shift=shift+'Up',**kwargs)
+                        self.buildSpline(h,region=region,shift=shift+'Down',**kwargs)
             self.workspace.factory('{}_{}_norm[1,0,9999]'.format(self.SPLINENAME.format(h=h),region))
 
     ######################

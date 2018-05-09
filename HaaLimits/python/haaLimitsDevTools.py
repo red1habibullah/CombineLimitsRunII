@@ -27,12 +27,12 @@ yRange = [0,1200] # h, hkf
 
 hmasses = [125,300,750]
 hmasses = [125]
-amasses = [5,7,9,11,13,15,17,19,21]
+amasses = ['3p6',4,5,6,7,9,11,13,15,17,19,21]
 #amasses = [5,11,15,21]
     
 signame = 'HToAAH{h}A{a}'
 
-shiftTypes = ['lep','pu','fake','trig']
+shiftTypes = ['lep','pu','fake','trig','btag','MuonEn','TauEn','JetEn','UnclusteredEn']
 shiftTypes = []
 shifts = []
 for s in shiftTypes:
@@ -75,6 +75,7 @@ def getHist(proc,**kwargs):
     shift = kwargs.pop('shift','')
     region = kwargs.pop('region','A')
     do2D = kwargs.pop('do2D',False)
+    doChi2 = kwargs.pop('doChi2',False)
     doUnbinned = kwargs.pop('doUnbinned',False)
     var = kwargs.pop('var',['mm'])
     wrappers = kwargs.pop('wrappers',{})
@@ -85,6 +86,7 @@ def getHist(proc,**kwargs):
     if doUnbinned:
         plot += '_dataset'
     plotname = 'region{}/{}'.format(region,plot)
+    if doChi2: plotname = 'chi2/{}'.format(plotname)
     if doUnbinned:
         hists = [getDataset(wrappers[s+shift],plotname) for s in sampleMap[proc]]
         hist = sumDatasets(proc+region,*hists)
@@ -102,6 +104,7 @@ def getDatadrivenHist(**kwargs):
     source = kwargs.pop('source','B')
     region = kwargs.pop('region','A')
     do2D = kwargs.pop('do2D',False)
+    doChi2 = kwargs.pop('doChi2',False)
     doUnbinned = kwargs.pop('doUnbinned',False)
     var = kwargs.pop('var',['mm'])
     wrappers = kwargs.pop('wrappers',{})
@@ -112,6 +115,7 @@ def getDatadrivenHist(**kwargs):
     if doUnbinned:
         plot += '_dataset'
     plotname = 'region{}_fakeFor{}/{}'.format(source,region,plot)
+    if doChi2: plotname = 'chi2/{}'.format(plotname)
     if doUnbinned:
         hists = [getDataset(wrappers[s+shift],plotname) for s in sampleMap['data']]
         hist = sumDatasets('data'+region+source,*hists)
@@ -131,6 +135,7 @@ def getMatrixHist(proc,**kwargs):
     doPrompt = kwargs.pop('doPrompt',True)
     doFake = kwargs.pop('doFake',False)
     do2D = kwargs.pop('do2D',False)
+    doChi2 = kwargs.pop('doChi2',False)
     doUnbinned = kwargs.pop('doUnbinned',False)
     var = kwargs.pop('var',['mm'])
     wrappers = kwargs.pop('wrappers',{})
@@ -142,6 +147,9 @@ def getMatrixHist(proc,**kwargs):
         plot += '_dataset'
     applot = ['matrixP/region{}_for{}/{}'.format(source,region,plot) for source in sources]
     afplot = ['matrixF/region{}_for{}/{}'.format(source,region,plot) for source in sources]
+    if doChi2:
+        applot = ['chi2/{}'.format(plotname) for plotname in applot]
+        afplot = ['chi2/{}'.format(plotname) for plotname in afplot]
     hists = []
     for s in sampleMap[proc]:
         if doUnbinned:
@@ -170,6 +178,7 @@ def getMatrixDatadrivenHist(**kwargs):
     doPrompt = kwargs.pop('doPrompt',True)
     doFake = kwargs.pop('doFake',False)
     do2D = kwargs.pop('do2D',False)
+    doChi2 = kwargs.pop('doChi2',False)
     doUnbinned = kwargs.pop('doUnbinned',False)
     var = kwargs.pop('var',['mm'])
     wrappers = kwargs.pop('wrappers',{})
@@ -181,6 +190,9 @@ def getMatrixDatadrivenHist(**kwargs):
         plot += '_dataset'
     bpplot = ['matrixP/region{}_for{}_fakeFor{}/{}'.format(source,fakeRegion,region,plot) for source in fakeSources]
     bfplot = ['matrixF/region{}_for{}_fakeFor{}/{}'.format(source,fakeRegion,region,plot) for source in fakeSources]
+    if doChi2:
+        bpplot = ['chi2/{}'.format(plotname) for plotname in bpplot]
+        bfplot = ['chi2/{}'.format(plotname) for plotname in bfplot]
     hists = []
     for s in sampleMap['data']:
         if doUnbinned:
@@ -224,6 +236,7 @@ def create_datacard(args):
     doParametric = args.parametric
     doUnbinned = args.unbinned
     do2D = len(args.fitVars)==2
+    doChi2 = False
     blind = not args.unblind
     addSignal = args.addSignal
     signalParams = {'h': args.higgs, 'a': args.pseudoscalar}
@@ -280,21 +293,21 @@ def create_datacard(args):
                     # TODO: unbinned, get the RooDataHist from flattenener first
                     if mode=='PP':
                         if doMatrix:
-                            histMap[mode][shift][proc] = getMatrixDatadrivenHist(doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,**regionArgs[mode])
+                            histMap[mode][shift][proc] = getMatrixDatadrivenHist(doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,doChi2=doChi2,**regionArgs[mode])
                         else:
-                            histMap[mode][shift][proc] = getDatadrivenHist(doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,**regionArgs[mode])
+                            histMap[mode][shift][proc] = getDatadrivenHist(doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,doChi2=doChi2,**regionArgs[mode])
                     else:
                         if doMatrix:
-                            histMap[mode][shift][proc] = getMatrixHist('data',doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,**regionArgs[mode])
+                            histMap[mode][shift][proc] = getMatrixHist('data',doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,doChi2=doChi2,**regionArgs[mode])
                         else:
-                            histMap[mode][shift][proc] = getHist('data',doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,**regionArgs[mode])
+                            histMap[mode][shift][proc] = getHist('data',doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,doChi2=doChi2,**regionArgs[mode])
                 else:
                     # override xRange for signal only
                     xRange = [0,30]
                     if doMatrix:
-                        histMap[mode][shift][proc] = getMatrixHist(proc,doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,**regionArgs[mode])
+                        histMap[mode][shift][proc] = getMatrixHist(proc,doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,doChi2=doChi2,**regionArgs[mode])
                     else:
-                        histMap[mode][shift][proc] = getHist(proc,doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,**regionArgs[mode])
+                        histMap[mode][shift][proc] = getHist(proc,doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,doChi2=doChi2,**regionArgs[mode])
                     xRange = args.xRange
                 if do2D or doUnbinned:
                     pass # TODO, figure out how to rebin 2D
@@ -325,7 +338,7 @@ def create_datacard(args):
                 histMap[mode][shift]['data'] = hist.Clone()
                 histMap[mode][shift]['dataNoSig'] = histNoSig.Clone()
             else:
-                hist = getHist('data',doUnbinned=doUnbinned,var=var,wrappers=wrappers,do2D=do2D,**regionArgs[mode])
+                hist = getHist('data',doUnbinned=doUnbinned,var=var,wrappers=wrappers,do2D=do2D,doChi2=doChi2,**regionArgs[mode])
                 histMap[mode][shift]['data'] = hist.Clone()
                 histMap[mode][shift]['dataNoSig'] = histNoSig.Clone()
                 if do2D or doUnbinned:
@@ -337,9 +350,11 @@ def create_datacard(args):
     name = []
     if args.unbinned: name += ['unbinned']
     if do2D: name += [var[1]]
+    n = '_'.join(name) if name else ''
+    name = []
     if args.tag: name += [args.tag]
     if args.addSignal: name += ['wSig']
-    name = '_'.join(name)
+    name = n+'/'+'_'.join(name) if n else '_'.join(name)
     if var == ['mm']:
         haaLimits = HaaLimits(histMap,name)
     elif var == ['h'] or var == ['hkf']:
@@ -359,7 +374,7 @@ def create_datacard(args):
     haaLimits.initializeWorkspace()
     haaLimits.addBackgroundModels()
     haaLimits.XRANGE = [0,30] # override for signal splines
-    haaLimits.addSignalModels(fit=True)#,ygausOnly=True)
+    haaLimits.addSignalModels(fit=False)#,ygausOnly=True) # dont fit, use splines
     haaLimits.XRANGE = xRange
     #haaLimits.addData() # this will use "data" as the observed dataset
     haaLimits.addData(asimov=(blind and not doMatrix),addSignal=addSignal,**signalParams) # this will generate a dataset based on the fitted model
