@@ -119,16 +119,16 @@ class HaaLimits2D(HaaLimits):
         bg.build(self.workspace,name)
 
     def _buildXModel(self,region='PP',**kwargs):
-        super(HaaLimits2D,self).buildModel(region)
+        super(HaaLimits2D,self).buildModel(region,**kwargs)
 
     def buildModel(self,region='PP',**kwargs):
         tag = kwargs.pop('tag',region)
 
         # build the x variable
-        self._buildXModel(region+'_x')
+        self._buildXModel(region+'_x',**kwargs)
 
         # build the y variable
-        self._buildYModel(region+'_y')
+        self._buildYModel(region+'_y',**kwargs)
 
         # the 2D model
         bg = Models.Prod('bg',
@@ -441,11 +441,15 @@ class HaaLimits2D(HaaLimits):
         model.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag))
         model.buildIntegral(self.workspace,'integral_{}_{}'.format(self.SPLINENAME.format(h=h),tag))
 
-    def fitBackground(self,region='PP',shift=''):
+    def fitBackground(self,region='PP',shift='',setUpsilonLambda=False,addUpsilon=True,logy=False):
+
+        if region=='control':
+            return super(HaaLimits2D, self).fitBackground(region=region, shift=shift, setUpsilonLambda=setUpsilonLambda,addUpsilon=addUpsilon,logy=logy)
+
         model = self.workspace.pdf('bg_{}'.format(region))
         name = 'data_prefit_{}{}'.format(region,'_'+shift if shift else '')
         hist = self.histMap[region][shift]['dataNoSig']
-        if self.binned:
+        if hist.InheritsFrom('TH1'):
             data = ROOT.RooDataHist(name,name,ROOT.RooArgList(self.workspace.var('x'),self.workspace.var('y')),hist)
         else:
             data = hist.Clone(name)
@@ -512,7 +516,7 @@ class HaaLimits2D(HaaLimits):
                 # TODO addSignal
                 model = self.workspace.pdf('bg_{}'.format(region))
                 h = self.histMap[region]['']['dataNoSig']
-                if self.binned:
+                if h.InheritsFrom('TH1'):
                     integral = h.Integral() # 2D integral?
                 else:
                     integral = h.sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE))
@@ -526,17 +530,21 @@ class HaaLimits2D(HaaLimits):
                 data_obs.SetName(name)
             else:
                 # use the provided data
-                if self.binned:
+                if hist.InheritsFrom('TH1'):
                     data_obs = ROOT.RooDataHist(name,name,ROOT.RooArgList(self.workspace.var('x'),self.workspace.var('y')),self.histMap[region]['']['data'])
                 else:
                     data_obs = hist.Clone(name)
             self.wsimport(data_obs)
 
-    def addBackgroundModels(self):
+    def addBackgroundModels(self, fixAfterControl=False, fixAfterFP=False, addUpsilon=True, setUpsilonLambda=False, voigtian=False, logy=False):
+        if fixAfterControl:
+            self.fix()
         for region in self.REGIONS:
-            self.buildModel(region=region)
+            self.buildModel(region=region, addUpsilon=addUpsilon, setUpsilonLambda=setUpsilonLambda, voigtian=voigtian)
             self.workspace.factory('bg_{}_norm[1,0,2]'.format(region))
-            self.fitBackground(region=region)
+            self.fitBackground(region=region, setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
+        if fixAfterControl:
+            self.fix(False)
 
     def addSignalModels(self,**kwargs):
         for region in self.REGIONS:
@@ -552,7 +560,7 @@ class HaaLimits2D(HaaLimits):
     ######################
     ### Setup datacard ###
     ######################
-    def setupDatacard(self):
+    def setupDatacard(self, addControl=True):
 
         # setup bins
         for region in self.REGIONS:
@@ -567,7 +575,7 @@ class HaaLimits2D(HaaLimits):
         # set expected
         for region in self.REGIONS:
             h = self.histMap[region]['']['dataNoSig']
-            if self.binned:
+            if h.InheritsFrom('TH1'):
                 integral = h.Integral() # 2D restricted integral?
             else:
                 integral = h.sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE))
@@ -579,7 +587,19 @@ class HaaLimits2D(HaaLimits):
                 
             self.setObserved(region,-1) # reads from histogram
 
-            
+        if addControl:
+            region = 'control'
+
+            self.addBin(region)
+
+            h = self.histMap[region]['']['dataNoSig']
+            if h.InheritsFrom('TH1'):
+                integral = h.Integral(h.FindBin(self.XRANGE[0]),h.FindBin(self.XRANGE[1]))
+            else:
+                integral = h.sumEntries('x>{} && x<{}'.format(*self.XRANGE))
+            self.setExpected('bg',region,integral)
+
+            self.setObserved(region,-1) # reads from histogram
 
     ###################
     ### Systematics ###

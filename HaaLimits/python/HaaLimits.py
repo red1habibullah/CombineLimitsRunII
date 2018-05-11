@@ -471,7 +471,7 @@ class HaaLimits(Limits):
         self.workspace.factory('bg_{}_norm[1,0,2]'.format(region))
         self.fitBackground(region=region, setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
 
-    def _fix(self,fix=True):
+    def fix(self,fix=True):
         self.workspace.arg("mean_upsilon1S").setConstant(fix)
         self.workspace.arg("mean_upsilon2S").setConstant(fix)
         self.workspace.arg("mean_upsilon3S").setConstant(fix)
@@ -496,20 +496,20 @@ class HaaLimits(Limits):
 
     def addBackgroundModels(self, fixAfterControl=False, fixAfterFP=False, addUpsilon=True, setUpsilonLambda=False, voigtian=False, logy=False):
         if fixAfterControl:
-            self._fix()
+            self.fix()
         if setUpsilonLambda:
             self.workspace.arg("lambda_cont1_FP").setConstant(True)
             self.workspace.arg("lambda_cont1_PP").setConstant(True)
         for region in self.REGIONS:
             if region == 'PP' and fixAfterFP and addUpsilon and self.XRANGE[0]<=9 and self.XRANGE[1]>=11:
-                self._fix()
+                self.fix()
             self.buildModel(region=region, addUpsilon=addUpsilon, setUpsilonLambda=setUpsilonLambda, voigtian=voigtian)
             self.workspace.factory('bg_{}_norm[1,0,2]'.format(region))
             self.fitBackground(region=region, setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
             if region == 'PP' and fixAfterFP and addUpsilon and self.XRANGE[0]<=9 and self.XRANGE[1]>=11: 
-                self._fix(False)
+                self.fix(False)
         if fixAfterControl:
-            self._fix(False)
+            self.fix(False)
 
     def addSignalModels(self,**kwargs):
         for region in self.REGIONS:
