@@ -70,6 +70,14 @@ def getDataset(wrapper,plotname):
     else:
         return wrapper.getDataset(plotname,selection=selDatasets['x'],xRange=xRange,weight='w')
 
+def getControlHist(proc,**kwargs):
+    wrappers = kwargs.pop('wrappers',{})
+    plot = 'mmMass'
+    plotname = 'deltaR_iso/default/{}'.format(plot)
+    hists = [wrappers[s].getHist(plotname) for s in sampleMap[proc]]
+    hist = sumHists(proc+'control',*hists)
+    return hist
+
 def getHist(proc,**kwargs):
     scale = kwargs.pop('scale',1)
     shift = kwargs.pop('shift','')
@@ -271,6 +279,11 @@ def create_datacard(args):
             wrappers[sample] = NtupleWrapper('MuMuTauTau',sample,new=True,version='80X')
             for shift in shifts:
                 wrappers[sample+shift] = NtupleWrapper('MuMuTauTau',sample,new=True,version='80X',shift=shift)
+
+    wrappers_mm = {}
+    for proc in data:
+        for sample in sampleMap[proc]:
+            wrappers_mm[sample] = NtupleWrapper('MuMu',sample,new=True,version='80X')
     
     ##############################
     ### Create/read histograms ###
@@ -347,6 +360,20 @@ def create_datacard(args):
                     histMap[mode][shift]['data'].Rebin(rebinning[var[0]])
                     histMap[mode][shift]['dataNoSig'].Rebin(rebinning[var[0]])
 
+    for mode in ['control']:
+        histMap[mode] = {}
+        for shift in ['']:
+            histMap[mode][shift] = {}
+            for proc in backgrounds:
+                logging.info('Getting {} {}'.format(proc,shift))
+                if proc=='datadriven':
+                    histMap[mode][shift][proc] = getControlHist('data',doUnbinned=doUnbinned,var=var,wrappers=wrappers_mm)
+            if shift: continue
+            logging.info('Getting observed')
+            hist = getControlHist('data',doUnbinned=doUnbinned,var=var,wrappers=wrappers_mm)
+            histMap[mode][shift]['data'] = hist.Clone()
+            histMap[mode][shift]['dataNoSig'] = hist.Clone()
+
     name = []
     if args.unbinned: name += ['unbinned']
     if do2D: name += [var[1]]
@@ -372,13 +399,14 @@ def create_datacard(args):
     if 'tt' in var: haaLimits.YLABEL = 'm_{#tau_{#mu}#tau_{h}}'
     if 'h' in var or 'hkf' in var: haaLimits.YLABEL = 'm_{#mu#mu#tau_{#mu}#tau_{h}}'
     haaLimits.initializeWorkspace()
-    haaLimits.addBackgroundModels()
+    haaLimits.addControlModels(voigtian=True,logy=xRange[0]<4)
+    haaLimits.addBackgroundModels(voigtian=True,logy=False,fixAfterControl=True)
     haaLimits.XRANGE = [0,30] # override for signal splines
     haaLimits.addSignalModels(fit=False)#,ygausOnly=True) # dont fit, use splines
     haaLimits.XRANGE = xRange
-    #haaLimits.addData() # this will use "data" as the observed dataset
+    haaLimits.addControlData()
     haaLimits.addData(asimov=(blind and not doMatrix),addSignal=addSignal,**signalParams) # this will generate a dataset based on the fitted model
-    haaLimits.setupDatacard()
+    haaLimits.setupDatacard(addControl=True)
     haaLimits.addSystematics()
     name = 'mmmt_{}_parametric'.format('_'.join(var))
     if args.unbinned: name += '_unbinned'

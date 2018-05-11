@@ -268,7 +268,7 @@ class Limits(object):
         val = self.expected[key] if key in self.expected else 0.
         if isinstance(val,ROOT.TH2):
             val = self.__unwrap(val)
-        return val if val else 1.0e-10
+        return val
 
     def printCard(self,filename,bins=['all'],processes=['all'],blind=True,addSignal=False,saveWorkspace=False,suffix=''):
         '''
@@ -356,13 +356,13 @@ class Limits(object):
         rates = ['rate','']+['']*totalColumns
         norms = []
         colpos = 1
+        toSkip = []
         for bin in bins:
             for process in processesOrdered:
-                colpos += 1
-                binsForRates[colpos] = binName.format(bin=bin)
-                processNames[colpos] = process
-                processNumbers[colpos] = '{0:<10}'.format(processesOrdered.index(process)-len(signals)+1)
                 exp = self.getExpected(process,bin)
+                if not exp: 
+                    toSkip += [(bin,process)]
+                    continue
                 label = '{0}_{1}'.format(processNames[colpos],binsForRates[colpos])
                 if isinstance(exp,ROOT.TH1): # it is a histogram (for shape analysis)
                     logging.debug('{0}: {1}'.format(label,exp.Integral()))
@@ -385,6 +385,10 @@ class Limits(object):
                     print exp
                     raise
                 # TODO: unbinned handling
+                colpos += 1
+                binsForRates[colpos] = binName.format(bin=bin)
+                processNames[colpos] = process
+                processNumbers[colpos] = '{0:<10}'.format(processesOrdered.index(process)-len(signals)+1)
                 rates[colpos] = '{0:<10.4g}'.format(exp)
 
         # other rateParams
@@ -419,6 +423,7 @@ class Limits(object):
                 for bin in bins:
                     for process in processesOrdered:
                         key = (bin,process)
+                        if key in toSkip: continue
                         s = '-'
                         if key in combinedSysts[syst]['systs']:
                             s = combinedSysts[syst]['systs'][key]
