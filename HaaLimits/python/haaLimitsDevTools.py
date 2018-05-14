@@ -60,6 +60,12 @@ rebinning = {
 #################
 ### Utilities ###
 #################
+def getControlDataset(wrapper,plotname):
+    selDatasets = {
+        'x' : 'x>{} && x<{}'.format(*xRange),
+    }
+    return wrapper.getDataset(plotname,selection=selDatasets['x'],xRange=xRange,weight='w')
+
 def getDataset(wrapper,plotname):
     selDatasets = {
         'x' : 'x>{} && x<{}'.format(*xRange),
@@ -72,10 +78,17 @@ def getDataset(wrapper,plotname):
 
 def getControlHist(proc,**kwargs):
     wrappers = kwargs.pop('wrappers',{})
+    doUnbinned = kwargs.pop('doUnbinned',False)
     plot = 'mmMass'
     plotname = 'deltaR_iso/default/{}'.format(plot)
-    hists = [wrappers[s].getHist(plotname) for s in sampleMap[proc]]
-    hist = sumHists(proc+'control',*hists)
+    if doUnbinned:
+        plot += '_dataset'
+    if doUnbinned:
+        hists = [getControlDataset(wrappers[s],plotname) for s in sampleMap[proc]]
+        hist = sumDatasets(proc+'control',*hists)
+    else:
+        hists = [wrappers[s].getHist(plotname) for s in sampleMap[proc]]
+        hist = sumHists(proc+'control',*hists)
     return hist
 
 def getHist(proc,**kwargs):
@@ -399,12 +412,12 @@ def create_datacard(args):
     if 'tt' in var: haaLimits.YLABEL = 'm_{#tau_{#mu}#tau_{h}}'
     if 'h' in var or 'hkf' in var: haaLimits.YLABEL = 'm_{#mu#mu#tau_{#mu}#tau_{h}}'
     haaLimits.initializeWorkspace()
-    haaLimits.addControlModels(voigtian=True,logy=xRange[0]<4)
-    haaLimits.addBackgroundModels(voigtian=True,logy=False,fixAfterControl=True)
+    if args.addControl: haaLimits.addControlModels(voigtian=True,logy=xRange[0]<4)
+    haaLimits.addBackgroundModels(voigtian=True,logy=False,fixAfterControl=args.addControl)
     haaLimits.XRANGE = [0,30] # override for signal splines
     haaLimits.addSignalModels(fit=False)#,ygausOnly=True) # dont fit, use splines
     haaLimits.XRANGE = xRange
-    haaLimits.addControlData()
+    if args.addControl: haaLimits.addControlData()
     haaLimits.addData(asimov=(blind and not doMatrix),addSignal=addSignal,**signalParams) # this will generate a dataset based on the fitted model
     haaLimits.setupDatacard(addControl=True)
     haaLimits.addSystematics()
@@ -423,6 +436,7 @@ def parse_command_line(argv):
     parser.add_argument('--parametric', action='store_true', help='Create parametric datacards')
     parser.add_argument('--unbinned', action='store_true', help='Create unbinned datacards')
     parser.add_argument('--addSignal', action='store_true', help='Insert fake signal')
+    parser.add_argument('--addControl', action='store_true', help='Add control channel')
     parser.add_argument('--higgs', type=int, default=125, choices=[125,300,750])
     parser.add_argument('--pseudoscalar', type=int, default=15, choices=[5,7,9,11,13,15,17,19,21])
     parser.add_argument('--xRange', type=float, nargs='*', default=[4,25])
