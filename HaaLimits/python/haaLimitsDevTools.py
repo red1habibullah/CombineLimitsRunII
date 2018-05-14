@@ -82,7 +82,7 @@ def getControlHist(proc,**kwargs):
     plot = 'mmMass'
     plotname = 'deltaR_iso/default/{}'.format(plot)
     if doUnbinned:
-        plot += '_dataset'
+        plotname += '_dataset'
     if doUnbinned:
         hists = [getControlDataset(wrappers[s],plotname) for s in sampleMap[proc]]
         hist = sumDatasets(proc+'control',*hists)
