@@ -171,7 +171,7 @@ class HaaLimits(Limits):
         cont.build(self.workspace,nameC)
     
         cont1 = Models.Exponential('cont1',
-            lamb = [-0.20,-1,0],
+            lamb = [-2,-4,0],
         )
         nameC1 = 'cont1{}'.format('_'+tag if tag else '')
         cont1.build(self.workspace,nameC1)
@@ -581,7 +581,7 @@ class HaaLimits(Limits):
     def _addShapeSystematic(self):
         for shift in self.SHIFTS:
             shapeproc = self.sigProcesses
-            shapesyst = { (shapeproc, tuple( self.REGIONS)) :shift, }
+            shapesyst = { (shapeproc, tuple(self.REGIONS)) : shift, }
             self.addSystematic(shift, 'shape', systematics=shapesyst)
     
     def _addLumiSystematic(self):

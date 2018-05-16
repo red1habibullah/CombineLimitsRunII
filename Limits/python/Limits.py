@@ -6,6 +6,7 @@ import numbers
 import ROOT
 
 from CombineLimits.Limits.Models import Model, ModelSpline
+from utilities import *
 
 class Limits(object):
     '''
@@ -474,6 +475,7 @@ class Limits(object):
 
         # now write to file
         logging.info('Writing {0}{1}.txt'.format(filename,suffix))
+        python_mkdir(os.path.dirname(filename))
         with open(filename+suffix+'.txt','w') as f:
             allRows = [binRows,observations,binsForRates,processNames,processNumbers,rates]+systRows
             lineWidth = 80

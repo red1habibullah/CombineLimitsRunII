@@ -33,10 +33,12 @@ amasses = ['3p6',4,5,6,7,9,11,13,15,17,19,21]
 signame = 'HToAAH{h}A{a}'
 
 shiftTypes = ['lep','pu','fake','trig','btag','MuonEn','TauEn','JetEn','UnclusteredEn']
-shiftTypes = []
+#shiftTypes = []
 shifts = []
 for s in shiftTypes:
     shifts += [s+'Up', s+'Down']
+
+
 
 varHists = {
     'mm' : 'ammMass',
@@ -81,14 +83,15 @@ def getControlHist(proc,**kwargs):
     doUnbinned = kwargs.pop('doUnbinned',False)
     plot = 'mmMass'
     plotname = 'deltaR_iso/default/{}'.format(plot)
-    if doUnbinned:
-        plotname += '_dataset'
-    if doUnbinned:
-        hists = [getControlDataset(wrappers[s],plotname) for s in sampleMap[proc]]
-        hist = sumDatasets(proc+'control',*hists)
-    else:
-        hists = [wrappers[s].getHist(plotname) for s in sampleMap[proc]]
-        hist = sumHists(proc+'control',*hists)
+    #if doUnbinned:
+    #    plotname += '_dataset'
+    #if doUnbinned:
+    #    hists = [getControlDataset(wrappers[s],plotname) for s in sampleMap[proc]]
+    #    hist = sumDatasets(proc+'control',*hists)
+    #else:
+    # Takes far too long to do this unbinned
+    hists = [wrappers[s].getHist(plotname) for s in sampleMap[proc]]
+    hist = sumHists(proc+'control',*hists)
     return hist
 
 def getHist(proc,**kwargs):
