@@ -420,9 +420,10 @@ def create_datacard(args):
     haaLimits.XRANGE = [0,30] # override for signal splines
     haaLimits.addSignalModels(fit=False)#,ygausOnly=True) # dont fit, use splines
     haaLimits.XRANGE = xRange
-    if args.addControl: haaLimits.addControlData()
+    #if args.addControl: haaLimits.addControlData()
     haaLimits.addData(asimov=(blind and not doMatrix),addSignal=addSignal,**signalParams) # this will generate a dataset based on the fitted model
-    haaLimits.setupDatacard(addControl=True)
+    #haaLimits.setupDatacard(addControl=args.addControl)
+    haaLimits.setupDatacard()
     haaLimits.addSystematics()
     name = 'mmmt_{}_parametric'.format('_'.join(var))
     if args.unbinned: name += '_unbinned'

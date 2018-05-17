@@ -200,7 +200,7 @@ class HaaLimits(Limits):
         bgs[nameC1] = [0.5,0,1]
         # jpsi
         if self.XRANGE[0]<4:
-            print "ADDING J/PSI"
+            print 'ADDING J/PSI'
             #bgs[nameJ1] = [0.9,0,1]
             #bgs[nameJ2] = [0.9,0,1]
             bgs[nameJ] = [0.9,0,1]
@@ -209,7 +209,7 @@ class HaaLimits(Limits):
         #    bgs[nameJE] = [0.9,0,1]
         # upsilon
         if addUpsilon and self.XRANGE[0]<=9 and self.XRANGE[1]>=11:
-            print "ADDING UPSILON"
+            print 'ADDING UPSILON'
             #bgs[nameU1] = [0.9,0,1]
             #bgs[nameU2] = [0.9,0,1]
             #bgs[nameU3] = [0.9,0,1]
@@ -367,9 +367,9 @@ class HaaLimits(Limits):
             data = hist.Clone(name)
 
         if setUpsilonLambda:
-            self.workspace.var("x").setRange("low", self.XRANGE[0], self.UPSILONRANGE[0] )
-            self.workspace.var("x").setRange("high", self.UPSILONRANGE[1], self.XRANGE[1])
-            fr = model.fitTo(data, ROOT.RooFit.Save(), ROOT.RooFit.SumW2Error(True), ROOT.RooFit.Range("low,high") )
+            self.workspace.var('x').setRange('low', self.XRANGE[0], self.UPSILONRANGE[0] )
+            self.workspace.var('x').setRange('high', self.UPSILONRANGE[1], self.XRANGE[1])
+            fr = model.fitTo(data, ROOT.RooFit.Save(), ROOT.RooFit.SumW2Error(True), ROOT.RooFit.Range('low,high') )
         else:
             fr = model.fitTo(data, ROOT.RooFit.Save(), ROOT.RooFit.SumW2Error(True) )
 
@@ -407,6 +407,8 @@ class HaaLimits(Limits):
             errs[pars.at(p).GetName()] = pars.at(p).getError()
         for v in sorted(vals.keys()):
             print '  ', v, vals[v], '+/-', errs[v]
+
+        return vals, errs
 
 
     ###############################
@@ -469,37 +471,39 @@ class HaaLimits(Limits):
         region = 'control'
         self.buildModel(region=region, addUpsilon=addUpsilon, setUpsilonLambda=setUpsilonLambda, voigtian=voigtian)
         self.workspace.factory('bg_{}_norm[1,0,2]'.format(region))
-        self.fitBackground(region=region, setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
+        vals, errs = self.fitBackground(region=region, setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
+        self.control_vals = vals
+        self.control_errs = errs
 
     def fix(self,fix=True):
-        self.workspace.arg("mean_upsilon1S").setConstant(fix)
-        self.workspace.arg("mean_upsilon2S").setConstant(fix)
-        self.workspace.arg("mean_upsilon3S").setConstant(fix)
-        self.workspace.arg("sigma_upsilon1S").setConstant(fix)
-        self.workspace.arg("sigma_upsilon2S").setConstant(fix)
-        self.workspace.arg("sigma_upsilon3S").setConstant(fix)
-        self.workspace.arg("width_upsilon1S").setConstant(fix)
-        self.workspace.arg("width_upsilon2S").setConstant(fix)
-        self.workspace.arg("width_upsilon3S").setConstant(fix)
-        self.workspace.arg("upsilon1S_frac").setConstant(fix) 
-        self.workspace.arg("upsilon2S_frac").setConstant(fix) 
-        self.workspace.arg("upsilon3S_frac").setConstant(fix) 
-        self.workspace.arg("upsilon23_frac").setConstant(fix) 
-        self.workspace.arg("mean_jpsi1S").setConstant(fix)
-        self.workspace.arg("mean_jpsi2S").setConstant(fix)
-        self.workspace.arg("sigma_jpsi1S").setConstant(fix)
-        self.workspace.arg("sigma_jpsi2S").setConstant(fix)
-        self.workspace.arg("width_jpsi1S").setConstant(fix)
-        self.workspace.arg("width_jpsi2S").setConstant(fix)
-        self.workspace.arg("jpsi1S_frac").setConstant(fix) 
-        self.workspace.arg("jpsi2S_frac").setConstant(fix) 
+        self.workspace.arg('mean_upsilon1S').setConstant(fix)
+        self.workspace.arg('mean_upsilon2S').setConstant(fix)
+        self.workspace.arg('mean_upsilon3S').setConstant(fix)
+        self.workspace.arg('sigma_upsilon1S').setConstant(fix)
+        self.workspace.arg('sigma_upsilon2S').setConstant(fix)
+        self.workspace.arg('sigma_upsilon3S').setConstant(fix)
+        self.workspace.arg('width_upsilon1S').setConstant(fix)
+        self.workspace.arg('width_upsilon2S').setConstant(fix)
+        self.workspace.arg('width_upsilon3S').setConstant(fix)
+        self.workspace.arg('upsilon1S_frac').setConstant(fix) 
+        self.workspace.arg('upsilon2S_frac').setConstant(fix) 
+        self.workspace.arg('upsilon3S_frac').setConstant(fix) 
+        self.workspace.arg('upsilon23_frac').setConstant(fix) 
+        self.workspace.arg('mean_jpsi1S').setConstant(fix)
+        self.workspace.arg('mean_jpsi2S').setConstant(fix)
+        self.workspace.arg('sigma_jpsi1S').setConstant(fix)
+        self.workspace.arg('sigma_jpsi2S').setConstant(fix)
+        self.workspace.arg('width_jpsi1S').setConstant(fix)
+        self.workspace.arg('width_jpsi2S').setConstant(fix)
+        self.workspace.arg('jpsi1S_frac').setConstant(fix) 
+        self.workspace.arg('jpsi2S_frac').setConstant(fix) 
 
     def addBackgroundModels(self, fixAfterControl=False, fixAfterFP=False, addUpsilon=True, setUpsilonLambda=False, voigtian=False, logy=False):
         if fixAfterControl:
             self.fix()
         if setUpsilonLambda:
-            self.workspace.arg("lambda_cont1_FP").setConstant(True)
-            self.workspace.arg("lambda_cont1_PP").setConstant(True)
+            self.workspace.arg('lambda_cont1_FP').setConstant(True)
+            self.workspace.arg('lambda_cont1_PP').setConstant(True)
         for region in self.REGIONS:
             if region == 'PP' and fixAfterFP and addUpsilon and self.XRANGE[0]<=9 and self.XRANGE[1]>=11:
                 self.fix()
@@ -571,12 +575,48 @@ class HaaLimits(Limits):
     ### Systematics ###
     ###################
     def addSystematics(self):
-        print "ADDING SYSTEMATICS"
+        print 'ADDING SYSTEMATICS'
         self.sigProcesses = tuple([self.SPLINENAME.format(h=h) for h in self.HMASSES])
         self._addLumiSystematic()
         self._addMuonSystematic()
         self._addTauSystematic()
         self._addShapeSystematic()
+        self._addControlSystematics()
+
+    def _addControlSystematics(self):
+        '''Add the prefit control region values to datacard'''
+
+        if not hasattr(self,'control_vals'): return
+
+        params = [
+            'mean_upsilon1S',
+            'mean_upsilon2S',
+            'mean_upsilon3S',
+            'sigma_upsilon1S',
+            'sigma_upsilon2S',
+            'sigma_upsilon3S',
+            'width_upsilon1S',
+            'width_upsilon2S',
+            'width_upsilon3S',
+            'upsilon1S_frac',
+            'upsilon2S_frac',
+            'upsilon3S_frac',
+            'upsilon23_frac',
+            'mean_jpsi1S',
+            'mean_jpsi2S',
+            'sigma_jpsi1S',
+            'sigma_jpsi2S',
+            'width_jpsi1S',
+            'width_jpsi2S',
+            'jpsi1S_frac',
+            'jpsi2S_frac',
+        ]
+
+        for param in params:
+            v = self.control_vals[param]
+            e = self.control_errs[param]
+            rel_err = e/v
+            self.addSystematic(param, 'param', systematics=[v,e])
 
     def _addShapeSystematic(self):
         for shift in self.SHIFTS:

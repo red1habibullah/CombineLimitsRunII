@@ -610,6 +610,7 @@ class HaaLimits2D(HaaLimits):
         self._addMuonSystematic()
         self._addTauSystematic()
         self._addShapeSystematic()
+        self._addControlSystematics()
 
     ###################################
     ### Save workspace and datacard ###
