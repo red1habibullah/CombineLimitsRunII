@@ -26,7 +26,7 @@ xRange = [4,25] # no jpsi
 yRange = [0,1200] # h, hkf
 
 hmasses = [125,300,750]
-hmasses = [125]
+#hmasses = [125]
 amasses = ['3p6',4,5,6,7,9,11,13,15,17,19,21]
 #amasses = [5,11,15,21]
     
@@ -284,7 +284,7 @@ def create_datacard(args):
     backgrounds = ['datadriven']
     data = ['data']
     
-    signals = [signame.format(h=h,a=a) for h in hmasses for a in amasses]
+    signals = [signame.format(h=h,a=a) for h in hmasses for a in amasses if not (h>125 and a in ['3p6',4,6])]
     signalToAdd = signame.format(**signalParams)
 
     

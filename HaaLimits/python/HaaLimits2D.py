@@ -149,7 +149,9 @@ class HaaLimits2D(HaaLimits):
         ygausOnly = kwargs.get('ygausOnly',False)
         fit = kwargs.get('fit',False)
         dobgsig = kwargs.get('doBackgroundSignal',False)
-        avals = [float(str(x).replace('p','.')) for x in self.AMASSES]
+        amasses = self.AMASSES
+        if h>125: amasses = [a for a in amasses if a not in ['3p6',4,6]]
+        avals = [float(str(x).replace('p','.')) for x in amasses]
         histMap = self.histMap[region][shift]
         tag= '{}{}'.format(region,'_'+shift if shift else '')
         # initial fit
@@ -157,7 +159,7 @@ class HaaLimits2D(HaaLimits):
         errors = {}
         results[h] = {}
         errors[h] = {}
-        for a in self.AMASSES:
+        for a in amasses:
             aval = float(str(a).replace('p','.'))
             ws = ROOT.RooWorkspace('sig')
             ws.factory('x[{0}, {1}]'.format(*self.XRANGE))
@@ -259,53 +261,6 @@ class HaaLimits2D(HaaLimits):
             results[h][a], errors[h][a] = model.fit2D(ws, hist, 'h{}_a{}_{}'.format(h,a,tag), saveDir=saveDir, save=True, doErrors=True)
             print h, a, results[h][a], errors[h][a]
     
-        #models = {
-        #    'xmean' : Models.Chebychev('xmean',  order = 1, p0 = [0,-1,1], p1 = [0.1,-1,1], p2 = [0.03,-1,1]),
-        #    'xwidth': Models.Chebychev('xwidth', order = 1, p0 = [0,-1,1], p1 = [0.1,-1,1], p2 = [0.03,-1,1]),
-        #    'xsigma': Models.Chebychev('xsigma', order = 1, p0 = [0,-1,1], p1 = [0.1,-1,1], p2 = [0.03,-1,1]),
-        #    'ymean' : Models.Chebychev('ymean',  order = 1, p0 = [0,-1,1], p1 = [0.1,-1,1], p2 = [0.03,-1,1], x = 'y'),
-        #    'ywidth': Models.Chebychev('ywidth', order = 3, p0 = [0,-1,1], p1 = [0.1,-1,1], p2 = [0.03,-1,1], x = 'y'),
-        #    'ysigma': Models.Chebychev('ysigma', order = 1, p0 = [0,-1,1], p1 = [0.1,-1,1], p2 = [0.03,-1,1], x = 'y'),
-        #}
-    
-        #for param in ['mean', 'width', 'sigma']:
-        #    ws = ROOT.RooWorkspace(param)
-        #    ws.factory('x[{},{}]'.format(*self.XRANGE))
-        #    ws.var('x').setUnit('GeV')
-        #    ws.var('x').setPlotLabel(self.SPLINELABEL)
-        #    ws.var('x').SetTitle(self.SPLINELABEL)
-        #    model = models['x'+param]
-        #    model.build(ws, 'x'+param)
-        #    name = '{}_{}{}'.format('x'+param,h,tag)
-        #    hist = ROOT.TH1D(name, name, len(self.AMASSES), 4, 22)
-        #    vals = [results[h][a]['{}_sigx'.format(param)] for a in self.AMASSES]
-        #    errs = [errors[h][a]['{}_sigx'.format(param)] for a in self.AMASSES]
-        #    for i,a in enumerate(self.AMASSES):
-        #        b = hist.FindBin(a)
-        #        hist.SetBinContent(b,vals[i])
-        #        hist.SetBinError(b,errs[i])
-        #    saveDir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
-        #    model.fit(ws, hist, name, saveDir=saveDir, save=True)
-    
-        #    if param=='width' and ygausOnly: continue
-
-        #    ws = ROOT.RooWorkspace(param)
-        #    ws.factory('y[{},{}]'.format(*self.YRANGE))
-        #    ws.var('y').setUnit('GeV')
-        #    ws.var('y').setPlotLabel(self.SPLINELABEL)
-        #    ws.var('y').SetTitle(self.SPLINELABEL)
-        #    model = models['y'+param]
-        #    model.build(ws, 'y'+param)
-        #    name = '{}_{}{}'.format('y'+param,h,tag)
-        #    hist = ROOT.TH1D(name, name, len(self.AMASSES), 4, 22)
-        #    vals = [results[h][a]['{}_sigy'.format(param)] for a in self.AMASSES]
-        #    errs = [errors[h][a]['{}_sigy'.format(param)] for a in self.AMASSES]
-        #    for i,a in enumerate(self.AMASSES):
-        #        b = hist.FindBin(a)
-        #        hist.SetBinContent(b,vals[i])
-        #        hist.SetBinError(b,errs[i])
-        #    saveDir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
-        #    model.fit(ws, hist, name, saveDir=saveDir, save=True)
 
         # Fit using ROOT rather than RooFit for the splines
         fitFuncs = {
@@ -330,9 +285,9 @@ class HaaLimits2D(HaaLimits):
         fittedParams = {}
         for param in ['mean','width','sigma']:
             name = '{}_{}{}'.format('x'+param,h,tag)
-            xerrs = [0]*len(self.AMASSES)
-            vals = [results[h][a]['{}_sigx'.format(param)] for a in self.AMASSES]
-            errs = [errors[h][a]['{}_sigx'.format(param)] for a in self.AMASSES]
+            xerrs = [0]*len(amasses)
+            vals = [results[h][a]['{}_sigx'.format(param)] for a in amasses]
+            errs = [errors[h][a]['{}_sigx'.format(param)] for a in amasses]
             graph = ROOT.TGraphErrors(len(avals),array('d',avals),array('d',vals),array('d',xerrs),array('d',errs))
             savename = '{}/{}/{}_Fit'.format(self.plotDir,shift if shift else 'central',name)
             canvas = ROOT.TCanvas(savename,savename,800,800)
@@ -340,17 +295,18 @@ class HaaLimits2D(HaaLimits):
             graph.SetTitle('')
             graph.GetHistogram().GetXaxis().SetTitle(self.SPLINELABEL)
             graph.GetHistogram().GetYaxis().SetTitle(param)
-            fit = graph.Fit(fitFuncs['x'+param])
+            if fit:
+                fitResult = graph.Fit(fitFuncs['x'+param])
+                func = graph.GetFunction(fitFuncs['x'+param])
+                fittedParams['x'+param] = [func.Eval(x) for x in xs]
             canvas.Print('{}.png'.format(savename))
-            func = graph.GetFunction(fitFuncs['x'+param])
-            fittedParams['x'+param] = [func.Eval(x) for x in xs]
 
             if param=='width' and ygausOnly: continue
 
             name = '{}_{}{}'.format('y'+param,h,tag)
-            xerrs = [0]*len(self.AMASSES)
-            vals = [results[h][a]['{}_sigy'.format(param)] for a in self.AMASSES]
-            errs = [errors[h][a]['{}_sigy'.format(param)] for a in self.AMASSES]
+            xerrs = [0]*len(amasses)
+            vals = [results[h][a]['{}_sigy'.format(param)] for a in amasses]
+            errs = [errors[h][a]['{}_sigy'.format(param)] for a in amasses]
             graph = ROOT.TGraphErrors(len(avals),array('d',avals),array('d',vals),array('d',xerrs),array('d',errs))
             savename = '{}/{}/{}_Fit'.format(self.plotDir,shift if shift else 'central',name)
             canvas = ROOT.TCanvas(savename,savename,800,800)
@@ -358,13 +314,14 @@ class HaaLimits2D(HaaLimits):
             graph.SetTitle('')
             graph.GetHistogram().GetXaxis().SetTitle(self.SPLINELABEL)
             graph.GetHistogram().GetYaxis().SetTitle(param)
-            fit = graph.Fit(fitFuncs['y'+param])
+            if fit:
+                fitResult = graph.Fit(fitFuncs['y'+param])
+                func = graph.GetFunction(fitFuncs['y'+param])
+                fittedParams['y'+param] = [func.Eval(y) for y in ys]
             canvas.Print('{}.png'.format(savename))
-            func = graph.GetFunction(fitFuncs['y'+param])
-            fittedParams['y'+param] = [func.Eval(y) for y in ys]
     
         # create model
-        for a in self.AMASSES:
+        for a in amasses:
             print h, a, results[h][a]
         if fit:
             modelx = Models.VoigtianSpline(self.SPLINENAME.format(h=h)+'_x',
@@ -379,9 +336,9 @@ class HaaLimits2D(HaaLimits):
             modelx = Models.VoigtianSpline(self.SPLINENAME.format(h=h)+'_x',
                 **{
                     'masses' : avals,
-                    'means'  : [results[h][a]['mean_sigx'] for a in self.AMASSES],
-                    'widths' : [results[h][a]['width_sigx'] for a in self.AMASSES],
-                    'sigmas' : [results[h][a]['sigma_sigx'] for a in self.AMASSES],
+                    'means'  : [results[h][a]['mean_sigx'] for a in amasses],
+                    'widths' : [results[h][a]['width_sigx'] for a in amasses],
+                    'sigmas' : [results[h][a]['sigma_sigx'] for a in amasses],
                 }
             )
         modelx.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_x'))
@@ -401,9 +358,9 @@ class HaaLimits2D(HaaLimits):
                 **{
                     'x'      : 'y',
                     'masses' : avals,
-                    'means'  : [results[h][a]['mean_sigy'] for a in self.AMASSES],
-                    'widths' : [] if ygausOnly else [results[h][a]['width_sigy'] for a in self.AMASSES],
-                    'sigmas' : [results[h][a]['sigma_sigy'] for a in self.AMASSES],
+                    'means'  : [results[h][a]['mean_sigy'] for a in amasses],
+                    'widths' : [] if ygausOnly else [results[h][a]['width_sigy'] for a in amasses],
+                    'sigmas' : [results[h][a]['sigma_sigy'] for a in amasses],
                 }
             )
         modely.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_y'))
@@ -413,29 +370,29 @@ class HaaLimits2D(HaaLimits):
         )
 
         if self.binned:
-            integrals = [histMap[self.SIGNAME.format(h=h,a=a)].Integral() for a in self.AMASSES]
+            integrals = [histMap[self.SIGNAME.format(h=h,a=a)].Integral() for a in amasses]
         else:
-            integrals = [histMap[self.SIGNAME.format(h=h,a=a)].sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE)) for a in self.AMASSES]
+            integrals = [histMap[self.SIGNAME.format(h=h,a=a)].sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE)) for a in amasses]
         print 'Integrals', tag, h, integrals
 
+        param = 'integral'
+        funcname = 'pol2'
+        name = '{}_{}{}'.format(param,h,tag)
+        vals = integrals
+        graph = ROOT.TGraph(len(avals),array('d',avals),array('d',vals))
+        savename = '{}/{}/{}_Fit'.format(self.plotDir,shift if shift else 'central',name)
+        canvas = ROOT.TCanvas(savename,savename,800,800)
+        graph.Draw()
+        graph.SetTitle('')
+        graph.GetHistogram().GetXaxis().SetTitle(self.SPLINELABEL)
+        graph.GetHistogram().GetYaxis().SetTitle('integral')
         if fit:
-            param = 'integral'
-            funcname = 'pol2'
-            name = '{}_{}{}'.format(param,h,tag)
-            vals = integrals
-            graph = ROOT.TGraph(len(avals),array('d',avals),array('d',vals))
-            savename = '{}/{}/{}_Fit'.format(self.plotDir,shift if shift else 'central',name)
-            canvas = ROOT.TCanvas(savename,savename,800,800)
-            graph.Draw()
-            graph.SetTitle('')
-            graph.GetHistogram().GetXaxis().SetTitle(self.SPLINELABEL)
-            graph.GetHistogram().GetYaxis().SetTitle('integral')
-            fit = graph.Fit(funcname)
-            canvas.Print('{}.png'.format(savename))
+            fitResult = graph.Fit(funcname)
             func = graph.GetFunction(funcname)
             newintegrals = [func.Eval(x) for x in xs]
             # dont fit integrals
             #model.setIntegral(xs,newintegrals)
+        canvas.Print('{}.png'.format(savename))
         model.setIntegral(avals,integrals)
 
         model.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag))
@@ -560,7 +517,7 @@ class HaaLimits2D(HaaLimits):
     ######################
     ### Setup datacard ###
     ######################
-    def setupDatacard(self, addControl=True):
+    def setupDatacard(self, addControl=False):
 
         # setup bins
         for region in self.REGIONS:
