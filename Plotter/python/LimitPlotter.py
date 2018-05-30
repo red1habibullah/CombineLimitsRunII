@@ -162,16 +162,16 @@ class LimitPlotter(PlotterBase):
                     expected.SetPoint(     i+1,   expectedSmooth.GetX()[i+1],         math.exp(expectedSmooth.GetY()[i+1]))
             # smooth linear
             else:
-                #twoSigmaSmooth_low    = twoSigmaSmoother_low.SmoothKern( twoSigma_low, 'normal',2,n)
-                #twoSigmaSmooth_high   = twoSigmaSmoother_high.SmoothKern(twoSigma_high,'normal',2,n)
-                #oneSigmaSmooth_low    = oneSigmaSmoother_low.SmoothKern( oneSigma_low, 'normal',2,n)
-                #oneSigmaSmooth_high   = oneSigmaSmoother_high.SmoothKern(oneSigma_high,'normal',2,n)
-                #expectedSmooth        = expectedSmoother.SmoothKern(     expected,     'normal',2,n)
-                twoSigmaSmooth_low    = twoSigmaSmoother_low.SmoothLowess(twoSigma_low,  '',0.3)
-                twoSigmaSmooth_high   = twoSigmaSmoother_high.SmoothLowess(twoSigma_high,'',0.3)
-                oneSigmaSmooth_low    = oneSigmaSmoother_low.SmoothLowess(oneSigma_low,  '',0.3)
-                oneSigmaSmooth_high   = oneSigmaSmoother_high.SmoothLowess(oneSigma_high,'',0.3)
-                expectedSmooth        = expectedSmoother.SmoothLowess(expected,          '',0.3)
+                twoSigmaSmooth_low    = twoSigmaSmoother_low.SmoothKern( twoSigma_low, 'normal',0.3,n)
+                twoSigmaSmooth_high   = twoSigmaSmoother_high.SmoothKern(twoSigma_high,'normal',0.3,n)
+                oneSigmaSmooth_low    = oneSigmaSmoother_low.SmoothKern( oneSigma_low, 'normal',0.3,n)
+                oneSigmaSmooth_high   = oneSigmaSmoother_high.SmoothKern(oneSigma_high,'normal',0.3,n)
+                expectedSmooth        = expectedSmoother.SmoothKern(     expected,     'normal',0.3,n)
+                #twoSigmaSmooth_low    = twoSigmaSmoother_low.SmoothLowess(twoSigma_low,  '',0.1)
+                #twoSigmaSmooth_high   = twoSigmaSmoother_high.SmoothLowess(twoSigma_high,'',0.1)
+                #oneSigmaSmooth_low    = oneSigmaSmoother_low.SmoothLowess(oneSigma_low,  '',0.1)
+                #oneSigmaSmooth_high   = oneSigmaSmoother_high.SmoothLowess(oneSigma_high,'',0.1)
+                #expectedSmooth        = expectedSmoother.SmoothLowess(expected,          '',0.1)
                 #twoSigmaSmooth_low    = twoSigmaSmoother_low.SmoothSuper(twoSigma_low,  '',0,0)
                 #twoSigmaSmooth_high   = twoSigmaSmoother_high.SmoothSuper(twoSigma_high,'',0,0)
                 #oneSigmaSmooth_low    = oneSigmaSmoother_low.SmoothSuper(oneSigma_low,  '',0,0)
@@ -247,6 +247,7 @@ class LimitPlotter(PlotterBase):
         blind = kwargs.pop('blind',True)
         lumipos = kwargs.pop('lumipos',11)
         isprelim = kwargs.pop('isprelim',True)
+        smooth = kwargs.pop('smooth',False)
         legendpos = kwargs.pop('legendpos',31)
         numcol = kwargs.pop('numcol',1)
         nsigmas = kwargs.pop('nsigmas',7)
@@ -265,10 +266,32 @@ class LimitPlotter(PlotterBase):
         n = len(xvals)
         expected = ROOT.TGraph(n)
         observed = ROOT.TGraph(n)
+        expectedForSmoothing = ROOT.TGraph(n)
 
         for i in range(len(xvals)):
             expected.SetPoint(     i,   xvals[i],     limits[xvals[i]][0])
             observed.SetPoint(     i,   xvals[i],     limits[xvals[i]][1])
+            expectedForSmoothing.SetPoint(     i, xvals[i],     math.log(limits[xvals[i]][0])) # 0.5
+
+        smoothlog = True
+        if smooth: # smooth out the expected bands
+
+            expectedSmoother      = ROOT.TGraphSmooth()
+            # smooth log, good for exponentially changing
+            if smoothlog:
+                expectedSmooth        = expectedSmoother.SmoothKern(     expectedForSmoothing,     'normal',0.5,n)
+                for i in range(len(xvals)):
+                    expected.SetPoint(     i,   expectedSmooth.GetX()[i],         math.exp(expectedSmooth.GetY()[i]))
+            # smooth linear
+            else:
+                expectedSmooth        = expectedSmoother.SmoothKern(     expected,     'normal',0.3,n)
+                #expectedSmooth        = expectedSmoother.SmoothLowess(expected,          '',0.1)
+                #expectedSmooth        = expectedSmoother.SmoothSuper(expected,          '',0,0)
+                for i in range(len(xvals)):
+                    x = expectedSmooth.GetX()[i]
+                    if x>3 and x<4: continue # jpsi
+                    if x>9 and x<11: continue # upsilon
+                    expected.SetPoint(     i,   expectedSmooth.GetX()[i],         expectedSmooth.GetY()[i])
 
         expected.SetLineStyle(7)
         expected.SetMarkerStyle(0)
@@ -350,6 +373,8 @@ class LimitPlotter(PlotterBase):
 
         expected = {}
         observed = {}
+        expectedForSmoothing = {}
+        expectedSmooth = {}
 
         for x in range(len(xvals)):
             limits = quartiles[x]
@@ -357,6 +382,7 @@ class LimitPlotter(PlotterBase):
             n = len(xvals[x])
             expected[x] = ROOT.TGraph(n)
             observed[x] = ROOT.TGraph(n)
+            expectedForSmoothing[x] = ROOT.TGraph(n)
 
             for i in range(len(xvals[x])):
                 if not all(limits[xvals[x][i]]):
@@ -364,6 +390,27 @@ class LimitPlotter(PlotterBase):
                     continue
                 expected[x].SetPoint(     i,   xvals[x][i],     limits[xvals[x][i]][2]) # 0.5
                 observed[x].SetPoint(     i,   xvals[x][i],     limits[xvals[x][i]][5]) # obs
+                expectedForSmoothing[x].SetPoint(     i, xvals[x][i],     math.log(limits[xvals[x][i]][2])) # 0.5
+
+            smoothlog = False
+            if smooth: # smooth out the expected bands
+
+                expectedSmoother      = ROOT.TGraphSmooth()
+                # smooth log, good for exponentially changing
+                if smoothlog:
+                    expectedSmooth[x]        = expectedSmoother.SmoothKern(     expectedForSmoothing[x],     'normal',0.5,n)
+                    for i in range(len(xvals[x])):
+                        expected[x].SetPoint(     i,   expectedSmooth[x].GetX()[i],         math.exp(expectedSmooth[x].GetY()[i]))
+                # smooth linear
+                else:
+                    expectedSmooth[x]        = expectedSmoother.SmoothKern(     expected[x],     'normal',0.3,n)
+                    #expectedSmooth[x]        = expectedSmoother.SmoothLowess(expected[x],          '',0.1)
+                    #expectedSmooth[x]        = expectedSmoother.SmoothSuper(expected[x],          '',0,0)
+                    for i in range(len(xvals[x])):
+                        xi = expected[x].GetX()[i]
+                        if xi>3 and xi<4: continue # jpsi
+                        if xi>9 and xi<11: continue # upsilon
+                        expected[x].SetPoint(     i,   expectedSmooth[x].GetX()[i],         expectedSmooth[x].GetY()[i])
 
             expected[x].SetLineStyle(7)
             expected[x].SetLineWidth(2)
