@@ -19,7 +19,7 @@ ROOT.gStyle.SetPalette(ROOT.kBlueGreenYellow)
 ROOT.TGaxis.SetMaxDigits(3)
 
 stops = array('d',[0, 0.749, 0.751, 1.0])
-red   = array('d',[  0./255,   51./255,  51./255, 255./255])
+red   = array('d',[  0./255,   51./255,  51./255,   0./255])
 green = array('d',[ 51./255,  204./255, 153./255, 204./255])
 blue  = array('d',[204./255,  255./255,  51./255,   0./255])
 number = 4
@@ -54,6 +54,8 @@ class LimitPlotter(PlotterBase):
         leftmargin = kwargs.pop('leftmargin',None)
         model = kwargs.pop('model',None)
         xVar = kwargs.pop('x',None)
+        overlay = kwargs.pop('overlay',None)
+        overlayLabels = kwargs.pop('overlayLabels',None)
 
         logging.info('Plotting {0}'.format(savename))
 
@@ -229,6 +231,17 @@ class LimitPlotter(PlotterBase):
 
         expected.Draw('same')
         ROOT.gPad.RedrawAxis()
+
+        colors = [ROOT.kRed, ROOT.kBlue-4, ROOT.kMagenta+1, ROOT.kCyan+1, ROOT.kOrange+7]
+        if overlay:
+            c = 0
+            for graph in overlay:
+                graph.SetLineColor(colors[c])
+                graph.SetLineWidth(2)
+                graph.Draw('same')
+                c += 1
+                if c >= len(colors): c = 0
+
         if not blind: observed.Draw('same')
 
         ratiounity = ROOT.TLine(expected.GetXaxis().GetXmin(),1,expected.GetXaxis().GetXmax(),1)
@@ -243,6 +256,14 @@ class LimitPlotter(PlotterBase):
         if not blind: entries = [[observed,'Observed','l']] + entries
         legend = self._getLegend(entries=entries,numcol=numcol,position=legendpos)
         legend.Draw()
+
+
+        if overlayLabels:
+            entries = []
+            for g,l in zip(overlay,overlayLabels):
+                entries += [[g,l,'l']]
+            legendOverlay = self._getLegend(entries=entries,numcol=1,position=32)
+            legendOverlay.Draw()
 
         # cms lumi styling
         self._setStyle(canvas,position=lumipos,preliminary=isprelim)
@@ -263,6 +284,7 @@ class LimitPlotter(PlotterBase):
         asymptoticFilenames = kwargs.pop('asymptoticFilenames',[])
         smooth = kwargs.pop('smooth',False)
         logz = kwargs.pop('logz',1)
+        logy = kwargs.pop('logy',0)
         plotunity = kwargs.pop('plotunity',True)
         model = kwargs.pop('model',None)
         modelkey = kwargs.pop('modelkey',None)
@@ -272,15 +294,18 @@ class LimitPlotter(PlotterBase):
 
         canvas = ROOT.TCanvas(savename,savename,50,50,600,600)
         canvas.SetLogz(logz)
+        canvas.SetLogy(logy)
         canvas.SetLeftMargin(0.14)
         canvas.SetRightMargin(0.2)
 
         xmin = xvals[0]
         xmax = xvals[-1]
-        nx = int((xmax-xmin)/0.1)
+        dx = 0.1
+        nx = int((xmax-xmin)/dx)
         ymin = yvals[0]
         ymax = yvals[-1]
-        ny = int((ymax-ymin)/0.1)
+        dy = 0.05
+        ny = int((ymax-ymin)/dy)
         expectedHist = ROOT.TH2D('exp','exp',nx,xmin,xmax,ny,ymin,ymax)
         oneSigmaLowHist  = ROOT.TH2D('onel','onel',nx,xmin,xmax,ny,ymin,ymax)
         oneSigmaHighHist = ROOT.TH2D('oneh','oneh',nx,xmin,xmax,ny,ymin,ymax)
@@ -297,7 +322,7 @@ class LimitPlotter(PlotterBase):
         twoSigma_high_vals = []
 
         for yi in range(ny):
-            y = ymin + yi*0.1
+            y = ymin + yi*dy
 
             n = len(xvals)
             twoSigma = ROOT.TGraph(2*n)
@@ -452,7 +477,7 @@ class LimitPlotter(PlotterBase):
             #twoSigma_low_prev = 0
             #twoSigma_high_prev = 0
             for xi in range(nx):
-                x = xmin + xi*0.1
+                x = xmin + xi*dx
                 val = expected.Eval(x)
                 if val<1e-3: val = 1e-3
                 expectedHist.SetBinContent(expectedHist.GetBin(xi+1,yi+1),val)
@@ -518,76 +543,49 @@ class LimitPlotter(PlotterBase):
         expectedHist.Draw('colz')
         for g in expected_graphs:
             g.SetLineStyle(1)
+            g.SetLineWidth(3)
             g.SetFillStyle(0)
             g.SetMarkerStyle(0)
             g.Draw('same')
         for g in oneSigma_graphs:
             g.SetLineStyle(2)
+            g.SetLineWidth(2)
             g.SetFillStyle(0)
             g.SetMarkerStyle(0)
             g.Draw('same')
         for g in twoSigma_graphs:
             g.SetLineStyle(6)
+            g.SetLineWidth(2)
             g.SetFillStyle(0)
             g.SetMarkerStyle(0)
             #g.Draw('same')
 
+        # special legend
+        entries = [
+            [expected_graphs[0],'Expected exclusion','l'],
+        ]
+        title = 'NMSSM Type {}'.format(modelkey)
+        legend = self._getLegend(entries=entries,numcol=1,position=24,title=title)
+        legend.Draw()
 
-        #def draw_lines(vals):
-        #    lines = []
-        #    line = []
-        #    xp, yp = 0, 0
-        #    for x,y in vals:
-        #        if abs(x-xp)>0.2 and abs(y-yp)>0.2:
-        #            if line: lines += [line]
-        #            line = []
-        #        line += [(x,y)]
-        #        xp = x
-        #        yp = y
-        #    if line: lines += [line]
-        #    return lines
+        # manually add the 1 sigma bands
+        leg_one_low  = ROOT.TGraph(2,array('d',[11.72,12.91]),array('d',[8.84,8.84]))
+        leg_one_high = ROOT.TGraph(2,array('d',[11.72,12.91]),array('d',[8.69,8.69]))
+        leg_two_low  = ROOT.TGraph(2,array('d',[11.72,12.91]),array('d',[8.91,8.91]))
+        leg_two_high = ROOT.TGraph(2,array('d',[11.72,12.91]),array('d',[8.62,8.62]))
 
-
-        #expected_vals      = sorted(expected_vals)
-        #oneSigma_low_vals  = sorted(oneSigma_low_vals)
-        #oneSigma_high_vals = sorted(oneSigma_high_vals)
-        #twoSigma_low_vals  = sorted(twoSigma_low_vals)
-        #twoSigma_high_vals = sorted(twoSigma_high_vals)
-
-
-        #expected_lines = draw_lines(expected_vals)
-        #oneSigma_lines = draw_lines(oneSigma_low_vals)
-        #oneSigma_lines += draw_lines(oneSigma_high_vals)
-        #twoSigma_lines = draw_lines(twoSigma_low_vals)
-        #twoSigma_lines += draw_lines(twoSigma_high_vals)
-
-        #graphs = []
-        #for line in expected_lines:
-        #    if not line: continue
-        #    graph = ROOT.TGraph(len(line),array('d',[v[0] for v in line]),array('d',[v[1] for v in line]))
-        #    graph.SetLineStyle(1)
-        #    graph.SetFillStyle(0)
-        #    graph.SetMarkerStyle(0)
-        #    graph.Draw('same')
-        #    graphs += [graph]
-        #for line in oneSigma_lines:
-        #    if not line: continue
-        #    graph = ROOT.TGraph(len(line),array('d',[v[0] for v in line]),array('d',[v[1] for v in line]))
-        #    graph.SetLineStyle(2)
-        #    graph.SetFillStyle(0)
-        #    graph.SetMarkerStyle(0)
-        #    graph.Draw('same')
-        #    graphs += [graph]
-        #for line in twoSigma_lines:
-        #    if not line: continue
-        #    graph = ROOT.TGraph(len(line),array('d',[v[0] for v in line]),array('d',[v[1] for v in line]))
-        #    graph.SetLineStyle(6)
-        #    graph.SetFillStyle(0)
-        #    graph.SetMarkerStyle(0)
-        #    #graph.Draw('same')
-        #    graphs += [graph]
-
-
+        leg_one_low.SetLineStyle(2)
+        leg_one_low.SetLineWidth(2)
+        leg_one_low.Draw('same')
+        leg_one_high.SetLineStyle(2)
+        leg_one_high.SetLineWidth(2)
+        leg_one_high.Draw('same')
+        leg_two_low.SetLineStyle(6)
+        leg_two_low.SetLineWidth(2)
+        #leg_two_low.Draw('same')
+        leg_two_high.SetLineStyle(6)
+        leg_two_high.SetLineWidth(2)
+        #leg_two_high.Draw('same')
 
         # cms lumi styling
         self._setStyle(canvas,position=lumipos,preliminary=isprelim)
