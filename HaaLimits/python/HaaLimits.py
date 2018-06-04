@@ -313,7 +313,7 @@ class HaaLimits(Limits):
         else:
             data = hist.Clone(name)
 
-        if setUpsilonLambda is not None:
+        if setUpsilonLambda is None and not addUpsilon:
             self.workspace.var("x").setRange("low", self.XRANGE[0], self.UPSILONRANGE[0] )
             self.workspace.var("x").setRange("high", self.UPSILONRANGE[1], self.XRANGE[1])
             fr = model.fitTo(data, ROOT.RooFit.Save(), ROOT.RooFit.SumW2Error(True), ROOT.RooFit.Range("low,high") )
@@ -404,11 +404,16 @@ class HaaLimits(Limits):
             self.buildModel(region=region, addUpsilon=addUpsilon, setUpsilonLambda=setUpsilonLambda)
             if setUpsilonLambda is not None:
                 print "SETTING LAMBD"
-                #self.workspace.arg("lambda_cont1_FP").setConstant(True)
-                #self.workspace.arg("lambda_cont1_PP").setConstant(True)
-	        self.workspace.argSet("lambda_cont1_FP").setRealValue("lambda_cont1_FP", setUpsilonLambda)
-    	        self.workspace.argSet("lambda_cont1_PP").setRealValue("lambda_cont1_PP", setUpsilonLambda)
+                if region == 'FP': 
+                    self.workspace.arg("lambda_cont1_FP").setConstant(True)
+	            self.workspace.argSet("lambda_cont1_FP").setRealValue("lambda_cont1_FP", setUpsilonLambda)
+                if region == 'PP':
+                    self.workspace.arg("lambda_cont1_PP").setConstant(True)
+    	            self.workspace.argSet("lambda_cont1_PP").setRealValue("lambda_cont1_PP", setUpsilonLambda)
             self.workspace.factory('bg_{}_norm[1,0,2]'.format(region))
+            self.workspace.Print("v")
+            if region == 'FP': print "CHECK lambda_cont1_FP=", self.workspace.argSet("lambda_cont1_FP").getRealValue("lambda_cont1_FP")
+            if region == 'PP': print "CHECK lambda_cont1_PP=", self.workspace.argSet("lambda_cont1_PP").getRealValue("lambda_cont1_PP")
             self.fitBackground(region=region, setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon)
             if region == 'PP' and fixAfterFP and addUpsilon and self.XRANGE[0]<=9 and self.XRANGE[1]>=11: 
                 print "SETTING NOT CONSTANT"
