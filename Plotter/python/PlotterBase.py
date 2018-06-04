@@ -34,6 +34,7 @@ class PlotterBase(object):
         numcol = kwargs.pop('numcol',1)
         widthScale = kwargs.pop('widthScale',1)
         heightScale = kwargs.pop('heightScale',1)
+        title = kwargs.pop('title',None)
         # programatically decide position
         # ----------------
         # | 14 | 24 | 34 |
@@ -69,6 +70,7 @@ class PlotterBase(object):
             xend = 0.95
             xstart = xend-width
         legend = ROOT.TLegend(xstart,ystart,xend,yend,'','NDC')
+        if title: legend.SetHeader(title)
         if numcol>1: legend.SetNColumns(int(numcol))
         legend.SetTextFont(42)
         legend.SetBorderSize(0)

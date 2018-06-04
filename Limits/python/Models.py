@@ -439,10 +439,10 @@ class Sum(Model):
             ws.factory("RSUM::{0}({1})".format(label, ', '.join(sumargs)))
         elif self.doExtended:
             sumargs = ['{0}_frac*{0}'.format(pdf) for pdf in pdfs]
-            ws.factory("sum::{0}({1})".format(label, ', '.join(sumargs)))
+            ws.factory("SUM::{0}({1})".format(label, ', '.join(sumargs)))
         else: # Don't do this if you have more than 2 pdfs ...
             if len(sumpdfs)>1: logging.warning('This sum is not guaranteed to be positive because there are more than two arguments. Better to use the option recursive=True.')
-            sumargs = ['{0}_frac*{0}'.format(pdf) for pdf in sumpdfs] + ['{0}'.format(pdf) for pdf in pdfs if pdf not in sumpdfs]
+            sumargs = ['{0}_frac*{0}'.format(pdf) for pdf in sumpdfs[:-1]] + [sumpdfs[-1]]
             ws.factory("SUM::{0}({1})".format(label, ', '.join(sumargs)))
         self.params = ['{}_frac'.format(pdf) for pdf in pdfs]
 

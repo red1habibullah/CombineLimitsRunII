@@ -15,8 +15,18 @@ import CombineLimits.Plotter.tdrstyle as tdrstyle
 ROOT.gROOT.SetBatch(ROOT.kTRUE)
 ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 1001;")
 tdrstyle.setTDRStyle()
-ROOT.gStyle.SetPalette(1)
+ROOT.gStyle.SetPalette(ROOT.kBlueGreenYellow)
 ROOT.TGaxis.SetMaxDigits(3)
+
+stops = array('d',[0, 0.749, 0.751, 1.0])
+red   = array('d',[  0./255,   51./255,  51./255,   0./255])
+green = array('d',[ 51./255,  204./255, 153./255, 204./255])
+blue  = array('d',[204./255,  255./255,  51./255,   0./255])
+number = 4
+nb = 255
+ROOT.TColor.CreateGradientColorTable(number, stops, red, green, blue, nb)
+ROOT.gStyle.SetPalette(nb)
+ROOT.gStyle.SetNumberContours(255)
 
 class LimitPlotter(PlotterBase):
     '''Basic limit plotter utilities'''
@@ -42,6 +52,10 @@ class LimitPlotter(PlotterBase):
         logy = kwargs.pop('logy',1)
         plotunity = kwargs.pop('plotunity',True)
         leftmargin = kwargs.pop('leftmargin',None)
+        model = kwargs.pop('model',None)
+        xVar = kwargs.pop('x',None)
+        overlay = kwargs.pop('overlay',None)
+        overlayLabels = kwargs.pop('overlayLabels',None)
 
         logging.info('Plotting {0}'.format(savename))
 
@@ -70,6 +84,14 @@ class LimitPlotter(PlotterBase):
         expected_asym = ROOT.TGraph(n)
         observed_asym = ROOT.TGraph(n)
 
+        if xVar:
+            w = ROOT.RooRealVar('w','w',0,10000)
+            twoSigmaDS_low  = ROOT.RooDataSet('twoSigmaLow', 'twoSigmaLow', ROOT.RooArgSet(xVar,w),w.GetName())
+            twoSigmaDS_high = ROOT.RooDataSet('twoSigmaHigh','twoSigmaHigh',ROOT.RooArgSet(xVar,w),w.GetName())
+            oneSigmaDS_low  = ROOT.RooDataSet('oneSigmaLow', 'oneSigmaLow', ROOT.RooArgSet(xVar,w),w.GetName())
+            oneSigmaDS_high = ROOT.RooDataSet('oneSigmaHigh','oneSigmaHigh',ROOT.RooArgSet(xVar,w),w.GetName())
+            expectedDS      = ROOT.RooDataSet('expected',    'expected',    ROOT.RooArgSet(xVar,w),w.GetName())
+
         for i in range(len(xvals)):
             if not all(limits[xvals[i]]):
                 print i, xvals[i], limits[xvals[i]]
@@ -97,9 +119,42 @@ class LimitPlotter(PlotterBase):
                 oneSigma_asym.SetPoint(2*n-i-1,xvals[i], limits_asym[xvals[i]][3]) # 0.84
                 twoSigma_asym.SetPoint(2*n-i-1,xvals[i], limits_asym[xvals[i]][4]) # 0.975
                 observed_asym.SetPoint(i,  xvals[i],     limits_asym[xvals[i]][5]) # obs
+            if xVar:
+                xVar.setVal(xvals[i])
+                w.setVal(limits[xvals[i]][0])
+                twoSigmaDS_high.add(ROOT.RooArgSet(xVar,w))
+                w.setVal(limits[xvals[i]][1])
+                oneSigmaDS_high.add(ROOT.RooArgSet(xVar,w))
+                w.setVal(limits[xvals[i]][2])
+                expectedDS.add(ROOT.RooArgSet(xVar,w))
+                w.setVal(limits[xvals[i]][3])
+                oneSigmaDS_low.add(ROOT.RooArgSet(xVar,w))
+                w.setVal(limits[xvals[i]][4])
+                twoSigmaDS_low.add(ROOT.RooArgSet(xVar,w))
+
+        
+        def fit(savename,ds):
+            model.fitTo(ds,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True))
+            xFrame = xVar.frame()
+            ds.plotOn(xFrame)
+            model.plotOn(xFrame)
+            canvas = ROOT.TCanvas(savename,savename,800,800)
+            xFrame.Draw()
+            canvas.Print('{0}.png'.format(savename))
+            
+        if model and xVar:
+            # smooth to a pdf
+            fit('twoSigma_low', twoSigmaDS_low)
+            fit('oneSigma_low', oneSigmaDS_low)
+            fit('expected',     expectedDS)
+            fit('oneSigma_high',oneSigmaDS_high)
+            fit('twoSigma_high',twoSigmaDS_high)
+
 
         smoothlog = False
         if smooth: # smooth out the expected bands
+
+            # smooth via function
             twoSigmaSmoother_low  = ROOT.TGraphSmooth()
             twoSigmaSmoother_high = ROOT.TGraphSmooth()
             oneSigmaSmoother_low  = ROOT.TGraphSmooth()
@@ -120,16 +175,16 @@ class LimitPlotter(PlotterBase):
                     expected.SetPoint(     i+1,   expectedSmooth.GetX()[i+1],         math.exp(expectedSmooth.GetY()[i+1]))
             # smooth linear
             else:
-                #twoSigmaSmooth_low    = twoSigmaSmoother_low.SmoothKern( twoSigma_low, 'normal',2,n)
-                #twoSigmaSmooth_high   = twoSigmaSmoother_high.SmoothKern(twoSigma_high,'normal',2,n)
-                #oneSigmaSmooth_low    = oneSigmaSmoother_low.SmoothKern( oneSigma_low, 'normal',2,n)
-                #oneSigmaSmooth_high   = oneSigmaSmoother_high.SmoothKern(oneSigma_high,'normal',2,n)
-                #expectedSmooth        = expectedSmoother.SmoothKern(     expected,     'normal',2,n)
-                twoSigmaSmooth_low    = twoSigmaSmoother_low.SmoothLowess(twoSigma_low,  '',0.3)
-                twoSigmaSmooth_high   = twoSigmaSmoother_high.SmoothLowess(twoSigma_high,'',0.3)
-                oneSigmaSmooth_low    = oneSigmaSmoother_low.SmoothLowess(oneSigma_low,  '',0.3)
-                oneSigmaSmooth_high   = oneSigmaSmoother_high.SmoothLowess(oneSigma_high,'',0.3)
-                expectedSmooth        = expectedSmoother.SmoothLowess(expected,          '',0.3)
+                twoSigmaSmooth_low    = twoSigmaSmoother_low.SmoothKern( twoSigma_low, 'normal',0.3,n)
+                twoSigmaSmooth_high   = twoSigmaSmoother_high.SmoothKern(twoSigma_high,'normal',0.3,n)
+                oneSigmaSmooth_low    = oneSigmaSmoother_low.SmoothKern( oneSigma_low, 'normal',0.3,n)
+                oneSigmaSmooth_high   = oneSigmaSmoother_high.SmoothKern(oneSigma_high,'normal',0.3,n)
+                expectedSmooth        = expectedSmoother.SmoothKern(     expected,     'normal',0.3,n)
+                #twoSigmaSmooth_low    = twoSigmaSmoother_low.SmoothLowess(twoSigma_low,  '',0.1)
+                #twoSigmaSmooth_high   = twoSigmaSmoother_high.SmoothLowess(twoSigma_high,'',0.1)
+                #oneSigmaSmooth_low    = oneSigmaSmoother_low.SmoothLowess(oneSigma_low,  '',0.1)
+                #oneSigmaSmooth_high   = oneSigmaSmoother_high.SmoothLowess(oneSigma_high,'',0.1)
+                #expectedSmooth        = expectedSmoother.SmoothLowess(expected,          '',0.1)
                 #twoSigmaSmooth_low    = twoSigmaSmoother_low.SmoothSuper(twoSigma_low,  '',0,0)
                 #twoSigmaSmooth_high   = twoSigmaSmoother_high.SmoothSuper(twoSigma_high,'',0,0)
                 #oneSigmaSmooth_low    = oneSigmaSmoother_low.SmoothSuper(oneSigma_low,  '',0,0)
@@ -144,6 +199,7 @@ class LimitPlotter(PlotterBase):
                     oneSigma_high.SetPoint(i+1,   oneSigmaSmooth_high.GetX()[i+1],    oneSigmaSmooth_high.GetY()[i+1])
                     oneSigma_low.SetPoint( i+1,   oneSigmaSmooth_low.GetX()[i+1],     oneSigmaSmooth_low.GetY()[i+1])
                     expected.SetPoint(     i+1,   expectedSmooth.GetX()[i+1],         expectedSmooth.GetY()[i+1])
+
             for i in range(n-2):
                 twoSigma.SetPoint(     i+1,   twoSigma_high.GetX()[i+1],    twoSigma_high.GetY()[i+1])
                 twoSigma.SetPoint(     n+i+1, twoSigma_low.GetX()[n-1-i-1], twoSigma_low.GetY()[n-1-i-1])
@@ -176,6 +232,17 @@ class LimitPlotter(PlotterBase):
 
         expected.Draw('same')
         ROOT.gPad.RedrawAxis()
+
+        colors = [ROOT.kRed, ROOT.kBlue-4, ROOT.kMagenta+1, ROOT.kCyan+1, ROOT.kOrange+7]
+        if overlay:
+            c = 0
+            for graph in overlay:
+                graph.SetLineColor(colors[c])
+                graph.SetLineWidth(2)
+                graph.Draw('same')
+                c += 1
+                if c >= len(colors): c = 0
+
         if not blind: observed.Draw('same')
 
         ratiounity = ROOT.TLine(expected.GetXaxis().GetXmin(),1,expected.GetXaxis().GetXmax(),1)
@@ -191,6 +258,336 @@ class LimitPlotter(PlotterBase):
         legend = self._getLegend(entries=entries,numcol=numcol,position=legendpos)
         legend.Draw()
 
+
+        if overlayLabels:
+            entries = []
+            for g,l in zip(overlay,overlayLabels):
+                entries += [[g,l,'l']]
+            legendOverlay = self._getLegend(entries=entries,numcol=1,position=32)
+            legendOverlay.Draw()
+
+        # cms lumi styling
+        self._setStyle(canvas,position=lumipos,preliminary=isprelim)
+
+        self._save(canvas,savename)
+
+
+    def plotLimit2D(self,xvals,yvals,quartiles,scales,savename,**kwargs):
+        '''Plot limits'''
+        xaxis = kwargs.pop('xaxis','x')
+        yaxis = kwargs.pop('yaxis','y')
+        zaxis = kwargs.pop('zaxis','95% CLs Upper Limit on #sigma/#sigma_{model}')
+        blind = kwargs.pop('blind',True)
+        lumipos = kwargs.pop('lumipos',11)
+        isprelim = kwargs.pop('isprelim',True)
+        legendpos = kwargs.pop('legendpos',31)
+        numcol = kwargs.pop('numcol',1)
+        asymptoticFilenames = kwargs.pop('asymptoticFilenames',[])
+        smooth = kwargs.pop('smooth',False)
+        logz = kwargs.pop('logz',1)
+        logy = kwargs.pop('logy',0)
+        plotunity = kwargs.pop('plotunity',True)
+        model = kwargs.pop('model',None)
+        modelkey = kwargs.pop('modelkey',None)
+        xVar = kwargs.pop('x',None)
+
+        logging.info('Plotting {0}'.format(savename))
+
+        canvas = ROOT.TCanvas(savename,savename,50,50,600,600)
+        canvas.SetLogz(logz)
+        canvas.SetLogy(logy)
+        canvas.SetLeftMargin(0.14)
+        canvas.SetRightMargin(0.2)
+
+        xmin = xvals[0]
+        xmax = xvals[-1]
+        dx = 0.1
+        nx = int((xmax-xmin)/dx)
+        ymin = yvals[0]
+        ymax = yvals[-1]
+        dy = 0.05
+        ny = int((ymax-ymin)/dy)
+        expectedHist = ROOT.TH2D('exp','exp',nx,xmin,xmax,ny,ymin,ymax)
+        oneSigmaLowHist  = ROOT.TH2D('onel','onel',nx,xmin,xmax,ny,ymin,ymax)
+        oneSigmaHighHist = ROOT.TH2D('oneh','oneh',nx,xmin,xmax,ny,ymin,ymax)
+        twoSigmaLowHist  = ROOT.TH2D('twol','twol',nx,xmin,xmax,ny,ymin,ymax)
+        twoSigmaHighHist = ROOT.TH2D('twoh','twoh',nx,xmin,xmax,ny,ymin,ymax)
+
+        limits = quartiles
+
+
+        expected_vals = []
+        oneSigma_low_vals = []
+        oneSigma_high_vals = []
+        twoSigma_low_vals = []
+        twoSigma_high_vals = []
+
+        for yi in range(ny):
+            y = ymin + yi*dy
+
+            n = len(xvals)
+            twoSigma = ROOT.TGraph(2*n)
+            oneSigma = ROOT.TGraph(2*n)
+            expected = ROOT.TGraph(n)
+            observed = ROOT.TGraph(n)
+            twoSigma_low = ROOT.TGraph(n)
+            twoSigma_high = ROOT.TGraph(n)
+            oneSigma_low = ROOT.TGraph(n)
+            oneSigma_high = ROOT.TGraph(n)
+            twoSigmaForSmoothing_low = ROOT.TGraph(n)
+            twoSigmaForSmoothing_high = ROOT.TGraph(n)
+            oneSigmaForSmoothing_low = ROOT.TGraph(n)
+            oneSigmaForSmoothing_high = ROOT.TGraph(n)
+            expectedForSmoothing = ROOT.TGraph(n)
+            twoSigma_asym = ROOT.TGraph(2*n)
+            oneSigma_asym = ROOT.TGraph(2*n)
+            expected_asym = ROOT.TGraph(n)
+            observed_asym = ROOT.TGraph(n)
+
+            if xVar:
+                w = ROOT.RooRealVar('w','w',0,10000)
+                twoSigmaDS_low  = ROOT.RooDataSet('twoSigmaLow', 'twoSigmaLow', ROOT.RooArgSet(xVar,w),w.GetName())
+                twoSigmaDS_high = ROOT.RooDataSet('twoSigmaHigh','twoSigmaHigh',ROOT.RooArgSet(xVar,w),w.GetName())
+                oneSigmaDS_low  = ROOT.RooDataSet('oneSigmaLow', 'oneSigmaLow', ROOT.RooArgSet(xVar,w),w.GetName())
+                oneSigmaDS_high = ROOT.RooDataSet('oneSigmaHigh','oneSigmaHigh',ROOT.RooArgSet(xVar,w),w.GetName())
+                expectedDS      = ROOT.RooDataSet('expected',    'expected',    ROOT.RooArgSet(xVar,w),w.GetName())
+
+            for i in range(len(xvals)):
+                if not all(limits[xvals[i]]):
+                    print i, xvals[i], limits[xvals[i]]
+                    continue
+                scale = scales[xvals[i]][modelkey].Eval(y)
+                if scale<=0: scale = 1e-10
+                twoSigma.SetPoint(     i,   xvals[i],     limits[xvals[i]][0]*scale) # 0.025
+                oneSigma.SetPoint(     i,   xvals[i],     limits[xvals[i]][1]*scale) # 0.16
+                expected.SetPoint(     i,   xvals[i],     limits[xvals[i]][2]*scale) # 0.5
+                oneSigma.SetPoint(2*n-i-1,  xvals[i],     limits[xvals[i]][3]*scale) # 0.84
+                twoSigma.SetPoint(2*n-i-1,  xvals[i],     limits[xvals[i]][4]*scale) # 0.975
+                observed.SetPoint(     i,   xvals[i],     limits[xvals[i]][5]*scale) # obs
+                twoSigma_high.SetPoint(i,   xvals[i],     limits[xvals[i]][0]*scale) # 0.025
+                oneSigma_high.SetPoint(i,   xvals[i],     limits[xvals[i]][1]*scale) # 0.16
+                oneSigma_low.SetPoint(n-i-1,xvals[i],     limits[xvals[i]][3]*scale) # 0.84
+                twoSigma_low.SetPoint(n-i-1,xvals[i],     limits[xvals[i]][4]*scale) # 0.975
+                twoSigmaForSmoothing_high.SetPoint(i, xvals[i],     math.log(limits[xvals[i]][0]*scale)) # 0.025
+                oneSigmaForSmoothing_high.SetPoint(i, xvals[i],     math.log(limits[xvals[i]][1]*scale)) # 0.16
+                oneSigmaForSmoothing_low.SetPoint(n-i-1, xvals[i],  math.log(limits[xvals[i]][3]*scale)) # 0.84
+                twoSigmaForSmoothing_low.SetPoint(n-i-1, xvals[i],  math.log(limits[xvals[i]][4]*scale)) # 0.975
+                expectedForSmoothing.SetPoint(     i, xvals[i],     math.log(limits[xvals[i]][2]*scale)) # 0.5
+                if asymptoticFilenames:
+                    twoSigma_asym.SetPoint(i,  xvals[i],     limits_asym[xvals[i]][0]*scale) # 0.025
+                    oneSigma_asym.SetPoint(i,  xvals[i],     limits_asym[xvals[i]][1]*scale) # 0.16
+                    expected_asym.SetPoint(i,  xvals[i],     limits_asym[xvals[i]][2]*scale) # 0.5
+                    oneSigma_asym.SetPoint(2*n-i-1,xvals[i], limits_asym[xvals[i]][3]*scale) # 0.84
+                    twoSigma_asym.SetPoint(2*n-i-1,xvals[i], limits_asym[xvals[i]][4]*scale) # 0.975
+                    observed_asym.SetPoint(i,  xvals[i],     limits_asym[xvals[i]][5]*scale) # obs
+                if xVar:
+                    xVar.setVal(xvals[i])
+                    w.setVal(limits[xvals[i]][0])
+                    twoSigmaDS_high.add(ROOT.RooArgSet(xVar,w))
+                    w.setVal(limits[xvals[i]][1])
+                    oneSigmaDS_high.add(ROOT.RooArgSet(xVar,w))
+                    w.setVal(limits[xvals[i]][2])
+                    expectedDS.add(ROOT.RooArgSet(xVar,w))
+                    w.setVal(limits[xvals[i]][3])
+                    oneSigmaDS_low.add(ROOT.RooArgSet(xVar,w))
+                    w.setVal(limits[xvals[i]][4])
+                    twoSigmaDS_low.add(ROOT.RooArgSet(xVar,w))
+
+            
+            def fit(savename,ds):
+                model.fitTo(ds,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True))
+                xFrame = xVar.frame()
+                ds.plotOn(xFrame)
+                model.plotOn(xFrame)
+                canvas = ROOT.TCanvas(savename,savename,800,800)
+                xFrame.Draw()
+                canvas.Print('{0}.png'.format(savename))
+                
+            if model and xVar:
+                # smooth to a pdf
+                fit('twoSigma_low', twoSigmaDS_low)
+                fit('oneSigma_low', oneSigmaDS_low)
+                fit('expected',     expectedDS)
+                fit('oneSigma_high',oneSigmaDS_high)
+                fit('twoSigma_high',twoSigmaDS_high)
+
+
+            smoothlog = False
+            if smooth: # smooth out the expected bands
+
+                # smooth via function
+                twoSigmaSmoother_low  = ROOT.TGraphSmooth()
+                twoSigmaSmoother_high = ROOT.TGraphSmooth()
+                oneSigmaSmoother_low  = ROOT.TGraphSmooth()
+                oneSigmaSmoother_high = ROOT.TGraphSmooth()
+                expectedSmoother      = ROOT.TGraphSmooth()
+                # smooth log, good for exponentially changing
+                if smoothlog:
+                    twoSigmaSmooth_low    = twoSigmaSmoother_low.SmoothKern( twoSigmaForSmoothing_low, 'normal',0.5,n)
+                    twoSigmaSmooth_high   = twoSigmaSmoother_high.SmoothKern(twoSigmaForSmoothing_high,'normal',0.5,n)
+                    oneSigmaSmooth_low    = oneSigmaSmoother_low.SmoothKern( oneSigmaForSmoothing_low, 'normal',0.5,n)
+                    oneSigmaSmooth_high   = oneSigmaSmoother_high.SmoothKern(oneSigmaForSmoothing_high,'normal',0.5,n)
+                    expectedSmooth        = expectedSmoother.SmoothKern(     expectedForSmoothing,     'normal',0.5,n)
+                    for i in range(n-2):
+                        twoSigma_high.SetPoint(i+1,   twoSigmaSmooth_high.GetX()[i+1],    math.exp(twoSigmaSmooth_high.GetY()[i+1]))
+                        twoSigma_low.SetPoint( i+1,   twoSigmaSmooth_low.GetX()[i+1],     math.exp(twoSigmaSmooth_low.GetY()[i+1]))
+                        oneSigma_high.SetPoint(i+1,   oneSigmaSmooth_high.GetX()[i+1],    math.exp(oneSigmaSmooth_high.GetY()[i+1]))
+                        oneSigma_low.SetPoint( i+1,   oneSigmaSmooth_low.GetX()[i+1],     math.exp(oneSigmaSmooth_low.GetY()[i+1]))
+                        expected.SetPoint(     i+1,   expectedSmooth.GetX()[i+1],         math.exp(expectedSmooth.GetY()[i+1]))
+                # smooth linear
+                else:
+                    twoSigmaSmooth_low    = twoSigmaSmoother_low.SmoothKern( twoSigma_low, 'normal',0.3,n)
+                    twoSigmaSmooth_high   = twoSigmaSmoother_high.SmoothKern(twoSigma_high,'normal',0.3,n)
+                    oneSigmaSmooth_low    = oneSigmaSmoother_low.SmoothKern( oneSigma_low, 'normal',0.3,n)
+                    oneSigmaSmooth_high   = oneSigmaSmoother_high.SmoothKern(oneSigma_high,'normal',0.3,n)
+                    expectedSmooth        = expectedSmoother.SmoothKern(     expected,     'normal',0.3,n)
+                    #twoSigmaSmooth_low    = twoSigmaSmoother_low.SmoothLowess(twoSigma_low,  '',0.1)
+                    #twoSigmaSmooth_high   = twoSigmaSmoother_high.SmoothLowess(twoSigma_high,'',0.1)
+                    #oneSigmaSmooth_low    = oneSigmaSmoother_low.SmoothLowess(oneSigma_low,  '',0.1)
+                    #oneSigmaSmooth_high   = oneSigmaSmoother_high.SmoothLowess(oneSigma_high,'',0.1)
+                    #expectedSmooth        = expectedSmoother.SmoothLowess(expected,          '',0.1)
+                    #twoSigmaSmooth_low    = twoSigmaSmoother_low.SmoothSuper(twoSigma_low,  '',0,0)
+                    #twoSigmaSmooth_high   = twoSigmaSmoother_high.SmoothSuper(twoSigma_high,'',0,0)
+                    #oneSigmaSmooth_low    = oneSigmaSmoother_low.SmoothSuper(oneSigma_low,  '',0,0)
+                    #oneSigmaSmooth_high   = oneSigmaSmoother_high.SmoothSuper(oneSigma_high,'',0,0)
+                    #expectedSmooth        = expectedSmoother.SmoothSuper(expected,          '',0,0)
+                    for i in range(n-2):
+                        x = twoSigmaSmooth_high.GetX()[i+1]
+                        if x>3 and x<4: continue # jpsi
+                        if x>9 and x<11: continue # upsilon
+                        twoSigma_high.SetPoint(i+1,   twoSigmaSmooth_high.GetX()[i+1],    twoSigmaSmooth_high.GetY()[i+1])
+                        twoSigma_low.SetPoint( i+1,   twoSigmaSmooth_low.GetX()[i+1],     twoSigmaSmooth_low.GetY()[i+1])
+                        oneSigma_high.SetPoint(i+1,   oneSigmaSmooth_high.GetX()[i+1],    oneSigmaSmooth_high.GetY()[i+1])
+                        oneSigma_low.SetPoint( i+1,   oneSigmaSmooth_low.GetX()[i+1],     oneSigmaSmooth_low.GetY()[i+1])
+                        expected.SetPoint(     i+1,   expectedSmooth.GetX()[i+1],         expectedSmooth.GetY()[i+1])
+
+                for i in range(n-2):
+                    twoSigma.SetPoint(     i+1,   twoSigma_high.GetX()[i+1],    twoSigma_high.GetY()[i+1])
+                    twoSigma.SetPoint(     n+i+1, twoSigma_low.GetX()[n-1-i-1], twoSigma_low.GetY()[n-1-i-1])
+                    oneSigma.SetPoint(     i+1,   oneSigma_high.GetX()[i+1],    oneSigma_high.GetY()[i+1])
+                    oneSigma.SetPoint(     n+i+1, oneSigma_low.GetX()[n-1-i-1], oneSigma_low.GetY()[n-1-i-1])
+
+            def cross(val,prev,curr):
+                if prev>=val and curr<=val: return True
+                if prev<=val and curr>=val: return True
+                return False
+
+            #expected_prev = 0
+            #oneSigma_low_prev = 0
+            #oneSigma_high_prev = 0
+            #twoSigma_low_prev = 0
+            #twoSigma_high_prev = 0
+            for xi in range(nx):
+                x = xmin + xi*dx
+                val = expected.Eval(x)
+                if val<1e-3: val = 1e-3
+                expectedHist.SetBinContent(expectedHist.GetBin(xi+1,yi+1),val)
+
+                oneSigmaLowHist.SetBinContent( oneSigmaLowHist.GetBin(xi+1,yi+1), oneSigma_low.Eval(x))
+                oneSigmaHighHist.SetBinContent(oneSigmaHighHist.GetBin(xi+1,yi+1),oneSigma_high.Eval(x))
+                twoSigmaLowHist.SetBinContent( oneSigmaLowHist.GetBin(xi+1,yi+1), twoSigma_low.Eval(x))
+                twoSigmaHighHist.SetBinContent(oneSigmaHighHist.GetBin(xi+1,yi+1),twoSigma_high.Eval(x))
+
+                #expected_curr      = expected.Eval(x)
+                #oneSigma_low_curr  = oneSigma_low.Eval(x)
+                #oneSigma_high_curr = oneSigma_high.Eval(x)
+                #twoSigma_low_curr  = twoSigma_low.Eval(x)
+                #twoSigma_high_curr = twoSigma_high.Eval(x)
+
+                #if xi:
+                #    if cross(1,expected_prev,     expected_curr)     : expected_vals      += [(x,y)]
+                #    if cross(1,oneSigma_low_prev, oneSigma_low_curr) : oneSigma_low_vals  += [(x,y)]
+                #    if cross(1,oneSigma_high_prev,oneSigma_high_curr): oneSigma_high_vals += [(x,y)]
+                #    if cross(1,twoSigma_low_prev, twoSigma_low_curr) : twoSigma_low_vals  += [(x,y)]
+                #    if cross(1,twoSigma_high_prev,twoSigma_high_curr): twoSigma_high_vals += [(x,y)]
+
+                #expected_prev      = expected_curr
+                #oneSigma_low_prev  = oneSigma_low_curr
+                #oneSigma_high_prev = oneSigma_high_curr
+                #twoSigma_low_prev  = twoSigma_low_curr
+                #twoSigma_high_prev = twoSigma_high_curr
+
+        expectedHistCont = expectedHist.Clone()
+
+        expectedHist.GetXaxis().SetTitle(xaxis)
+        expectedHist.GetYaxis().SetTitle(yaxis)
+        expectedHist.GetZaxis().SetTitle(zaxis)
+        expectedHist.GetYaxis().SetTitleSize(0.05)
+        expectedHist.GetYaxis().SetTitleOffset(1.2)
+        expectedHist.GetZaxis().SetTitleSize(0.05)
+        expectedHist.GetZaxis().SetTitleOffset(1.5)
+        expectedHist.GetZaxis().SetRangeUser(1e-3,1e1)
+
+        def get_contours(hist):
+            contours = array('d',[1.0])
+            hist.SetContour(1,contours)
+            hist.Draw('cont z list')
+            canvas.Update()
+            graphs = []
+            conts = ROOT.gROOT.GetListOfSpecials().FindObject('contours')
+            i = 0 # why is this needed?!?!?
+            if i in range(conts.GetSize()):
+                contLevel = conts.At(i)
+                for j in range(contLevel.GetSize()):
+                    graphs += [contLevel.At(j).Clone()]
+                    
+            return graphs
+
+        expected_graphs = get_contours(expectedHistCont)
+        oneSigma_graphs = get_contours(oneSigmaLowHist)
+        oneSigma_graphs += get_contours(oneSigmaHighHist)
+        twoSigma_graphs = get_contours(twoSigmaLowHist)
+        twoSigma_graphs += get_contours(twoSigmaHighHist)
+
+        #print len(expected_graphs), len(oneSigma_graphs), len(twoSigma_graphs)
+
+        expectedHist.Draw('colz')
+        for g in expected_graphs:
+            g.SetLineStyle(1)
+            g.SetLineWidth(3)
+            g.SetFillStyle(0)
+            g.SetMarkerStyle(0)
+            g.Draw('same')
+        for g in oneSigma_graphs:
+            g.SetLineStyle(2)
+            g.SetLineWidth(2)
+            g.SetFillStyle(0)
+            g.SetMarkerStyle(0)
+            g.Draw('same')
+        for g in twoSigma_graphs:
+            g.SetLineStyle(6)
+            g.SetLineWidth(2)
+            g.SetFillStyle(0)
+            g.SetMarkerStyle(0)
+            #g.Draw('same')
+
+        # special legend
+        entries = [
+            [expected_graphs[0],'Expected exclusion','l'],
+        ]
+        title = 'NMSSM Type {}'.format(modelkey)
+        legend = self._getLegend(entries=entries,numcol=1,position=24,title=title)
+        legend.Draw()
+
+        # manually add the 1 sigma bands
+        leg_one_low  = ROOT.TGraph(2,array('d',[11.72,12.91]),array('d',[8.84,8.84]))
+        leg_one_high = ROOT.TGraph(2,array('d',[11.72,12.91]),array('d',[8.69,8.69]))
+        leg_two_low  = ROOT.TGraph(2,array('d',[11.72,12.91]),array('d',[8.91,8.91]))
+        leg_two_high = ROOT.TGraph(2,array('d',[11.72,12.91]),array('d',[8.62,8.62]))
+
+        leg_one_low.SetLineStyle(2)
+        leg_one_low.SetLineWidth(2)
+        leg_one_low.Draw('same')
+        leg_one_high.SetLineStyle(2)
+        leg_one_high.SetLineWidth(2)
+        leg_one_high.Draw('same')
+        leg_two_low.SetLineStyle(6)
+        leg_two_low.SetLineWidth(2)
+        #leg_two_low.Draw('same')
+        leg_two_high.SetLineStyle(6)
+        leg_two_high.SetLineWidth(2)
+        #leg_two_high.Draw('same')
+
         # cms lumi styling
         self._setStyle(canvas,position=lumipos,preliminary=isprelim)
 
@@ -204,6 +601,7 @@ class LimitPlotter(PlotterBase):
         blind = kwargs.pop('blind',True)
         lumipos = kwargs.pop('lumipos',11)
         isprelim = kwargs.pop('isprelim',True)
+        smooth = kwargs.pop('smooth',False)
         legendpos = kwargs.pop('legendpos',31)
         numcol = kwargs.pop('numcol',1)
         nsigmas = kwargs.pop('nsigmas',7)
@@ -222,10 +620,32 @@ class LimitPlotter(PlotterBase):
         n = len(xvals)
         expected = ROOT.TGraph(n)
         observed = ROOT.TGraph(n)
+        expectedForSmoothing = ROOT.TGraph(n)
 
         for i in range(len(xvals)):
             expected.SetPoint(     i,   xvals[i],     limits[xvals[i]][0])
             observed.SetPoint(     i,   xvals[i],     limits[xvals[i]][1])
+            expectedForSmoothing.SetPoint(     i, xvals[i],     math.log(limits[xvals[i]][0])) # 0.5
+
+        smoothlog = True
+        if smooth: # smooth out the expected bands
+
+            expectedSmoother      = ROOT.TGraphSmooth()
+            # smooth log, good for exponentially changing
+            if smoothlog:
+                expectedSmooth        = expectedSmoother.SmoothKern(     expectedForSmoothing,     'normal',0.5,n)
+                for i in range(len(xvals)):
+                    expected.SetPoint(     i,   expectedSmooth.GetX()[i],         math.exp(expectedSmooth.GetY()[i]))
+            # smooth linear
+            else:
+                expectedSmooth        = expectedSmoother.SmoothKern(     expected,     'normal',0.3,n)
+                #expectedSmooth        = expectedSmoother.SmoothLowess(expected,          '',0.1)
+                #expectedSmooth        = expectedSmoother.SmoothSuper(expected,          '',0,0)
+                for i in range(len(xvals)):
+                    x = expectedSmooth.GetX()[i]
+                    if x>3 and x<4: continue # jpsi
+                    if x>9 and x<11: continue # upsilon
+                    expected.SetPoint(     i,   expectedSmooth.GetX()[i],         expectedSmooth.GetY()[i])
 
         expected.SetLineStyle(7)
         expected.SetMarkerStyle(0)
@@ -307,6 +727,8 @@ class LimitPlotter(PlotterBase):
 
         expected = {}
         observed = {}
+        expectedForSmoothing = {}
+        expectedSmooth = {}
 
         for x in range(len(xvals)):
             limits = quartiles[x]
@@ -314,6 +736,7 @@ class LimitPlotter(PlotterBase):
             n = len(xvals[x])
             expected[x] = ROOT.TGraph(n)
             observed[x] = ROOT.TGraph(n)
+            expectedForSmoothing[x] = ROOT.TGraph(n)
 
             for i in range(len(xvals[x])):
                 if not all(limits[xvals[x][i]]):
@@ -321,6 +744,27 @@ class LimitPlotter(PlotterBase):
                     continue
                 expected[x].SetPoint(     i,   xvals[x][i],     limits[xvals[x][i]][2]) # 0.5
                 observed[x].SetPoint(     i,   xvals[x][i],     limits[xvals[x][i]][5]) # obs
+                expectedForSmoothing[x].SetPoint(     i, xvals[x][i],     math.log(limits[xvals[x][i]][2])) # 0.5
+
+            smoothlog = False
+            if smooth: # smooth out the expected bands
+
+                expectedSmoother      = ROOT.TGraphSmooth()
+                # smooth log, good for exponentially changing
+                if smoothlog:
+                    expectedSmooth[x]        = expectedSmoother.SmoothKern(     expectedForSmoothing[x],     'normal',0.5,n)
+                    for i in range(len(xvals[x])):
+                        expected[x].SetPoint(     i,   expectedSmooth[x].GetX()[i],         math.exp(expectedSmooth[x].GetY()[i]))
+                # smooth linear
+                else:
+                    expectedSmooth[x]        = expectedSmoother.SmoothKern(     expected[x],     'normal',0.3,n)
+                    #expectedSmooth[x]        = expectedSmoother.SmoothLowess(expected[x],          '',0.1)
+                    #expectedSmooth[x]        = expectedSmoother.SmoothSuper(expected[x],          '',0,0)
+                    for i in range(len(xvals[x])):
+                        xi = expected[x].GetX()[i]
+                        if xi>3 and xi<4: continue # jpsi
+                        if xi>9 and xi<11: continue # upsilon
+                        expected[x].SetPoint(     i,   expectedSmooth[x].GetX()[i],         expectedSmooth[x].GetY()[i])
 
             expected[x].SetLineStyle(7)
             expected[x].SetLineWidth(2)

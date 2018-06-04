@@ -6,6 +6,7 @@ import numbers
 import ROOT
 
 from CombineLimits.Limits.Models import Model, ModelSpline
+from utilities import *
 
 class Limits(object):
     '''
@@ -25,6 +26,7 @@ class Limits(object):
         self.models = {}      # models to add
         self.expected = {}    # expected yield, one per process/era/analysis/chanel combination
         self.systematics = {} # systematic uncertainties
+        self.param_systematics = {}
         self.rates = {}
         self.name = name
         self.workspace = ROOT.RooWorkspace(self.name)
@@ -134,16 +136,22 @@ class Limits(object):
         if systname in self.systematics:
             logging.warning('Systematic {0} already added.'.format(systname))
         else:
-            goodToAdd = True
-            for syst in systematics:
-                processes,bins = syst
-                goodToAdd = goodToAdd and self.__checkProcesses(processes)
-                goodToAdd = goodToAdd and self.__checkBins(bins)
-            if goodToAdd:
-                self.systematics[systname] = {
+            if mode in ['param','flatParam']:
+                self.param_systematics[systname] = {
                     'mode'  : mode,
                     'values': systematics,
                 }
+            else:
+                goodToAdd = True
+                for syst in systematics:
+                    processes,bins = syst
+                    goodToAdd = goodToAdd and self.__checkProcesses(processes)
+                    goodToAdd = goodToAdd and self.__checkBins(bins)
+                if goodToAdd:
+                    self.systematics[systname] = {
+                        'mode'  : mode,
+                        'values': systematics,
+                    }
 
     def addGroup(self,groupname,*systnames):
         '''Add a group name for a list of systematics'''
@@ -268,7 +276,7 @@ class Limits(object):
         val = self.expected[key] if key in self.expected else 0.
         if isinstance(val,ROOT.TH2):
             val = self.__unwrap(val)
-        return val if val else 1.0e-10
+        return val
 
     def printCard(self,filename,bins=['all'],processes=['all'],blind=True,addSignal=False,saveWorkspace=False,suffix=''):
         '''
@@ -356,13 +364,13 @@ class Limits(object):
         rates = ['rate','']+['']*totalColumns
         norms = []
         colpos = 1
+        toSkip = []
         for bin in bins:
             for process in processesOrdered:
-                colpos += 1
-                binsForRates[colpos] = binName.format(bin=bin)
-                processNames[colpos] = process
-                processNumbers[colpos] = '{0:<10}'.format(processesOrdered.index(process)-len(signals)+1)
                 exp = self.getExpected(process,bin)
+                if not exp: 
+                    toSkip += [(bin,process)]
+                    continue
                 label = '{0}_{1}'.format(processNames[colpos],binsForRates[colpos])
                 if isinstance(exp,ROOT.TH1): # it is a histogram (for shape analysis)
                     logging.debug('{0}: {1}'.format(label,exp.Integral()))
@@ -385,6 +393,10 @@ class Limits(object):
                     print exp
                     raise
                 # TODO: unbinned handling
+                colpos += 1
+                binsForRates[colpos] = binName.format(bin=bin)
+                processNames[colpos] = process
+                processNumbers[colpos] = '{0:<10}'.format(processesOrdered.index(process)-len(signals)+1)
                 rates[colpos] = '{0:<10.4g}'.format(exp)
 
         # other rateParams
@@ -409,66 +421,73 @@ class Limits(object):
         combinedSysts = self.__combineSystematics(*[systs[key] for key in systs])
         logging.debug('Systs to add: {0}'.format([str(x) for x in sorted(combinedSysts.keys())]))
         systRows = []
-        paramRows = []
         for syst in sorted(combinedSysts.keys()):
-            if combinedSysts[syst]['mode'] in ['param','flatParam']:
-                # TODO: implement param uncertainties
-                pass
-            else:
-                thisRow = [syst,combinedSysts[syst]['mode']]
-                for bin in bins:
-                    for process in processesOrdered:
-                        key = (bin,process)
-                        s = '-'
-                        if key in combinedSysts[syst]['systs']:
-                            s = combinedSysts[syst]['systs'][key]
-                            if s==1:
-                                s = '-'
-                            elif isinstance(s,ROOT.TH1):
-                                label = '{0}_{1}_{2}'.format(process,binName.format(bin=bin),syst)
-                                s.SetName(label)
-                                s.SetTitle(label)
-                                shapes += [s]
+            thisRow = [syst,combinedSysts[syst]['mode']]
+            for bin in bins:
+                for process in processesOrdered:
+                    key = (bin,process)
+                    if key in toSkip: continue
+                    s = '-'
+                    if key in combinedSysts[syst]['systs']:
+                        s = combinedSysts[syst]['systs'][key]
+                        if s==1:
+                            s = '-'
+                        elif isinstance(s,ROOT.TH1):
+                            label = '{0}_{1}_{2}'.format(process,binName.format(bin=bin),syst)
+                            s.SetName(label)
+                            s.SetTitle(label)
+                            shapes += [s]
+                            if saveWorkspace:
+                                datahist = ROOT.RooDataHist(label, label, ROOT.RooArgList(self.workspace.var("x")), s)
+                                self.wsimport(datahist)
+                            s = '1'
+                        elif isinstance(s,basestring):
+                            label = '{0}_{1}_{2}'.format(process,binName.format(bin=bin),syst)
+                            s = '1'
+                        elif (isinstance(s,tuple) or isinstance(s,list)) and len(s)==2:
+                            if isinstance(s[0],ROOT.TH1):
+                                label_up = '{0}_{1}_{2}Up'.format(process,binName.format(bin=bin),syst)
+                                label_down = '{0}_{1}_{2}Down'.format(process,binName.format(bin=bin),syst)
+                                s[0].SetName(label_up)
+                                s[0].SetTitle(label_up)
+                                s[1].SetName(label_down)
+                                s[1].SetTitle(label_down)
+                                shapes += s
                                 if saveWorkspace:
-                                    datahist = ROOT.RooDataHist(label, label, ROOT.RooArgList(self.workspace.var("x")), s)
-                                    self.wsimport(datahist)
+                                    datahist_up = ROOT.RooDataHist(label_up, label_up, ROOT.RooArgList(self.workspace.var("x")), s[0])
+                                    datahist_down = ROOT.RooDataHist(label_down, label_down, ROOT.RooArgList(self.workspace.var("x")), s[1])
+                                    self.wsimport(datahist_up)
+                                    self.wsimport(datahist_down)
                                 s = '1'
-                            elif isinstance(s,basestring):
-                                label = '{0}_{1}_{2}'.format(process,binName.format(bin=bin),syst)
+                            elif isinstance(s[0],basestring):
+                                label_up = '{0}_{1}_{2}Up'.format(process,binName.format(bin=bin),syst)
+                                label_down = '{0}_{1}_{2}Down'.format(process,binName.format(bin=bin),syst)
                                 s = '1'
-                            elif (isinstance(s,tuple) or isinstance(s,list)) and len(s)==2:
-                                if isinstance(s[0],ROOT.TH1):
-                                    label_up = '{0}_{1}_{2}Up'.format(process,binName.format(bin=bin),syst)
-                                    label_down = '{0}_{1}_{2}Down'.format(process,binName.format(bin=bin),syst)
-                                    s[0].SetName(label_up)
-                                    s[0].SetTitle(label_up)
-                                    s[1].SetName(label_down)
-                                    s[1].SetTitle(label_down)
-                                    shapes += s
-                                    if saveWorkspace:
-                                        datahist_up = ROOT.RooDataHist(label_up, label_up, ROOT.RooArgList(self.workspace.var("x")), s[0])
-                                        datahist_down = ROOT.RooDataHist(label_down, label_down, ROOT.RooArgList(self.workspace.var("x")), s[1])
-                                        self.wsimport(datahist_up)
-                                        self.wsimport(datahist_down)
-                                    s = '1'
-                                elif isinstance(s[0],basestring):
-                                    label_up = '{0}_{1}_{2}Up'.format(process,binName.format(bin=bin),syst)
-                                    label_down = '{0}_{1}_{2}Down'.format(process,binName.format(bin=bin),syst)
-                                    s = '1'
-                                elif isinstance(s[0],numbers.Number):
-                                    s = '{0:>4.4g}/{1:<4.4g}'.format(*s)
-                                else:
-                                    logging.error('Do not know how to handle {0}'.format(s))
-                                    raise
-                            elif isinstance(s,numbers.Number):
-                                s = '{0:<10.4g}'.format(s)
-                        thisRow += [s]
-                systRows += [thisRow]
+                            elif isinstance(s[0],numbers.Number):
+                                s = '{0:>4.4g}/{1:<4.4g}'.format(*s)
+                            else:
+                                logging.error('Do not know how to handle {0}'.format(s))
+                                raise
+                        elif isinstance(s,numbers.Number):
+                            s = '{0:<10.4g}'.format(s)
+                    thisRow += [s]
+            systRows += [thisRow]
+
+        logging.debug('Params systs to add: {0}'.format([str(x) for x in sorted(self.param_systematics.keys())]))
+        paramRows = []
+        for param in sorted(self.param_systematics.keys()):
+            mode = self.param_systematics[param]['mode']
+            if mode in ['flatParam']:
+                paramRows += [[param,mode]]
+            else:
+                values = self.param_systematics[param]['values']
+                paramRows += [[param,mode]+values]
 
         kmax = len(systRows)
 
         # now write to file
         logging.info('Writing {0}{1}.txt'.format(filename,suffix))
+        python_mkdir(os.path.dirname(filename))
         with open(filename+suffix+'.txt','w') as f:
             allRows = [binRows,observations,binsForRates,processNames,processNumbers,rates]+systRows
             lineWidth = 80
@@ -533,6 +552,11 @@ class Limits(object):
             for norm in norms:
                 logging.debug('Rate param: {0}'.format([str(x) for x in norm]))
                 f.write(getparamline(norm))
+
+            # other params
+            for paramRow in paramRows:
+                logging.debug('Param: {}'.format([str(x) for x in paramRow]))
+                f.write(getparamline(paramRow))
 
             # nuissance categories
             for group in self.groups:

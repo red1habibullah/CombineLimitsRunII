@@ -6,6 +6,7 @@ import numpy as np
 import argparse
 import math
 import errno
+from array import array
 
 import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
@@ -53,7 +54,7 @@ class HaaLimits2D(HaaLimits):
     def initializeWorkspace(self):
         self.addX(*self.XRANGE,unit='GeV',label=self.XLABEL)
         self.addY(*self.YRANGE,unit='GeV',label=self.YLABEL)
-        self.addMH(*self.SPLINERANGE,unit='GeV',label=self.SPLINERANGE)
+        self.addMH(*self.SPLINERANGE,unit='GeV',label=self.SPLINELABEL)
 
     def _buildYModel(self,region='PP',**kwargs):
         tag = kwargs.pop('tag',region)
@@ -118,16 +119,16 @@ class HaaLimits2D(HaaLimits):
         bg.build(self.workspace,name)
 
     def _buildXModel(self,region='PP',**kwargs):
-        super(HaaLimits2D,self).buildModel(region)
+        super(HaaLimits2D,self).buildModel(region,**kwargs)
 
     def buildModel(self,region='PP',**kwargs):
         tag = kwargs.pop('tag',region)
 
         # build the x variable
-        self._buildXModel(region+'_x')
+        self._buildXModel(region+'_x',**kwargs)
 
         # build the y variable
-        self._buildYModel(region+'_y')
+        self._buildYModel(region+'_y',**kwargs)
 
         # the 2D model
         bg = Models.Prod('bg',
@@ -145,8 +146,12 @@ class HaaLimits2D(HaaLimits):
         Required arguments:
             h = higgs mass
         '''
+        ygausOnly = kwargs.get('ygausOnly',False)
         fit = kwargs.get('fit',False)
         dobgsig = kwargs.get('doBackgroundSignal',False)
+        amasses = self.AMASSES
+        if h>125: amasses = [a for a in amasses if a not in ['3p6',4,6]]
+        avals = [float(str(x).replace('p','.')) for x in amasses]
         histMap = self.histMap[region][shift]
         tag= '{}{}'.format(region,'_'+shift if shift else '')
         # initial fit
@@ -154,7 +159,8 @@ class HaaLimits2D(HaaLimits):
         errors = {}
         results[h] = {}
         errors[h] = {}
-        for a in self.AMASSES:
+        for a in amasses:
+            aval = float(str(a).replace('p','.'))
             ws = ROOT.RooWorkspace('sig')
             ws.factory('x[{0}, {1}]'.format(*self.XRANGE))
             ws.var('x').setUnit('GeV')
@@ -165,16 +171,17 @@ class HaaLimits2D(HaaLimits):
             ws.var('y').setPlotLabel(self.YLABEL)
             ws.var('y').SetTitle(self.YLABEL)
             modelx = Models.Voigtian('sigx',
-                mean  = [a,0,30],
-                width = [0.01*a,0.001,5],
-                sigma = [0.01*a,0.001,5],
+                mean  = [aval,0,30],
+                width = [0.01*aval,0.001,5],
+                sigma = [0.01*aval,0.001,5],
             )
             modelx.build(ws, 'sigx')
+            ym = Models.Gaussian if ygausOnly else Models.Voigtian
             if self.YRANGE[1]>100: # y variable is h mass
-                modely = Models.Voigtian('sigy',
+                modely = ym('sigy',
                     x = 'y',
                     #mean  = [h,0.75*h,1.25*h], # kinfit
-                    mean  = [0.75*h,0,1.25*h], # visible
+                    mean  = [h,0,1.25*h],
                     width = [0.1*h,0.1,0.5*h],
                     sigma = [0.1*h,0.1,0.5*h],
                 )
@@ -187,11 +194,11 @@ class HaaLimits2D(HaaLimits):
             else: # y variable is tt
                 if region=='PP':
                     # simple voitian
-                    voity = Models.Voigtian('sigy',
+                    voity = ym('sigy',
                         x = 'y',
-                        mean  = [0.5*a,0,1.25*a], # visible
-                        width = [0.1*a,0,0.5*a],
-                        sigma = [0.1*a,0,0.5*a],
+                        mean  = [0.5*aval,0,1.25*aval], # visible
+                        width = [0.1*aval,0,0.5*aval],
+                        sigma = [0.1*aval,0,0.5*aval],
                     )
                     voity.build(ws, 'sigy')
 
@@ -201,11 +208,11 @@ class HaaLimits2D(HaaLimits):
                     )
                 else:
                     # add a mistagged jet background
-                    voity = Models.Voigtian('sigy',
+                    voity = ym('sigy',
                         x = 'y',
-                        mean  = [0.5*a,0,1.25*a], # visible
-                        width = [0.1*a,0,0.5*a],
-                        sigma = [0.1*a,0,0.5*a],
+                        mean  = [0.5*aval,0,1.25*aval], # visible
+                        width = [0.1*aval,0,0.5*aval],
+                        sigma = [0.1*aval,0,0.5*aval],
                     )
                     voity.build(ws, 'sigy')
 
@@ -250,61 +257,19 @@ class HaaLimits2D(HaaLimits):
 
             model.build(ws, 'sig')
             hist = histMap[self.SIGNAME.format(h=h,a=a)]
-            results[h][a], errors[h][a] = model.fit2D(ws, hist, 'h{}_a{}_{}'.format(h,a,tag), saveDir=self.plotDir, save=True, doErrors=True)
+            saveDir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
+            results[h][a], errors[h][a] = model.fit2D(ws, hist, 'h{}_a{}_{}'.format(h,a,tag), saveDir=saveDir, save=True, doErrors=True)
             print h, a, results[h][a], errors[h][a]
     
-        models = {
-            'xmean' : Models.Chebychev('xmean',  order = 1, p0 = [0,-1,1], p1 = [0.1,-1,1], p2 = [0.03,-1,1]),
-            'xwidth': Models.Chebychev('xwidth', order = 1, p0 = [0,-1,1], p1 = [0.1,-1,1], p2 = [0.03,-1,1]),
-            'xsigma': Models.Chebychev('xsigma', order = 1, p0 = [0,-1,1], p1 = [0.1,-1,1], p2 = [0.03,-1,1]),
-            'ymean' : Models.Chebychev('ymean',  order = 1, p0 = [0,-1,1], p1 = [0.1,-1,1], p2 = [0.03,-1,1], x = 'y'),
-            'ywidth': Models.Chebychev('ywidth', order = 3, p0 = [0,-1,1], p1 = [0.1,-1,1], p2 = [0.03,-1,1], x = 'y'),
-            'ysigma': Models.Chebychev('ysigma', order = 1, p0 = [0,-1,1], p1 = [0.1,-1,1], p2 = [0.03,-1,1], x = 'y'),
-        }
-    
-        for param in ['mean', 'width', 'sigma']:
-            ws = ROOT.RooWorkspace(param)
-            ws.factory('x[{},{}]'.format(*self.XRANGE))
-            ws.var('x').setUnit('GeV')
-            ws.var('x').setPlotLabel(self.SPLINELABEL)
-            ws.var('x').SetTitle(self.SPLINELABEL)
-            model = models['x'+param]
-            model.build(ws, 'x'+param)
-            name = '{}_{}{}'.format('x'+param,h,tag)
-            hist = ROOT.TH1D(name, name, len(self.AMASSES), 4, 22)
-            vals = [results[h][a]['{}_sigx'.format(param)] for a in self.AMASSES]
-            errs = [errors[h][a]['{}_sigx'.format(param)] for a in self.AMASSES]
-            for i,a in enumerate(self.AMASSES):
-                b = hist.FindBin(a)
-                hist.SetBinContent(b,vals[i])
-                hist.SetBinError(b,errs[i])
-            model.fit(ws, hist, name, saveDir=self.plotDir, save=True)
-    
-            ws = ROOT.RooWorkspace(param)
-            ws.factory('y[{},{}]'.format(*self.YRANGE))
-            ws.var('y').setUnit('GeV')
-            ws.var('y').setPlotLabel(self.SPLINELABEL)
-            ws.var('y').SetTitle(self.SPLINELABEL)
-            model = models['y'+param]
-            model.build(ws, 'y'+param)
-            name = '{}_{}{}'.format('y'+param,h,tag)
-            hist = ROOT.TH1D(name, name, len(self.AMASSES), 4, 22)
-            vals = [results[h][a]['{}_sigy'.format(param)] for a in self.AMASSES]
-            errs = [errors[h][a]['{}_sigy'.format(param)] for a in self.AMASSES]
-            for i,a in enumerate(self.AMASSES):
-                b = hist.FindBin(a)
-                hist.SetBinContent(b,vals[i])
-                hist.SetBinError(b,errs[i])
-            model.fit(ws, hist, name, saveDir=self.plotDir, save=True)
 
         # Fit using ROOT rather than RooFit for the splines
         fitFuncs = {
             'xmean' : 'pol1',
-            'xwidth': 'pol1',
-            'xsigma': 'pol1',
-            'ymean' : 'pol4',
-            'ywidth': 'pol4',
-            'ysigma': 'pol4',
+            'xwidth': 'pol2',
+            'xsigma': 'pol2',
+            'ymean' : 'pol2',
+            'ywidth': 'pol2',
+            'ysigma': 'pol2',
         }
 
         xs = []
@@ -320,41 +285,43 @@ class HaaLimits2D(HaaLimits):
         fittedParams = {}
         for param in ['mean','width','sigma']:
             name = '{}_{}{}'.format('x'+param,h,tag)
-            hist = ROOT.TH1D(name, name, len(self.AMASSES), 4, 22)
-            vals = [results[h][a]['{}_sigx'.format(param)] for a in self.AMASSES]
-            errs = [errors[h][a]['{}_sigx'.format(param)] for a in self.AMASSES]
-            for i,a in enumerate(self.AMASSES):
-                b = hist.FindBin(a)
-                hist.SetBinContent(b,vals[i])
-                hist.SetBinError(b,errs[i])
-            savename = '{}/{}_Fit'.format(self.plotDir,name)
+            xerrs = [0]*len(amasses)
+            vals = [results[h][a]['{}_sigx'.format(param)] for a in amasses]
+            errs = [errors[h][a]['{}_sigx'.format(param)] for a in amasses]
+            graph = ROOT.TGraphErrors(len(avals),array('d',avals),array('d',vals),array('d',xerrs),array('d',errs))
+            savename = '{}/{}/{}_Fit'.format(self.plotDir,shift if shift else 'central',name)
             canvas = ROOT.TCanvas(savename,savename,800,800)
-            hist.Draw()
-            fit = hist.Fit(fitFuncs['x'+param])
+            graph.Draw()
+            graph.SetTitle('')
+            graph.GetHistogram().GetXaxis().SetTitle(self.SPLINELABEL)
+            graph.GetHistogram().GetYaxis().SetTitle(param)
+            if fit:
+                fitResult = graph.Fit(fitFuncs['x'+param])
+                func = graph.GetFunction(fitFuncs['x'+param])
+                fittedParams['x'+param] = [func.Eval(x) for x in xs]
             canvas.Print('{}.png'.format(savename))
-            func = hist.GetFunction(fitFuncs['x'+param])
-            fittedParams['x'+param] = [func.Eval(x) for x in xs]
+
+            if param=='width' and ygausOnly: continue
 
             name = '{}_{}{}'.format('y'+param,h,tag)
-            hist = ROOT.TH1D(name, name, len(self.AMASSES), 4, 22)
-            vals = [results[h][a]['{}_sigy'.format(param)] for a in self.AMASSES]
-            errs = [errors[h][a]['{}_sigy'.format(param)] for a in self.AMASSES]
-            for i,a in enumerate(self.AMASSES):
-                b = hist.FindBin(a)
-                hist.SetBinContent(b,vals[i])
-                hist.SetBinError(b,errs[i])
-            savename = '{}/{}_Fit'.format(self.plotDir,name)
+            xerrs = [0]*len(amasses)
+            vals = [results[h][a]['{}_sigy'.format(param)] for a in amasses]
+            errs = [errors[h][a]['{}_sigy'.format(param)] for a in amasses]
+            graph = ROOT.TGraphErrors(len(avals),array('d',avals),array('d',vals),array('d',xerrs),array('d',errs))
+            savename = '{}/{}/{}_Fit'.format(self.plotDir,shift if shift else 'central',name)
             canvas = ROOT.TCanvas(savename,savename,800,800)
-            hist.Draw()
-            hist.SetTitle('')
-            hist.GetXaxis().SetTitle(self.SPLINELABEL)
-            fit = hist.Fit(fitFuncs['y'+param])
+            graph.Draw()
+            graph.SetTitle('')
+            graph.GetHistogram().GetXaxis().SetTitle(self.SPLINELABEL)
+            graph.GetHistogram().GetYaxis().SetTitle(param)
+            if fit:
+                fitResult = graph.Fit(fitFuncs['y'+param])
+                func = graph.GetFunction(fitFuncs['y'+param])
+                fittedParams['y'+param] = [func.Eval(y) for y in ys]
             canvas.Print('{}.png'.format(savename))
-            func = hist.GetFunction(fitFuncs['y'+param])
-            fittedParams['y'+param] = [func.Eval(y) for y in ys]
     
         # create model
-        for a in self.AMASSES:
+        for a in amasses:
             print h, a, results[h][a]
         if fit:
             modelx = Models.VoigtianSpline(self.SPLINENAME.format(h=h)+'_x',
@@ -368,31 +335,32 @@ class HaaLimits2D(HaaLimits):
         else:
             modelx = Models.VoigtianSpline(self.SPLINENAME.format(h=h)+'_x',
                 **{
-                    'masses' : self.AMASSES,
-                    'means'  : [results[h][a]['mean_sigx'] for a in self.AMASSES],
-                    'widths' : [results[h][a]['width_sigx'] for a in self.AMASSES],
-                    'sigmas' : [results[h][a]['sigma_sigx'] for a in self.AMASSES],
+                    'masses' : avals,
+                    'means'  : [results[h][a]['mean_sigx'] for a in amasses],
+                    'widths' : [results[h][a]['width_sigx'] for a in amasses],
+                    'sigmas' : [results[h][a]['sigma_sigx'] for a in amasses],
                 }
             )
         modelx.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_x'))
+        ym = Models.GaussianSpline if ygausOnly else Models.VoigtianSpline
         if fit:
-            modely = Models.VoigtianSpline(self.SPLINENAME.format(h=h)+'_y',
+            modely = ym(self.SPLINENAME.format(h=h)+'_y',
                 **{
                     'x'      : 'y',
                     'masses' : ys,
                     'means'  : fittedParams['ymean'],
-                    'widths' : fittedParams['ywidth'],
+                    'widths' : [] if ygausOnly else fittedParams['ywidth'],
                     'sigmas' : fittedParams['ysigma'],
                 }
             )
         else:
-            modely = Models.VoigtianSpline(self.SPLINENAME.format(h=h)+'_y',
+            modely = ym(self.SPLINENAME.format(h=h)+'_y',
                 **{
                     'x'      : 'y',
-                    'masses' : self.AMASSES,
-                    'means'  : [results[h][a]['mean_sigy'] for a in self.AMASSES],
-                    'widths' : [results[h][a]['width_sigy'] for a in self.AMASSES],
-                    'sigmas' : [results[h][a]['sigma_sigy'] for a in self.AMASSES],
+                    'masses' : avals,
+                    'means'  : [results[h][a]['mean_sigy'] for a in amasses],
+                    'widths' : [] if ygausOnly else [results[h][a]['width_sigy'] for a in amasses],
+                    'sigmas' : [results[h][a]['sigma_sigy'] for a in amasses],
                 }
             )
         modely.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_y'))
@@ -402,41 +370,43 @@ class HaaLimits2D(HaaLimits):
         )
 
         if self.binned:
-            integrals = [histMap[self.SIGNAME.format(h=h,a=a)].Integral() for a in self.AMASSES]
+            integrals = [histMap[self.SIGNAME.format(h=h,a=a)].Integral() for a in amasses]
         else:
-            integrals = [histMap[self.SIGNAME.format(h=h,a=a)].sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE)) for a in self.AMASSES]
+            integrals = [histMap[self.SIGNAME.format(h=h,a=a)].sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE)) for a in amasses]
         print 'Integrals', tag, h, integrals
 
+        param = 'integral'
+        funcname = 'pol2'
+        name = '{}_{}{}'.format(param,h,tag)
+        vals = integrals
+        graph = ROOT.TGraph(len(avals),array('d',avals),array('d',vals))
+        savename = '{}/{}/{}_Fit'.format(self.plotDir,shift if shift else 'central',name)
+        canvas = ROOT.TCanvas(savename,savename,800,800)
+        graph.Draw()
+        graph.SetTitle('')
+        graph.GetHistogram().GetXaxis().SetTitle(self.SPLINELABEL)
+        graph.GetHistogram().GetYaxis().SetTitle('integral')
         if fit:
-            param = 'integral'
-            funcname = 'pol2'
-            name = '{}_{}{}'.format(param,h,tag)
-            hist = ROOT.TH1D(name, name, len(self.AMASSES), 4, 22)
-            vals = integrals
-            for i,a in enumerate(self.AMASSES):
-                b = hist.FindBin(a)
-                hist.SetBinContent(b,vals[i])
-            savename = '{}/{}_Fit'.format(self.plotDir,name)
-            canvas = ROOT.TCanvas(savename,savename,800,800)
-            hist.Draw()
-            hist.SetTitle('')
-            hist.GetXaxis().SetTitle(self.SPLINELABEL)
-            fit = hist.Fit(funcname)
-            canvas.Print('{}.png'.format(savename))
-            func = hist.GetFunction(funcname)
+            fitResult = graph.Fit(funcname)
+            func = graph.GetFunction(funcname)
             newintegrals = [func.Eval(x) for x in xs]
-            model.setIntegral(xs,newintegrals)
-        else:
-            model.setIntegral(self.AMASSES,integrals)
+            # dont fit integrals
+            #model.setIntegral(xs,newintegrals)
+        canvas.Print('{}.png'.format(savename))
+        model.setIntegral(avals,integrals)
 
         model.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag))
         model.buildIntegral(self.workspace,'integral_{}_{}'.format(self.SPLINENAME.format(h=h),tag))
 
-    def fitBackground(self,region='PP',shift=''):
+    def fitBackground(self,region='PP',shift='',setUpsilonLambda=False,addUpsilon=True,logy=False):
+
+        if region=='control':
+            return super(HaaLimits2D, self).fitBackground(region=region, shift=shift, setUpsilonLambda=setUpsilonLambda,addUpsilon=addUpsilon,logy=logy)
+
         model = self.workspace.pdf('bg_{}'.format(region))
         name = 'data_prefit_{}{}'.format(region,'_'+shift if shift else '')
         hist = self.histMap[region][shift]['dataNoSig']
-        if self.binned:
+        if hist.InheritsFrom('TH1'):
             data = ROOT.RooDataHist(name,name,ROOT.RooArgList(self.workspace.var('x'),self.workspace.var('y')),hist)
         else:
             data = hist.Clone(name)
@@ -503,7 +473,7 @@ class HaaLimits2D(HaaLimits):
                 # TODO addSignal
                 model = self.workspace.pdf('bg_{}'.format(region))
                 h = self.histMap[region]['']['dataNoSig']
-                if self.binned:
+                if h.InheritsFrom('TH1'):
                     integral = h.Integral() # 2D integral?
                 else:
                     integral = h.sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE))
@@ -517,29 +487,37 @@ class HaaLimits2D(HaaLimits):
                 data_obs.SetName(name)
             else:
                 # use the provided data
-                if self.binned:
+                if hist.InheritsFrom('TH1'):
                     data_obs = ROOT.RooDataHist(name,name,ROOT.RooArgList(self.workspace.var('x'),self.workspace.var('y')),self.histMap[region]['']['data'])
                 else:
                     data_obs = hist.Clone(name)
             self.wsimport(data_obs)
 
-    def addBackgroundModels(self):
+    def addBackgroundModels(self, fixAfterControl=False, fixAfterFP=False, addUpsilon=True, setUpsilonLambda=False, voigtian=False, logy=False):
+        if fixAfterControl:
+            self.fix()
         for region in self.REGIONS:
-            self.buildModel(region=region)
+            self.buildModel(region=region, addUpsilon=addUpsilon, setUpsilonLambda=setUpsilonLambda, voigtian=voigtian)
             self.workspace.factory('bg_{}_norm[1,0,2]'.format(region))
-            self.fitBackground(region=region)
+            self.fitBackground(region=region, setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
+        if fixAfterControl:
+            self.fix(False)
 
     def addSignalModels(self,**kwargs):
         for region in self.REGIONS:
             for shift in ['']+self.SHIFTS:
                 for h in self.HMASSES:
-                    self.buildSpline(h,region=region,shift=shift,**kwargs)
+                    if shift == '':
+                        self.buildSpline(h,region=region,shift=shift,**kwargs)
+                    else:
+                        self.buildSpline(h,region=region,shift=shift+'Up',**kwargs)
+                        self.buildSpline(h,region=region,shift=shift+'Down',**kwargs)
             self.workspace.factory('{}_{}_norm[1,0,9999]'.format(self.SPLINENAME.format(h=h),region))
 
     ######################
     ### Setup datacard ###
     ######################
-    def setupDatacard(self):
+    def setupDatacard(self, addControl=False):
 
         # setup bins
         for region in self.REGIONS:
@@ -554,7 +532,7 @@ class HaaLimits2D(HaaLimits):
         # set expected
         for region in self.REGIONS:
             h = self.histMap[region]['']['dataNoSig']
-            if self.binned:
+            if h.InheritsFrom('TH1'):
                 integral = h.Integral() # 2D restricted integral?
             else:
                 integral = h.sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE))
@@ -566,7 +544,19 @@ class HaaLimits2D(HaaLimits):
                 
             self.setObserved(region,-1) # reads from histogram
 
-            
+        if addControl:
+            region = 'control'
+
+            self.addBin(region)
+
+            h = self.histMap[region]['']['dataNoSig']
+            if h.InheritsFrom('TH1'):
+                integral = h.Integral(h.FindBin(self.XRANGE[0]),h.FindBin(self.XRANGE[1]))
+            else:
+                integral = h.sumEntries('x>{} && x<{}'.format(*self.XRANGE))
+            self.setExpected('bg',region,integral)
+
+            self.setObserved(region,-1) # reads from histogram
 
     ###################
     ### Systematics ###
@@ -576,6 +566,8 @@ class HaaLimits2D(HaaLimits):
         self._addLumiSystematic()
         self._addMuonSystematic()
         self._addTauSystematic()
+        self._addShapeSystematic()
+        self._addControlSystematics()
 
     ###################################
     ### Save workspace and datacard ###
