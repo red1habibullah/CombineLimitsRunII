@@ -18,14 +18,17 @@ tdrstyle.setTDRStyle()
 ROOT.gStyle.SetPalette(ROOT.kBlueGreenYellow)
 ROOT.TGaxis.SetMaxDigits(3)
 
-stops = array('d',[0, 0.749, 0.751, 1.0])
-red   = array('d',[  0./255,   51./255,  51./255,   0./255])
-green = array('d',[ 51./255,  204./255, 153./255, 204./255])
-blue  = array('d',[204./255,  255./255,  51./255,   0./255])
-number = 4
-nb = 255
-ROOT.TColor.CreateGradientColorTable(number, stops, red, green, blue, nb)
-ROOT.gStyle.SetPalette(nb)
+#stops = array('d',[0, 0.749, 0.751, 1.0])
+#red   = array('d',[  0./255,   51./255,  51./255,   0./255])
+#green = array('d',[ 51./255,  204./255, 153./255, 204./255])
+#blue  = array('d',[204./255,  255./255,  51./255,   0./255])
+#number = 4
+#nb = 255
+#ROOT.TColor.CreateGradientColorTable(number, stops, red, green, blue, nb)
+#ROOT.gStyle.SetPalette(nb)
+
+ROOT.gStyle.SetPalette(ROOT.kBird)
+
 ROOT.gStyle.SetNumberContours(255)
 
 class LimitPlotter(PlotterBase):
@@ -290,6 +293,7 @@ class LimitPlotter(PlotterBase):
         model = kwargs.pop('model',None)
         modelkey = kwargs.pop('modelkey',None)
         xVar = kwargs.pop('x',None)
+        expectedBands = kwargs.pop('expectedBands', [])
 
         logging.info('Plotting {0}'.format(savename))
 
@@ -297,7 +301,7 @@ class LimitPlotter(PlotterBase):
         canvas.SetLogz(logz)
         canvas.SetLogy(logy)
         canvas.SetLeftMargin(0.14)
-        canvas.SetRightMargin(0.2)
+        canvas.SetRightMargin(0.22)
 
         xmin = xvals[0]
         xmax = xvals[-1]
@@ -480,7 +484,7 @@ class LimitPlotter(PlotterBase):
             for xi in range(nx):
                 x = xmin + xi*dx
                 val = expected.Eval(x)
-                if val<1e-3: val = 1e-3
+                #if val<1e-3: val = 1e-3
                 expectedHist.SetBinContent(expectedHist.GetBin(xi+1,yi+1),val)
 
                 oneSigmaLowHist.SetBinContent( oneSigmaLowHist.GetBin(xi+1,yi+1), oneSigma_low.Eval(x))
@@ -516,10 +520,10 @@ class LimitPlotter(PlotterBase):
         expectedHist.GetYaxis().SetTitleOffset(1.2)
         expectedHist.GetZaxis().SetTitleSize(0.05)
         expectedHist.GetZaxis().SetTitleOffset(1.5)
-        expectedHist.GetZaxis().SetRangeUser(1e-3,1e1)
+        expectedHist.GetZaxis().SetRangeUser(1e-2,1)
 
-        def get_contours(hist):
-            contours = array('d',[1.0])
+        def get_contours(hist,val=1.0):
+            contours = array('d',[val])
             hist.SetContour(1,contours)
             hist.Draw('cont z list')
             canvas.Update()
@@ -533,38 +537,48 @@ class LimitPlotter(PlotterBase):
                     
             return graphs
 
-        expected_graphs = get_contours(expectedHistCont)
-        oneSigma_graphs = get_contours(oneSigmaLowHist)
-        oneSigma_graphs += get_contours(oneSigmaHighHist)
-        twoSigma_graphs = get_contours(twoSigmaLowHist)
-        twoSigma_graphs += get_contours(twoSigmaHighHist)
+        expected_graphs = {}
+        oneSigma_graphs = {}
+        twoSigma_graphs = {}
+        for eb in expectedBands:
+            expected_graphs[eb] =  get_contours(expectedHistCont,eb)
+            oneSigma_graphs[eb] =  get_contours(oneSigmaLowHist, eb)
+            oneSigma_graphs[eb] += get_contours(oneSigmaHighHist,eb)
+            twoSigma_graphs[eb] =  get_contours(twoSigmaLowHist, eb)
+            twoSigma_graphs[eb] += get_contours(twoSigmaHighHist,eb)
 
         #print len(expected_graphs), len(oneSigma_graphs), len(twoSigma_graphs)
 
+        colors = [ROOT.kBlack, ROOT.kRed+2, ROOT.kRed]
+
         expectedHist.Draw('colz')
-        for g in expected_graphs:
-            g.SetLineStyle(1)
-            g.SetLineWidth(3)
-            g.SetFillStyle(0)
-            g.SetMarkerStyle(0)
-            g.Draw('same')
-        for g in oneSigma_graphs:
-            g.SetLineStyle(2)
-            g.SetLineWidth(2)
-            g.SetFillStyle(0)
-            g.SetMarkerStyle(0)
-            g.Draw('same')
-        for g in twoSigma_graphs:
-            g.SetLineStyle(6)
-            g.SetLineWidth(2)
-            g.SetFillStyle(0)
-            g.SetMarkerStyle(0)
-            #g.Draw('same')
+        for i in range(len(expectedBands)):
+            eb = expectedBands[i]
+            c = colors[i]
+            for g in expected_graphs[eb]:
+                g.SetLineStyle(2)
+                g.SetLineWidth(2)
+                g.SetFillStyle(0)
+                g.SetLineColor(c)
+                g.SetMarkerStyle(0)
+                g.Draw('same')
+            #for g in oneSigma_graphs[eb]:
+            #    g.SetLineStyle(2)
+            #    g.SetLineWidth(2)
+            #    g.SetFillStyle(0)
+            #    g.SetLineColor(c)
+            #    g.SetMarkerStyle(0)
+            #    g.Draw('same')
+            #for g in twoSigma_graphs[eb]:
+            #    g.SetLineStyle(6)
+            #    g.SetLineWidth(2)
+            #    g.SetFillStyle(0)
+            #    g.SetLineColor(c)
+            #    g.SetMarkerStyle(0)
+            #    #g.Draw('same')
 
         # special legend
-        entries = [
-            [expected_graphs[0],'Expected exclusion','l'],
-        ]
+        entries = [[expected_graphs[eb][0],'#splitline{{Expected exclusion}}{{BR(H #rightarrow a_{{1}}a_{{1}}) = {}}}'.format(eb),'l'] for eb in expectedBands if len(expected_graphs[eb])]
         title = 'NMSSM Type {}'.format(modelkey)
         legend = self._getLegend(entries=entries,numcol=1,position=24,title=title)
         legend.Draw()
@@ -577,10 +591,10 @@ class LimitPlotter(PlotterBase):
 
         leg_one_low.SetLineStyle(2)
         leg_one_low.SetLineWidth(2)
-        leg_one_low.Draw('same')
+        #leg_one_low.Draw('same')
         leg_one_high.SetLineStyle(2)
         leg_one_high.SetLineWidth(2)
-        leg_one_high.Draw('same')
+        #leg_one_high.Draw('same')
         leg_two_low.SetLineStyle(6)
         leg_two_low.SetLineWidth(2)
         #leg_two_low.Draw('same')
