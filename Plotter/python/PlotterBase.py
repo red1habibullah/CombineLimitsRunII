@@ -25,6 +25,7 @@ class PlotterBase(object):
         # plot directory
         self.analysis = analysis
         self.outputDirectory = kwargs.pop('outputDirectory','plots/{0}'.format(self.analysis))
+        self.outputDirectoryCSV = kwargs.pop('outputDirectoryCSV','csv/{0}'.format(self.analysis))
         # initialize stuff
 
     def _getLegend(self,**kwargs):
@@ -105,6 +106,14 @@ class PlotterBase(object):
             python_mkdir(os.path.dirname(name))
             logging.debug('Writing {0}'.format(name))
             canvas.Print(name)
+
+    def _saveCSV(self, rows, savename):
+        name = '{0}/{1}/{2}.{1}'.format(self.outputDirectoryCSV, 'csv', savename)
+        python_mkdir(os.path.dirname(name))
+        with open(name,'w') as f:
+            for line in rows:
+                f.write(','.join([str(x) for x in line])+'\n')
+
 
     def _saveTemp(self, canvas):
         '''Save the canvas in multiple formats.'''
