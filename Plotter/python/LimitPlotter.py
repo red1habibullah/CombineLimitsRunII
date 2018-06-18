@@ -305,17 +305,18 @@ class LimitPlotter(PlotterBase):
 
         xmin = xvals[0]
         xmax = xvals[-1]
-        dx = 0.1
-        nx = int((xmax-xmin)/dx)
+        dx = xvals[1]-xvals[0]
+        nx = int(float(xmax-xmin)/dx)
         ymin = yvals[0]
         ymax = yvals[-1]
-        dy = 0.05
-        ny = int((ymax-ymin)/dy)
-        expectedHist = ROOT.TH2D('exp','exp',nx,xmin,xmax,ny,ymin,ymax)
-        oneSigmaLowHist  = ROOT.TH2D('onel','onel',nx,xmin,xmax,ny,ymin,ymax)
-        oneSigmaHighHist = ROOT.TH2D('oneh','oneh',nx,xmin,xmax,ny,ymin,ymax)
-        twoSigmaLowHist  = ROOT.TH2D('twol','twol',nx,xmin,xmax,ny,ymin,ymax)
-        twoSigmaHighHist = ROOT.TH2D('twoh','twoh',nx,xmin,xmax,ny,ymin,ymax)
+        dy = yvals[1]-yvals[0]
+        ny = int(float(ymax-ymin)/dy)
+        observedHist     = ROOT.TH2D('obs', 'obs', nx+1,xmin-0.5*dx,xmax+0.5*dx,ny+1,ymin-0.5*dy,ymax+0.5*dy)
+        expectedHist     = ROOT.TH2D('exp', 'exp', nx+1,xmin-0.5*dx,xmax+0.5*dx,ny+1,ymin-0.5*dy,ymax+0.5*dy)
+        oneSigmaLowHist  = ROOT.TH2D('onel','onel',nx+1,xmin-0.5*dx,xmax+0.5*dx,ny+1,ymin-0.5*dy,ymax+0.5*dy)
+        oneSigmaHighHist = ROOT.TH2D('oneh','oneh',nx+1,xmin-0.5*dx,xmax+0.5*dx,ny+1,ymin-0.5*dy,ymax+0.5*dy)
+        twoSigmaLowHist  = ROOT.TH2D('twol','twol',nx+1,xmin-0.5*dx,xmax+0.5*dx,ny+1,ymin-0.5*dy,ymax+0.5*dy)
+        twoSigmaHighHist = ROOT.TH2D('twoh','twoh',nx+1,xmin-0.5*dx,xmax+0.5*dx,ny+1,ymin-0.5*dy,ymax+0.5*dy)
 
         limits = quartiles
 
@@ -326,7 +327,8 @@ class LimitPlotter(PlotterBase):
         twoSigma_low_vals = []
         twoSigma_high_vals = []
 
-        for yi in range(ny):
+
+        for yi in range(ny+1):
             y = ymin + yi*dy
 
             n = len(xvals)
@@ -481,16 +483,18 @@ class LimitPlotter(PlotterBase):
             #oneSigma_high_prev = 0
             #twoSigma_low_prev = 0
             #twoSigma_high_prev = 0
-            for xi in range(nx):
+            for xi in range(nx+1):
                 x = xmin + xi*dx
                 val = expected.Eval(x)
                 #if val<1e-3: val = 1e-3
-                expectedHist.SetBinContent(expectedHist.GetBin(xi+1,yi+1),val)
+                eb = expectedHist.GetBin(xi+1,yi+1)
+                #eb = expectedHist.FindBin(x,y)
+                expectedHist.SetBinContent(eb,val)
 
-                oneSigmaLowHist.SetBinContent( oneSigmaLowHist.GetBin(xi+1,yi+1), oneSigma_low.Eval(x))
-                oneSigmaHighHist.SetBinContent(oneSigmaHighHist.GetBin(xi+1,yi+1),oneSigma_high.Eval(x))
-                twoSigmaLowHist.SetBinContent( oneSigmaLowHist.GetBin(xi+1,yi+1), twoSigma_low.Eval(x))
-                twoSigmaHighHist.SetBinContent(oneSigmaHighHist.GetBin(xi+1,yi+1),twoSigma_high.Eval(x))
+                oneSigmaLowHist.SetBinContent( eb, oneSigma_low.Eval(x))
+                oneSigmaHighHist.SetBinContent(eb, oneSigma_high.Eval(x))
+                twoSigmaLowHist.SetBinContent( eb, twoSigma_low.Eval(x))
+                twoSigmaHighHist.SetBinContent(eb, twoSigma_high.Eval(x))
 
                 #expected_curr      = expected.Eval(x)
                 #oneSigma_low_curr  = oneSigma_low.Eval(x)
@@ -606,6 +610,21 @@ class LimitPlotter(PlotterBase):
         self._setStyle(canvas,position=lumipos,preliminary=isprelim)
 
         self._save(canvas,savename)
+
+        xSave = [3.6,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21]
+        ySave = [1,1.5,2,3,5,10,20,50]
+
+        save = []
+        for x in xSave:
+            for y in ySave:
+                be = expectedHist.FindBin(x,y)
+                ve = expectedHist.GetBinContent(be)
+                vel = oneSigmaLowHist.GetBinContent(be)
+                veh = oneSigmaHighHist.GetBinContent(be)
+                save += [(x,y,ve,vel,veh)]
+
+        self._saveCSV(save,savename)
+                
 
 
     def plotPValue(self,xvals,quartiles,savename,**kwargs):
