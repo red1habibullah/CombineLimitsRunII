@@ -98,7 +98,7 @@ def getHist(proc,**kwargs):
     shift = kwargs.pop('shift','')
     region = kwargs.pop('region','A')
     do2D = kwargs.pop('do2D',False)
-    doChi2 = kwargs.pop('doChi2',False)
+    chi2Mass = kwargs.pop('chi2Mass',0)
     doUnbinned = kwargs.pop('doUnbinned',False)
     var = kwargs.pop('var',['mm'])
     wrappers = kwargs.pop('wrappers',{})
@@ -109,7 +109,7 @@ def getHist(proc,**kwargs):
     if doUnbinned:
         plot += '_dataset'
     plotname = 'region{}/{}'.format(region,plot)
-    if doChi2: plotname = 'chi2/{}'.format(plotname)
+    if chi2Mass: plotname = 'chi2_{}/{}'.format(chi2Mass,plotname)
     if doUnbinned:
         hists = [getDataset(wrappers[s+shift],plotname) for s in sampleMap[proc]]
         hist = sumDatasets(proc+region,*hists)
@@ -127,7 +127,7 @@ def getDatadrivenHist(**kwargs):
     source = kwargs.pop('source','B')
     region = kwargs.pop('region','A')
     do2D = kwargs.pop('do2D',False)
-    doChi2 = kwargs.pop('doChi2',False)
+    chi2Mass = kwargs.pop('chi2Mass',0)
     doUnbinned = kwargs.pop('doUnbinned',False)
     var = kwargs.pop('var',['mm'])
     wrappers = kwargs.pop('wrappers',{})
@@ -138,7 +138,7 @@ def getDatadrivenHist(**kwargs):
     if doUnbinned:
         plot += '_dataset'
     plotname = 'region{}_fakeFor{}/{}'.format(source,region,plot)
-    if doChi2: plotname = 'chi2/{}'.format(plotname)
+    if chi2Mass: plotname = 'chi2_{}/{}'.format(chi2Mass,plotname)
     if doUnbinned:
         hists = [getDataset(wrappers[s+shift],plotname) for s in sampleMap['data']]
         hist = sumDatasets('data'+region+source,*hists)
@@ -158,7 +158,7 @@ def getMatrixHist(proc,**kwargs):
     doPrompt = kwargs.pop('doPrompt',True)
     doFake = kwargs.pop('doFake',False)
     do2D = kwargs.pop('do2D',False)
-    doChi2 = kwargs.pop('doChi2',False)
+    chi2Mass = kwargs.pop('chi2Mass',0)
     doUnbinned = kwargs.pop('doUnbinned',False)
     var = kwargs.pop('var',['mm'])
     wrappers = kwargs.pop('wrappers',{})
@@ -170,9 +170,9 @@ def getMatrixHist(proc,**kwargs):
         plot += '_dataset'
     applot = ['matrixP/region{}_for{}/{}'.format(source,region,plot) for source in sources]
     afplot = ['matrixF/region{}_for{}/{}'.format(source,region,plot) for source in sources]
-    if doChi2:
-        applot = ['chi2/{}'.format(plotname) for plotname in applot]
-        afplot = ['chi2/{}'.format(plotname) for plotname in afplot]
+    if chi2Mass:
+        applot = ['chi2_{}/{}'.format(chi2Mass,plotname) for plotname in applot]
+        afplot = ['chi2_{}/{}'.format(chi2Mass,plotname) for plotname in afplot]
     hists = []
     for s in sampleMap[proc]:
         if doUnbinned:
@@ -201,7 +201,7 @@ def getMatrixDatadrivenHist(**kwargs):
     doPrompt = kwargs.pop('doPrompt',True)
     doFake = kwargs.pop('doFake',False)
     do2D = kwargs.pop('do2D',False)
-    doChi2 = kwargs.pop('doChi2',False)
+    chi2Mass = kwargs.pop('chi2Mass',0)
     doUnbinned = kwargs.pop('doUnbinned',False)
     var = kwargs.pop('var',['mm'])
     wrappers = kwargs.pop('wrappers',{})
@@ -213,9 +213,9 @@ def getMatrixDatadrivenHist(**kwargs):
         plot += '_dataset'
     bpplot = ['matrixP/region{}_for{}_fakeFor{}/{}'.format(source,fakeRegion,region,plot) for source in fakeSources]
     bfplot = ['matrixF/region{}_for{}_fakeFor{}/{}'.format(source,fakeRegion,region,plot) for source in fakeSources]
-    if doChi2:
-        bpplot = ['chi2/{}'.format(plotname) for plotname in bpplot]
-        bfplot = ['chi2/{}'.format(plotname) for plotname in bfplot]
+    if chi2Mass:
+        bpplot = ['chi2_{}/{}'.format(chi2Mass,plotname) for plotname in bpplot]
+        bfplot = ['chi2_{}/{}'.format(chi2Mass,plotname) for plotname in bfplot]
     hists = []
     for s in sampleMap['data']:
         if doUnbinned:
@@ -259,7 +259,7 @@ def create_datacard(args):
     doParametric = args.parametric
     doUnbinned = args.unbinned
     do2D = len(args.fitVars)==2
-    doChi2 = False
+    chi2Mass = args.chi2Mass
     blind = not args.unblind
     addSignal = args.addSignal
     signalParams = {'h': args.higgs, 'a': args.pseudoscalar}
@@ -268,6 +268,10 @@ def create_datacard(args):
     
     if doUnbinned and not doParametric:
         logging.error('Unbinned only supported with parametric option')
+        raise
+
+    if chi2Mass and 'hkf' not in var:
+        logging.error('Trying to use non-kinematic fit with chi2 cut')
         raise
 
     global xRange
@@ -318,24 +322,23 @@ def create_datacard(args):
             for proc in backgrounds+signals:
                 logging.info('Getting {} {}'.format(proc,shift))
                 if proc=='datadriven':
-                    # TODO: unbinned, get the RooDataHist from flattenener first
                     if mode=='PP':
                         if doMatrix:
-                            histMap[mode][shift][proc] = getMatrixDatadrivenHist(doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,doChi2=doChi2,**regionArgs[mode])
+                            histMap[mode][shift][proc] = getMatrixDatadrivenHist(doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
                         else:
-                            histMap[mode][shift][proc] = getDatadrivenHist(doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,doChi2=doChi2,**regionArgs[mode])
+                            histMap[mode][shift][proc] = getDatadrivenHist(doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
                     else:
                         if doMatrix:
-                            histMap[mode][shift][proc] = getMatrixHist('data',doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,doChi2=doChi2,**regionArgs[mode])
+                            histMap[mode][shift][proc] = getMatrixHist('data',doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
                         else:
-                            histMap[mode][shift][proc] = getHist('data',doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,doChi2=doChi2,**regionArgs[mode])
+                            histMap[mode][shift][proc] = getHist('data',doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
                 else:
                     # override xRange for signal only
                     xRange = [0,30]
                     if doMatrix:
-                        histMap[mode][shift][proc] = getMatrixHist(proc,doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,doChi2=doChi2,**regionArgs[mode])
+                        histMap[mode][shift][proc] = getMatrixHist(proc,doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
                     else:
-                        histMap[mode][shift][proc] = getHist(proc,doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,doChi2=doChi2,**regionArgs[mode])
+                        histMap[mode][shift][proc] = getHist(proc,doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
                     xRange = args.xRange
                 if do2D or doUnbinned:
                     pass # TODO, figure out how to rebin 2D
@@ -366,7 +369,7 @@ def create_datacard(args):
                 histMap[mode][shift]['data'] = hist.Clone()
                 histMap[mode][shift]['dataNoSig'] = histNoSig.Clone()
             else:
-                hist = getHist('data',doUnbinned=doUnbinned,var=var,wrappers=wrappers,do2D=do2D,doChi2=doChi2,**regionArgs[mode])
+                hist = getHist('data',doUnbinned=doUnbinned,var=var,wrappers=wrappers,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
                 histMap[mode][shift]['data'] = hist.Clone()
                 histMap[mode][shift]['dataNoSig'] = histNoSig.Clone()
                 if do2D or doUnbinned:
@@ -406,7 +409,7 @@ def create_datacard(args):
         raise
     haaLimits.SHIFTS = shiftTypes
     haaLimits.AMASSES = amasses
-    haaLimits.HMASSES = hmasses
+    haaLimits.HMASSES = [chi2Mass] if chi2Mass else hmasses
     haaLimits.XRANGE = xRange
     if do2D: haaLimits.YRANGE = yRange
     if 'tt' in var: haaLimits.YLABEL = 'm_{#tau_{#mu}#tau_{h}}'
@@ -442,6 +445,7 @@ def parse_command_line(argv):
     parser.add_argument('--pseudoscalar', type=int, default=15, choices=[5,7,9,11,13,15,17,19,21])
     parser.add_argument('--xRange', type=float, nargs='*', default=[4,25])
     parser.add_argument('--tag', type=str, default='')
+    parser.add_argument('--chi2Mass', type=int, default=0)
 
     return parser.parse_args(argv)
 
