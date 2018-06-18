@@ -199,11 +199,15 @@ class HaaLimits(Limits):
         # continuum background
         bgs[nameC1] = [0.5,0,1]
         # jpsi
-        if self.XRANGE[0]<4:
+        if self.XRANGE[0]<3.3:
             print 'ADDING J/PSI'
             #bgs[nameJ1] = [0.9,0,1]
             #bgs[nameJ2] = [0.9,0,1]
             bgs[nameJ] = [0.9,0,1]
+            bgs[nameC3] = [0.5,0,1]
+        elif self.XRANGE[0]<4:
+            print 'ADDING PSI(2S)'
+            bgs[nameJ2] = [0.9,0,1]
             bgs[nameC3] = [0.5,0,1]
         #if self.XRANGE[0]<8:
         #    bgs[nameJE] = [0.9,0,1]

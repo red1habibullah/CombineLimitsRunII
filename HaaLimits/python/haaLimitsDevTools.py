@@ -14,7 +14,6 @@ from DevTools.Plotter.NtupleWrapper import NtupleWrapper
 from DevTools.Utilities.utilities import *
 from DevTools.Plotter.haaUtils import *
 from CombineLimits.HaaLimits.HaaLimits import HaaLimits
-from CombineLimits.HaaLimits.HaaLimitsHMass import HaaLimitsHMass
 from CombineLimits.HaaLimits.HaaLimits2D import HaaLimits2D
 
 logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
@@ -400,8 +399,6 @@ def create_datacard(args):
     name = n+'/'+'_'.join(name) if n else '_'.join(name)
     if var == ['mm']:
         haaLimits = HaaLimits(histMap,name)
-    elif var == ['h'] or var == ['hkf']:
-        haaLimits = HaaLimitsHMass(histMap,name)
     elif do2D:
         haaLimits = HaaLimits2D(histMap,name)
     else:
@@ -415,7 +412,7 @@ def create_datacard(args):
     if 'tt' in var: haaLimits.YLABEL = 'm_{#tau_{#mu}#tau_{h}}'
     if 'h' in var or 'hkf' in var: haaLimits.YLABEL = 'm_{#mu#mu#tau_{#mu}#tau_{h}}'
     haaLimits.initializeWorkspace()
-    if args.addControl: haaLimits.addControlModels(voigtian=True,logy=xRange[0]<4)
+    if args.addControl: haaLimits.addControlModels(voigtian=True,logy=xRange[0]<3.3)
     haaLimits.addBackgroundModels(voigtian=True,logy=False,fixAfterControl=args.addControl)
     haaLimits.XRANGE = [0,30] # override for signal splines
     haaLimits.addSignalModels(fit=False)#,ygausOnly=True) # dont fit, use splines
