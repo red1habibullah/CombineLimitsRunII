@@ -1,0 +1,1639 @@
+
+OUTPUT_3p7.out
+
+OUTPUT_3p8.out
+
+OUTPUT_3p9.out
+
+OUTPUT_4p0.out
+
+OUTPUT_4p1.out
+
+OUTPUT_4p2.out
+
+OUTPUT_4p3.out
+
+OUTPUT_4p4.out
+
+OUTPUT_4p5.out
+
+OUTPUT_4p6.out
+
+OUTPUT_4p7.out
+
+OUTPUT_4p8.out
+
+higgsCombineHToAAH125A3p7.AsymptoticLimits.mH3.7.root
+higgsCombineHToAAH125A3p7.AsymptoticLimits.mH3.7.root
+<ROOT.TTree object ("limit") at 0x521ddf0> 2.71899414062
+<ROOT.TTree object ("limit") at 0x521ddf0> 3.21694946289
+<ROOT.TTree object ("limit") at 0x521ddf0> 4.046875
+<ROOT.TTree object ("limit") at 0x521ddf0> 5.28896331787
+<ROOT.TTree object ("limit") at 0x521ddf0> 6.90616083145
+<ROOT.TTree object ("limit") at 0x521ddf0> 2.4098925841
+
+higgsCombineHToAAH125A3p8.AsymptoticLimits.mH3.8.root
+higgsCombineHToAAH125A3p8.AsymptoticLimits.mH3.8.root
+<ROOT.TTree object ("limit") at 0x521ddf0> 0.3076171875
+<ROOT.TTree object ("limit") at 0x521ddf0> 0.524139404297
+<ROOT.TTree object ("limit") at 0x521ddf0> 0.9375
+<ROOT.TTree object ("limit") at 0x521ddf0> 1.63256621361
+<ROOT.TTree object ("limit") at 0x521ddf0> 2.61286425591
+<ROOT.TTree object ("limit") at 0x521ddf0> 1.61020367179
+
+higgsCombineHToAAH125A3p9.AsymptoticLimits.mH3.9.root
+higgsCombineHToAAH125A3p9.AsymptoticLimits.mH3.9.root
+<ROOT.TTree object ("limit") at 0x5260ce0> 0.234970092773
+<ROOT.TTree object ("limit") at 0x5260ce0> 0.395435929298
+<ROOT.TTree object ("limit") at 0x5260ce0> 0.69140625
+<ROOT.TTree object ("limit") at 0x5260ce0> 1.1929936409
+<ROOT.TTree object ("limit") at 0x5260ce0> 1.88220274448
+<ROOT.TTree object ("limit") at 0x5260ce0> 0.751875411947
+
+higgsCombineHToAAH125A4p0.AsymptoticLimits.mH4.root
+higgsCombineHToAAH125A4p0.AsymptoticLimits.mH4.root
+<ROOT.TTree object ("limit") at 0x52c1f90> 1.50796508789
+<ROOT.TTree object ("limit") at 0x52c1f90> 1.74228286743
+<ROOT.TTree object ("limit") at 0x52c1f90> 2.1328125
+<ROOT.TTree object ("limit") at 0x52c1f90> 2.719414711
+<ROOT.TTree object ("limit") at 0x52c1f90> 3.49912691116
+<ROOT.TTree object ("limit") at 0x52c1f90> 0.836725168136
+
+higgsCombineHToAAH125A4p1.AsymptoticLimits.mH4.1.root
+higgsCombineHToAAH125A4p1.AsymptoticLimits.mH4.1.root
+<ROOT.TTree object ("limit") at 0x5260f40> 0.0817565917969
+<ROOT.TTree object ("limit") at 0x5260f40> 0.145292758942
+<ROOT.TTree object ("limit") at 0x5260f40> 0.275390625
+<ROOT.TTree object ("limit") at 0x5260f40> 0.523475050926
+<ROOT.TTree object ("limit") at 0x5260f40> 0.834969937801
+<ROOT.TTree object ("limit") at 0x5260f40> 0.411979199264
+
+higgsCombineHToAAH125A4p2.AsymptoticLimits.mH4.2.root
+higgsCombineHToAAH125A4p2.AsymptoticLimits.mH4.2.root
+<ROOT.TTree object ("limit") at 0x52c69f0> 1.46690368652
+<ROOT.TTree object ("limit") at 0x52c69f0> 1.66388511658
+<ROOT.TTree object ("limit") at 0x52c69f0> 1.9921875
+<ROOT.TTree object ("limit") at 0x52c69f0> 2.5083489418
+<ROOT.TTree object ("limit") at 0x52c69f0> 3.16003370285
+<ROOT.TTree object ("limit") at 0x52c69f0> 0.752198215505
+
+higgsCombineHToAAH125A4p3.AsymptoticLimits.mH4.3.root
+higgsCombineHToAAH125A4p3.AsymptoticLimits.mH4.3.root
+<ROOT.TTree object ("limit") at 0x52610b0> 0.0655212402344
+<ROOT.TTree object ("limit") at 0x52610b0> 0.115227937698
+<ROOT.TTree object ("limit") at 0x52610b0> 0.220703125
+<ROOT.TTree object ("limit") at 0x52610b0> 0.423041522503
+<ROOT.TTree object ("limit") at 0x52610b0> 0.669187784195
+<ROOT.TTree object ("limit") at 0x52610b0> 0.362548453421
+
+higgsCombineHToAAH125A4p4.AsymptoticLimits.mH4.4.root
+higgsCombineHToAAH125A4p4.AsymptoticLimits.mH4.4.root
+<ROOT.TTree object ("limit") at 0x52a0390> 1.0467376709
+<ROOT.TTree object ("limit") at 0x52a0390> 1.20938682556
+<ROOT.TTree object ("limit") at 0x52a0390> 1.48046875
+<ROOT.TTree object ("limit") at 0x52a0390> 1.89945483208
+<ROOT.TTree object ("limit") at 0x52a0390> 2.45857167244
+<ROOT.TTree object ("limit") at 0x52a0390> 0.591586641939
+
+higgsCombineHToAAH125A4p5.AsymptoticLimits.mH4.5.root
+higgsCombineHToAAH125A4p5.AsymptoticLimits.mH4.5.root
+<ROOT.TTree object ("limit") at 0x52c5bf0> 0.0879974365234
+<ROOT.TTree object ("limit") at 0x52c5bf0> 0.152690172195
+<ROOT.TTree object ("limit") at 0x52c5bf0> 0.28515625
+<ROOT.TTree object ("limit") at 0x52c5bf0> 0.528398275375
+<ROOT.TTree object ("limit") at 0x52c5bf0> 0.864472270012
+<ROOT.TTree object ("limit") at 0x52c5bf0> 0.611290190946
+
+higgsCombineHToAAH125A4p6.AsymptoticLimits.mH4.6.root
+higgsCombineHToAAH125A4p6.AsymptoticLimits.mH4.6.root
+<ROOT.TTree object ("limit") at 0x52c1f90> 0.577346801758
+<ROOT.TTree object ("limit") at 0x52c1f90> 0.711024880409
+<ROOT.TTree object ("limit") at 0x52c1f90> 0.94140625
+<ROOT.TTree object ("limit") at 0x52c1f90> 1.29038739204
+<ROOT.TTree object ("limit") at 0x52c1f90> 1.76330316067
+<ROOT.TTree object ("limit") at 0x52c1f90> 0.938202831163
+
+higgsCombineHToAAH125A4p7.AsymptoticLimits.mH4.7.root
+higgsCombineHToAAH125A4p7.AsymptoticLimits.mH4.7.root
+<ROOT.TTree object ("limit") at 0x52e7720> 0.242828369141
+<ROOT.TTree object ("limit") at 0x52e7720> 0.363076448441
+<ROOT.TTree object ("limit") at 0x52e7720> 0.5703125
+<ROOT.TTree object ("limit") at 0x52e7720> 0.89539295435
+<ROOT.TTree object ("limit") at 0x52e7720> 1.33447539806
+<ROOT.TTree object ("limit") at 0x52e7720> 0.468214171209
+
+higgsCombineHToAAH125A4p8.AsymptoticLimits.mH4.8.root
+higgsCombineHToAAH125A4p8.AsymptoticLimits.mH4.8.root
+<ROOT.TTree object ("limit") at 0x52c5cd0> 0.172836303711
+<ROOT.TTree object ("limit") at 0x52c5cd0> 0.279882192612
+<ROOT.TTree object ("limit") at 0x52c5cd0> 0.470703125
+<ROOT.TTree object ("limit") at 0x52c5cd0> 0.78215944767
+<ROOT.TTree object ("limit") at 0x52c5cd0> 1.21325552464
+<ROOT.TTree object ("limit") at 0x52c5cd0> 0.423720191672
+
+higgsCombineHToAAH125A4p9.AsymptoticLimits.mH4.9.root
+higgsCombineHToAAH125A4p9.AsymptoticLimits.mH4.9.root
+<ROOT.TTree object ("limit") at 0x52e37b0> 0.613815307617
+<ROOT.TTree object ("limit") at 0x52e37b0> 0.751314520836
+<ROOT.TTree object ("limit") at 0x52e37b0> 0.98828125
+<ROOT.TTree object ("limit") at 0x52e37b0> 1.35463905334
+<ROOT.TTree object ("limit") at 0x52e37b0> 1.83820736408
+<ROOT.TTree object ("limit") at 0x52e37b0> 0.838578462837
+
+higgsCombineHToAAH125A5p1.AsymptoticLimits.mH5.1.root
+higgsCombineHToAAH125A5p1.AsymptoticLimits.mH5.1.root
+<ROOT.TTree object ("limit") at 0x5261a00> 0.817611694336
+<ROOT.TTree object ("limit") at 0x5261a00> 0.97682762146
+<ROOT.TTree object ("limit") at 0x5261a00> 1.2421875
+<ROOT.TTree object ("limit") at 0x5261a00> 1.66305756569
+<ROOT.TTree object ("limit") at 0x5261a00> 2.21639728546
+<ROOT.TTree object ("limit") at 0x5261a00> 0.368083662748
+
+higgsCombineHToAAH125A5p0.AsymptoticLimits.mH5.root
+higgsCombineHToAAH125A5p0.AsymptoticLimits.mH5.root
+<ROOT.TTree object ("limit") at 0x52a06a0> 0.09521484375
+<ROOT.TTree object ("limit") at 0x52a06a0> 0.166511535645
+<ROOT.TTree object ("limit") at 0x52a06a0> 0.3125
+<ROOT.TTree object ("limit") at 0x52a06a0> 0.579066634178
+<ROOT.TTree object ("limit") at 0x52a06a0> 0.947366833687
+<ROOT.TTree object ("limit") at 0x52a06a0> 0.391797934813
+
+higgsCombineHToAAH125A5p2.AsymptoticLimits.mH5.2.root
+higgsCombineHToAAH125A5p2.AsymptoticLimits.mH5.2.root
+<ROOT.TTree object ("limit") at 0x52c1f90> 0.0999755859375
+<ROOT.TTree object ("limit") at 0x52c1f90> 0.173054695129
+<ROOT.TTree object ("limit") at 0x52c1f90> 0.328125
+<ROOT.TTree object ("limit") at 0x52c1f90> 0.618483304977
+<ROOT.TTree object ("limit") at 0x52c1f90> 0.994816958904
+<ROOT.TTree object ("limit") at 0x52c1f90> 0.276007785704
+
+higgsCombineHToAAH125A5p3.AsymptoticLimits.mH5.3.root
+higgsCombineHToAAH125A5p3.AsymptoticLimits.mH5.3.root
+<ROOT.TTree object ("limit") at 0x52a07e0> 0.868347167969
+<ROOT.TTree object ("limit") at 0x52a07e0> 1.04721212387
+<ROOT.TTree object ("limit") at 0x52a07e0> 1.35546875
+<ROOT.TTree object ("limit") at 0x52a07e0> 1.84173488617
+<ROOT.TTree object ("limit") at 0x52a07e0> 2.49190473557
+<ROOT.TTree object ("limit") at 0x52a07e0> 0.730306542704
+
+higgsCombineHToAAH125A5p4.AsymptoticLimits.mH5.4.root
+higgsCombineHToAAH125A5p4.AsymptoticLimits.mH5.4.root
+<ROOT.TTree object ("limit") at 0x52c1f90> 0.165161132812
+<ROOT.TTree object ("limit") at 0x52c1f90> 0.282895088196
+<ROOT.TTree object ("limit") at 0x52c1f90> 0.515625
+<ROOT.TTree object ("limit") at 0x52c1f90> 0.922575056553
+<ROOT.TTree object ("limit") at 0x52c1f90> 1.50239539146
+<ROOT.TTree object ("limit") at 0x52c1f90> 0.744067834505
+
+higgsCombineHToAAH125A5p5.AsymptoticLimits.mH5.5.root
+higgsCombineHToAAH125A5p5.AsymptoticLimits.mH5.5.root
+<ROOT.TTree object ("limit") at 0x52a08f0> 0.63916015625
+<ROOT.TTree object ("limit") at 0x52a08f0> 0.846240997314
+<ROOT.TTree object ("limit") at 0x52a08f0> 1.203125
+<ROOT.TTree object ("limit") at 0x52a08f0> 1.75942707062
+<ROOT.TTree object ("limit") at 0x52a08f0> 2.50868153572
+<ROOT.TTree object ("limit") at 0x52a08f0> 0.764593945473
+
+higgsCombineHToAAH125A5p6.AsymptoticLimits.mH5.6.root
+higgsCombineHToAAH125A5p6.AsymptoticLimits.mH5.6.root
+<ROOT.TTree object ("limit") at 0x52c1f90> 0.486755371094
+<ROOT.TTree object ("limit") at 0x52c1f90> 0.702464580536
+<ROOT.TTree object ("limit") at 0x52c1f90> 1.07421875
+<ROOT.TTree object ("limit") at 0x52c1f90> 1.66083657742
+<ROOT.TTree object ("limit") at 0x52c1f90> 2.44487261772
+<ROOT.TTree object ("limit") at 0x52c1f90> 1.06070215506
+
+higgsCombineHToAAH125A5p7.AsymptoticLimits.mH5.7.root
+higgsCombineHToAAH125A5p7.AsymptoticLimits.mH5.7.root
+<ROOT.TTree object ("limit") at 0x52e37b0> 0.283325195312
+<ROOT.TTree object ("limit") at 0x52e37b0> 0.473483085632
+<ROOT.TTree object ("limit") at 0x52e37b0> 0.82421875
+<ROOT.TTree object ("limit") at 0x52e37b0> 1.42215633392
+<ROOT.TTree object ("limit") at 0x52e37b0> 2.2606959343
+<ROOT.TTree object ("limit") at 0x52e37b0> 1.3291097715
+
+higgsCombineHToAAH125A5p8.AsymptoticLimits.mH5.8.root
+higgsCombineHToAAH125A5p8.AsymptoticLimits.mH5.8.root
+<ROOT.TTree object ("limit") at 0x52c1f90> 1.14202880859
+<ROOT.TTree object ("limit") at 0x52c1f90> 1.41977262497
+<ROOT.TTree object ("limit") at 0x52c1f90> 1.8984375
+<ROOT.TTree object ("limit") at 0x52c1f90> 2.647595644
+<ROOT.TTree object ("limit") at 0x52c1f90> 3.66086864471
+<ROOT.TTree object ("limit") at 0x52c1f90> 2.03466397476
+
+higgsCombineHToAAH125A5p9.AsymptoticLimits.mH5.9.root
+higgsCombineHToAAH125A5p9.AsymptoticLimits.mH5.9.root
+<ROOT.TTree object ("limit") at 0x52c1f90> 0.207092285156
+<ROOT.TTree object ("limit") at 0x52c1f90> 0.362162590027
+<ROOT.TTree object ("limit") at 0x52c1f90> 0.6796875
+<ROOT.TTree object ("limit") at 0x52c1f90> 1.25946986675
+<ROOT.TTree object ("limit") at 0x52c1f90> 2.06052279472
+<ROOT.TTree object ("limit") at 0x52c1f90> 2.40280449216
+
+higgsCombineHToAAH125A6p1.AsymptoticLimits.mH6.1.root
+higgsCombineHToAAH125A6p1.AsymptoticLimits.mH6.1.root
+<ROOT.TTree object ("limit") at 0x52aeb50> 0.207336425781
+<ROOT.TTree object ("limit") at 0x52aeb50> 0.359763145447
+<ROOT.TTree object ("limit") at 0x52aeb50> 0.671875
+<ROOT.TTree object ("limit") at 0x52aeb50> 1.23963701725
+<ROOT.TTree object ("limit") at 0x52aeb50> 2.03679680824
+<ROOT.TTree object ("limit") at 0x52aeb50> 1.38960721089
+
+higgsCombineHToAAH125A6p2.AsymptoticLimits.mH6.2.root
+higgsCombineHToAAH125A6p2.AsymptoticLimits.mH6.2.root
+<ROOT.TTree object ("limit") at 0x52a07e0> 1.04370117188
+<ROOT.TTree object ("limit") at 0x52a07e0> 1.31149291992
+<ROOT.TTree object ("limit") at 0x52a07e0> 1.7578125
+<ROOT.TTree object ("limit") at 0x52a07e0> 2.46549081802
+<ROOT.TTree object ("limit") at 0x52a07e0> 3.42166113853
+<ROOT.TTree object ("limit") at 0x52a07e0> 1.10429088677
+
+higgsCombineHToAAH125A6p3.AsymptoticLimits.mH6.3.root
+higgsCombineHToAAH125A6p3.AsymptoticLimits.mH6.3.root
+<ROOT.TTree object ("limit") at 0x52617f0> 0.253555297852
+<ROOT.TTree object ("limit") at 0x52617f0> 0.422865390778
+<ROOT.TTree object ("limit") at 0x52617f0> 0.74609375
+<ROOT.TTree object ("limit") at 0x52617f0> 1.29330265522
+<ROOT.TTree object ("limit") at 0x52617f0> 2.06300115585
+<ROOT.TTree object ("limit") at 0x52617f0> 0.648595175313
+
+higgsCombineHToAAH125A6p4.AsymptoticLimits.mH6.4.root
+higgsCombineHToAAH125A6p4.AsymptoticLimits.mH6.4.root
+<ROOT.TTree object ("limit") at 0x52c1f90> 0.516540527344
+<ROOT.TTree object ("limit") at 0x52c1f90> 0.72274017334
+<ROOT.TTree object ("limit") at 0x52c1f90> 1.06640625
+<ROOT.TTree object ("limit") at 0x52c1f90> 1.6147518158
+<ROOT.TTree object ("limit") at 0x52c1f90> 2.3588142395
+<ROOT.TTree object ("limit") at 0x52c1f90> 0.740104372884
+
+higgsCombineHToAAH125A6p5.AsymptoticLimits.mH6.5.root
+higgsCombineHToAAH125A6p5.AsymptoticLimits.mH6.5.root
+<ROOT.TTree object ("limit") at 0x4fd5630> 0.370849609375
+<ROOT.TTree object ("limit") at 0x4fd5630> 0.545927047729
+<ROOT.TTree object ("limit") at 0x4fd5630> 0.84765625
+<ROOT.TTree object ("limit") at 0x4fd5630> 1.32406628132
+<ROOT.TTree object ("limit") at 0x4fd5630> 1.96062576771
+<ROOT.TTree object ("limit") at 0x4fd5630> 0.587185660473
+
+higgsCombineHToAAH125A6p6.AsymptoticLimits.mH6.6.root
+higgsCombineHToAAH125A6p6.AsymptoticLimits.mH6.6.root
+<ROOT.TTree object ("limit") at 0x5261880> 0.235557556152
+<ROOT.TTree object ("limit") at 0x5261880> 0.379022955894
+<ROOT.TTree object ("limit") at 0x5261880> 0.634765625
+<ROOT.TTree object ("limit") at 0x5261880> 1.05477929115
+<ROOT.TTree object ("limit") at 0x5261880> 1.6224540472
+<ROOT.TTree object ("limit") at 0x5261880> 0.474123407015
+
+higgsCombineHToAAH125A6p7.AsymptoticLimits.mH6.7.root
+higgsCombineHToAAH125A6p7.AsymptoticLimits.mH6.7.root
+<ROOT.TTree object ("limit") at 0x52e33e0> 0.442016601562
+<ROOT.TTree object ("limit") at 0x52e33e0> 0.585225105286
+<ROOT.TTree object ("limit") at 0x52e33e0> 0.83203125
+<ROOT.TTree object ("limit") at 0x52e33e0> 1.22006320953
+<ROOT.TTree object ("limit") at 0x52e33e0> 1.74714243412
+<ROOT.TTree object ("limit") at 0x52e33e0> 0.69067626969
+
+higgsCombineHToAAH125A6p8.AsymptoticLimits.mH6.8.root
+higgsCombineHToAAH125A6p8.AsymptoticLimits.mH6.8.root
+<ROOT.TTree object ("limit") at 0x52617a0> 0.154190063477
+<ROOT.TTree object ("limit") at 0x52617a0> 0.258963108063
+<ROOT.TTree object ("limit") at 0x52617a0> 0.458984375
+<ROOT.TTree object ("limit") at 0x52617a0> 0.799277186394
+<ROOT.TTree object ("limit") at 0x52617a0> 1.2745552063
+<ROOT.TTree object ("limit") at 0x52617a0> 0.520628739017
+
+higgsCombineHToAAH125A6p9.AsymptoticLimits.mH6.9.root
+higgsCombineHToAAH125A6p9.AsymptoticLimits.mH6.9.root
+<ROOT.TTree object ("limit") at 0x52a0a60> 0.390930175781
+<ROOT.TTree object ("limit") at 0x52a0a60> 0.509867191315
+<ROOT.TTree object ("limit") at 0x52a0a60> 0.71484375
+<ROOT.TTree object ("limit") at 0x52a0a60> 1.03682565689
+<ROOT.TTree object ("limit") at 0x52a0a60> 1.47649002075
+<ROOT.TTree object ("limit") at 0x52a0a60> 0.537028211005
+
+higgsCombineHToAAH125A6p0.AsymptoticLimits.mH6.root
+higgsCombineHToAAH125A6p0.AsymptoticLimits.mH6.root
+<ROOT.TTree object ("limit") at 0x402b4e0> 1.40029907227
+<ROOT.TTree object ("limit") at 0x402b4e0> 1.71014785767
+<ROOT.TTree object ("limit") at 0x402b4e0> 2.2265625
+<ROOT.TTree object ("limit") at 0x402b4e0> 3.05195355415
+<ROOT.TTree object ("limit") at 0x402b4e0> 4.17046833038
+<ROOT.TTree object ("limit") at 0x402b4e0> 2.22959757852
+
+higgsCombineHToAAH125A7p0.AsymptoticLimits.mH7.root
+higgsCombineHToAAH125A7p0.AsymptoticLimits.mH7.root
+<ROOT.TTree object ("limit") at 0x52c1f90> 0.138442993164
+<ROOT.TTree object ("limit") at 0x52c1f90> 0.234653830528
+<ROOT.TTree object ("limit") at 0x52c1f90> 0.412109375
+<ROOT.TTree object ("limit") at 0x52c1f90> 0.714363515377
+<ROOT.TTree object ("limit") at 0x52c1f90> 1.13109230995
+<ROOT.TTree object ("limit") at 0x52c1f90> 0.402599260366
+
+higgsCombineHToAAH125A7p1.AsymptoticLimits.mH7.1.root
+higgsCombineHToAAH125A7p1.AsymptoticLimits.mH7.1.root
+<ROOT.TTree object ("limit") at 0x52a0a60> 0.308471679688
+<ROOT.TTree object ("limit") at 0x52a0a60> 0.413222312927
+<ROOT.TTree object ("limit") at 0x52a0a60> 0.59375
+<ROOT.TTree object ("limit") at 0x52a0a60> 0.877755522728
+<ROOT.TTree object ("limit") at 0x52a0a60> 1.26552665234
+<ROOT.TTree object ("limit") at 0x52a0a60> 0.350625985119
+
+higgsCombineHToAAH125A7p2.AsymptoticLimits.mH7.2.root
+higgsCombineHToAAH125A7p2.AsymptoticLimits.mH7.2.root
+<ROOT.TTree object ("limit") at 0x52d8ea0> 0.156341552734
+<ROOT.TTree object ("limit") at 0x52d8ea0> 0.253171443939
+<ROOT.TTree object ("limit") at 0x52d8ea0> 0.42578125
+<ROOT.TTree object ("limit") at 0x52d8ea0> 0.707513511181
+<ROOT.TTree object ("limit") at 0x52d8ea0> 1.0928800106
+<ROOT.TTree object ("limit") at 0x52d8ea0> 0.34896225281
+
+higgsCombineHToAAH125A7p3.AsymptoticLimits.mH7.3.root
+higgsCombineHToAAH125A7p3.AsymptoticLimits.mH7.3.root
+<ROOT.TTree object ("limit") at 0x52bb090> 0.228668212891
+<ROOT.TTree object ("limit") at 0x52bb090> 0.328952789307
+<ROOT.TTree object ("limit") at 0x52bb090> 0.49609375
+<ROOT.TTree object ("limit") at 0x52bb090> 0.763049602509
+<ROOT.TTree object ("limit") at 0x52bb090> 1.12706279755
+<ROOT.TTree object ("limit") at 0x52bb090> 0.398953947484
+
+higgsCombineHToAAH125A7p4.AsymptoticLimits.mH7.4.root
+higgsCombineHToAAH125A7p4.AsymptoticLimits.mH7.4.root
+<ROOT.TTree object ("limit") at 0x52d8ed0> 0.194595336914
+<ROOT.TTree object ("limit") at 0x52d8ed0> 0.29095852375
+<ROOT.TTree object ("limit") at 0x52d8ed0> 0.45703125
+<ROOT.TTree object ("limit") at 0x52d8ed0> 0.723006188869
+<ROOT.TTree object ("limit") at 0x52d8ed0> 1.08243095875
+<ROOT.TTree object ("limit") at 0x52d8ed0> 0.437617560323
+
+higgsCombineHToAAH125A7p5.AsymptoticLimits.mH7.5.root
+higgsCombineHToAAH125A7p5.AsymptoticLimits.mH7.5.root
+<ROOT.TTree object ("limit") at 0x5261100> 0.176940917969
+<ROOT.TTree object ("limit") at 0x5261100> 0.271897792816
+<ROOT.TTree object ("limit") at 0x5261100> 0.435546875
+<ROOT.TTree object ("limit") at 0x5261100> 0.699435353279
+<ROOT.TTree object ("limit") at 0x5261100> 1.05588018894
+<ROOT.TTree object ("limit") at 0x5261100> 0.601041530007
+
+higgsCombineHToAAH125A7p6.AsymptoticLimits.mH7.6.root
+higgsCombineHToAAH125A7p6.AsymptoticLimits.mH7.6.root
+<ROOT.TTree object ("limit") at 0x52bb130> 0.226173400879
+<ROOT.TTree object ("limit") at 0x52bb130> 0.318830311298
+<ROOT.TTree object ("limit") at 0x52bb130> 0.478515625
+<ROOT.TTree object ("limit") at 0x52bb130> 0.732197642326
+<ROOT.TTree object ("limit") at 0x52bb130> 1.07952773571
+<ROOT.TTree object ("limit") at 0x52bb130> 0.781161670133
+
+higgsCombineHToAAH125A7p7.AsymptoticLimits.mH7.7.root
+higgsCombineHToAAH125A7p7.AsymptoticLimits.mH7.7.root
+<ROOT.TTree object ("limit") at 0x52d93c0> 0.1552734375
+<ROOT.TTree object ("limit") at 0x52d93c0> 0.248275756836
+<ROOT.TTree object ("limit") at 0x52d93c0> 0.4140625
+<ROOT.TTree object ("limit") at 0x52d93c0> 0.681438803673
+<ROOT.TTree object ("limit") at 0x52d93c0> 1.03796625137
+<ROOT.TTree object ("limit") at 0x52d93c0> 0.825736560243
+
+higgsCombineHToAAH125A7p8.AsymptoticLimits.mH7.8.root
+higgsCombineHToAAH125A7p8.AsymptoticLimits.mH7.8.root
+<ROOT.TTree object ("limit") at 0x52c1f90> 0.235565185547
+<ROOT.TTree object ("limit") at 0x52c1f90> 0.32862174511
+<ROOT.TTree object ("limit") at 0x52c1f90> 0.486328125
+<ROOT.TTree object ("limit") at 0x52c1f90> 0.73639780283
+<ROOT.TTree object ("limit") at 0x52c1f90> 1.07572293282
+<ROOT.TTree object ("limit") at 0x52c1f90> 0.757869683909
+
+higgsCombineHToAAH125A7p9.AsymptoticLimits.mH7.9.root
+higgsCombineHToAAH125A7p9.AsymptoticLimits.mH7.9.root
+<ROOT.TTree object ("limit") at 0x52d9510> 0.158935546875
+<ROOT.TTree object ("limit") at 0x52d9510> 0.254131317139
+<ROOT.TTree object ("limit") at 0x52d9510> 0.423828125
+<ROOT.TTree object ("limit") at 0x52d9510> 0.694131672382
+<ROOT.TTree object ("limit") at 0x52d9510> 1.06115317345
+<ROOT.TTree object ("limit") at 0x52d9510> 0.607387145069
+
+higgsCombineHToAAH125A8p1.AsymptoticLimits.mH8.1.root
+higgsCombineHToAAH125A8p1.AsymptoticLimits.mH8.1.root
+<ROOT.TTree object ("limit") at 0x52bb640> 0.182312011719
+<ROOT.TTree object ("limit") at 0x52bb640> 0.281751155853
+<ROOT.TTree object ("limit") at 0x52bb640> 0.453125
+<ROOT.TTree object ("limit") at 0x52bb640> 0.727663695812
+<ROOT.TTree object ("limit") at 0x52bb640> 1.0984941721
+<ROOT.TTree object ("limit") at 0x52bb640> 0.56366675022
+
+higgsCombineHToAAH125A8p2.AsymptoticLimits.mH8.2.root
+higgsCombineHToAAH125A8p2.AsymptoticLimits.mH8.2.root
+<ROOT.TTree object ("limit") at 0x52d9960> 0.215698242188
+<ROOT.TTree object ("limit") at 0x52d9960> 0.314352989197
+<ROOT.TTree object ("limit") at 0x52d9960> 0.484375
+<ROOT.TTree object ("limit") at 0x52d9960> 0.752747774124
+<ROOT.TTree object ("limit") at 0x52d9960> 1.12127017975
+<ROOT.TTree object ("limit") at 0x52d9960> 0.471147825505
+
+higgsCombineHToAAH125A8p0.AsymptoticLimits.mH8.root
+higgsCombineHToAAH125A8p0.AsymptoticLimits.mH8.root
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.228942871094
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.322734355927
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.484375
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.739232599735
+<ROOT.TTree object ("limit") at 0x50c26d0> 1.08601152897
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.525552395573
+
+higgsCombineHToAAH125A8p3.AsymptoticLimits.mH8.3.root
+higgsCombineHToAAH125A8p3.AsymptoticLimits.mH8.3.root
+<ROOT.TTree object ("limit") at 0x5230970> 0.212562561035
+<ROOT.TTree object ("limit") at 0x5230970> 0.314520180225
+<ROOT.TTree object ("limit") at 0x5230970> 0.490234375
+<ROOT.TTree object ("limit") at 0x5230970> 0.769670009613
+<ROOT.TTree object ("limit") at 0x5230970> 1.14710044861
+<ROOT.TTree object ("limit") at 0x5230970> 0.400705083326
+
+higgsCombineHToAAH125A8p4.AsymptoticLimits.mH8.4.root
+higgsCombineHToAAH125A8p4.AsymptoticLimits.mH8.4.root
+<ROOT.TTree object ("limit") at 0x52bf0d0> 0.206535339355
+<ROOT.TTree object ("limit") at 0x52bf0d0> 0.312140405178
+<ROOT.TTree object ("limit") at 0x52bf0d0> 0.494140625
+<ROOT.TTree object ("limit") at 0x52bf0d0> 0.783681511879
+<ROOT.TTree object ("limit") at 0x52bf0d0> 1.17122864723
+<ROOT.TTree object ("limit") at 0x52bf0d0> 0.425716619701
+
+higgsCombineHToAAH125A8p5.AsymptoticLimits.mH8.5.root
+higgsCombineHToAAH125A8p5.AsymptoticLimits.mH8.5.root
+<ROOT.TTree object ("limit") at 0x5230970> 0.243072509766
+<ROOT.TTree object ("limit") at 0x5230970> 0.347453355789
+<ROOT.TTree object ("limit") at 0x5230970> 0.52734375
+<ROOT.TTree object ("limit") at 0x5230970> 0.81111574173
+<ROOT.TTree object ("limit") at 0x5230970> 1.19805884361
+<ROOT.TTree object ("limit") at 0x5230970> 0.444791862529
+
+higgsCombineHToAAH125A8p6.AsymptoticLimits.mH8.6.root
+higgsCombineHToAAH125A8p6.AsymptoticLimits.mH8.6.root
+<ROOT.TTree object ("limit") at 0x5261100> 0.211853027344
+<ROOT.TTree object ("limit") at 0x5261100> 0.325545787811
+<ROOT.TTree object ("limit") at 0x5261100> 0.521484375
+<ROOT.TTree object ("limit") at 0x5261100> 0.833283245564
+<ROOT.TTree object ("limit") at 0x5261100> 1.25067150593
+<ROOT.TTree object ("limit") at 0x5261100> 0.482748810017
+
+higgsCombineHToAAH125A8p7.AsymptoticLimits.mH8.7.root
+higgsCombineHToAAH125A8p7.AsymptoticLimits.mH8.7.root
+<ROOT.TTree object ("limit") at 0x52d93d0> 0.262756347656
+<ROOT.TTree object ("limit") at 0x52d93d0> 0.37442779541
+<ROOT.TTree object ("limit") at 0x52d93d0> 0.560546875
+<ROOT.TTree object ("limit") at 0x52d93d0> 0.862186014652
+<ROOT.TTree object ("limit") at 0x52d93d0> 1.26691138744
+<ROOT.TTree object ("limit") at 0x52d93d0> 0.552215172299
+
+higgsCombineHToAAH125A8p8.AsymptoticLimits.mH8.8.root
+higgsCombineHToAAH125A8p8.AsymptoticLimits.mH8.8.root
+<ROOT.TTree object ("limit") at 0x52a45f0> 0.23291015625
+<ROOT.TTree object ("limit") at 0x52a45f0> 0.353931427002
+<ROOT.TTree object ("limit") at 0x52a45f0> 0.5625
+<ROOT.TTree object ("limit") at 0x52a45f0> 0.892095923424
+<ROOT.TTree object ("limit") at 0x52a45f0> 1.33325624466
+<ROOT.TTree object ("limit") at 0x52a45f0> 0.588824705021
+
+higgsCombineHToAAH125A8p9.AsymptoticLimits.mH8.9.root
+higgsCombineHToAAH125A8p9.AsymptoticLimits.mH8.9.root
+<ROOT.TTree object ("limit") at 0x52305f0> 0.282897949219
+<ROOT.TTree object ("limit") at 0x52305f0> 0.400624752045
+<ROOT.TTree object ("limit") at 0x52305f0> 0.603515625
+<ROOT.TTree object ("limit") at 0x52305f0> 0.92346560955
+<ROOT.TTree object ("limit") at 0x52305f0> 1.36152684689
+<ROOT.TTree object ("limit") at 0x52305f0> 0.579023984511
+
+higgsCombineHToAAH125A9p1.AsymptoticLimits.mH9.1.root
+higgsCombineHToAAH125A9p1.AsymptoticLimits.mH9.1.root
+<ROOT.TTree object ("limit") at 0x52bf0d0> 0.324951171875
+<ROOT.TTree object ("limit") at 0x52bf0d0> 0.458074569702
+<ROOT.TTree object ("limit") at 0x52bf0d0> 0.6875
+<ROOT.TTree object ("limit") at 0x52bf0d0> 1.04375255108
+<ROOT.TTree object ("limit") at 0x52bf0d0> 1.52218866348
+<ROOT.TTree object ("limit") at 0x52bf0d0> 0.629227446241
+
+higgsCombineHToAAH125A9p2.AsymptoticLimits.mH9.2.root
+higgsCombineHToAAH125A9p2.AsymptoticLimits.mH9.2.root
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.386444091797
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.532846212387
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.78515625
+<ROOT.TTree object ("limit") at 0x50c26d0> 1.17949426174
+<ROOT.TTree object ("limit") at 0x50c26d0> 1.71273565292
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.671710942768
+
+higgsCombineHToAAH125A9p3.AsymptoticLimits.mH9.3.root
+higgsCombineHToAAH125A9p3.AsymptoticLimits.mH9.3.root
+<ROOT.TTree object ("limit") at 0x52bf0d0> 0.630187988281
+<ROOT.TTree object ("limit") at 0x52bf0d0> 0.830075740814
+<ROOT.TTree object ("limit") at 0x52bf0d0> 1.15234375
+<ROOT.TTree object ("limit") at 0x52bf0d0> 1.6392326355
+<ROOT.TTree object ("limit") at 0x52bf0d0> 2.27299928665
+<ROOT.TTree object ("limit") at 0x52bf0d0> 0.79606466539
+
+higgsCombineHToAAH125A9p4.AsymptoticLimits.mH9.4.root
+higgsCombineHToAAH125A9p4.AsymptoticLimits.mH9.4.root
+<ROOT.TTree object ("limit") at 0x52c1f90> 0.8759765625
+<ROOT.TTree object ("limit") at 0x52c1f90> 1.08654785156
+<ROOT.TTree object ("limit") at 0x52c1f90> 1.4375
+<ROOT.TTree object ("limit") at 0x52c1f90> 1.97038412094
+<ROOT.TTree object ("limit") at 0x52c1f90> 2.67375612259
+<ROOT.TTree object ("limit") at 0x52c1f90> 1.2647620339
+
+higgsCombineHToAAH125A9p5.AsymptoticLimits.mH9.5.root
+higgsCombineHToAAH125A9p5.AsymptoticLimits.mH9.5.root
+<ROOT.TTree object ("limit") at 0x52a87d0> 0.915161132812
+<ROOT.TTree object ("limit") at 0x52a87d0> 1.15100765228
+<ROOT.TTree object ("limit") at 0x52a87d0> 1.53125
+<ROOT.TTree object ("limit") at 0x52a87d0> 2.09888744354
+<ROOT.TTree object ("limit") at 0x52a87d0> 2.84813165665
+<ROOT.TTree object ("limit") at 0x52a87d0> 1.64544021191
+
+higgsCombineHToAAH125A9p6.AsymptoticLimits.mH9.6.root
+higgsCombineHToAAH125A9p6.AsymptoticLimits.mH9.6.root
+<ROOT.TTree object ("limit") at 0x52a4f70> 0.928619384766
+<ROOT.TTree object ("limit") at 0x52a4f70> 1.13409805298
+<ROOT.TTree object ("limit") at 0x52a4f70> 1.4765625
+<ROOT.TTree object ("limit") at 0x52a4f70> 2.00627017021
+<ROOT.TTree object ("limit") at 0x52a4f70> 2.69512009621
+<ROOT.TTree object ("limit") at 0x52a4f70> 1.2036845216
+
+higgsCombineHToAAH125A9p7.AsymptoticLimits.mH9.7.root
+higgsCombineHToAAH125A9p7.AsymptoticLimits.mH9.7.root
+<ROOT.TTree object ("limit") at 0x522fdd0> 0.973449707031
+<ROOT.TTree object ("limit") at 0x522fdd0> 1.17823028564
+<ROOT.TTree object ("limit") at 0x522fdd0> 1.51953125
+<ROOT.TTree object ("limit") at 0x522fdd0> 2.04648303986
+<ROOT.TTree object ("limit") at 0x522fdd0> 2.72019672394
+<ROOT.TTree object ("limit") at 0x522fdd0> 0.97436654939
+
+higgsCombineHToAAH125A9p8.AsymptoticLimits.mH9.8.root
+higgsCombineHToAAH125A9p8.AsymptoticLimits.mH9.8.root
+<ROOT.TTree object ("limit") at 0x5260f40> 1.16485595703
+<ROOT.TTree object ("limit") at 0x5260f40> 1.37256622314
+<ROOT.TTree object ("limit") at 0x5260f40> 1.71875
+<ROOT.TTree object ("limit") at 0x5260f40> 2.2599799633
+<ROOT.TTree object ("limit") at 0x5260f40> 2.96683835983
+<ROOT.TTree object ("limit") at 0x5260f40> 1.50436040534
+
+higgsCombineHToAAH125A9p9.AsymptoticLimits.mH9.9.root
+higgsCombineHToAAH125A9p9.AsymptoticLimits.mH9.9.root
+<ROOT.TTree object ("limit") at 0x522fef0> 2.24815368652
+<ROOT.TTree object ("limit") at 0x522fef0> 2.49786949158
+<ROOT.TTree object ("limit") at 0x522fef0> 2.9140625
+<ROOT.TTree object ("limit") at 0x522fef0> 3.52968811989
+<ROOT.TTree object ("limit") at 0x522fef0> 4.34191656113
+<ROOT.TTree object ("limit") at 0x522fef0> 2.5370814657
+
+higgsCombineHToAAH125A10p1.AsymptoticLimits.mH10.1.root
+higgsCombineHToAAH125A10p1.AsymptoticLimits.mH10.1.root
+<ROOT.TTree object ("limit") at 0x5261240> 4.27866085097
+
+higgsCombineHToAAH125A10p2.AsymptoticLimits.mH10.2.root
+higgsCombineHToAAH125A10p2.AsymptoticLimits.mH10.2.root
+<ROOT.TTree object ("limit") at 0x522fda0> 4.25856169865
+
+higgsCombineHToAAH125A10p3.AsymptoticLimits.mH10.3.root
+higgsCombineHToAAH125A10p3.AsymptoticLimits.mH10.3.root
+<ROOT.TTree object ("limit") at 0x52c1f90> 2.63909912109
+<ROOT.TTree object ("limit") at 0x52c1f90> 2.89748382568
+<ROOT.TTree object ("limit") at 0x52c1f90> 3.328125
+<ROOT.TTree object ("limit") at 0x52c1f90> 4.00469350815
+<ROOT.TTree object ("limit") at 0x52c1f90> 4.84081745148
+<ROOT.TTree object ("limit") at 0x52c1f90> 3.92711006476
+
+higgsCombineHToAAH125A10p4.AsymptoticLimits.mH10.4.root
+higgsCombineHToAAH125A10p4.AsymptoticLimits.mH10.4.root
+<ROOT.TTree object ("limit") at 0x52a5780> 2.02770996094
+<ROOT.TTree object ("limit") at 0x52a5780> 2.26048278809
+<ROOT.TTree object ("limit") at 0x52a5780> 2.6484375
+<ROOT.TTree object ("limit") at 0x52a5780> 3.22906064987
+<ROOT.TTree object ("limit") at 0x52a5780> 3.98288106918
+<ROOT.TTree object ("limit") at 0x52a5780> 3.7754720669
+
+higgsCombineHToAAH125A10p5.AsymptoticLimits.mH10.5.root
+higgsCombineHToAAH125A10p5.AsymptoticLimits.mH10.5.root
+<ROOT.TTree object ("limit") at 0x50c26d0> 1.43609619141
+<ROOT.TTree object ("limit") at 0x50c26d0> 1.63877105713
+<ROOT.TTree object ("limit") at 0x50c26d0> 1.9765625
+<ROOT.TTree object ("limit") at 0x50c26d0> 2.50443291664
+<ROOT.TTree object ("limit") at 0x50c26d0> 3.17550420761
+<ROOT.TTree object ("limit") at 0x50c26d0> 3.36795297905
+
+higgsCombineHToAAH125A10p6.AsymptoticLimits.mH10.6.root
+higgsCombineHToAAH125A10p6.AsymptoticLimits.mH10.6.root
+<ROOT.TTree object ("limit") at 0x5221540> 1.0066986084
+<ROOT.TTree object ("limit") at 0x5221540> 1.181432724
+<ROOT.TTree object ("limit") at 0x5221540> 1.47265625
+<ROOT.TTree object ("limit") at 0x5221540> 1.92465174198
+<ROOT.TTree object ("limit") at 0x5221540> 2.52312374115
+<ROOT.TTree object ("limit") at 0x5221540> 2.71008989465
+
+higgsCombineHToAAH125A10p7.AsymptoticLimits.mH10.7.root
+higgsCombineHToAAH125A10p7.AsymptoticLimits.mH10.7.root
+<ROOT.TTree object ("limit") at 0x52a51b0> 0.613998413086
+<ROOT.TTree object ("limit") at 0x52a51b0> 0.769002914429
+<ROOT.TTree object ("limit") at 0x52a51b0> 1.02734375
+<ROOT.TTree object ("limit") at 0x52a51b0> 1.43275237083
+<ROOT.TTree object ("limit") at 0x52a51b0> 1.96787440777
+<ROOT.TTree object ("limit") at 0x52a51b0> 2.25311863518
+
+higgsCombineHToAAH125A10p8.AsymptoticLimits.mH10.8.root
+higgsCombineHToAAH125A10p8.AsymptoticLimits.mH10.8.root
+<ROOT.TTree object ("limit") at 0x52bb500> 0.442199707031
+<ROOT.TTree object ("limit") at 0x52bb500> 0.583992004395
+<ROOT.TTree object ("limit") at 0x52bb500> 0.8203125
+<ROOT.TTree object ("limit") at 0x52bb500> 1.18980002403
+<ROOT.TTree object ("limit") at 0x52bb500> 1.68414020538
+<ROOT.TTree object ("limit") at 0x52bb500> 1.92730179953
+
+higgsCombineHToAAH125A10p9.AsymptoticLimits.mH10.9.root
+higgsCombineHToAAH125A10p9.AsymptoticLimits.mH10.9.root
+<ROOT.TTree object ("limit") at 0x52ed970> 0.359230041504
+<ROOT.TTree object ("limit") at 0x52ed970> 0.489089787006
+<ROOT.TTree object ("limit") at 0x52ed970> 0.712890625
+<ROOT.TTree object ("limit") at 0x52ed970> 1.0624089241
+<ROOT.TTree object ("limit") at 0x52ed970> 1.53306210041
+<ROOT.TTree object ("limit") at 0x52ed970> 1.50361775238
+
+higgsCombineHToAAH125A11p1.AsymptoticLimits.mH11.1.root
+higgsCombineHToAAH125A11p1.AsymptoticLimits.mH11.1.root
+<ROOT.TTree object ("limit") at 0x52a5780> 0.298461914062
+<ROOT.TTree object ("limit") at 0x52a5780> 0.422665596008
+<ROOT.TTree object ("limit") at 0x52a5780> 0.63671875
+<ROOT.TTree object ("limit") at 0x52a5780> 0.969195187092
+<ROOT.TTree object ("limit") at 0x52a5780> 1.41868674755
+<ROOT.TTree object ("limit") at 0x52a5780> 0.759233244754
+
+higgsCombineHToAAH125A11p2.AsymptoticLimits.mH11.2.root
+higgsCombineHToAAH125A11p2.AsymptoticLimits.mH11.2.root
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.285079956055
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.405591368675
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.61328125
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.940852999687
+<ROOT.TTree object ("limit") at 0x50c26d0> 1.38482809067
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.546428485268
+
+higgsCombineHToAAH125A11p3.AsymptoticLimits.mH11.3.root
+higgsCombineHToAAH125A11p3.AsymptoticLimits.mH11.3.root
+<ROOT.TTree object ("limit") at 0x5230450> 0.276718139648
+<ROOT.TTree object ("limit") at 0x5230450> 0.39999961853
+<ROOT.TTree object ("limit") at 0x5230450> 0.60546875
+<ROOT.TTree object ("limit") at 0x5230450> 0.93369448185
+<ROOT.TTree object ("limit") at 0x5230450> 1.373239398
+<ROOT.TTree object ("limit") at 0x5230450> 0.456382733447
+
+higgsCombineHToAAH125A11p4.AsymptoticLimits.mH11.4.root
+higgsCombineHToAAH125A11p4.AsymptoticLimits.mH11.4.root
+<ROOT.TTree object ("limit") at 0x52a4fe0> 0.269577026367
+<ROOT.TTree object ("limit") at 0x52a4fe0> 0.387174963951
+<ROOT.TTree object ("limit") at 0x52a4fe0> 0.58984375
+<ROOT.TTree object ("limit") at 0x52a4fe0> 0.911950290203
+<ROOT.TTree object ("limit") at 0x52a4fe0> 1.34934544563
+<ROOT.TTree object ("limit") at 0x52a4fe0> 0.40981392025
+
+higgsCombineHToAAH125A11p5.AsymptoticLimits.mH11.5.root
+higgsCombineHToAAH125A11p5.AsymptoticLimits.mH11.5.root
+<ROOT.TTree object ("limit") at 0x5230690> 0.26496887207
+<ROOT.TTree object ("limit") at 0x5230690> 0.385527908802
+<ROOT.TTree object ("limit") at 0x5230690> 0.58984375
+<ROOT.TTree object ("limit") at 0x5230690> 0.911950290203
+<ROOT.TTree object ("limit") at 0x5230690> 1.34934544563
+<ROOT.TTree object ("limit") at 0x5230690> 0.396076300054
+
+higgsCombineHToAAH125A11p6.AsymptoticLimits.mH11.6.root
+higgsCombineHToAAH125A11p6.AsymptoticLimits.mH11.6.root
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.259704589844
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.376624584198
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.578125
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.896136462688
+<ROOT.TTree object ("limit") at 0x50c26d0> 1.33043169975
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.411879437384
+
+higgsCombineHToAAH125A11p7.AsymptoticLimits.mH11.7.root
+higgsCombineHToAAH125A11p7.AsymptoticLimits.mH11.7.root
+<ROOT.TTree object ("limit") at 0x52d92d0> 0.258316040039
+<ROOT.TTree object ("limit") at 0x52d92d0> 0.378976821899
+<ROOT.TTree object ("limit") at 0x52d92d0> 0.580078125
+<ROOT.TTree object ("limit") at 0x52d92d0> 0.899163961411
+<ROOT.TTree object ("limit") at 0x52d92d0> 1.33154845238
+<ROOT.TTree object ("limit") at 0x52d92d0> 0.451912634903
+
+higgsCombineHToAAH125A11p8.AsymptoticLimits.mH11.8.root
+higgsCombineHToAAH125A11p8.AsymptoticLimits.mH11.8.root
+<ROOT.TTree object ("limit") at 0x5221540> 0.255706787109
+<ROOT.TTree object ("limit") at 0x5221540> 0.372660398483
+<ROOT.TTree object ("limit") at 0x5221540> 0.57421875
+<ROOT.TTree object ("limit") at 0x5221540> 0.892370343208
+<ROOT.TTree object ("limit") at 0x5221540> 1.32257783413
+<ROOT.TTree object ("limit") at 0x5221540> 0.532156040735
+
+higgsCombineHToAAH125A11p9.AsymptoticLimits.mH11.9.root
+higgsCombineHToAAH125A11p9.AsymptoticLimits.mH11.9.root
+<ROOT.TTree object ("limit") at 0x52c0310> 0.255706787109
+<ROOT.TTree object ("limit") at 0x52c0310> 0.372660398483
+<ROOT.TTree object ("limit") at 0x52c0310> 0.57421875
+<ROOT.TTree object ("limit") at 0x52c0310> 0.892370343208
+<ROOT.TTree object ("limit") at 0x52c0310> 1.32257783413
+<ROOT.TTree object ("limit") at 0x52c0310> 0.689195684655
+
+higgsCombineHToAAH125A12p1.AsymptoticLimits.mH12.1.root
+higgsCombineHToAAH125A12p1.AsymptoticLimits.mH12.1.root
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.253967285156
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.370125293732
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.5703125
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.888573110104
+<ROOT.TTree object ("limit") at 0x50c26d0> 1.32131516933
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.834003485887
+
+higgsCombineHToAAH125A12p2.AsymptoticLimits.mH12.2.root
+higgsCombineHToAAH125A12p2.AsymptoticLimits.mH12.2.root
+<ROOT.TTree object ("limit") at 0x52a4f70> 0.255706787109
+<ROOT.TTree object ("limit") at 0x52a4f70> 0.372660398483
+<ROOT.TTree object ("limit") at 0x52a4f70> 0.57421875
+<ROOT.TTree object ("limit") at 0x52a4f70> 0.894659221172
+<ROOT.TTree object ("limit") at 0x52a4f70> 1.32371330261
+<ROOT.TTree object ("limit") at 0x52a4f70> 0.769511502666
+
+higgsCombineHToAAH125A12p3.AsymptoticLimits.mH12.3.root
+higgsCombineHToAAH125A12p3.AsymptoticLimits.mH12.3.root
+<ROOT.TTree object ("limit") at 0x522fef0> 0.251739501953
+<ROOT.TTree object ("limit") at 0x522fef0> 0.368715524673
+<ROOT.TTree object ("limit") at 0x522fef0> 0.5703125
+<ROOT.TTree object ("limit") at 0x522fef0> 0.888573110104
+<ROOT.TTree object ("limit") at 0x522fef0> 1.32131516933
+<ROOT.TTree object ("limit") at 0x522fef0> 0.674514596938
+
+higgsCombineHToAAH125A12p4.AsymptoticLimits.mH12.4.root
+higgsCombineHToAAH125A12p4.AsymptoticLimits.mH12.4.root
+<ROOT.TTree object ("limit") at 0x53038f0> 0.256576538086
+<ROOT.TTree object ("limit") at 0x53038f0> 0.373927950859
+<ROOT.TTree object ("limit") at 0x53038f0> 0.576171875
+<ROOT.TTree object ("limit") at 0x53038f0> 0.895405650139
+<ROOT.TTree object ("limit") at 0x53038f0> 1.33042263985
+<ROOT.TTree object ("limit") at 0x53038f0> 0.628905202314
+
+higgsCombineHToAAH125A12p5.AsymptoticLimits.mH12.5.root
+higgsCombineHToAAH125A12p5.AsymptoticLimits.mH12.5.root
+<ROOT.TTree object ("limit") at 0x52a4fe0> 0.252601623535
+<ROOT.TTree object ("limit") at 0x52a4fe0> 0.369978249073
+<ROOT.TTree object ("limit") at 0x52a4fe0> 0.572265625
+<ROOT.TTree object ("limit") at 0x52a4fe0> 0.893897235394
+<ROOT.TTree object ("limit") at 0x52a4fe0> 1.32364821434
+<ROOT.TTree object ("limit") at 0x52a4fe0> 0.609970658896
+
+higgsCombineHToAAH125A12p6.AsymptoticLimits.mH12.6.root
+higgsCombineHToAAH125A12p6.AsymptoticLimits.mH12.6.root
+<ROOT.TTree object ("limit") at 0x5303ea0> 0.255187988281
+<ROOT.TTree object ("limit") at 0x5303ea0> 0.373766422272
+<ROOT.TTree object ("limit") at 0x5303ea0> 0.578125
+<ROOT.TTree object ("limit") at 0x5303ea0> 0.898440897465
+<ROOT.TTree object ("limit") at 0x5303ea0> 1.33493256569
+<ROOT.TTree object ("limit") at 0x5303ea0> 0.599682381581
+
+higgsCombineHToAAH125A12p7.AsymptoticLimits.mH12.7.root
+higgsCombineHToAAH125A12p7.AsymptoticLimits.mH12.7.root
+<ROOT.TTree object ("limit") at 0x52a4d90> 0.254325866699
+<ROOT.TTree object ("limit") at 0x52a4d90> 0.372503697872
+<ROOT.TTree object ("limit") at 0x52a4d90> 0.576171875
+<ROOT.TTree object ("limit") at 0x52a4d90> 0.899998903275
+<ROOT.TTree object ("limit") at 0x52a4d90> 1.33268344402
+<ROOT.TTree object ("limit") at 0x52a4d90> 0.603922983076
+
+higgsCombineHToAAH125A12p8.AsymptoticLimits.mH12.8.root
+higgsCombineHToAAH125A12p8.AsymptoticLimits.mH12.8.root
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.255187988281
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.373766422272
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.578125
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.903049767017
+<ROOT.TTree object ("limit") at 0x50c26d0> 1.33720099926
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.635636668371
+
+higgsCombineHToAAH125A12p9.AsymptoticLimits.mH12.9.root
+higgsCombineHToAAH125A12p9.AsymptoticLimits.mH12.9.root
+<ROOT.TTree object ("limit") at 0x5221540> 0.258316040039
+<ROOT.TTree object ("limit") at 0x5221540> 0.376463055611
+<ROOT.TTree object ("limit") at 0x5221540> 0.580078125
+<ROOT.TTree object ("limit") at 0x5221540> 0.90610063076
+<ROOT.TTree object ("limit") at 0x5221540> 1.3417185545
+<ROOT.TTree object ("limit") at 0x5221540> 0.680280157586
+
+higgsCombineHToAAH125A13p1.AsymptoticLimits.mH13.1.root
+higgsCombineHToAAH125A13p1.AsymptoticLimits.mH13.1.root
+<ROOT.TTree object ("limit") at 0x52f5c70> 0.260055541992
+<ROOT.TTree object ("limit") at 0x52f5c70> 0.378998160362
+<ROOT.TTree object ("limit") at 0x52f5c70> 0.583984375
+<ROOT.TTree object ("limit") at 0x52f5c70> 0.912202298641
+<ROOT.TTree object ("limit") at 0x52f5c70> 1.35075366497
+<ROOT.TTree object ("limit") at 0x52f5c70> 0.638066240534
+
+higgsCombineHToAAH125A13p2.AsymptoticLimits.mH13.2.root
+higgsCombineHToAAH125A13p2.AsymptoticLimits.mH13.2.root
+<ROOT.TTree object ("limit") at 0x52d92d0> 0.256912231445
+<ROOT.TTree object ("limit") at 0x52d92d0> 0.376291871071
+<ROOT.TTree object ("limit") at 0x52d92d0> 0.58203125
+<ROOT.TTree object ("limit") at 0x52d92d0> 0.909151434898
+<ROOT.TTree object ("limit") at 0x52d92d0> 1.35968482494
+<ROOT.TTree object ("limit") at 0x52d92d0> 0.533449492857
+
+higgsCombineHToAAH125A13p3.AsymptoticLimits.mH13.3.root
+higgsCombineHToAAH125A13p3.AsymptoticLimits.mH13.3.root
+<ROOT.TTree object ("limit") at 0x52f6280> 0.259498596191
+<ROOT.TTree object ("limit") at 0x52f6280> 0.38008004427
+<ROOT.TTree object ("limit") at 0x52f6280> 0.587890625
+<ROOT.TTree object ("limit") at 0x52f6280> 0.915960609913
+<ROOT.TTree object ("limit") at 0x52f6280> 1.36204063892
+<ROOT.TTree object ("limit") at 0x52f6280> 0.462830634186
+
+higgsCombineHToAAH125A13p4.AsymptoticLimits.mH13.4.root
+higgsCombineHToAAH125A13p4.AsymptoticLimits.mH13.4.root
+<ROOT.TTree object ("limit") at 0x52bf410> 0.258636474609
+<ROOT.TTree object ("limit") at 0x52bf410> 0.37881731987
+<ROOT.TTree object ("limit") at 0x52bf410> 0.5859375
+<ROOT.TTree object ("limit") at 0x52bf410> 0.915253162384
+<ROOT.TTree object ("limit") at 0x52bf410> 1.36204075813
+<ROOT.TTree object ("limit") at 0x52bf410> 0.47376463754
+
+higgsCombineHToAAH125A13p5.AsymptoticLimits.mH13.5.root
+higgsCombineHToAAH125A13p5.AsymptoticLimits.mH13.5.root
+<ROOT.TTree object ("limit") at 0x5221540> 0.260360717773
+<ROOT.TTree object ("limit") at 0x5221540> 0.381342768669
+<ROOT.TTree object ("limit") at 0x5221540> 0.58984375
+<ROOT.TTree object ("limit") at 0x5221540> 0.919003665447
+<ROOT.TTree object ("limit") at 0x5221540> 1.36656570435
+<ROOT.TTree object ("limit") at 0x5221540> 0.57069524881
+
+higgsCombineHToAAH125A13p6.AsymptoticLimits.mH13.6.root
+higgsCombineHToAAH125A13p6.AsymptoticLimits.mH13.6.root
+<ROOT.TTree object ("limit") at 0x52f6560> 0.260360717773
+<ROOT.TTree object ("limit") at 0x52f6560> 0.381342768669
+<ROOT.TTree object ("limit") at 0x52f6560> 0.58984375
+<ROOT.TTree object ("limit") at 0x52f6560> 0.919003665447
+<ROOT.TTree object ("limit") at 0x52f6560> 1.36656570435
+<ROOT.TTree object ("limit") at 0x52f6560> 0.693972863858
+
+higgsCombineHToAAH125A13p7.AsymptoticLimits.mH13.7.root
+higgsCombineHToAAH125A13p7.AsymptoticLimits.mH13.7.root
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.260360717773
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.381342768669
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.58984375
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.921354830265
+<ROOT.TTree object ("limit") at 0x50c26d0> 1.37112104893
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.752730514997
+
+higgsCombineHToAAH125A13p8.AsymptoticLimits.mH13.8.root
+higgsCombineHToAAH125A13p8.AsymptoticLimits.mH13.8.root
+<ROOT.TTree object ("limit") at 0x52f6860> 0.263534545898
+<ROOT.TTree object ("limit") at 0x52f6860> 0.384068369865
+<ROOT.TTree object ("limit") at 0x52f6860> 0.591796875
+<ROOT.TTree object ("limit") at 0x52f6860> 0.924405694008
+<ROOT.TTree object ("limit") at 0x52f6860> 1.36882400513
+<ROOT.TTree object ("limit") at 0x52f6860> 0.758533635322
+
+higgsCombineHToAAH125A13p9.AsymptoticLimits.mH13.9.root
+higgsCombineHToAAH125A13p9.AsymptoticLimits.mH13.9.root
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.261222839355
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.382605493069
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.591796875
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.924405694008
+<ROOT.TTree object ("limit") at 0x50c26d0> 1.37566113472
+<ROOT.TTree object ("limit") at 0x50c26d0> 0.730487928246
+
+higgsCombineHToAAH125A14p1.AsymptoticLimits.mH14.1.root
+higgsCombineHToAAH125A14p1.AsymptoticLimits.mH14.1.root
+<ROOT.TTree object ("limit") at 0x52a4f30> 0.262084960938
+<ROOT.TTree object ("limit") at 0x52a4f30> 0.383868217468
+<ROOT.TTree object ("limit") at 0x52a4f30> 0.59375
+<ROOT.TTree object ("limit") at 0x52a4f30> 0.927456498146
+<ROOT.TTree object ("limit") at 0x52a4f30> 1.38706111908
+<ROOT.TTree object ("limit") at 0x52a4f30> 0.579580325514
+
+higgsCombineHToAAH125A14p2.AsymptoticLimits.mH14.2.root
+higgsCombineHToAAH125A14p2.AsymptoticLimits.mH14.2.root
+<ROOT.TTree object ("limit") at 0x52f6b00> 0.266143798828
+<ROOT.TTree object ("limit") at 0x52f6b00> 0.387871026993
+<ROOT.TTree object ("limit") at 0x52f6b00> 0.59765625
+<ROOT.TTree object ("limit") at 0x52f6b00> 0.931175947189
+<ROOT.TTree object ("limit") at 0x52f6b00> 1.38466596603
+<ROOT.TTree object ("limit") at 0x52f6b00> 0.484735852126
+
+higgsCombineHToAAH125A14p3.AsymptoticLimits.mH14.3.root
+higgsCombineHToAAH125A14p3.AsymptoticLimits.mH14.3.root
+<ROOT.TTree object ("limit") at 0x52f6740> 0.265274047852
+<ROOT.TTree object ("limit") at 0x52f6740> 0.386603474617
+<ROOT.TTree object ("limit") at 0x52f6740> 0.595703125
+<ROOT.TTree object ("limit") at 0x52f6740> 0.930507361889
+<ROOT.TTree object ("limit") at 0x52f6740> 1.39162373543
+<ROOT.TTree object ("limit") at 0x52f6740> 0.423566571656
+
+higgsCombineHToAAH125A14p4.AsymptoticLimits.mH14.4.root
+higgsCombineHToAAH125A14p4.AsymptoticLimits.mH14.4.root
+<ROOT.TTree object ("limit") at 0x53045a0> 0.267013549805
+<ROOT.TTree object ("limit") at 0x53045a0> 0.389138579369
+<ROOT.TTree object ("limit") at 0x53045a0> 0.599609375
+<ROOT.TTree object ("limit") at 0x53045a0> 0.934219002724
+<ROOT.TTree object ("limit") at 0x53045a0> 1.38919091225
+<ROOT.TTree object ("limit") at 0x53045a0> 0.386745966114
+
+higgsCombineHToAAH125A14p5.AsymptoticLimits.mH14.5.root
+higgsCombineHToAAH125A14p5.AsymptoticLimits.mH14.5.root
+<ROOT.TTree object ("limit") at 0x52a5920> 0.267013549805
+<ROOT.TTree object ("limit") at 0x52a5920> 0.389138579369
+<ROOT.TTree object ("limit") at 0x52a5920> 0.599609375
+<ROOT.TTree object ("limit") at 0x52a5920> 0.93660902977
+<ROOT.TTree object ("limit") at 0x52a5920> 1.39382171631
+<ROOT.TTree object ("limit") at 0x52a5920> 0.365259652875
+
+higgsCombineHToAAH125A14p6.AsymptoticLimits.mH14.6.root
+higgsCombineHToAAH125A14p6.AsymptoticLimits.mH14.6.root
+<ROOT.TTree object ("limit") at 0x52bf410> 0.267883300781
+<ROOT.TTree object ("limit") at 0x52bf410> 0.390406131744
+<ROOT.TTree object ("limit") at 0x52bf410> 0.6015625
+<ROOT.TTree object ("limit") at 0x52bf410> 0.937262058258
+<ROOT.TTree object ("limit") at 0x52bf410> 1.39371597767
+<ROOT.TTree object ("limit") at 0x52bf410> 0.367329720908
+
+higgsCombineHToAAH125A14p7.AsymptoticLimits.mH14.7.root
+higgsCombineHToAAH125A14p7.AsymptoticLimits.mH14.7.root
+<ROOT.TTree object ("limit") at 0x5221540> 0.268753051758
+<ROOT.TTree object ("limit") at 0x5221540> 0.39167368412
+<ROOT.TTree object ("limit") at 0x5221540> 0.603515625
+<ROOT.TTree object ("limit") at 0x5221540> 0.940305113792
+<ROOT.TTree object ("limit") at 0x5221540> 1.39824104309
+<ROOT.TTree object ("limit") at 0x5221540> 0.407154084046
+
+higgsCombineHToAAH125A14p8.AsymptoticLimits.mH14.8.root
+higgsCombineHToAAH125A14p8.AsymptoticLimits.mH14.8.root
+<ROOT.TTree object ("limit") at 0x52a54d0> 0.268753051758
+<ROOT.TTree object ("limit") at 0x52a54d0> 0.39167368412
+<ROOT.TTree object ("limit") at 0x52a54d0> 0.603515625
+<ROOT.TTree object ("limit") at 0x52a54d0> 0.942710757256
+<ROOT.TTree object ("limit") at 0x52a54d0> 1.4029020071
+<ROOT.TTree object ("limit") at 0x52a54d0> 0.501384350177
+
+higgsCombineHToAAH125A14p9.AsymptoticLimits.mH14.9.root
+higgsCombineHToAAH125A14p9.AsymptoticLimits.mH14.9.root
+<ROOT.TTree object ("limit") at 0x402b4e0> 0.269622802734
+<ROOT.TTree object ("limit") at 0x402b4e0> 0.392941236496
+<ROOT.TTree object ("limit") at 0x402b4e0> 0.60546875
+<ROOT.TTree object ("limit") at 0x402b4e0> 0.945761561394
+<ROOT.TTree object ("limit") at 0x402b4e0> 1.40044701099
+<ROOT.TTree object ("limit") at 0x402b4e0> 0.667402616374
+
+higgsCombineHToAAH125A15p1.AsymptoticLimits.mH15.1.root
+higgsCombineHToAAH125A15p1.AsymptoticLimits.mH15.1.root
+<ROOT.TTree object ("limit") at 0x52a52f0> 0.271362304688
+<ROOT.TTree object ("limit") at 0x52a52f0> 0.395476341248
+<ROOT.TTree object ("limit") at 0x52a52f0> 0.609375
+<ROOT.TTree object ("limit") at 0x52a52f0> 0.949434280396
+<ROOT.TTree object ("limit") at 0x52a52f0> 1.41181623936
+<ROOT.TTree object ("limit") at 0x52a52f0> 0.991515107466
+
+higgsCombineHToAAH125A15p2.AsymptoticLimits.mH15.2.root
+higgsCombineHToAAH125A15p2.AsymptoticLimits.mH15.2.root
+<ROOT.TTree object ("limit") at 0x5260cc0> 0.271362304688
+<ROOT.TTree object ("limit") at 0x5260cc0> 0.395476341248
+<ROOT.TTree object ("limit") at 0x5260cc0> 0.609375
+<ROOT.TTree object ("limit") at 0x5260cc0> 0.951863288879
+<ROOT.TTree object ("limit") at 0x5260cc0> 1.41652238369
+<ROOT.TTree object ("limit") at 0x5260cc0> 1.05505196062
+
+higgsCombineHToAAH125A15p3.AsymptoticLimits.mH15.3.root
+higgsCombineHToAAH125A15p3.AsymptoticLimits.mH15.3.root
+<ROOT.TTree object ("limit") at 0x52615a0> 0.272232055664
+<ROOT.TTree object ("limit") at 0x52615a0> 0.396743893623
+<ROOT.TTree object ("limit") at 0x52615a0> 0.611328125
+<ROOT.TTree object ("limit") at 0x52615a0> 0.954914093018
+<ROOT.TTree object ("limit") at 0x52615a0> 1.4139996767
+<ROOT.TTree object ("limit") at 0x52615a0> 1.05935949326
+
+higgsCombineHToAAH125A15p4.AsymptoticLimits.mH15.4.root
+higgsCombineHToAAH125A15p4.AsymptoticLimits.mH15.4.root
+<ROOT.TTree object ("limit") at 0x52c0f60> 0.273101806641
+<ROOT.TTree object ("limit") at 0x52c0f60> 0.398011445999
+<ROOT.TTree object ("limit") at 0x52c0f60> 0.61328125
+<ROOT.TTree object ("limit") at 0x52c0f60> 0.95796495676
+<ROOT.TTree object ("limit") at 0x52c0f60> 1.41851723194
+<ROOT.TTree object ("limit") at 0x52c0f60> 1.02339203618
+
+higgsCombineHToAAH125A15p5.AsymptoticLimits.mH15.5.root
+higgsCombineHToAAH125A15p5.AsymptoticLimits.mH15.5.root
+<ROOT.TTree object ("limit") at 0x402b4e0> 0.273971557617
+<ROOT.TTree object ("limit") at 0x402b4e0> 0.399278998375
+<ROOT.TTree object ("limit") at 0x402b4e0> 0.615234375
+<ROOT.TTree object ("limit") at 0x402b4e0> 0.961015820503
+<ROOT.TTree object ("limit") at 0x402b4e0> 1.42303478718
+<ROOT.TTree object ("limit") at 0x402b4e0> 0.960985659685
+
+higgsCombineHToAAH125A15p6.AsymptoticLimits.mH15.6.root
+higgsCombineHToAAH125A15p6.AsymptoticLimits.mH15.6.root
+<ROOT.TTree object ("limit") at 0x5261660> 0.274841308594
+<ROOT.TTree object ("limit") at 0x5261660> 0.400546550751
+<ROOT.TTree object ("limit") at 0x5261660> 0.6171875
+<ROOT.TTree object ("limit") at 0x5261660> 0.964066624641
+<ROOT.TTree object ("limit") at 0x5261660> 1.42755234241
+<ROOT.TTree object ("limit") at 0x5261660> 0.89740153232
+
+higgsCombineHToAAH125A15p7.AsymptoticLimits.mH15.7.root
+higgsCombineHToAAH125A15p7.AsymptoticLimits.mH15.7.root
+<ROOT.TTree object ("limit") at 0x52a5250> 0.276580810547
+<ROOT.TTree object ("limit") at 0x52a5250> 0.403081655502
+<ROOT.TTree object ("limit") at 0x52a5250> 0.62109375
+<ROOT.TTree object ("limit") at 0x52a5250> 0.965216934681
+<ROOT.TTree object ("limit") at 0x52a5250> 1.43775773048
+<ROOT.TTree object ("limit") at 0x52a5250> 0.848444806542
+
+higgsCombineHToAAH125A15p8.AsymptoticLimits.mH15.8.root
+higgsCombineHToAAH125A15p8.AsymptoticLimits.mH15.8.root
+<ROOT.TTree object ("limit") at 0x52f62b0> 0.277450561523
+<ROOT.TTree object ("limit") at 0x52f62b0> 0.404349207878
+<ROOT.TTree object ("limit") at 0x52f62b0> 0.623046875
+<ROOT.TTree object ("limit") at 0x52f62b0> 0.968252182007
+<ROOT.TTree object ("limit") at 0x52f62b0> 1.44227898121
+<ROOT.TTree object ("limit") at 0x52f62b0> 0.830293521669
+
+higgsCombineHToAAH125A15p9.AsymptoticLimits.mH15.9.root
+higgsCombineHToAAH125A15p9.AsymptoticLimits.mH15.9.root
+<ROOT.TTree object ("limit") at 0x52a4720> 0.2783203125
+<ROOT.TTree object ("limit") at 0x52a4720> 0.405616760254
+<ROOT.TTree object ("limit") at 0x52a4720> 0.625
+<ROOT.TTree object ("limit") at 0x52a4720> 0.97377872467
+<ROOT.TTree object ("limit") at 0x52a4720> 1.44801664352
+<ROOT.TTree object ("limit") at 0x52a4720> 0.888779374685
+
+higgsCombineHToAAH125A16p1.AsymptoticLimits.mH16.1.root
+higgsCombineHToAAH125A16p1.AsymptoticLimits.mH16.1.root
+<ROOT.TTree object ("limit") at 0x52c0cf0> 0.28092956543
+<ROOT.TTree object ("limit") at 0x52c0cf0> 0.409419417381
+<ROOT.TTree object ("limit") at 0x52c0cf0> 0.630859375
+<ROOT.TTree object ("limit") at 0x52c0cf0> 0.98039329052
+<ROOT.TTree object ("limit") at 0x52c0cf0> 1.46036398411
+<ROOT.TTree object ("limit") at 0x52c0cf0> 1.11756976292
+
+higgsCombineHToAAH125A16p2.AsymptoticLimits.mH16.2.root
+higgsCombineHToAAH125A16p2.AsymptoticLimits.mH16.2.root
+<ROOT.TTree object ("limit") at 0x5221540> 0.284271240234
+<ROOT.TTree object ("limit") at 0x5221540> 0.412251234055
+<ROOT.TTree object ("limit") at 0x5221540> 0.6328125
+<ROOT.TTree object ("limit") at 0x5221540> 0.983428537846
+<ROOT.TTree object ("limit") at 0x5221540> 1.46488523483
+<ROOT.TTree object ("limit") at 0x5221540> 1.18167240795
+
+higgsCombineHToAAH125A16p3.AsymptoticLimits.mH16.3.root
+higgsCombineHToAAH125A16p3.AsymptoticLimits.mH16.3.root
+<ROOT.TTree object ("limit") at 0x52a4d30> 0.285148620605
+<ROOT.TTree object ("limit") at 0x52a4d30> 0.413523614407
+<ROOT.TTree object ("limit") at 0x52a4d30> 0.634765625
+<ROOT.TTree object ("limit") at 0x52a4d30> 0.988994061947
+<ROOT.TTree object ("limit") at 0x52a4d30> 1.47064185143
+<ROOT.TTree object ("limit") at 0x52a4d30> 1.20508385412
+
+higgsCombineHToAAH125A16p4.AsymptoticLimits.mH16.4.root
+higgsCombineHToAAH125A16p4.AsymptoticLimits.mH16.4.root
+<ROOT.TTree object ("limit") at 0x52f6920> 0.286903381348
+<ROOT.TTree object ("limit") at 0x52f6920> 0.416068375111
+<ROOT.TTree object ("limit") at 0x52f6920> 0.638671875
+<ROOT.TTree object ("limit") at 0x52f6920> 0.992534399033
+<ROOT.TTree object ("limit") at 0x52f6920> 1.47844898701
+<ROOT.TTree object ("limit") at 0x52f6920> 1.15993956667
+
+higgsCombineHToAAH125A16p5.AsymptoticLimits.mH16.5.root
+higgsCombineHToAAH125A16p5.AsymptoticLimits.mH16.5.root
+<ROOT.TTree object ("limit") at 0x52a4e30> 0.287780761719
+<ROOT.TTree object ("limit") at 0x52a4e30> 0.417340755463
+<ROOT.TTree object ("limit") at 0x52a4e30> 0.640625
+<ROOT.TTree object ("limit") at 0x52a4e30> 0.995569646358
+<ROOT.TTree object ("limit") at 0x52a4e30> 1.48297023773
+<ROOT.TTree object ("limit") at 0x52a4e30> 1.04782718883
+
+higgsCombineHToAAH125A16p6.AsymptoticLimits.mH16.6.root
+higgsCombineHToAAH125A16p6.AsymptoticLimits.mH16.6.root
+<ROOT.TTree object ("limit") at 0x52f6c20> 0.289535522461
+<ROOT.TTree object ("limit") at 0x52f6c20> 0.419885516167
+<ROOT.TTree object ("limit") at 0x52f6c20> 0.64453125
+<ROOT.TTree object ("limit") at 0x52f6c20> 1.00164020061
+<ROOT.TTree object ("limit") at 0x52f6c20> 1.49201273918
+<ROOT.TTree object ("limit") at 0x52f6c20> 0.931286498304
+
+higgsCombineHToAAH125A16p7.AsymptoticLimits.mH16.7.root
+higgsCombineHToAAH125A16p7.AsymptoticLimits.mH16.7.root
+<ROOT.TTree object ("limit") at 0x52f66a0> 0.291290283203
+<ROOT.TTree object ("limit") at 0x52f66a0> 0.422430276871
+<ROOT.TTree object ("limit") at 0x52f66a0> 0.6484375
+<ROOT.TTree object ("limit") at 0x52f66a0> 1.00771069527
+<ROOT.TTree object ("limit") at 0x52f66a0> 1.49352324009
+<ROOT.TTree object ("limit") at 0x52f66a0> 0.843066638785
+
+higgsCombineHToAAH125A16p8.AsymptoticLimits.mH16.8.root
+higgsCombineHToAAH125A16p8.AsymptoticLimits.mH16.8.root
+<ROOT.TTree object ("limit") at 0x402b4e0> 0.292167663574
+<ROOT.TTree object ("limit") at 0x402b4e0> 0.423702657223
+<ROOT.TTree object ("limit") at 0x402b4e0> 0.650390625
+<ROOT.TTree object ("limit") at 0x402b4e0> 1.0107460022
+<ROOT.TTree object ("limit") at 0x402b4e0> 1.50557649136
+<ROOT.TTree object ("limit") at 0x402b4e0> 0.776773451559
+
+higgsCombineHToAAH125A16p9.AsymptoticLimits.mH16.9.root
+higgsCombineHToAAH125A16p9.AsymptoticLimits.mH16.9.root
+<ROOT.TTree object ("limit") at 0x52f6ba0> 0.293922424316
+<ROOT.TTree object ("limit") at 0x52f6ba0> 0.426247417927
+<ROOT.TTree object ("limit") at 0x52f6ba0> 0.654296875
+<ROOT.TTree object ("limit") at 0x52f6ba0> 1.01681661606
+<ROOT.TTree object ("limit") at 0x52f6ba0> 1.51081895828
+<ROOT.TTree object ("limit") at 0x52f6ba0> 0.746796303408
+
+higgsCombineHToAAH125A17p1.AsymptoticLimits.mH17.1.root
+higgsCombineHToAAH125A17p1.AsymptoticLimits.mH17.1.root
+<ROOT.TTree object ("limit") at 0x52f6810> 0.299133300781
+<ROOT.TTree object ("limit") at 0x52f6810> 0.431696414948
+<ROOT.TTree object ("limit") at 0x52f6810> 0.66015625
+<ROOT.TTree object ("limit") at 0x52f6810> 1.02592241764
+<ROOT.TTree object ("limit") at 0x52f6810> 1.52818274498
+<ROOT.TTree object ("limit") at 0x52f6810> 0.806111789151
+
+higgsCombineHToAAH125A17p2.AsymptoticLimits.mH17.2.root
+higgsCombineHToAAH125A17p2.AsymptoticLimits.mH17.2.root
+<ROOT.TTree object ("limit") at 0x402b4e0> 0.300903320312
+<ROOT.TTree object ("limit") at 0x402b4e0> 0.434250831604
+<ROOT.TTree object ("limit") at 0x402b4e0> 0.6640625
+<ROOT.TTree object ("limit") at 0x402b4e0> 1.03199291229
+<ROOT.TTree object ("limit") at 0x402b4e0> 1.53722524643
+<ROOT.TTree object ("limit") at 0x402b4e0> 0.881094066127
+
+higgsCombineHToAAH125A17p3.AsymptoticLimits.mH17.3.root
+higgsCombineHToAAH125A17p3.AsymptoticLimits.mH17.3.root
+<ROOT.TTree object ("limit") at 0x402b4e0> 0.302673339844
+<ROOT.TTree object ("limit") at 0x402b4e0> 0.43680524826
+<ROOT.TTree object ("limit") at 0x402b4e0> 0.66796875
+<ROOT.TTree object ("limit") at 0x402b4e0> 1.03806352615
+<ROOT.TTree object ("limit") at 0x402b4e0> 1.54626774788
+<ROOT.TTree object ("limit") at 0x402b4e0> 0.937806555167
+
+higgsCombineHToAAH125A17p4.AsymptoticLimits.mH17.4.root
+higgsCombineHToAAH125A17p4.AsymptoticLimits.mH17.4.root
+<ROOT.TTree object ("limit") at 0x52b7b80> 0.304443359375
+<ROOT.TTree object ("limit") at 0x52b7b80> 0.439359664917
+<ROOT.TTree object ("limit") at 0x52b7b80> 0.671875
+<ROOT.TTree object ("limit") at 0x52b7b80> 1.04413402081
+<ROOT.TTree object ("limit") at 0x52b7b80> 1.55531024933
+<ROOT.TTree object ("limit") at 0x52b7b80> 0.949414490876
+
+higgsCombineHToAAH125A17p5.AsymptoticLimits.mH17.5.root
+higgsCombineHToAAH125A17p5.AsymptoticLimits.mH17.5.root
+<ROOT.TTree object ("limit") at 0x52f5d30> 0.306213378906
+<ROOT.TTree object ("limit") at 0x52f5d30> 0.441914081573
+<ROOT.TTree object ("limit") at 0x52f5d30> 0.67578125
+<ROOT.TTree object ("limit") at 0x52f5d30> 1.05020463467
+<ROOT.TTree object ("limit") at 0x52f5d30> 1.56435275078
+<ROOT.TTree object ("limit") at 0x52f5d30> 0.931135487148
+
+higgsCombineHToAAH125A17p6.AsymptoticLimits.mH17.6.root
+higgsCombineHToAAH125A17p6.AsymptoticLimits.mH17.6.root
+<ROOT.TTree object ("limit") at 0x52b7f10> 0.307983398438
+<ROOT.TTree object ("limit") at 0x52b7f10> 0.44446849823
+<ROOT.TTree object ("limit") at 0x52b7f10> 0.6796875
+<ROOT.TTree object ("limit") at 0x52b7f10> 1.05627512932
+<ROOT.TTree object ("limit") at 0x52b7f10> 1.57339525223
+<ROOT.TTree object ("limit") at 0x52b7f10> 0.889023221735
+
+higgsCombineHToAAH125A17p7.AsymptoticLimits.mH17.7.root
+higgsCombineHToAAH125A17p7.AsymptoticLimits.mH17.7.root
+<ROOT.TTree object ("limit") at 0x52f6040> 0.309753417969
+<ROOT.TTree object ("limit") at 0x52f6040> 0.447022914886
+<ROOT.TTree object ("limit") at 0x52f6040> 0.68359375
+<ROOT.TTree object ("limit") at 0x52f6040> 1.06234562397
+<ROOT.TTree object ("limit") at 0x52f6040> 1.58243763447
+<ROOT.TTree object ("limit") at 0x52f6040> 0.815887991718
+
+higgsCombineHToAAH125A17p8.AsymptoticLimits.mH17.8.root
+higgsCombineHToAAH125A17p8.AsymptoticLimits.mH17.8.root
+<ROOT.TTree object ("limit") at 0x52b8400> 0.312408447266
+<ROOT.TTree object ("limit") at 0x52b8400> 0.450854539871
+<ROOT.TTree object ("limit") at 0x52b8400> 0.689453125
+<ROOT.TTree object ("limit") at 0x52b8400> 1.07145154476
+<ROOT.TTree object ("limit") at 0x52b8400> 1.59199726582
+<ROOT.TTree object ("limit") at 0x52b8400> 0.72059653494
+
+higgsCombineHToAAH125A17p9.AsymptoticLimits.mH17.9.root
+higgsCombineHToAAH125A17p9.AsymptoticLimits.mH17.9.root
+<ROOT.TTree object ("limit") at 0x52a4800> 0.314178466797
+<ROOT.TTree object ("limit") at 0x52a4800> 0.453408956528
+<ROOT.TTree object ("limit") at 0x52a4800> 0.693359375
+<ROOT.TTree object ("limit") at 0x52a4800> 1.07752203941
+<ROOT.TTree object ("limit") at 0x52a4800> 1.6050440073
+<ROOT.TTree object ("limit") at 0x52a4800> 0.651319846667
+
+higgsCombineHToAAH125A18p1.AsymptoticLimits.mH18.1.root
+higgsCombineHToAAH125A18p1.AsymptoticLimits.mH18.1.root
+<ROOT.TTree object ("limit") at 0x52a5b70> 0.318603515625
+<ROOT.TTree object ("limit") at 0x52a5b70> 0.459794998169
+<ROOT.TTree object ("limit") at 0x52a5b70> 0.703125
+<ROOT.TTree object ("limit") at 0x52a5b70> 1.09269845486
+<ROOT.TTree object ("limit") at 0x52a5b70> 1.6235666275
+<ROOT.TTree object ("limit") at 0x52a5b70> 0.515747684146
+
+higgsCombineHToAAH125A18p2.AsymptoticLimits.mH18.2.root
+higgsCombineHToAAH125A18p2.AsymptoticLimits.mH18.2.root
+<ROOT.TTree object ("limit") at 0x52b8470> 0.320373535156
+<ROOT.TTree object ("limit") at 0x52b8470> 0.462349414825
+<ROOT.TTree object ("limit") at 0x52b8470> 0.70703125
+<ROOT.TTree object ("limit") at 0x52b8470> 1.09876894951
+<ROOT.TTree object ("limit") at 0x52b8470> 1.63669276237
+<ROOT.TTree object ("limit") at 0x52b8470> 0.466121210477
+
+higgsCombineHToAAH125A18p3.AsymptoticLimits.mH18.3.root
+higgsCombineHToAAH125A18p3.AsymptoticLimits.mH18.3.root
+<ROOT.TTree object ("limit") at 0x52f6510> 0.322143554688
+<ROOT.TTree object ("limit") at 0x52f6510> 0.464903831482
+<ROOT.TTree object ("limit") at 0x52f6510> 0.7109375
+<ROOT.TTree object ("limit") at 0x52f6510> 1.10483944416
+<ROOT.TTree object ("limit") at 0x52f6510> 1.64573514462
+<ROOT.TTree object ("limit") at 0x52f6510> 0.44952883828
+
+higgsCombineHToAAH125A18p4.AsymptoticLimits.mH18.4.root
+higgsCombineHToAAH125A18p4.AsymptoticLimits.mH18.4.root
+<ROOT.TTree object ("limit") at 0x52b8a20> 0.324798583984
+<ROOT.TTree object ("limit") at 0x52b8a20> 0.468735456467
+<ROOT.TTree object ("limit") at 0x52b8a20> 0.716796875
+<ROOT.TTree object ("limit") at 0x52b8a20> 1.11394536495
+<ROOT.TTree object ("limit") at 0x52b8a20> 1.659299016
+<ROOT.TTree object ("limit") at 0x52b8a20> 0.474477901588
+
+higgsCombineHToAAH125A18p5.AsymptoticLimits.mH18.5.root
+higgsCombineHToAAH125A18p5.AsymptoticLimits.mH18.5.root
+<ROOT.TTree object ("limit") at 0x52a5b70> 0.327453613281
+<ROOT.TTree object ("limit") at 0x52a5b70> 0.472567081451
+<ROOT.TTree object ("limit") at 0x52a5b70> 0.72265625
+<ROOT.TTree object ("limit") at 0x52a5b70> 1.12305116653
+<ROOT.TTree object ("limit") at 0x52a5b70> 1.66866564751
+<ROOT.TTree object ("limit") at 0x52a5b70> 0.544154421502
+
+higgsCombineHToAAH125A18p6.AsymptoticLimits.mH18.6.root
+higgsCombineHToAAH125A18p6.AsymptoticLimits.mH18.6.root
+<ROOT.TTree object ("limit") at 0x52b88f0> 0.329223632812
+<ROOT.TTree object ("limit") at 0x52b88f0> 0.475121498108
+<ROOT.TTree object ("limit") at 0x52b88f0> 0.7265625
+<ROOT.TTree object ("limit") at 0x52b88f0> 1.12912166119
+<ROOT.TTree object ("limit") at 0x52b88f0> 1.68190526962
+<ROOT.TTree object ("limit") at 0x52b88f0> 0.635439487958
+
+higgsCombineHToAAH125A18p7.AsymptoticLimits.mH18.7.root
+higgsCombineHToAAH125A18p7.AsymptoticLimits.mH18.7.root
+<ROOT.TTree object ("limit") at 0x52f6550> 0.330993652344
+<ROOT.TTree object ("limit") at 0x52f6550> 0.477675914764
+<ROOT.TTree object ("limit") at 0x52f6550> 0.73046875
+<ROOT.TTree object ("limit") at 0x52f6550> 1.13810396194
+<ROOT.TTree object ("limit") at 0x52f6550> 1.69236946106
+<ROOT.TTree object ("limit") at 0x52f6550> 0.691101025106
+
+higgsCombineHToAAH125A18p8.AsymptoticLimits.mH18.8.root
+higgsCombineHToAAH125A18p8.AsymptoticLimits.mH18.8.root
+<ROOT.TTree object ("limit") at 0x52b8f50> 0.333648681641
+<ROOT.TTree object ("limit") at 0x52b8f50> 0.481507539749
+<ROOT.TTree object ("limit") at 0x52b8f50> 0.736328125
+<ROOT.TTree object ("limit") at 0x52b8f50> 1.14429807663
+<ROOT.TTree object ("limit") at 0x52b8f50> 1.70451152325
+<ROOT.TTree object ("limit") at 0x52b8f50> 0.670236230651
+
+higgsCombineHToAAH125A18p9.AsymptoticLimits.mH18.9.root
+higgsCombineHToAAH125A18p9.AsymptoticLimits.mH18.9.root
+<ROOT.TTree object ("limit") at 0x52a5050> 0.336303710938
+<ROOT.TTree object ("limit") at 0x52a5050> 0.485339164734
+<ROOT.TTree object ("limit") at 0x52a5050> 0.7421875
+<ROOT.TTree object ("limit") at 0x52a5050> 1.15340387821
+<ROOT.TTree object ("limit") at 0x52a5050> 1.71807527542
+<ROOT.TTree object ("limit") at 0x52a5050> 0.583042343462
+
+higgsCombineHToAAH125A19p1.AsymptoticLimits.mH19.1.root
+higgsCombineHToAAH125A19p1.AsymptoticLimits.mH19.1.root
+<ROOT.TTree object ("limit") at 0x52b8e20> 0.340728759766
+<ROOT.TTree object ("limit") at 0x52b8e20> 0.491725206375
+<ROOT.TTree object ("limit") at 0x52b8e20> 0.751953125
+<ROOT.TTree object ("limit") at 0x52b8e20> 1.16858029366
+<ROOT.TTree object ("limit") at 0x52b8e20> 1.74068152905
+<ROOT.TTree object ("limit") at 0x52b8e20> 0.423797025424
+
+higgsCombineHToAAH125A19p2.AsymptoticLimits.mH19.2.root
+higgsCombineHToAAH125A19p2.AsymptoticLimits.mH19.2.root
+<ROOT.TTree object ("limit") at 0x52c0ff0> 0.343383789062
+<ROOT.TTree object ("limit") at 0x52c0ff0> 0.49555683136
+<ROOT.TTree object ("limit") at 0x52c0ff0> 0.7578125
+<ROOT.TTree object ("limit") at 0x52c0ff0> 1.17768609524
+<ROOT.TTree object ("limit") at 0x52c0ff0> 1.75424528122
+<ROOT.TTree object ("limit") at 0x52c0ff0> 0.400195926153
+
+higgsCombineHToAAH125A19p3.AsymptoticLimits.mH19.3.root
+higgsCombineHToAAH125A19p3.AsymptoticLimits.mH19.3.root
+<ROOT.TTree object ("limit") at 0x52b8f30> 0.346038818359
+<ROOT.TTree object ("limit") at 0x52b8f30> 0.499388456345
+<ROOT.TTree object ("limit") at 0x52b8f30> 0.763671875
+<ROOT.TTree object ("limit") at 0x52b8f30> 1.18679189682
+<ROOT.TTree object ("limit") at 0x52b8f30> 1.76780903339
+<ROOT.TTree object ("limit") at 0x52b8f30> 0.401753315629
+
+higgsCombineHToAAH125A19p4.AsymptoticLimits.mH19.4.root
+higgsCombineHToAAH125A19p4.AsymptoticLimits.mH19.4.root
+<ROOT.TTree object ("limit") at 0x5041b90> 0.347808837891
+<ROOT.TTree object ("limit") at 0x5041b90> 0.501942873001
+<ROOT.TTree object ("limit") at 0x5041b90> 0.767578125
+<ROOT.TTree object ("limit") at 0x5041b90> 1.19286239147
+<ROOT.TTree object ("limit") at 0x5041b90> 1.77685141563
+<ROOT.TTree object ("limit") at 0x5041b90> 0.412991637964
+
+higgsCombineHToAAH125A19p5.AsymptoticLimits.mH19.5.root
+higgsCombineHToAAH125A19p5.AsymptoticLimits.mH19.5.root
+<ROOT.TTree object ("limit") at 0x52b8ff0> 0.350463867188
+<ROOT.TTree object ("limit") at 0x52b8ff0> 0.505774497986
+<ROOT.TTree object ("limit") at 0x52b8ff0> 0.7734375
+<ROOT.TTree object ("limit") at 0x52b8ff0> 1.20196819305
+<ROOT.TTree object ("limit") at 0x52b8ff0> 1.79041516781
+<ROOT.TTree object ("limit") at 0x52b8ff0> 0.425319316398
+
+higgsCombineHToAAH125A19p6.AsymptoticLimits.mH19.6.root
+higgsCombineHToAAH125A19p6.AsymptoticLimits.mH19.6.root
+<ROOT.TTree object ("limit") at 0x52a52c0> 0.35400390625
+<ROOT.TTree object ("limit") at 0x52a52c0> 0.510883331299
+<ROOT.TTree object ("limit") at 0x52a52c0> 0.78125
+<ROOT.TTree object ("limit") at 0x52a52c0> 1.2109951973
+<ROOT.TTree object ("limit") at 0x52a52c0> 1.79788064957
+<ROOT.TTree object ("limit") at 0x52a52c0> 0.440988715299
+
+higgsCombineHToAAH125A19p7.AsymptoticLimits.mH19.7.root
+higgsCombineHToAAH125A19p7.AsymptoticLimits.mH19.7.root
+<ROOT.TTree object ("limit") at 0x52add00> 0.355773925781
+<ROOT.TTree object ("limit") at 0x52add00> 0.513437747955
+<ROOT.TTree object ("limit") at 0x52add00> 0.78515625
+<ROOT.TTree object ("limit") at 0x52add00> 1.22017991543
+<ROOT.TTree object ("limit") at 0x52add00> 1.81298267841
+<ROOT.TTree object ("limit") at 0x52add00> 0.463699756641
+
+higgsCombineHToAAH125A19p8.AsymptoticLimits.mH19.8.root
+higgsCombineHToAAH125A19p8.AsymptoticLimits.mH19.8.root
+<ROOT.TTree object ("limit") at 0x52b9240> 0.357543945312
+<ROOT.TTree object ("limit") at 0x52b9240> 0.515992164612
+<ROOT.TTree object ("limit") at 0x52b9240> 0.7890625
+<ROOT.TTree object ("limit") at 0x52b9240> 1.22625041008
+<ROOT.TTree object ("limit") at 0x52b9240> 1.82658529282
+<ROOT.TTree object ("limit") at 0x52b9240> 0.497463747086
+
+higgsCombineHToAAH125A19p9.AsymptoticLimits.mH19.9.root
+higgsCombineHToAAH125A19p9.AsymptoticLimits.mH19.9.root
+<ROOT.TTree object ("limit") at 0x52b8dc0> 0.362411499023
+<ROOT.TTree object ("limit") at 0x52b8dc0> 0.520506739616
+<ROOT.TTree object ("limit") at 0x52b8dc0> 0.79296875
+<ROOT.TTree object ("limit") at 0x52b8dc0> 1.23548173904
+<ROOT.TTree object ("limit") at 0x52b8dc0> 1.83717107773
+<ROOT.TTree object ("limit") at 0x52b8dc0> 0.53531671927
+
+higgsCombineHToAAH125A20p1.AsymptoticLimits.mH20.1.root
+higgsCombineHToAAH125A20p1.AsymptoticLimits.mH20.1.root
+<ROOT.TTree object ("limit") at 0x529da80> 0.367767333984
+<ROOT.TTree object ("limit") at 0x529da80> 0.528198957443
+<ROOT.TTree object ("limit") at 0x529da80> 0.8046875
+<ROOT.TTree object ("limit") at 0x529da80> 1.25053262711
+<ROOT.TTree object ("limit") at 0x529da80> 1.86275529861
+<ROOT.TTree object ("limit") at 0x529da80> 0.565654344823
+
+higgsCombineHToAAH125A20p2.AsymptoticLimits.mH20.2.root
+higgsCombineHToAAH125A20p2.AsymptoticLimits.mH20.2.root
+<ROOT.TTree object ("limit") at 0x52a53a0> 0.3681640625
+<ROOT.TTree object ("limit") at 0x52a53a0> 0.531318664551
+<ROOT.TTree object ("limit") at 0x52a53a0> 0.8125
+<ROOT.TTree object ("limit") at 0x52a53a0> 1.25943505764
+<ROOT.TTree object ("limit") at 0x52a53a0> 1.86979591846
+<ROOT.TTree object ("limit") at 0x52a53a0> 0.551642350956
+
+higgsCombineHToAAH125A20p3.AsymptoticLimits.mH20.3.root
+higgsCombineHToAAH125A20p3.AsymptoticLimits.mH20.3.root
+<ROOT.TTree object ("limit") at 0x52accb0> 0.373123168945
+<ROOT.TTree object ("limit") at 0x52accb0> 0.53589117527
+<ROOT.TTree object ("limit") at 0x52accb0> 0.81640625
+<ROOT.TTree object ("limit") at 0x52accb0> 1.26874423027
+<ROOT.TTree object ("limit") at 0x52accb0> 1.88514125347
+<ROOT.TTree object ("limit") at 0x52accb0> 0.52719088504
+
+higgsCombineHToAAH125A20p4.AsymptoticLimits.mH20.4.root
+higgsCombineHToAAH125A20p4.AsymptoticLimits.mH20.4.root
+<ROOT.TTree object ("limit") at 0x52a53d0> 0.376693725586
+<ROOT.TTree object ("limit") at 0x52a53d0> 0.541019320488
+<ROOT.TTree object ("limit") at 0x52a53d0> 0.82421875
+<ROOT.TTree object ("limit") at 0x52a53d0> 1.27431464195
+<ROOT.TTree object ("limit") at 0x52a53d0> 1.8951343298
+<ROOT.TTree object ("limit") at 0x52a53d0> 0.503008938703
+
+higgsCombineHToAAH125A20p5.AsymptoticLimits.mH20.5.root
+higgsCombineHToAAH125A20p5.AsymptoticLimits.mH20.5.root
+<ROOT.TTree object ("limit") at 0x52c11b0> 0.378479003906
+<ROOT.TTree object ("limit") at 0x52c11b0> 0.543583393097
+<ROOT.TTree object ("limit") at 0x52c11b0> 0.828125
+<ROOT.TTree object ("limit") at 0x52c11b0> 1.28365492821
+<ROOT.TTree object ("limit") at 0x52c11b0> 1.90575349331
+<ROOT.TTree object ("limit") at 0x52c11b0> 0.491095342719
+
+higgsCombineHToAAH125A20p6.AsymptoticLimits.mH20.6.root
+higgsCombineHToAAH125A20p6.AsymptoticLimits.mH20.6.root
+<ROOT.TTree object ("limit") at 0x52b80a0> 0.380264282227
+<ROOT.TTree object ("limit") at 0x52b80a0> 0.546147465706
+<ROOT.TTree object ("limit") at 0x52b80a0> 0.83203125
+<ROOT.TTree object ("limit") at 0x52b80a0> 1.2930264473
+<ROOT.TTree object ("limit") at 0x52b80a0> 1.921220541
+<ROOT.TTree object ("limit") at 0x52b80a0> 0.49669848616
+
+higgsCombineHToAAH125A20p7.AsymptoticLimits.mH20.7.root
+higgsCombineHToAAH125A20p7.AsymptoticLimits.mH20.7.root
+<ROOT.TTree object ("limit") at 0x52ad300> 0.383834838867
+<ROOT.TTree object ("limit") at 0x52ad300> 0.551275610924
+<ROOT.TTree object ("limit") at 0x52ad300> 0.83984375
+<ROOT.TTree object ("limit") at 0x52ad300> 1.30181992054
+<ROOT.TTree object ("limit") at 0x52ad300> 1.93272173405
+<ROOT.TTree object ("limit") at 0x52ad300> 0.525467142602
+
+higgsCombineHToAAH125A20p8.AsymptoticLimits.mH20.8.root
+higgsCombineHToAAH125A20p8.AsymptoticLimits.mH20.8.root
+<ROOT.TTree object ("limit") at 0x52b8130> 0.388916015625
+<ROOT.TTree object ("limit") at 0x52b8130> 0.555925369263
+<ROOT.TTree object ("limit") at 0x52b8130> 0.84375
+<ROOT.TTree object ("limit") at 0x52b8130> 1.31123805046
+<ROOT.TTree object ("limit") at 0x52b8130> 1.94337964058
+<ROOT.TTree object ("limit") at 0x52b8130> 0.574770911193
+
+higgsCombineHToAAH125A20p9.AsymptoticLimits.mH20.9.root
+higgsCombineHToAAH125A20p9.AsymptoticLimits.mH20.9.root
+<ROOT.TTree object ("limit") at 0x52a4800> 0.389190673828
+<ROOT.TTree object ("limit") at 0x52a4800> 0.558967828751
+<ROOT.TTree object ("limit") at 0x52a4800> 0.8515625
+<ROOT.TTree object ("limit") at 0x52a4800> 1.31659042835
+<ROOT.TTree object ("limit") at 0x52a4800> 1.95800602436
+<ROOT.TTree object ("limit") at 0x52a4800> 0.641480114637
+
+higgsCombineHToAAH125A10p0.AsymptoticLimits.mH10.root
+higgsCombineHToAAH125A10p0.AsymptoticLimits.mH10.root
+<ROOT.TTree object ("limit") at 0x52ad310> 3.53464965465
+
+higgsCombineHToAAH125A11p0.AsymptoticLimits.mH11.root
+higgsCombineHToAAH125A11p0.AsymptoticLimits.mH11.root
+<ROOT.TTree object ("limit") at 0x52bf910> 0.321655273438
+<ROOT.TTree object ("limit") at 0x52bf910> 0.450057983398
+<ROOT.TTree object ("limit") at 0x52bf910> 0.6640625
+<ROOT.TTree object ("limit") at 0x52bf910> 1.00552308559
+<ROOT.TTree object ("limit") at 0x52bf910> 1.46093833447
+<ROOT.TTree object ("limit") at 0x52bf910> 1.08261939943
+
+higgsCombineHToAAH125A12p0.AsymptoticLimits.mH12.root
+higgsCombineHToAAH125A12p0.AsymptoticLimits.mH12.root
+<ROOT.TTree object ("limit") at 0x52ad760> 0.255706787109
+<ROOT.TTree object ("limit") at 0x52ad760> 0.372660398483
+<ROOT.TTree object ("limit") at 0x52ad760> 0.57421875
+<ROOT.TTree object ("limit") at 0x52ad760> 0.892370343208
+<ROOT.TTree object ("limit") at 0x52ad760> 1.32257783413
+<ROOT.TTree object ("limit") at 0x52ad760> 0.813982373808
+
+higgsCombineHToAAH125A13p0.AsymptoticLimits.mH13.root
+higgsCombineHToAAH125A13p0.AsymptoticLimits.mH13.root
+<ROOT.TTree object ("limit") at 0x52bf910> 0.256050109863
+<ROOT.TTree object ("limit") at 0x52bf910> 0.375029146671
+<ROOT.TTree object ("limit") at 0x52bf910> 0.580078125
+<ROOT.TTree object ("limit") at 0x52bf910> 0.90610063076
+<ROOT.TTree object ("limit") at 0x52bf910> 1.3417185545
+<ROOT.TTree object ("limit") at 0x52bf910> 0.696895522612
+
+higgsCombineHToAAH125A14p0.AsymptoticLimits.mH14.root
+higgsCombineHToAAH125A14p0.AsymptoticLimits.mH14.root
+<ROOT.TTree object ("limit") at 0x52a4e10> 0.265274047852
+<ROOT.TTree object ("limit") at 0x52a4e10> 0.386603474617
+<ROOT.TTree object ("limit") at 0x52a4e10> 0.595703125
+<ROOT.TTree object ("limit") at 0x52a4e10> 0.928132891655
+<ROOT.TTree object ("limit") at 0x52a4e10> 1.38014090061
+<ROOT.TTree object ("limit") at 0x52a4e10> 0.676958370809
+
+higgsCombineHToAAH125A15p0.AsymptoticLimits.mH15.root
+higgsCombineHToAAH125A15p0.AsymptoticLimits.mH15.root
+<ROOT.TTree object ("limit") at 0x52ad8f0> 0.269622802734
+<ROOT.TTree object ("limit") at 0x52ad8f0> 0.392941236496
+<ROOT.TTree object ("limit") at 0x52ad8f0> 0.60546875
+<ROOT.TTree object ("limit") at 0x52ad8f0> 0.945761561394
+<ROOT.TTree object ("limit") at 0x52ad8f0> 1.41443729401
+<ROOT.TTree object ("limit") at 0x52ad8f0> 0.855436230372
+
+higgsCombineHToAAH125A16p0.AsymptoticLimits.mH16.root
+higgsCombineHToAAH125A16p0.AsymptoticLimits.mH16.root
+<ROOT.TTree object ("limit") at 0x52ad050> 0.281639099121
+<ROOT.TTree object ("limit") at 0x52ad050> 0.408434092999
+<ROOT.TTree object ("limit") at 0x52ad050> 0.626953125
+<ROOT.TTree object ("limit") at 0x52ad050> 0.976821780205
+<ROOT.TTree object ("limit") at 0x52ad050> 1.45254170895
+<ROOT.TTree object ("limit") at 0x52ad050> 1.0146075319
+
+higgsCombineHToAAH125A17p0.AsymptoticLimits.mH17.root
+higgsCombineHToAAH125A17p0.AsymptoticLimits.mH17.root
+<ROOT.TTree object ("limit") at 0x52d8ee0> 0.295677185059
+<ROOT.TTree object ("limit") at 0x52d8ee0> 0.428792178631
+<ROOT.TTree object ("limit") at 0x52d8ee0> 0.658203125
+<ROOT.TTree object ("limit") at 0x52d8ee0> 1.02288711071
+<ROOT.TTree object ("limit") at 0x52d8ee0> 1.51601600647
+<ROOT.TTree object ("limit") at 0x52d8ee0> 0.759461845274
+
+higgsCombineHToAAH125A18p0.AsymptoticLimits.mH18.root
+higgsCombineHToAAH125A18p0.AsymptoticLimits.mH18.root
+<ROOT.TTree object ("limit") at 0x52c12f0> 0.315948486328
+<ROOT.TTree object ("limit") at 0x52c12f0> 0.455963373184
+<ROOT.TTree object ("limit") at 0x52c12f0> 0.697265625
+<ROOT.TTree object ("limit") at 0x52c12f0> 1.08359253407
+<ROOT.TTree object ("limit") at 0x52c12f0> 1.61408638954
+<ROOT.TTree object ("limit") at 0x52c12f0> 0.583815380243
+
+higgsCombineHToAAH125A19p0.AsymptoticLimits.mH19.root
+higgsCombineHToAAH125A19p0.AsymptoticLimits.mH19.root
+<ROOT.TTree object ("limit") at 0x52bf910> 0.338073730469
+<ROOT.TTree object ("limit") at 0x52bf910> 0.48789358139
+<ROOT.TTree object ("limit") at 0x52bf910> 0.74609375
+<ROOT.TTree object ("limit") at 0x52bf910> 1.16244840622
+<ROOT.TTree object ("limit") at 0x52bf910> 1.72856986523
+<ROOT.TTree object ("limit") at 0x52bf910> 0.485955438673
+
+higgsCombineHToAAH125A20p0.AsymptoticLimits.mH20.root
+higgsCombineHToAAH125A20p0.AsymptoticLimits.mH20.root
+<ROOT.TTree object ("limit") at 0x52c0ea0> 0.362854003906
+<ROOT.TTree object ("limit") at 0x52c0ea0> 0.523655414581
+<ROOT.TTree object ("limit") at 0x52c0ea0> 0.80078125
+<ROOT.TTree object ("limit") at 0x52c0ea0> 1.24446213245
+<ROOT.TTree object ("limit") at 0x52c0ea0> 1.84906196594
+<ROOT.TTree object ("limit") at 0x52c0ea0> 0.56037070145
+
+higgsCombineHToAAH125A21p0.AsymptoticLimits.mH21.root
+higgsCombineHToAAH125A21p0.AsymptoticLimits.mH21.root
+<ROOT.TTree object ("limit") at 0x52bf910> 0.394317626953
+<ROOT.TTree object ("limit") at 0x52bf910> 0.563646554947
+<ROOT.TTree object ("limit") at 0x52bf910> 0.85546875
+<ROOT.TTree object ("limit") at 0x52bf910> 1.32603979111
+<ROOT.TTree object ("limit") at 0x52bf910> 1.96867930889
+<ROOT.TTree object ("limit") at 0x52bf910> 0.710419738216
+
+higgsCombineHToAAH125A9p0.AsymptoticLimits.mH9.root
+higgsCombineHToAAH125A9p0.AsymptoticLimits.mH9.root
+<ROOT.TTree object ("limit") at 0x52bf910> 0.274291992188
+<ROOT.TTree object ("limit") at 0x52bf910> 0.403784751892
+<ROOT.TTree object ("limit") at 0x52bf910> 0.626953125
+<ROOT.TTree object ("limit") at 0x52bf910> 0.974322736263
+<ROOT.TTree object ("limit") at 0x52bf910> 1.44039785862
+<ROOT.TTree object ("limit") at 0x52bf910> 0.566720422368
+3.7 	[2.718994140625, 3.216949462890625, 4.046875, 5.288963317871094, 6.906160831451416, 2.409892584100339]
+3.8 	[0.3076171875, 0.524139404296875, 0.9375, 1.632566213607788, 2.6128642559051514, 1.610203671789382]
+3.9 	[0.2349700927734375, 0.3954359292984009, 0.69140625, 1.1929936408996582, 1.8822027444839478, 0.7518754119470598]
+4.0 	[1.507965087890625, 1.7422828674316406, 2.1328125, 2.719414710998535, 3.49912691116333, 0.8367251681361183]
+4.1 	[0.081756591796875, 0.1452927589416504, 0.275390625, 0.5234750509262085, 0.8349699378013611, 0.4119791992639763]
+4.2 	[1.4669036865234375, 1.6638851165771484, 1.9921875, 2.5083489418029785, 3.160033702850342, 0.7521982155052248]
+4.3 	[0.065521240234375, 0.11522793769836426, 0.220703125, 0.42304152250289917, 0.6691877841949463, 0.3625484534213469]
+4.4 	[1.0467376708984375, 1.2093868255615234, 1.48046875, 1.8994548320770264, 2.458571672439575, 0.591586641938653]
+4.5 	[0.0879974365234375, 0.15269017219543457, 0.28515625, 0.5283982753753662, 0.8644722700119019, 0.6112901909460202]
+4.6 	[0.5773468017578125, 0.7110248804092407, 0.94140625, 1.2903873920440674, 1.7633031606674194, 0.9382028311634032]
+4.7 	[0.242828369140625, 0.36307644844055176, 0.5703125, 0.8953929543495178, 1.3344753980636597, 0.46821417120890646]
+4.8 	[0.1728363037109375, 0.27988219261169434, 0.470703125, 0.7821594476699829, 1.213255524635315, 0.42372019167219593]
+4.9 	[0.6138153076171875, 0.7513145208358765, 0.98828125, 1.3546390533447266, 1.8382073640823364, 0.8385784628368358]
+5.0 	[0.09521484375, 0.16651153564453125, 0.3125, 0.5790666341781616, 0.9473668336868286, 0.39179793481277875]
+5.1 	[0.8176116943359375, 0.9768276214599609, 1.2421875, 1.663057565689087, 2.216397285461426, 0.36808366274770327]
+5.2 	[0.0999755859375, 0.17305469512939453, 0.328125, 0.618483304977417, 0.9948169589042664, 0.2760077857039034]
+5.3 	[0.86834716796875, 1.0472121238708496, 1.35546875, 1.8417348861694336, 2.4919047355651855, 0.7303065427041001]
+5.4 	[0.1651611328125, 0.2828950881958008, 0.515625, 0.922575056552887, 1.5023953914642334, 0.744067834504787]
+5.5 	[0.63916015625, 0.8462409973144531, 1.203125, 1.7594270706176758, 2.508681535720825, 0.764593945473375]
+5.6 	[0.48675537109375, 0.7024645805358887, 1.07421875, 1.6608365774154663, 2.4448726177215576, 1.060702155061715]
+5.7 	[0.2833251953125, 0.4734830856323242, 0.82421875, 1.4221563339233398, 2.2606959342956543, 1.3291097715027678]
+5.8 	[1.14202880859375, 1.4197726249694824, 1.8984375, 2.6475956439971924, 3.6608686447143555, 2.0346639747644253]
+5.9 	[0.20709228515625, 0.36216259002685547, 0.6796875, 1.2594698667526245, 2.0605227947235107, 2.4028044921597993]
+6.0 	[1.400299072265625, 1.7101478576660156, 2.2265625, 3.0519535541534424, 4.170468330383301, 2.229597578517504]
+6.1 	[0.20733642578125, 0.35976314544677734, 0.671875, 1.239637017250061, 2.036796808242798, 1.3896072108916284]
+6.2 	[1.043701171875, 1.311492919921875, 1.7578125, 2.4654908180236816, 3.421661138534546, 1.104290886774819]
+6.3 	[0.2535552978515625, 0.4228653907775879, 0.74609375, 1.2933026552200317, 2.0630011558532715, 0.6485951753127407]
+6.4 	[0.51654052734375, 0.7227401733398438, 1.06640625, 1.6147518157958984, 2.358814239501953, 0.7401043728835526]
+6.5 	[0.370849609375, 0.5459270477294922, 0.84765625, 1.3240662813186646, 1.9606257677078247, 0.5871856604734572]
+6.6 	[0.23555755615234375, 0.3790229558944702, 0.634765625, 1.054779291152954, 1.622454047203064, 0.47412340701538386]
+6.7 	[0.4420166015625, 0.5852251052856445, 0.83203125, 1.2200632095336914, 1.7471424341201782, 0.6906762696899208]
+6.8 	[0.1541900634765625, 0.25896310806274414, 0.458984375, 0.7992771863937378, 1.2745552062988281, 0.5206287390171871]
+6.9 	[0.39093017578125, 0.5098671913146973, 0.71484375, 1.0368256568908691, 1.4764900207519531, 0.5370282110047329]
+7.0 	[0.1384429931640625, 0.23465383052825928, 0.412109375, 0.7143635153770447, 1.1310923099517822, 0.4025992603660419]
+7.1 	[0.3084716796875, 0.4132223129272461, 0.59375, 0.8777555227279663, 1.2655266523361206, 0.35062598511884313]
+7.2 	[0.156341552734375, 0.253171443939209, 0.42578125, 0.7075135111808777, 1.0928800106048584, 0.3489622528099309]
+7.3 	[0.228668212890625, 0.3289527893066406, 0.49609375, 0.7630496025085449, 1.1270627975463867, 0.3989539474837558]
+7.4 	[0.1945953369140625, 0.2909585237503052, 0.45703125, 0.7230061888694763, 1.0824309587478638, 0.43761756032287175]
+7.5 	[0.17694091796875, 0.2718977928161621, 0.435546875, 0.6994353532791138, 1.0558801889419556, 0.6010415300067908]
+7.6 	[0.22617340087890625, 0.31883031129837036, 0.478515625, 0.732197642326355, 1.079527735710144, 0.7811616701328556]
+7.7 	[0.1552734375, 0.2482757568359375, 0.4140625, 0.6814388036727905, 1.037966251373291, 0.8257365602427887]
+7.8 	[0.235565185546875, 0.3286217451095581, 0.486328125, 0.7363978028297424, 1.0757229328155518, 0.7578696839088055]
+7.9 	[0.158935546875, 0.2541313171386719, 0.423828125, 0.6941316723823547, 1.0611531734466553, 0.6073871450692876]
+8.0 	[0.22894287109375, 0.32273435592651367, 0.484375, 0.73923259973526, 1.086011528968811, 0.5255523955730017]
+8.1 	[0.18231201171875, 0.2817511558532715, 0.453125, 0.7276636958122253, 1.0984941720962524, 0.56366675022041]
+8.2 	[0.2156982421875, 0.31435298919677734, 0.484375, 0.7527477741241455, 1.1212701797485352, 0.47114782550522344]
+8.3 	[0.21256256103515625, 0.3145201802253723, 0.490234375, 0.7696700096130371, 1.1471004486083984, 0.4007050833258024]
+8.4 	[0.20653533935546875, 0.31214040517807007, 0.494140625, 0.7836815118789673, 1.1712286472320557, 0.42571661970096253]
+8.5 	[0.243072509765625, 0.34745335578918457, 0.52734375, 0.8111157417297363, 1.198058843612671, 0.44479186252907355]
+8.6 	[0.21185302734375, 0.3255457878112793, 0.521484375, 0.8332832455635071, 1.2506715059280396, 0.4827488100170595]
+8.7 	[0.26275634765625, 0.37442779541015625, 0.560546875, 0.8621860146522522, 1.2669113874435425, 0.5522151722991401]
+8.8 	[0.23291015625, 0.3539314270019531, 0.5625, 0.8920959234237671, 1.3332562446594238, 0.5888247050207633]
+8.9 	[0.28289794921875, 0.40062475204467773, 0.603515625, 0.9234656095504761, 1.3615268468856812, 0.5790239845106377]
+9.0 	[0.2742919921875, 0.40378475189208984, 0.626953125, 0.9743227362632751, 1.44039785861969, 0.5667204223681864]
+9.1 	[0.324951171875, 0.45807456970214844, 0.6875, 1.0437525510787964, 1.522188663482666, 0.6292274462411674]
+9.2 	[0.386444091796875, 0.532846212387085, 0.78515625, 1.1794942617416382, 1.712735652923584, 0.671710942768296]
+9.3 	[0.63018798828125, 0.830075740814209, 1.15234375, 1.6392326354980469, 2.2729992866516113, 0.7960646653900483]
+9.4 	[0.8759765625, 1.0865478515625, 1.4375, 1.970384120941162, 2.6737561225891113, 1.2647620339034527]
+9.5 	[0.9151611328125, 1.1510076522827148, 1.53125, 2.0988874435424805, 2.8481316566467285, 1.6454402119080174]
+9.6 	[0.928619384765625, 1.1340980529785156, 1.4765625, 2.006270170211792, 2.695120096206665, 1.2036845216027579]
+9.7 	[0.97344970703125, 1.1782302856445312, 1.51953125, 2.046483039855957, 2.7201967239379883, 0.974366549389761]
+9.8 	[1.16485595703125, 1.3725662231445312, 1.71875, 2.2599799633026123, 2.9668383598327637, 1.5043604053430748]
+9.9 	[2.2481536865234375, 2.4978694915771484, 2.9140625, 3.5296881198883057, 4.341916561126709, 2.5370814657014096]
+10.0 	[3.5346496546530517]
