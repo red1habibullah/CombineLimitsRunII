@@ -658,7 +658,13 @@ class LimitPlotter(PlotterBase):
         for i in range(len(xvals)):
             expected.SetPoint(     i,   xvals[i],     limits[xvals[i]][0])
             observed.SetPoint(     i,   xvals[i],     limits[xvals[i]][1])
-            expectedForSmoothing.SetPoint(     i, xvals[i],     math.log(limits[xvals[i]][0])) # 0.5
+            try:
+                expectedForSmoothing.SetPoint(     i, xvals[i],     math.log(limits[xvals[i]][0])) # 0.5
+            except:
+                print limits[xvals[i]]
+                e = sys.exc_info()[0]
+                print e
+                raise
 
         smoothlog = True
         if smooth: # smooth out the expected bands

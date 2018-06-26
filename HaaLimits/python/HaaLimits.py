@@ -146,74 +146,95 @@ class HaaLimits(Limits):
         #nameU = 'upsilon_{}'.format(region)
         #upsilon.build(self.workspace,nameU)
 
+        nameU23 = 'upsilon23'
         upsilon23 = {'extended': True}
         upsilon23[nameU2] = [0.5,0,1]
         upsilon23[nameU3] = [0.5,0,1]
-        upsilon23 = Models.Sum('upsilon23', **upsilon23)
-        nameU23 = 'upsilon23'
+        upsilon23 = Models.Sum(nameU23, **upsilon23)
         upsilon23.build(self.workspace,nameU23)
 
+        nameU = 'upsilon'
         upsilon = {'extended': True}
         upsilon[nameU1]  = [0.75,0,1]
         upsilon[nameU23] = [0.5,0,1]
-        upsilon = Models.Sum('upsilon', **upsilon)
-        nameU = 'upsilon'
+        upsilon = Models.Sum(nameU, **upsilon)
         upsilon.build(self.workspace,nameU)
 
+        # sum upsilon and jpsi
+        nameR = 'resonant'
+        resonant = {'extended': True}
+        resonant[nameU]  = [0.75,0,1]
+        if self.XRANGE[0]<3.3:
+            resonant[nameJ] = [0.5,0,1]
+        elif self.XRANGE[0]<4.0:
+            resonant[nameJ2] = [0.5,0,1]
+        resonant = Models.Sum(nameR, **resonant)
+        resonant.build(self.workspace,nameR)
+
+
         # continuum background
-        cont = Models.Chebychev('cont',
+        nameC = 'cont{}'.format('_'+tag if tag else '')
+        cont = Models.Chebychev(nameC,
             order = 2,
             p0 = [-1,-1.4,0],
             p1 = [0.25,0,0.5],
             p2 = [0.03,-1,1],
         )
-        nameC = 'cont{}'.format('_'+tag if tag else '')
         cont.build(self.workspace,nameC)
     
-        cont1 = Models.Exponential('cont1',
+        nameC1 = 'cont1{}'.format('_'+tag if tag else '')
+        nameC1 = 'cont1'
+        cont1 = Models.Exponential(nameC1,
             lamb = [-2,-4,0],
         )
-        nameC1 = 'cont1{}'.format('_'+tag if tag else '')
         cont1.build(self.workspace,nameC1)
 
-        cont2 = Models.Exponential('cont2',
+        nameC2 = 'cont2{}'.format('_'+tag if tag else '')
+        nameC2 = 'cont2'
+        cont2 = Models.Exponential(nameC2,
             lamb = [-0.5,-2,0],
         )
-        nameC2 = 'cont2{}'.format('_'+tag if tag else '')
         cont2.build(self.workspace,nameC2)
     
-        cont3 = Models.Exponential('cont3',
+        nameC3 = 'cont3{}'.format('_'+tag if tag else '')
+        nameC3 = 'cont3'
+        cont3 = Models.Exponential(nameC3,
             lamb = [-0.75,-5,0],
         )
-        nameC3 = 'cont3{}'.format('_'+tag if tag else '')
         cont3.build(self.workspace,nameC3)
     
-        cont4 = Models.Exponential('cont4',
+        nameC4 = 'cont4{}'.format('_'+tag if tag else '')
+        nameC4 = 'cont4'
+        cont4 = Models.Exponential(nameC4,
             lamb = [-2,-5,0],
         )
-        nameC4 = 'cont4{}'.format('_'+tag if tag else '')
         cont4.build(self.workspace,nameC4)
 
         # sum
         bgs = {'recursive': True}
         # continuum background
         bgs[nameC1] = [0.5,0,1]
-        # jpsi
-        if self.XRANGE[0]<4:
-            print 'ADDING J/PSI'
-            #bgs[nameJ1] = [0.9,0,1]
-            #bgs[nameJ2] = [0.9,0,1]
-            bgs[nameJ] = [0.9,0,1]
+        if self.XRANGE[0]<=4 and self.XRANGE[1]>=11:
+            bgs[nameR] = [0.9,0,1]
             bgs[nameC3] = [0.5,0,1]
-        #if self.XRANGE[0]<8:
-        #    bgs[nameJE] = [0.9,0,1]
-        # upsilon
-        if addUpsilon and self.XRANGE[0]<=9 and self.XRANGE[1]>=11:
-            print 'ADDING UPSILON'
-            #bgs[nameU1] = [0.9,0,1]
-            #bgs[nameU2] = [0.9,0,1]
-            #bgs[nameU3] = [0.9,0,1]
-            bgs[nameU] = [0.9,0,1]
+        else:
+            # jpsi
+            if self.XRANGE[0]<4:
+                bgs[nameJ] = [0.9,0,1]
+                bgs[nameC3] = [0.5,0,1]
+            elif self.XRANGE[0]<4:
+                print 'ADDING PSI(2S)'
+                bgs[nameJ2] = [0.9,0,1]
+                bgs[nameC3] = [0.5,0,1]
+            #if self.XRANGE[0]<8:
+            #    bgs[nameJE] = [0.9,0,1]
+            # upsilon
+            if addUpsilon and self.XRANGE[0]<=9 and self.XRANGE[1]>=11:
+                print 'ADDING UPSILON'
+                #bgs[nameU1] = [0.9,0,1]
+                #bgs[nameU2] = [0.9,0,1]
+                #bgs[nameU3] = [0.9,0,1]
+                bgs[nameU] = [0.9,0,1]
         bg = Models.Sum('bg', **bgs)
         name = 'bg_{}'.format(region)
         bg.build(self.workspace,name)
@@ -358,10 +379,14 @@ class HaaLimits(Limits):
         # continuum
         model.plotOn(xFrame,ROOT.RooFit.Components('cont1_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
         model.plotOn(xFrame,ROOT.RooFit.Components('cont2_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+        model.plotOn(xFrame,ROOT.RooFit.Components('cont1'),ROOT.RooFit.LineStyle(ROOT.kDashed))
+        model.plotOn(xFrame,ROOT.RooFit.Components('cont2'),ROOT.RooFit.LineStyle(ROOT.kDashed))
         if self.XRANGE[0]<4:
             # extended continuum when also fitting jpsi
             model.plotOn(xFrame,ROOT.RooFit.Components('cont3_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
             model.plotOn(xFrame,ROOT.RooFit.Components('cont4_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+            model.plotOn(xFrame,ROOT.RooFit.Components('cont3'),ROOT.RooFit.LineStyle(ROOT.kDashed))
+            model.plotOn(xFrame,ROOT.RooFit.Components('cont4'),ROOT.RooFit.LineStyle(ROOT.kDashed))
             # jpsi
             model.plotOn(xFrame,ROOT.RooFit.Components('jpsi1S'),ROOT.RooFit.LineColor(ROOT.kRed))
             model.plotOn(xFrame,ROOT.RooFit.Components('jpsi2S'),ROOT.RooFit.LineColor(ROOT.kRed))
@@ -456,6 +481,10 @@ class HaaLimits(Limits):
         self.control_errs = errs
 
     def fix(self,fix=True):
+        #self.workspace.arg('lambda_cont1').setConstant(fix)
+        #self.workspace.arg('lambda_cont2').setConstant(fix)
+        #self.workspace.arg('lambda_cont3').setConstant(fix)
+        #self.workspace.arg('lambda_cont4').setConstant(fix)
         self.workspace.arg('mean_upsilon1S').setConstant(fix)
         self.workspace.arg('mean_upsilon2S').setConstant(fix)
         self.workspace.arg('mean_upsilon3S').setConstant(fix)
@@ -477,6 +506,8 @@ class HaaLimits(Limits):
         self.workspace.arg('width_jpsi2S').setConstant(fix)
         self.workspace.arg('jpsi1S_frac').setConstant(fix) 
         self.workspace.arg('jpsi2S_frac').setConstant(fix) 
+        self.workspace.arg('upsilon_frac').setConstant(fix) 
+        if self.XRANGE[0]<3.3: self.workspace.arg('jpsi_frac').setConstant(fix) 
 
     def addBackgroundModels(self, fixAfterControl=False, fixAfterFP=False, addUpsilon=True, setUpsilonLambda=False, voigtian=False, logy=False):
         if fixAfterControl:
@@ -590,7 +621,9 @@ class HaaLimits(Limits):
             'width_jpsi2S',
             'jpsi1S_frac',
             'jpsi2S_frac',
+            'upsilon_frac',
         ]
+        if self.XRANGE[0]<3.3: params += ['jpsi_frac']
 
         for param in params:
             if param not in self.control_vals: continue
