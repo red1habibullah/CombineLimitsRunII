@@ -339,6 +339,7 @@ class HaaLimits(Limits):
     def fitBackground(self,region='PP',shift='', setUpsilonLambda=False, addUpsilon=True, logy=False):
         model = self.workspace.pdf('bg_{}'.format(region))
         name = 'data_prefit_{}{}'.format(region,'_'+shift if shift else '')
+        print region, shift
         hist = self.histMap[region][shift]['dataNoSig']
         if hist.InheritsFrom('TH1'):
             data = ROOT.RooDataHist(name,name,ROOT.RooArgList(self.workspace.var('x')),hist)

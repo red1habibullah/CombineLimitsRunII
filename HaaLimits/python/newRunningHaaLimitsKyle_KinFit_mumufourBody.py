@@ -17,10 +17,10 @@ from CombineLimits.Limits.utilities import *
 
 from HaaLimits2D import *
 
-XRANGE = [2.5, 25]
-YRANGE = [50,1000]
+XRANGE = [3.5, 25]
+YRANGE = [0,1200]
 UPSILONRANGE = [8,11]
-subdirectoryName='KinFit_mumufourBody_yV/'
+subdirectoryName='KinFit_mumufourBody_3p5_yCB/'
 name = 'mmmt_mm_parametric'
 IFCONTROL = True
 
@@ -39,7 +39,7 @@ def GetPPData(dictionary,xRange=[],yRange=[]):
    f_FRC = ROOT.TFile.Open("/eos/cms/store/user/ktos/ShapeDifferences/FINAL_RooDataSet_MiniAOD_SingleMu_MedIsoMu2_TauDMAntiMedIso_MAY1_AFromB_HKinFit.root")
    
    SingleMu_FakeRateCentral = f_FRC.Get("mumufourBodymass_dataset")
-   SingleMu_FakeRateCentral = getDataset(SingleMu_FakeRateCentral, selection='x <= 25 && x >= 2.5 && y>=50', xRange=xRange, yRange=yRange)
+   SingleMu_FakeRateCentral = getDataset(SingleMu_FakeRateCentral, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
    dictionary['PP']['']['data'] = SingleMu_FakeRateCentral
    dictionary['PP']['']['dataNoSig'] = SingleMu_FakeRateCentral
 
@@ -59,15 +59,15 @@ def GetPPSignal(dictionary,xRange=[],yRange=[]):
        h_PileupDOWN = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMMedIso_MAY1_PileupDOWN_fourBody")
        h_PileupUP = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMMedIso_MAY1_PileupUP_fourBody")
      
-       h_Central = getDataset(h_Central, selection='x <= 25 && x >= 2.5 && y>=50', xRange=xRange, yRange=yRange)
-       h_IDDOWN = getDataset(h_IDDOWN, selection='x <= 25 && x >= 2.5 && y>=50', xRange=xRange, yRange=yRange)
-       h_IDUP = getDataset(h_IDUP, selection='x <= 25 && x >= 2.5 && y>=50', xRange=xRange, yRange=yRange)
-       h_IsoDOWN = getDataset(h_IsoDOWN, selection='x <= 25 && x >= 2.5 && y>=50', xRange=xRange, yRange=yRange)
-       h_IsoUP = getDataset(h_IsoUP, selection='x <= 25 && x >= 2.5 && y>=50', xRange=xRange, yRange=yRange)
-       h_BTagDOWN = getDataset(h_BTagDOWN, selection='x <= 25 && x >= 2.5 && y>=50', xRange=xRange, yRange=yRange)
-       h_BTagUP = getDataset(h_BTagUP, selection='x <= 25 && x >= 2.5 && y>=50', xRange=xRange, yRange=yRange)
-       h_PileupDOWN = getDataset(h_PileupDOWN, selection='x <= 25 && x >= 2.5 && y>=50', xRange=xRange, yRange=yRange)
-       h_PileupUP = getDataset(h_PileupUP, selection='x <= 25 && x >= 2.5 && y>=50', xRange=xRange, yRange=yRange)
+       h_Central = getDataset(h_Central, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
+       h_IDDOWN = getDataset(h_IDDOWN, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
+       h_IDUP = getDataset(h_IDUP, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
+       h_IsoDOWN = getDataset(h_IsoDOWN, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
+       h_IsoUP = getDataset(h_IsoUP, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
+       h_BTagDOWN = getDataset(h_BTagDOWN, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
+       h_BTagUP = getDataset(h_BTagUP, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
+       h_PileupDOWN = getDataset(h_PileupDOWN, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
+       h_PileupUP = getDataset(h_PileupUP, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
     
        dictionary['PP']['']["HToAAH" + hMass + "A" + aMass] = h_Central
        dictionary['PP']['IDUp']["HToAAH" + hMass + "A" + aMass] = h_IDUP
@@ -84,7 +84,7 @@ def GetFPData(dictionary,xRange=[],yRange=[]):
 
    f_FakeRateRegionB = ROOT.TFile.Open("/eos/cms/store/user/ktos/ShapeDifferences/FINAL_RooDataSet_MiniAOD_SingleMu_MedIsoMu2_TauDMAntiMedIso_MAY1_BItself_HKinFit.root")
    SingleMu_RegionB = f_FakeRateRegionB.Get("mumufourBodymass_dataset")
-   SingleMu_RegionB = getDataset(SingleMu_RegionB, selection='x <= 25 && x >= 2.5 && y>=50', xRange=xRange, yRange=yRange)
+   SingleMu_RegionB = getDataset(SingleMu_RegionB, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
 
    dictionary['FP']['']['data'] = SingleMu_RegionB
    dictionary['FP']['']['dataNoSig'] = SingleMu_RegionB
@@ -105,15 +105,15 @@ def GetFPSignal(dictionary,xRange=[],yRange=[]):
        h_PileupDOWN = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMAntiMedIso_MAY1_PileupDOWN_fourBody")
        h_PileupUP = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMAntiMedIso_MAY1_PileupUP_fourBody")
 
-       h_Central = getDataset(h_Central, selection='x <= 25 && x >= 2.5 && y>=50', xRange=xRange, yRange=yRange)
-       h_IDDOWN = getDataset(h_IDDOWN, selection='x <= 25 && x >= 2.5 && y>=50', xRange=xRange, yRange=yRange)
-       h_IDUP = getDataset(h_IDUP, selection='x <= 25 && x >= 2.5 && y>=50', xRange=xRange, yRange=yRange)
-       h_IsoDOWN = getDataset(h_IsoDOWN, selection='x <= 25 && x >= 2.5 && y>=50', xRange=xRange, yRange=yRange)
-       h_IsoUP = getDataset(h_IsoUP, selection='x <= 25 && x >= 2.5 && y>=50', xRange=xRange, yRange=yRange)
-       h_BTagDOWN = getDataset(h_BTagDOWN, selection='x <= 25 && x >= 2.5 && y>=50', xRange=xRange, yRange=yRange)
-       h_BTagUP = getDataset(h_BTagUP, selection='x <= 25 && x >= 2.5 && y>=50', xRange=xRange, yRange=yRange)
-       h_PileupDOWN = getDataset(h_PileupDOWN, selection='x <= 25 && x >= 2.5 && y>=50', xRange=xRange, yRange=yRange)
-       h_PileupUP = getDataset(h_PileupUP, selection='x <= 25 && x >= 2.5 && y>=50', xRange=xRange, yRange=yRange)
+       h_Central = getDataset(h_Central, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
+       h_IDDOWN = getDataset(h_IDDOWN, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
+       h_IDUP = getDataset(h_IDUP, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
+       h_IsoDOWN = getDataset(h_IsoDOWN, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
+       h_IsoUP = getDataset(h_IsoUP, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
+       h_BTagDOWN = getDataset(h_BTagDOWN, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
+       h_BTagUP = getDataset(h_BTagUP, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
+       h_PileupDOWN = getDataset(h_PileupDOWN, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
+       h_PileupUP = getDataset(h_PileupUP, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
  
        dictionary['FP']['']["HToAAH" + hMass + "A" + aMass] = h_Central
        dictionary['FP']['IDUp']["HToAAH" + hMass + "A" + aMass] = h_IDUP
@@ -189,11 +189,11 @@ GetPPData(dictionary,XRANGE,YRANGE)
 GetFPData(dictionary,XRANGE,YRANGE)
 GetFPSignal(dictionary,XRANGE,YRANGE)
 
-LimitsClass = HaaLimits2D(dictionary, tag='KinFit_mumufourBody_yV')
+LimitsClass = HaaLimits2D(dictionary, tag='KinFit_mumufourBody_3p5_yCB')
 LimitsClass.XRANGE = XRANGE
 LimitsClass.YRANGE = YRANGE
 LimitsClass.UPSILONRANGE = UPSILONRANGE
-LimitsClass.SHIFTS = ['Pileup','ID','Iso','BTag']
+LimitsClass.SHIFTS = ['']#['Pileup','ID','Iso','BTag']
 LimitsClass.REGIONS = ['FP','PP']
 LimitsClass.initializeWorkspace()
 
@@ -203,7 +203,7 @@ LimitsClass.initializeWorkspace()
 LimitsClass.addControlModels(voigtian=True)
 LimitsClass.addBackgroundModels(voigtian=True,logy=False,fixAfterControl=IFCONTROL)
 
-LimitsClass.addSignalModels(fit=False, yFitFunc="V")
+LimitsClass.addSignalModels(fit=False, yFitFunc="CB")
 LimitsClass.addData(asimov=True)
 
 LimitsClass.setupDatacard()

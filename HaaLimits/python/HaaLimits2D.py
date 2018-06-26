@@ -11,6 +11,7 @@ from array import array
 import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 ROOT.gROOT.SetBatch()
+ROOT.gROOT.ProcessLine(".L ../../Limits/macros/DoubleCrystalBall.cpp")
 
 import CombineLimits.Limits.Models as Models
 from CombineLimits.Limits.Limits import Limits
@@ -140,7 +141,7 @@ class HaaLimits2D(HaaLimits):
         bg.build(self.workspace,name)
 
 
-    def buildSpline(self,h,region='PP',shift='',**kwargs):
+    def buildSpline(self,h,region='PP',shift='',yFitFunc="G", **kwargs):
         '''
         Get the signal spline for a given Higgs mass.
         Required arguments:
@@ -176,85 +177,151 @@ class HaaLimits2D(HaaLimits):
                 sigma = [0.01*aval,0.001,5],
             )
             modelx.build(ws, 'sigx')
-            ym = Models.Gaussian if ygausOnly else Models.Voigtian
             if self.YRANGE[1]>100: # y variable is h mass
-                modely = ym('sigy',
-                    x = 'y',
-                    #mean  = [h,0.75*h,1.25*h], # kinfit
-                    mean  = [h,0,1.25*h],
-                    width = [0.1*h,0.1,0.5*h],
-                    sigma = [0.1*h,0.1,0.5*h],
-                )
+                if yFitFunc == "G": 
+                    modely = Models.Gaussian('sigy',
+                        x = 'y',
+                        mean  = [h,0,1.25*h],
+                        sigma = [0.1*h,0.01,0.5*h],
+                    )
+                elif yFitFunc == "V":
+                    modely = Models.Voigtian('sigy',
+                        x = 'y',
+                        mean  = [h,0.1,1000],
+                        width = [0.1*h,0.01,0.5*h],
+                        sigma = [0.1*h,0.01,0.5*h],
+                    )
+                elif yFitFunc == "CB":
+                    modely = Models.CrystalBall('sigy',
+                        x = 'y',
+                        mean  = [h,0.1,1000],
+                        sigma = [0.1*h,0.01,0.5*h],
+                        a = [1.0,.5,5],
+                        n = [0.5,.1,1.5],
+                    )
+                elif yFitFunc == "DCB":
+                    modely = Models.DoubleCrystalBall('sigy',
+                        x = 'y',
+                        mean  = [h,0.1,1000],
+                        sigma = [0.1*h,0.01,0.5*h],
+                        a1 = [1.0,0.1,6],
+                        n1 = [0.9,0.1,6],
+                        a2 = [2.0,0.1,10],
+                        n2 = [1.5,0.1,10],
+                    )
+                elif yFitFunc == "DG":
+                    modely = Models.DoubleSidedGaussian('sigy',
+                        x = 'y',
+                        mean  = [h,0.1,1000],
+                        sigma1 = [0.03*h,0.01,0.5*h],
+                        sigma2 = [0.06*h,0.01,0.5*h],
+                    )
+                elif yFitFunc == "DV":
+                    modely = Models.DoubleSidedVoigtian('sigy',
+                        x = 'y',
+                        mean  = [h,0.01,1000],
+                        sigma1 = [0.03*h,0.01,0.5*h],
+                        sigma2 = [0.06*h,0.01,0.5*h],
+                        width1 = [0.03*h,0.01,0.5*h],
+                        width2 = [0.06*h,0.01,0.5*h],
+                    )
                 modely.build(ws, 'sigy')
-
                 model = Models.Prod('sig',
                     'sigx',
                     'sigy',
                 )
             else: # y variable is tt
-                if region=='PP':
-                    # simple voitian
-                    voity = ym('sigy',
+                # simple voitian
+                if yFitFunc == "G":
+                    modely_sig = Models.Gaussian('sigy',
                         x = 'y',
-                        mean  = [0.5*aval,0,1.25*aval], # visible
-                        width = [0.1*aval,0,0.5*aval],
-                        sigma = [0.1*aval,0,0.5*aval],
+                        mean  = [aval,0,1.25*aval],
+                        sigma = [0.1*aval,0.01,0.5*aval],
                     )
-                    voity.build(ws, 'sigy')
+                elif yFitFunc == "V":
+                    modely_sig = Models.Voigtian('sigy',
+                        x = 'y',
+                        mean  = [aval,0,30],
+                        width = [0.1*aval,0.01,5],
+                        sigma = [0.1*aval,0.01,5],
+                    )
+                elif yFitFunc == "CB":
+                    modely_sig = Models.CrystalBall('sigy',
+                        x = 'y',
+                        mean  = [aval,0,30],
+                        sigma = [0.1*aval,0,5],
+                        a = [1.0,0.5,5],
+                        n = [0.5,0.1,1.5],
+                    )
+                elif yFitFunc == "DCB":
+                    modely_sig = Models.DoubleCrystalBall('sigy',
+                        x = 'y',
+                        mean  = [aval,0,30],
+                        sigma = [0.1*aval,0,5],
+                        a1 = [1.0,0.1,6],
+                        n1 = [0.9,0.1,6],
+                        a2 = [2.0,0.1,10],
+                        n2 = [1.5,0.1,10],
+                    )
+                elif yFitFunc == "DG":
+                    modely_sig = Models.DoubleSidedGaussian('sigy',
+                        x = 'y',
+                        mean  = [aval,0,30],
+                        sigma1 = [0.1*aval,0.5,0.4*aval],
+                        sigma2 = [0.3*aval,0.5,0.4*aval],
+                    )
+                elif yFitFunc == "DV":
+                    modely_sig = Models.DoubleSidedVoigtian('sigy',
+                        x = 'y',
+                        mean  = [aval,0,30],
+                        sigma1 = [0.1*aval,0.01,5],
+                        sigma2 = [0.3*aval,0.01,5],
+                        width1 = [0.1*aval,0.01,5],
+                        width2 = [0.3*aval,0.01,5],
+                    )
 
+                modely_sig.build(ws, 'sigy')
+
+                if region=='PP' or not dobgsig:
                     model = Models.Prod('sig',
                         'sigx',
                         'sigy',
                     )
                 else:
-                    # add a mistagged jet background
-                    voity = ym('sigy',
+                    conty = Models.Exponential('conty',
                         x = 'y',
-                        mean  = [0.5*aval,0,1.25*aval], # visible
-                        width = [0.1*aval,0,0.5*aval],
-                        sigma = [0.1*aval,0,0.5*aval],
+                        lamb = [-0.25,-1,-0.001], # visible
                     )
-                    voity.build(ws, 'sigy')
+                    conty.build(ws,'conty')
 
-                    if dobgsig:
-                        conty = Models.Exponential('conty',
-                            x = 'y',
-                            lamb = [-0.25,-1,-0.001], # visible
-                        )
-                        conty.build(ws,'conty')
+                    erfy = Models.Erf('erfy',
+                        x = 'y',
+                        erfScale = [0.1,0.01,10],
+                        erfShift = [2,0,10],
+                    )
+                    erfy.build(ws,'erfy')
 
-                        erfy = Models.Erf('erfy',
-                            x = 'y',
-                            erfScale = [0.1,0.01,10],
-                            erfShift = [2,0,10],
-                        )
-                        erfy.build(ws,'erfy')
+                    erfc = Models.Prod('erfcy',
+                        'erfy',
+                        'conty',
+                    )
+                    erfc.build(ws,'erfcy')
 
-                        erfc = Models.Prod('erfcy',
-                            'erfy',
-                            'conty',
-                        )
-                        erfc.build(ws,'erfcy')
+                    modely = Models.Sum('bgsigy',
+                        **{ 
+                            'erfcy'    : [0.5,0,1],
+                            'sigy'     : [0.5,0,1],
+                            'recursive': True,
+                        }
+                    )
+                    modely.build(ws,'bgsigy')
 
-                        modely = Models.Sum('bgsigy',
-                            **{ 
-                                'erfcy'    : [0.5,0,1],
-                                'sigy'     : [0.5,0,1],
-                                'recursive': True,
-                            }
-                        )
-                        modely.build(ws,'bgsigy')
+                    model = Models.Prod('sig',
+                        'sigx',
+                        'bgsigy',
+                    )
 
-                        model = Models.Prod('sig',
-                            'sigx',
-                            'bgsigy',
-                        )
-                    else:
-                        model = Models.Prod('sig',
-                            'sigx',
-                            'sigy',
-                        )
-
+            ws.Print("v")
             model.build(ws, 'sig')
             hist = histMap[self.SIGNAME.format(h=h,a=a)]
             saveDir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
@@ -263,14 +330,65 @@ class HaaLimits2D(HaaLimits):
     
 
         # Fit using ROOT rather than RooFit for the splines
-        fitFuncs = {
-            'xmean' : 'pol1',
-            'xwidth': 'pol2',
-            'xsigma': 'pol2',
-            'ymean' : 'pol2',
-            'ywidth': 'pol2',
-            'ysigma': 'pol2',
-        }
+        if yFitFunc == "V":
+            fitFuncs = {
+              'xmean' : 'pol1',  
+              'xwidth': 'pol2',
+              'xsigma': 'pol2',
+              'ymean' : 'pol1',
+              'ywidth': 'pol2',
+              'ysigma': 'pol2',
+          }
+        elif yFitFunc == "G":
+            fitFuncs = {
+              'xmean' : 'pol1',  
+              'xwidth': 'pol2',
+              'xsigma': 'pol2',
+              'ymean' : 'pol1',
+              'ysigma': 'pol2',
+          }
+        elif yFitFunc == "CB":
+            fitFuncs = {
+              'xmean' : 'pol1',  
+              'xwidth': 'pol2',
+              'xsigma': 'pol2',
+              'ymean' : 'pol1',
+              'ysigma': 'pol2',
+              'ya': 'pol2',
+              'yn': 'pol2',
+          }
+        elif yFitFunc == "DCB":
+            fitFuncs = {
+              'xmean' : 'pol1',  
+              'xwidth': 'pol2',
+              'xsigma': 'pol2',
+              'ymean' : 'pol1',
+              'ysigma': 'pol2',
+              'ya1': 'pol2',
+              'yn1': 'pol2',
+              'ya2': 'pol2',
+              'yn2': 'pol2',
+          }
+        elif yFitFunc == "DG":
+            fitFuncs = {
+              'xmean' : 'pol1',  
+              'xwidth': 'pol2',
+              'xsigma': 'pol2',
+              'ymean' : 'pol1',
+              'ysigma1': 'pol2',
+              'ysigma2': 'pol2',
+          }
+        elif yFitFunc == "DV":
+            fitFuncs = {
+              'xmean' : 'pol1',  
+              'xwidth': 'pol2',
+              'xsigma': 'pol2',
+              'ymean' : 'pol1',
+              'ysigma1': 'pol2',
+              'ysigma2': 'pol2',
+              'ywidth1': 'pol2',
+              'ywidth2': 'pol2',
+          }
 
         xs = []
         x = self.XRANGE[0]
@@ -283,6 +401,12 @@ class HaaLimits2D(HaaLimits):
             ys += [y]
             y += float(self.YRANGE[1]-self.YRANGE[0])/100
         fittedParams = {}
+        if   yFitFunc == "V":   yparameters = ['mean','width','sigma']
+        elif yFitFunc == "G":   yparameters = ['mean', 'sigma']
+        elif yFitFunc == "CB":  yparameters = ['mean', 'sigma', 'a', 'n']
+        elif yFitFunc == "DCB": yparameters = ['mean', 'sigma', 'a1', 'n1', 'a2', 'n2']
+        elif yFitFunc == "DG":  yparameters = ['mean', 'sigma1', 'sigma2']
+        elif yFitFunc == "DV":  yparameters = ['mean', 'sigma1', 'sigma2','width1','width2']
         for param in ['mean','width','sigma']:
             name = '{}_{}{}'.format('x'+param,h,tag)
             xerrs = [0]*len(amasses)
@@ -301,8 +425,7 @@ class HaaLimits2D(HaaLimits):
                 fittedParams['x'+param] = [func.Eval(x) for x in xs]
             canvas.Print('{}.png'.format(savename))
 
-            if param=='width' and ygausOnly: continue
-
+        for param in yparameters:
             name = '{}_{}{}'.format('y'+param,h,tag)
             xerrs = [0]*len(amasses)
             vals = [results[h][a]['{}_sigy'.format(param)] for a in amasses]
@@ -344,7 +467,7 @@ class HaaLimits2D(HaaLimits):
         modelx.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_x'))
         ym = Models.GaussianSpline if ygausOnly else Models.VoigtianSpline
         if fit:
-            modely = ym(self.SPLINENAME.format(h=h)+'_y',
+            model = ym(self.SPLINENAME.format(h=h)+'_y',
                 **{
                     'x'      : 'y',
                     'masses' : ys,
@@ -354,16 +477,66 @@ class HaaLimits2D(HaaLimits):
                 }
             )
         else:
-            modely = ym(self.SPLINENAME.format(h=h)+'_y',
-                **{
-                    'x'      : 'y',
-                    'masses' : avals,
-                    'means'  : [results[h][a]['mean_sigy'] for a in amasses],
-                    'widths' : [] if ygausOnly else [results[h][a]['width_sigy'] for a in amasses],
-                    'sigmas' : [results[h][a]['sigma_sigy'] for a in amasses],
-                }
-            )
-        modely.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_y'))
+            if yFitFunc == "V":
+                model = Models.VoigtianSpline(self.SPLINENAME.format(h=h),
+                    **{
+                      'masses' : avals,
+                      'means'  : [results[h][a]['mean_sigy'] for a in amasses],
+                      'widths' : [results[h][a]['width_sigy'] for a in amasses],
+                      'sigmas' : [results[h][a]['sigma_sigy'] for a in amasses],
+                    }
+                )
+            elif yFitFunc == "G":
+                model = Models.GaussianSpline(self.SPLINENAME.format(h=h),
+                    **{
+                      'masses' : avals,
+                      'means'  : [results[h][a]['mean_sigy'] for a in amasses],
+                      'sigmas' : [results[h][a]['sigma_sigy'] for a in amasses],
+                    }
+                )
+            elif yFitFunc == "CB":
+                model = Models.CrystalBallSpline(self.SPLINENAME.format(h=h),
+                    **{
+                      'masses' : avals,
+                      'means'  : [results[h][a]['mean_sigy'] for a in amasses],
+                      'sigmas' : [results[h][a]['sigma_sigy'] for a in amasses],
+                      'a_s' :    [results[h][a]['a_sigy'] for a in amasses],
+                      'n_s' :    [results[h][a]['n_sigy'] for a in amasses],
+                    }
+                )
+            elif yFitFunc == "DCB":
+                model = Models.DoubleCrystalBallSpline(self.SPLINENAME.format(h=h),
+                    **{
+                      'masses' : avals,
+                      'means'  : [results[h][a]['mean_sigy'] for a in amasses],
+                      'sigmas' : [results[h][a]['sigma_sigy'] for a in amasses],
+                      'a1s' :   [results[h][a]['a1_sigy'] for a in amasses],
+                      'n1s' :   [results[h][a]['n1_sigy'] for a in amasses],
+                      'a2s' :   [results[h][a]['a2_sigy'] for a in amasses],
+                      'n2s' :   [results[h][a]['n2_sigy'] for a in amasses],
+                    }
+                )
+            elif yFitFunc == "DG":
+                model = Models.DoubleSidedGaussianSpline(self.SPLINENAME.format(h=h),
+                    **{
+                      'masses' :  avals,
+                      'means'  :  [results[h][a]['mean_sigy'] for a in amasses],
+                      'sigma1s' : [results[h][a]['sigma1_sigy'] for a in amasses],
+                      'sigma2s' : [results[h][a]['sigma2_sigy'] for a in amasses],
+                    }
+                )
+            elif yFitFunc == "DV":
+                model = Models.DoubleSidedVoigtianSpline(self.SPLINENAME.format(h=h),
+                    **{
+                      'masses' :  avals,
+                      'means'  :  [results[h][a]['mean_sigy'] for a in amasses],
+                      'sigma1s' : [results[h][a]['sigma1_sigy'] for a in amasses],
+                      'sigma2s' : [results[h][a]['sigma2_sigy'] for a in amasses],
+                      'width1s' : [results[h][a]['width1_sigy'] for a in amasses],
+                      'width2s' : [results[h][a]['width2_sigy'] for a in amasses],
+                    }
+                )
+        model.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_y'))
         model = Models.ProdSpline(self.SPLINENAME.format(h=h),
             '{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_x'),
             '{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_y'),
@@ -406,11 +579,14 @@ class HaaLimits2D(HaaLimits):
         model = self.workspace.pdf('bg_{}'.format(region))
         name = 'data_prefit_{}{}'.format(region,'_'+shift if shift else '')
         hist = self.histMap[region][shift]['dataNoSig']
+        print "region=", region, "\tshift=", shift, "\t", hist.GetName()
         if hist.InheritsFrom('TH1'):
             data = ROOT.RooDataHist(name,name,ROOT.RooArgList(self.workspace.var('x'),self.workspace.var('y')),hist)
         else:
             data = hist.Clone(name)
 
+        data.Print("v")
+        print "DataSetName=", data.GetName()
         fr = model.fitTo(data,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True))
 
         xFrame = self.workspace.var('x').frame()
@@ -503,15 +679,16 @@ class HaaLimits2D(HaaLimits):
         if fixAfterControl:
             self.fix(False)
 
-    def addSignalModels(self,**kwargs):
+    def addSignalModels(self,yFitFunc="V",**kwargs):
         for region in self.REGIONS:
             for shift in ['']+self.SHIFTS:
                 for h in self.HMASSES:
+                    print "IN addSignalModel", region, shift, h
                     if shift == '':
-                        self.buildSpline(h,region=region,shift=shift,**kwargs)
+                        self.buildSpline(h,region=region,shift=shift,yFitFunc=yFitFunc,**kwargs)
                     else:
-                        self.buildSpline(h,region=region,shift=shift+'Up',**kwargs)
-                        self.buildSpline(h,region=region,shift=shift+'Down',**kwargs)
+                        self.buildSpline(h,region=region,shift=shift+'Up',yFitFunc=yFitFunc,**kwargs)
+                        self.buildSpline(h,region=region,shift=shift+'Down',yFitFunc=yFitFunc,**kwargs)
             self.workspace.factory('{}_{}_norm[1,0,9999]'.format(self.SPLINENAME.format(h=h),region))
 
     ######################
@@ -572,10 +749,12 @@ class HaaLimits2D(HaaLimits):
     ###################################
     ### Save workspace and datacard ###
     ###################################
-    def save(self,name='mmmt'):
+    def save(self,name='mmmt', subdirectory=''):
         processes = {}
         for h in self.HMASSES:
             processes[self.SIGNAME.format(h=h,a='X')] = [self.SPLINENAME.format(h=h)] + ['bg']
-        self.printCard('datacards_shape/MuMuTauTau/{}'.format(name),processes=processes,blind=False,saveWorkspace=True)
-
+        if subdirectory == '':
+          self.printCard('datacards_shape/MuMuTauTau/{}'.format(name),processes=processes,blind=False,saveWorkspace=True)
+        else:
+          self.printCard('datacards_shape/MuMuTauTau/' + subdirectory + '{}'.format(name),processes=processes,blind=False,saveWorkspace=True)
 

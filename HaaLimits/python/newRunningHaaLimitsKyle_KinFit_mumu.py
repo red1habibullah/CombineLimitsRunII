@@ -17,9 +17,9 @@ from CombineLimits.Limits.utilities import *
 
 from HaaLimits import *
 
-XRANGE = [2.5, 25]
+XRANGE = [3.5, 25]
 UPSILONRANGE = [8,11]
-subdirectoryName='KinFit_mumu/'
+subdirectoryName='KinFit_mumu_3p5/'
 name = 'mmmt_mm_parametric'
 IFCONTROL = True
 
@@ -184,7 +184,7 @@ GetPPData(dictionary,XRANGE)
 GetFPData(dictionary,XRANGE)
 GetFPSignal(dictionary,XRANGE)
 
-LimitsClass = HaaLimits(dictionary, tag='KinFit_mumu')
+LimitsClass = HaaLimits(dictionary, tag='KinFit_mumu_3p5')
 LimitsClass.XRANGE = XRANGE
 LimitsClass.UPSILONRANGE = UPSILONRANGE
 LimitsClass.SHIFTS = ['Pileup','ID','Iso','BTag']

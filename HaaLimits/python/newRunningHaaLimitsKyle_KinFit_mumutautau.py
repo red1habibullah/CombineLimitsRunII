@@ -17,10 +17,10 @@ from CombineLimits.Limits.utilities import *
 
 from HaaLimits2D import *
 
-XRANGE = [2.5, 25]
+XRANGE = [3.5, 25]
 YRANGE = [0,30]
 UPSILONRANGE = [8,11]
-subdirectoryName='KinFit_mumutautau_yV/'
+subdirectoryName='KinFit_mumutautau_3p5_yCB/'
 name = 'mmmt_mm_parametric'
 IFCONTROL = True
 
@@ -190,11 +190,12 @@ GetPPData(dictionary,XRANGE)
 GetFPData(dictionary,XRANGE)
 GetFPSignal(dictionary,XRANGE)
 
-LimitsClass = HaaLimits2D(dictionary, tag='KinFit_mumutautau_yV')
+LimitsClass = HaaLimits2D(dictionary, tag='KinFit_mumutautau_3p5_yCB')
 LimitsClass.XRANGE = XRANGE
 LimitsClass.YRANGE = YRANGE
+LimitsClass.YLABEL = 'm_{#tau_{#mu}#tau_{h}}'
 LimitsClass.UPSILONRANGE = UPSILONRANGE
-LimitsClass.SHIFTS = ['Pileup','ID','Iso','BTag']
+LimitsClass.SHIFTS = ['']#['Pileup','ID','Iso','BTag']
 LimitsClass.REGIONS = ['FP','PP']
 LimitsClass.initializeWorkspace()
 
@@ -204,7 +205,7 @@ LimitsClass.initializeWorkspace()
 LimitsClass.addControlModels(voigtian=True)
 LimitsClass.addBackgroundModels(voigtian=True,logy=False,fixAfterControl=IFCONTROL)
 
-LimitsClass.addSignalModels(fit=False, yFitFunc="V")
+LimitsClass.addSignalModels(fit=False, yFitFunc="CB")
 LimitsClass.addData(asimov=True)
 
 LimitsClass.setupDatacard()

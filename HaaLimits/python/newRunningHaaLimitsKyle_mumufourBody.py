@@ -17,10 +17,10 @@ from CombineLimits.Limits.utilities import *
 
 from HaaLimits2D import *
 
-XRANGE = [2.5, 25]
+XRANGE = [3.5, 25]
 YRANGE = [50,1000]
 UPSILONRANGE = [8,11]
-subdirectoryName='mumufourBody_yV/'
+subdirectoryName='mumufourBody_3p5_yCB/'
 name = 'mmmt_mm_parametric'
 IFCONTROL = True
 
@@ -189,7 +189,7 @@ GetPPData(dictionary,XRANGE,YRANGE)
 GetFPData(dictionary,XRANGE,YRANGE)
 GetFPSignal(dictionary,XRANGE,YRANGE)
 
-LimitsClass = HaaLimits2D(dictionary, tag='mumufourBody_yV')
+LimitsClass = HaaLimits2D(dictionary, tag='mumufourBody_3p5_yCB')
 LimitsClass.XRANGE = XRANGE
 LimitsClass.YRANGE = YRANGE
 LimitsClass.UPSILONRANGE = UPSILONRANGE
@@ -203,7 +203,7 @@ LimitsClass.initializeWorkspace()
 LimitsClass.addControlModels(voigtian=True)
 LimitsClass.addBackgroundModels(voigtian=True,logy=False,fixAfterControl=IFCONTROL)
 
-LimitsClass.addSignalModels(fit=False, yFitFunc="V")
+LimitsClass.addSignalModels(fit=False, yFitFunc="CB")
 LimitsClass.addData(asimov=True)
 
 LimitsClass.setupDatacard()
