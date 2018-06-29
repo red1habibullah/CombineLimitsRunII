@@ -48,9 +48,14 @@ class Model(object):
             xFrame.SetTitle('')
             hist.plotOn(xFrame)
             model.plotOn(xFrame)
-            model.paramOn(xFrame)
+            model.paramOn(xFrame,ROOT.RooFit.Layout(0.72,0.98,0.90))
             canvas = ROOT.TCanvas(savename,savename,800,800)
+            canvas.SetRightMargin(0.3)
             xFrame.Draw()
+            prims = canvas.GetListOfPrimitives()
+            for prim in prims:
+                if 'paramBox' in prim.GetName():
+                    prim.SetTextSize(0.02)
             canvas.Print('{0}.png'.format(savename))
 
         if doErrors:
@@ -81,9 +86,14 @@ class Model(object):
             xFrame.SetTitle('')
             hist.plotOn(xFrame)
             model.plotOn(xFrame)
-            model.paramOn(xFrame)
+            model.paramOn(xFrame,ROOT.RooFit.Layout(0.72,0.98,0.90))
             canvas = ROOT.TCanvas(savename,savename,800,800)
+            canvas.SetRightMargin(0.3)
             xFrame.Draw()
+            prims = canvas.GetListOfPrimitives()
+            for prim in prims:
+                if 'paramBox' in prim.GetName():
+                    prim.SetTextSize(0.02)
             canvas.Print('{0}_xproj.png'.format(savename))
 
             y = ws.var(self.y)
@@ -91,8 +101,12 @@ class Model(object):
             yFrame.SetTitle('')
             hist.plotOn(yFrame)
             model.plotOn(yFrame)
-            model.paramOn(yFrame)
+            model.paramOn(yFrame,ROOT.RooFit.Layout(0.72,0.98,0.90))
             yFrame.Draw()
+            prims = canvas.GetListOfPrimitives()
+            for prim in prims:
+                if 'paramBox' in prim.GetName():
+                    prim.SetTextSize(0.02)
             canvas.Print('{0}_yproj.png'.format(savename))
 
             histM = model.createHistogram('x,y',100,100)
