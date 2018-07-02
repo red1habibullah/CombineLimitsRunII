@@ -20,7 +20,7 @@ from HaaLimits2D import *
 XRANGE = [3.5, 25]
 YRANGE = [0,1200]
 UPSILONRANGE = [8,11]
-subdirectoryName='KinFit_mumukinFit_3p5_yCB/'
+subdirectoryName='KinFit_mumukinFit_3p5_yDCB/'
 name = 'mmmt_mm_parametric'
 IFCONTROL = True
 
@@ -189,7 +189,7 @@ GetPPData(dictionary,XRANGE,YRANGE)
 GetFPData(dictionary,XRANGE,YRANGE)
 GetFPSignal(dictionary,XRANGE,YRANGE)
 
-LimitsClass = HaaLimits2D(dictionary, tag='KinFit_mumukinFit_3p5_yCB')
+LimitsClass = HaaLimits2D(dictionary, tag='KinFit_mumukinFit_3p5_yDCB')
 LimitsClass.XRANGE = XRANGE
 LimitsClass.YRANGE = YRANGE
 LimitsClass.UPSILONRANGE = UPSILONRANGE
@@ -203,7 +203,7 @@ LimitsClass.initializeWorkspace()
 LimitsClass.addControlModels(voigtian=True)
 LimitsClass.addBackgroundModels(voigtian=True,logy=False,fixAfterControl=IFCONTROL)
 
-LimitsClass.addSignalModels(fit=False, yFitFunc="CB")
+LimitsClass.addSignalModels(fit=False, yFitFunc="DCB")
 LimitsClass.addData(asimov=True)
 
 LimitsClass.setupDatacard()
