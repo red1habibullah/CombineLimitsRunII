@@ -515,12 +515,12 @@ class DoubleCrystalBallSpline(ModelSpline):
         self.wsimport(ws, doubleCB)
         self.params = [meanName,sigmaName,a1Name,n1Name,a2Name,n2Name]
 
-class DoubleGaussian(Model):
+class DoubleSidedGaussian(Model):
 
     def __init__(self,name,**kwargs):
-        super(DoubleGaussian,self).__init__(name,**kwargs)
-        if not hasattr(ROOT,"DoubleGaussian"):
-            ROOT.gROOT.ProcessLine(".L /afs/cern.ch/work/k/ktos/public/Plotting/CMSSW_8_1_0/src/CombineLimits/Limits/macros/DoubleGaussian.cpp")        
+        super(DoubleSidedGaussian,self).__init__(name,**kwargs)
+        if not hasattr(ROOT,"DoubleSidedGaussian"):
+            ROOT.gROOT.ProcessLine(".L /afs/cern.ch/work/k/ktos/public/Plotting/CMSSW_8_1_0/src/CombineLimits/Limits/macros/DoubleSidedGaussian.cpp")        
         
 
     def build(self,ws,label):
@@ -531,22 +531,23 @@ class DoubleGaussian(Model):
         mean  = self.kwargs.get('mean',  [1,0,1000])
         sigma1 = self.kwargs.get('sigma1', [1,0,100])
         sigma2 = self.kwargs.get('sigma2', [1,0,100])
+        yMax = self.kwargs.get('yMax')
         # variables
         ws.factory('{0}[{1}, {2}, {3}]'.format(meanName,*mean))
         ws.factory('{0}[{1}, {2}, {3}]'.format(sigma1Name,*sigma1))
         ws.factory('{0}[{1}, {2}, {3}]'.format(sigma2Name,*sigma2))
 
         # build model
-        doubleG = ROOT.DoubleGaussian(label, label, ws.arg(self.x), ws.arg(meanName), ws.arg(sigma1Name), ws.arg(sigma2Name) )
+        doubleG = ROOT.DoubleSidedGaussian(label, label, ws.arg(self.x), ws.arg(meanName), ws.arg(sigma1Name), ws.arg(sigma2Name), yMax )
         self.wsimport(ws, doubleG)
         self.params = [meanName,sigma1Name,sigma2Name]
 
-class DoubleGaussianSpline(ModelSpline):
+class DoubleSidedGaussianSpline(ModelSpline):
 
     def __init__(self,name,**kwargs):
-        super(DoubleGaussianSpline,self).__init__(name,**kwargs)
-        if not hasattr(ROOT,"DoubleGaussian"):
-            ROOT.gROOT.ProcessLine(".L /afs/cern.ch/work/k/ktos/public/Plotting/CMSSW_8_1_0/src/CombineLimits/Limits/macros/DoubleGaussian.cpp")
+        super(DoubleSidedGaussianSpline,self).__init__(name,**kwargs)
+        if not hasattr(ROOT,"DoubleSidedGaussian"):
+            ROOT.gROOT.ProcessLine(".L /afs/cern.ch/work/k/ktos/public/Plotting/CMSSW_8_1_0/src/CombineLimits/Limits/macros/DoubleSidedGaussian.cpp")
 
     def build(self,ws,label):
         logging.debug('Building {}'.format(label))
@@ -557,6 +558,7 @@ class DoubleGaussianSpline(ModelSpline):
         means  = self.kwargs.get('means',  [])
         sigma1s = self.kwargs.get('sigma1s', [])
         sigma2s = self.kwargs.get('sigma2s', [])
+        yMax = self.kwargs.get('yMax')
         # splines
         meanSpline  = ROOT.RooSpline1D(meanName,  meanName,  ws.var('MH'), len(masses), array('d',masses), array('d',means))
         sigma1Spline = ROOT.RooSpline1D(sigma1Name, sigma1Name, ws.var('MH'), len(masses), array('d',masses), array('d',sigma1s))
@@ -567,16 +569,16 @@ class DoubleGaussianSpline(ModelSpline):
         getattr(ws, "import")(sigma2Spline, ROOT.RooFit.RecycleConflictNodes())
 
         # build model
-        doubleG = ROOT.DoubleGaussian(label, label, ws.arg(self.x), ws.arg(meanName), ws.arg(sigma1Name), ws.arg(sigma2Name) )
+        doubleG = ROOT.DoubleSidedGaussian(label, label, ws.arg(self.x), ws.arg(meanName), ws.arg(sigma1Name), ws.arg(sigma2Name), yMax )
         self.wsimport(ws, doubleG)
         self.params = [meanName,sigma1Name,sigma2Name] 
 
-class DoubleVoigtian(Model):
+class DoubleSidedVoigtian(Model):
 
     def __init__(self,name,**kwargs):
-        super(DoubleVoigtian,self).__init__(name,**kwargs)
-        if not hasattr(ROOT,"DoubleVoigtian"):
-            ROOT.gROOT.ProcessLine(".L /afs/cern.ch/work/k/ktos/public/Plotting/CMSSW_8_1_0/src/CombineLimits/Limits/macros/DoubleVoigtian.cpp")        
+        super(DoubleSidedVoigtian,self).__init__(name,**kwargs)
+        if not hasattr(ROOT,"DoubleSidedVoigtian"):
+            ROOT.gROOT.ProcessLine(".L /afs/cern.ch/work/k/ktos/public/Plotting/CMSSW_8_1_0/src/CombineLimits/Limits/macros/DoubleSidedVoigtian.cpp")        
         
 
     def build(self,ws,label):
@@ -591,6 +593,7 @@ class DoubleVoigtian(Model):
         sigma2 = self.kwargs.get('sigma2', [1,0,100])
         width1 = self.kwargs.get('width1', [1,0,100])
         width2 = self.kwargs.get('width2', [1,0,100])
+        yMax = self.kwargs.get('yMax')
         # variables
         ws.factory('{0}[{1}, {2}, {3}]'.format(meanName,*mean))
         ws.factory('{0}[{1}, {2}, {3}]'.format(sigma1Name,*sigma1))
@@ -599,16 +602,16 @@ class DoubleVoigtian(Model):
         ws.factory('{0}[{1}, {2}, {3}]'.format(width2Name,*width2))
 
         # build model
-        doubleV = ROOT.DoubleVoigtian(label, label, ws.arg(self.x), ws.arg(meanName), ws.arg(sigma1Name), ws.arg(sigma2Name), ws.arg(width1Name), ws.arg(width2Name) )
+        doubleV = ROOT.DoubleSidedVoigtian(label, label, ws.arg(self.x), ws.arg(meanName), ws.arg(sigma1Name), ws.arg(sigma2Name), ws.arg(width1Name), ws.arg(width2Name), yMax )
         self.wsimport(ws, doubleV)
         self.params = [meanName,sigma1Name,sigma2Name,width1Name,width2Name]
 
-class DoubleVoigtianSpline(ModelSpline):
+class DoubleSidedVoigtianSpline(ModelSpline):
 
     def __init__(self,name,**kwargs):
-        super(DoubleVoigtianSpline,self).__init__(name,**kwargs)
-        if not hasattr(ROOT,"DoubleVoigtian"):
-            ROOT.gROOT.ProcessLine(".L /afs/cern.ch/work/k/ktos/public/Plotting/CMSSW_8_1_0/src/CombineLimits/Limits/macros/DoubleVoigtian.cpp")
+        super(DoubleSidedVoigtianSpline,self).__init__(name,**kwargs)
+        if not hasattr(ROOT,"DoubleSidedVoigtian"):
+            ROOT.gROOT.ProcessLine(".L /afs/cern.ch/work/k/ktos/public/Plotting/CMSSW_8_1_0/src/CombineLimits/Limits/macros/DoubleSidedVoigtian.cpp")
 
     def build(self,ws,label):
         logging.debug('Building {}'.format(label))
@@ -623,6 +626,7 @@ class DoubleVoigtianSpline(ModelSpline):
         sigma2s = self.kwargs.get('sigma2s', [])
         width1s = self.kwargs.get('width1s', [])
         width2s = self.kwargs.get('width2s', [])  
+        yMax = self.kwargs.get('yMax')
         # splines
         meanSpline  = ROOT.RooSpline1D(meanName,  meanName,  ws.var('MH'), len(masses), array('d',masses), array('d',means))
         sigma1Spline = ROOT.RooSpline1D(sigma1Name, sigma1Name, ws.var('MH'), len(masses), array('d',masses), array('d',sigma1s))
@@ -637,7 +641,7 @@ class DoubleVoigtianSpline(ModelSpline):
         getattr(ws, "import")(width2Spline, ROOT.RooFit.RecycleConflictNodes())
 
         # build model
-        doubleV = ROOT.DoubleVoigtian(label, label, ws.arg(self.x), ws.arg(meanName), ws.arg(sigma1Name), ws.arg(sigma2Name), ws.arg(width1Name), ws.arg(width2Name) )
+        doubleV = ROOT.DoubleSidedVoigtian(label, label, ws.arg(self.x), ws.arg(meanName), ws.arg(sigma1Name), ws.arg(sigma2Name), ws.arg(width1Name), ws.arg(width2Name), yMax )
         self.wsimport(ws, doubleV)
         self.params = [meanName,sigma1Name,sigma2Name,width1Name,width2Name] 
 
@@ -670,12 +674,37 @@ class Erf(Model):
         # variables
         ws.factory('{0}[{1}, {2}, {3}]'.format(erfScaleName,*erfScale))
         ws.factory('{0}[{1}, {2}, {3}]'.format(erfShiftName,*erfShift))
+        print 'ERFSCALE {0}[{1}, {2}, {3}]'.format(erfScaleName,*erfScale)
+        print 'ERFSHIFT {0}[{1}, {2}, {3}]'.format(erfShiftName,*erfShift)
         # build model
         ws.factory("EXPR::{0}('0.5*(TMath::Erf({2}*({1}-{3}))+1)', {1}, {2}, {3})".format(
             label,self.x,erfScaleName,erfShiftName)
         )
         self.params = [erfScaleName,erfShiftName]
 
+class ErfSpline(ModelSpline):
+        
+    def __init__(self,name,**kwargs):
+        super(ErfSpline,self).__init__(name,**kwargs)
+    
+    def build(self,ws,label):
+        logging.debug('Building {}'.format(label))
+        erfScaleName = 'erfScale_{0}'.format(label)
+        erfShiftName = 'erfShift_{0}'.format(label)
+        masses = self.kwargs.get('masses', [])
+        erfScales  = self.kwargs.get('erfScales',  [])
+        erfShifts = self.kwargs.get('erfShifts', [])
+        # splines  
+        erfScaleSpline  = ROOT.RooSpline1D(erfScaleName,  erfScaleName,  ws.var('MH'), len(masses), array('d',masses), array('d',erfScales))
+        erfShiftSpline = ROOT.RooSpline1D(erfShiftName, erfShiftName, ws.var('MH'), len(masses), array('d',masses), array('d',erfShifts))
+        # import
+        getattr(ws, "import")(erfScaleSpline, ROOT.RooFit.RecycleConflictNodes())
+        getattr(ws, "import")(erfShiftSpline, ROOT.RooFit.RecycleConflictNodes())
+        # build model
+        ws.factory("EXPR::{0}('0.5*(TMath::Erf({2}*({1}-{3}))+1)', {1}, {2}, {3})".format(
+                   label,self.x,erfScaleName,erfShiftName)
+        )
+        self.params = [erfScaleName,erfShiftName]
 
 class Sum(Model):
 
