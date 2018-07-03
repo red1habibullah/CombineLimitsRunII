@@ -4,6 +4,7 @@ from array import array
 
 import ROOT
 from CombineLimits.Limits.utilities import *
+
 class Model(object):
 
     def __init__(self,name,**kwargs):
@@ -51,12 +52,22 @@ class Model(object):
             x = ws.var(self.x)
             xFrame = x.frame()
             xFrame.SetTitle('')
-            hist.plotOn(xFrame)
+            val = chi2.getVal()  # Adding chi2 info
+            xframe1.chiSquare()        # Adding chi2 info
+            # nBinsLine = "nBins: " + hist.numEntries() # Adding chi2 info
+            #nParamsLine = "nParamFit: " + model.getParameters(data).selectByAttrib("Constant",kFALSE).getSize() # Adding chi2 info
+            chi2Line = "RedChi2: " +  xframe1.chiSquare() # Adding chi2 info
+            pt = ROOT.TPaveText(.72,.1,.90,.4, "brNDC") # Adding chi2 info
+            #pt.AddText(nBinsLine ) # Adding chi2 info
+            #pt.AddText(nParamsLine ) # Adding chi2 info
+            pt.AddText(chi2Line ) # Adding chi2 info
+            hist.plotOn(xFrame) # Adding chi2 info
             model.plotOn(xFrame)
             model.paramOn(xFrame,ROOT.RooFit.Layout(0.72,0.98,0.90))
             canvas = ROOT.TCanvas(savename,savename,800,800)
             canvas.SetRightMargin(0.3)
             xFrame.Draw()
+            pt.Draw() # Adding chi2 info
             prims = canvas.GetListOfPrimitives()
             for prim in prims:
                 if 'paramBox' in prim.GetName():
@@ -449,8 +460,9 @@ class DoubleCrystalBall(Model):
 
     def __init__(self,name,**kwargs):
         super(DoubleCrystalBall,self).__init__(name,**kwargs)
+        filepath = '{}/src/CombineLimits/Limits/macros/DoubleCrystalBall.cpp'.format(os.environ['CMSSW_BASE'])
         if not hasattr(ROOT,"DoubleCrystalBall"):
-            ROOT.gROOT.ProcessLine(".L /afs/cern.ch/work/k/ktos/public/Plotting/CMSSW_8_1_0/src/CombineLimits/Limits/macros/DoubleCrystalBall.cpp")        
+            ROOT.gROOT.ProcessLine(".L " + filepath)        
         
 
     def build(self,ws,label):
@@ -485,11 +497,11 @@ class DoubleCrystalBallSpline(ModelSpline):
 
     def __init__(self,name,**kwargs):
         super(DoubleCrystalBallSpline,self).__init__(name,**kwargs)
+        filepath = '{}/src/CombineLimits/Limits/macros/DoubleCrystalBall.cpp'.format(os.environ['CMSSW_BASE'])
         if not hasattr(ROOT,"DoubleCrystalBall"):
-            ROOT.gROOT.ProcessLine(".L /afs/cern.ch/work/k/ktos/public/Plotting/CMSSW_8_1_0/src/CombineLimits/Limits/macros/DoubleCrystalBall.cpp")
+            ROOT.gROOT.ProcessLine(".L " + filepath)                                                                 
 
     def build(self,ws,label):
-        print "CHECK1"
         logging.debug('Building {}'.format(label))
         meanName = 'mean_{0}'.format(label)
         sigmaName = 'sigma_{0}'.format(label)
@@ -504,7 +516,6 @@ class DoubleCrystalBallSpline(ModelSpline):
         n1s = self.kwargs.get('n1s', [])
         a2s = self.kwargs.get('a2s', [])
         n2s = self.kwargs.get('n2s', [])
-        print "CHECK2"
         # splines
         meanSpline  = ROOT.RooSpline1D(meanName,  meanName,  ws.var('MH'), len(masses), array('d',masses), array('d',means))
         sigmaSpline = ROOT.RooSpline1D(sigmaName, sigmaName, ws.var('MH'), len(masses), array('d',masses), array('d',sigmas))
@@ -512,7 +523,6 @@ class DoubleCrystalBallSpline(ModelSpline):
         n1Spline =     ROOT.RooSpline1D(n1Name, n1Name, ws.var('MH'), len(masses), array('d',masses), array('d',n1s))
         a2Spline =     ROOT.RooSpline1D(a2Name, a2Name, ws.var('MH'), len(masses), array('d',masses), array('d',a2s))
         n2Spline =     ROOT.RooSpline1D(n2Name, n2Name, ws.var('MH'), len(masses), array('d',masses), array('d',n2s))
-        print "CHECK3"
         # import
         getattr(ws, "import")(meanSpline, ROOT.RooFit.RecycleConflictNodes())
         getattr(ws, "import")(sigmaSpline, ROOT.RooFit.RecycleConflictNodes())
@@ -533,8 +543,9 @@ class DoubleSidedGaussian(Model):
 
     def __init__(self,name,**kwargs):
         super(DoubleSidedGaussian,self).__init__(name,**kwargs)
+        filepath = '{}/src/CombineLimits/Limits/macros/DoubleSidedGaussian.cpp'.format(os.environ['CMSSW_BASE'])
         if not hasattr(ROOT,"DoubleSidedGaussian"):
-            ROOT.gROOT.ProcessLine(".L /afs/cern.ch/work/k/ktos/public/Plotting/CMSSW_8_1_0/src/CombineLimits/Limits/macros/DoubleSidedGaussian.cpp")        
+            ROOT.gROOT.ProcessLine(".L " + filepath)                                                                 
         
 
     def build(self,ws,label):
@@ -560,8 +571,9 @@ class DoubleSidedGaussianSpline(ModelSpline):
 
     def __init__(self,name,**kwargs):
         super(DoubleSidedGaussianSpline,self).__init__(name,**kwargs)
+        filepath = '{}/src/CombineLimits/Limits/macros/DoubleSidedGaussian.cpp'.format(os.environ['CMSSW_BASE'])
         if not hasattr(ROOT,"DoubleSidedGaussian"):
-            ROOT.gROOT.ProcessLine(".L /afs/cern.ch/work/k/ktos/public/Plotting/CMSSW_8_1_0/src/CombineLimits/Limits/macros/DoubleSidedGaussian.cpp")
+            ROOT.gROOT.ProcessLine(".L " + filepath)                                                                 
 
     def build(self,ws,label):
         logging.debug('Building {}'.format(label))
@@ -591,8 +603,9 @@ class DoubleSidedVoigtian(Model):
 
     def __init__(self,name,**kwargs):
         super(DoubleSidedVoigtian,self).__init__(name,**kwargs)
+        filepath = '{}/src/CombineLimits/Limits/macros/DoubleSidedVoigtian.cpp'.format(os.environ['CMSSW_BASE'])
         if not hasattr(ROOT,"DoubleSidedVoigtian"):
-            ROOT.gROOT.ProcessLine(".L /afs/cern.ch/work/k/ktos/public/Plotting/CMSSW_8_1_0/src/CombineLimits/Limits/macros/DoubleSidedVoigtian.cpp")        
+            ROOT.gROOT.ProcessLine(".L " + filepath)                                                                 
         
 
     def build(self,ws,label):
@@ -624,8 +637,9 @@ class DoubleSidedVoigtianSpline(ModelSpline):
 
     def __init__(self,name,**kwargs):
         super(DoubleSidedVoigtianSpline,self).__init__(name,**kwargs)
+        filepath = '{}/src/CombineLimits/Limits/macros/DoubleSidedVoigtian.cpp'.format(os.environ['CMSSW_BASE'])
         if not hasattr(ROOT,"DoubleSidedVoigtian"):
-            ROOT.gROOT.ProcessLine(".L /afs/cern.ch/work/k/ktos/public/Plotting/CMSSW_8_1_0/src/CombineLimits/Limits/macros/DoubleSidedVoigtian.cpp")
+            ROOT.gROOT.ProcessLine(".L " + filepath)                                                                 
 
     def build(self,ws,label):
         logging.debug('Building {}'.format(label))
