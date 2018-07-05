@@ -52,22 +52,12 @@ class Model(object):
             x = ws.var(self.x)
             xFrame = x.frame()
             xFrame.SetTitle('')
-            val = chi2.getVal()  # Adding chi2 info
-            xframe1.chiSquare()        # Adding chi2 info
-            # nBinsLine = "nBins: " + hist.numEntries() # Adding chi2 info
-            #nParamsLine = "nParamFit: " + model.getParameters(data).selectByAttrib("Constant",kFALSE).getSize() # Adding chi2 info
-            chi2Line = "RedChi2: " +  xframe1.chiSquare() # Adding chi2 info
-            pt = ROOT.TPaveText(.72,.1,.90,.4, "brNDC") # Adding chi2 info
-            #pt.AddText(nBinsLine ) # Adding chi2 info
-            #pt.AddText(nParamsLine ) # Adding chi2 info
-            pt.AddText(chi2Line ) # Adding chi2 info
-            hist.plotOn(xFrame) # Adding chi2 info
+            hist.plotOn(xFrame)
             model.plotOn(xFrame)
             model.paramOn(xFrame,ROOT.RooFit.Layout(0.72,0.98,0.90))
             canvas = ROOT.TCanvas(savename,savename,800,800)
             canvas.SetRightMargin(0.3)
             xFrame.Draw()
-            pt.Draw() # Adding chi2 info
             prims = canvas.GetListOfPrimitives()
             for prim in prims:
                 if 'paramBox' in prim.GetName():
