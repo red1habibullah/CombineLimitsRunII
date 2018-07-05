@@ -11,7 +11,6 @@ from array import array
 import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 ROOT.gROOT.SetBatch()
-ROOT.gROOT.ProcessLine(".L ../../Limits/macros/DoubleCrystalBall.cpp")
 
 import CombineLimits.Limits.Models as Models
 from CombineLimits.Limits.Limits import Limits
@@ -60,12 +59,12 @@ class HaaLimits2D(HaaLimits):
     def _buildYModel(self,region='PP',**kwargs):
         tag = kwargs.pop('tag',region)
 
-        cont1 = Models.Exponential('cont1',
+        cont1 = Models.Exponential('conty1',
             x = 'y',
             #lamb = [-0.20,-1,0], # kinfit
             lamb = [-0.1,-0.5,0], # visible
         )
-        nameC1 = 'cont1{}'.format('_'+tag if tag else '')
+        nameC1 = 'conty1{}'.format('_'+tag if tag else '')
         cont1.build(self.workspace,nameC1)
 
         # higgs fit (mmtt)
@@ -189,14 +188,14 @@ class HaaLimits2D(HaaLimits):
                 elif yFitFunc == "V":
                     modely = Models.Voigtian('sigy',
                         x = 'y',
-                        mean  = [h,0.1,1000],
+                        mean  = [h,0,1.25*h],
                         width = [0.1*h,0.01,0.5*h],
                         sigma = [0.1*h,0.01,0.5*h],
                     )
                 elif yFitFunc == "CB":
                     modely = Models.CrystalBall('sigy',
                         x = 'y',
-                        mean  = [h,0.1,1000],
+                        mean  = [h,0,1.25*h],
                         sigma = [0.1*h,0.01,0.5*h],
                         a = [1.0,.5,5],
                         n = [0.5,.1,10],
@@ -204,7 +203,7 @@ class HaaLimits2D(HaaLimits):
                 elif yFitFunc == "DCB":
                     modely = Models.DoubleCrystalBall('sigy',
                         x = 'y',
-                        mean  = [h,0.1,1000],
+                        mean  = [h,0,1.25*h],
                         sigma = [initialValuesDCB["h"+str(h)+"a"+str(a)]["sigma"],0.01,0.5*h],
                         a1    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["a1"],0.1,10],
                         n1    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["n1"],0.1,20],
@@ -214,7 +213,7 @@ class HaaLimits2D(HaaLimits):
                 elif yFitFunc == "DG":
                     modely = Models.DoubleSidedGaussian('sigy',
                         x = 'y',
-                        mean  = [h,0.1,1000],
+                        mean  = [h,0,1.25*h],
                         sigma1 = [0.1*h,0.05*h,0.5*h],
                         sigma2 = [0.2*h,0.05*h,0.5*h],
                         yMax = self.YRANGE[1],
@@ -222,7 +221,7 @@ class HaaLimits2D(HaaLimits):
                 elif yFitFunc == "DV":
                     modely = Models.DoubleSidedVoigtian('sigy',
                         x = 'y',
-                        mean  = [h,0.01,1000],
+                        mean  = [h,0,1.25*h],
                         sigma1 = [0.1*h,0.01,0.5*h],
                         sigma2 = [0.2*h,0.01,0.5*h],
                         width1 = [1.0,0.01,10.0],
@@ -237,20 +236,20 @@ class HaaLimits2D(HaaLimits):
             else: # y variable is tt
                 # simple voitian
                 if yFitFunc == "G":
-                    modely_sig = Models.Gaussian('sigy',
+                    modely = Models.Gaussian('sigy',
                         x = 'y',
                         mean  = [aval,0,1.25*aval],
                         sigma = [0.1*aval,0.01,0.5*aval],
                     )
                 elif yFitFunc == "V":
-                    modely_sig = Models.Voigtian('sigy',
+                    modely = Models.Voigtian('sigy',
                         x = 'y',
                         mean  = [aval,0,30],
                         width = [0.1*aval,0.01,5],
                         sigma = [0.1*aval,0.01,5],
                     )
                 elif yFitFunc == "CB":
-                    modely_sig = Models.CrystalBall('sigy',
+                    modely = Models.CrystalBall('sigy',
                         x = 'y',
                         mean  = [aval,0,30],
                         sigma = [0.1*aval,0,5],
@@ -258,7 +257,7 @@ class HaaLimits2D(HaaLimits):
                         n = [0.5,0.1,10],
                     )
                 elif yFitFunc == "DCB":
-                    modely_sig = Models.DoubleCrystalBall('sigy',
+                    modely = Models.DoubleCrystalBall('sigy',
                         x = 'y',
                         mean  = [aval,0,30],
                         sigma = [0.1*aval,0,5],
@@ -268,7 +267,7 @@ class HaaLimits2D(HaaLimits):
                         n2 = [1.5,0.1,10],
                     )
                 elif yFitFunc == "DG":
-                    modely_sig = Models.DoubleSidedGaussian('sigy',
+                    modely = Models.DoubleSidedGaussian('sigy',
                         x = 'y',
                         mean  = [aval,0,30],
                         sigma1 = [0.1*aval,0.05*aval,0.4*aval],
@@ -276,7 +275,7 @@ class HaaLimits2D(HaaLimits):
                         yMax = self.YRANGE[1],
                     )
                 elif yFitFunc == "DV":
-                    modely_sig = Models.DoubleSidedVoigtian('sigy',
+                    modely = Models.DoubleSidedVoigtian('sigy',
                         x = 'y',
                         mean  = [aval,0,30],
                         sigma1 = [0.1*aval,0.05*aval,0.4*aval],
@@ -298,14 +297,12 @@ class HaaLimits2D(HaaLimits):
                     )
                     ttgaus.build(ws,"ttgaus")
                     tterf.build(ws,"tterf")
-                    #self.wsimport(ws, ttgaus)
-                    ##self.wsimport(ws, tterf)
-                    modely_sig = Models.Prod('sigy',
+                    modely = Models.Prod('sigy',
                             'ttgaus',
                             'tterf',
                     )
 
-                modely_sig.build(ws, 'sigy')
+                modely.build(ws, 'sigy')
 
                 if region=='PP' or not dobgsig:
                     model = Models.Prod('sig',
@@ -332,14 +329,14 @@ class HaaLimits2D(HaaLimits):
                     )
                     erfc.build(ws,'erfcy')
 
-                    modely = Models.Sum('bgsigy',
+                    modelymod = Models.Sum('bgsigy',
                         **{ 
                             'erfcy'    : [0.5,0,1],
                             'sigy'     : [0.5,0,1],
                             'recursive': True,
                         }
                     )
-                    modely.build(ws,'bgsigy')
+                    modelymod.build(ws,'bgsigy')
 
                     model = Models.Prod('sig',
                         'sigx',
@@ -506,7 +503,7 @@ class HaaLimits2D(HaaLimits):
         modelx.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_x'))
         ym = Models.GaussianSpline if ygausOnly else Models.VoigtianSpline
         if fit:
-            model = ym(self.SPLINENAME.format(h=h)+'_y',
+            modely = ym(self.SPLINENAME.format(h=h)+'_y',
                 **{
                     'x'      : 'y',
                     'masses' : ys,
@@ -517,7 +514,7 @@ class HaaLimits2D(HaaLimits):
             )
         else:
             if yFitFunc == "V":
-                model = Models.VoigtianSpline(self.SPLINENAME.format(h=h),
+                modely = Models.VoigtianSpline(self.SPLINENAME.format(h=h)+'_y',
                     **{
                       'masses' : avals,
                       'means'  : [results[h][a]['mean_sigy'] for a in amasses],
@@ -526,7 +523,7 @@ class HaaLimits2D(HaaLimits):
                     }
                 )
             elif yFitFunc == "G":
-                model = Models.GaussianSpline(self.SPLINENAME.format(h=h),
+                modely = Models.GaussianSpline(self.SPLINENAME.format(h=h)+'_y',
                     **{
                       'masses' : avals,
                       'means'  : [results[h][a]['mean_sigy'] for a in amasses],
@@ -534,7 +531,7 @@ class HaaLimits2D(HaaLimits):
                     }
                 )
             elif yFitFunc == "CB":
-                model = Models.CrystalBallSpline(self.SPLINENAME.format(h=h),
+                modely = Models.CrystalBallSpline(self.SPLINENAME.format(h=h)+'_y',
                     **{
                       'masses' : avals,
                       'means'  : [results[h][a]['mean_sigy'] for a in amasses],
@@ -544,7 +541,7 @@ class HaaLimits2D(HaaLimits):
                     }
                 )
             elif yFitFunc == "DCB":
-                model = Models.DoubleCrystalBallSpline(self.SPLINENAME.format(h=h),
+                modely = Models.DoubleCrystalBallSpline(self.SPLINENAME.format(h=h)+'_y',
                     **{
                       'masses' : avals,
                       'means'  : [results[h][a]['mean_sigy'] for a in amasses],
@@ -556,7 +553,7 @@ class HaaLimits2D(HaaLimits):
                     }
                 )
             elif yFitFunc == "DG":
-                model = Models.DoubleSidedGaussianSpline(self.SPLINENAME.format(h=h),
+                modely = Models.DoubleSidedGaussianSpline(self.SPLINENAME.format(h=h)+'_y',
                     **{
                       'masses' :  avals,
                       'means'  :  [results[h][a]['mean_sigy'] for a in amasses],
@@ -566,7 +563,7 @@ class HaaLimits2D(HaaLimits):
                     }
                 )
             elif yFitFunc == "DV":
-                model = Models.DoubleSidedVoigtianSpline(self.SPLINENAME.format(h=h),
+                modely = Models.DoubleSidedVoigtianSpline(self.SPLINENAME.format(h=h)+'_y',
                     **{
                       'masses' :  avals,
                       'means'  :  [results[h][a]['mean_sigy'] for a in amasses],
@@ -578,27 +575,29 @@ class HaaLimits2D(HaaLimits):
                     }
                 )
             elif yFitFunc == "errG":
-                model_gaus = Models.GaussianSpline("model_gaus",
+                modely_gaus = Models.GaussianSpline("model_gaus",
                     **{
                       'masses' :  avals,
                       'means'  :  [results[h][a]['mean_ttgaus'] for a in amasses],
                       'sigmas' : [results[h][a]['sigma_ttgaus'] for a in amasses],
                     }
                 )
-                model_erf = Models.ErfSpline("model_erf",
+                modely_gaus.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_gaus_y'))
+                modely_erf = Models.ErfSpline("model_erf",
                     **{
                       'masses' :  avals,
                       'erfScales' : [results[h][a]['erfScale_tterf'] for a in amasses],
                       'erfShifts' : [results[h][a]['erfShift_tterf'] for a in amasses],
                     }
                 )
-                model = Models.ProdSpline(self.SPLINENAME,
-                    "model_gaus",
-                    "model_erf",
+                modely_erf.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_erf_y'))
+                modely = Models.ProdSpline(self.SPLINENAME.format(h=h)+'_y',
+                    '{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_gaus_y'),
+                    '{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_erf_y'),
                 )
-          
+
+        modely.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_y'))
                 
-        model.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_y'))
         model = Models.ProdSpline(self.SPLINENAME.format(h=h),
             '{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_x'),
             '{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_y'),
@@ -683,6 +682,7 @@ class HaaLimits2D(HaaLimits):
         data.plotOn(yFrame)
         # continuum
         model.plotOn(yFrame,ROOT.RooFit.Components('cont1_{}_y'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+        model.plotOn(yFrame,ROOT.RooFit.Components('conty1_{}_y'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
         # combined model
         model.plotOn(yFrame)
 

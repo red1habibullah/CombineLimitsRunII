@@ -52,7 +52,7 @@ class Model(object):
             x = ws.var(self.x)
             xFrame = x.frame()
             xFrame.SetTitle('')
-            hist.plotOn(xFrame) # Adding chi2 info
+            hist.plotOn(xFrame)
             model.plotOn(xFrame)
             chi2Line = "Chi2: " + str(xframe1.chiSquare()) # Adding chi2 info
             pt = ROOT.TPaveText(.72,.1,.90,.2, "brNDC") # Adding chi2 info
@@ -61,7 +61,6 @@ class Model(object):
             canvas = ROOT.TCanvas(savename,savename,800,800)
             canvas.SetRightMargin(0.3)
             xFrame.Draw()
-            pt.Draw() # Adding chi2 info
             prims = canvas.GetListOfPrimitives()
             for prim in prims:
                 if 'paramBox' in prim.GetName():

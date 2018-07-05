@@ -421,7 +421,8 @@ def create_datacard(args):
     if 'tt' in var:
         haaLimits.addSignalModels(fit=False,yFitFunc='errG')
     elif 'h' in var or 'hkf' in var:
-        haaLimits.addSignalModels(fit=False,yFitFunc='DCB')
+        #haaLimits.addSignalModels(fit=False,yFitFunc='DCB')
+        haaLimits.addSignalModels(fit=False,yFitFunc='V')
     else:
         haaLimits.addSignalModels(fit=False)
     haaLimits.XRANGE = xRange
