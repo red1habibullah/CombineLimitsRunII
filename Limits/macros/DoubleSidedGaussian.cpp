@@ -19,13 +19,15 @@ DoubleSidedGaussian::DoubleSidedGaussian(const char *name, const char *title,
                        RooAbsReal& _x,
                        RooAbsReal& _mean,
                        RooAbsReal& _sig1,
-                       RooAbsReal& _sig2) :
+                       RooAbsReal& _sig2,
+                       Double_t _yMax) :
   RooAbsPdf(name,title), 
   x("x","x",this,_x),
   mean("mean","mean",this,_mean),
   sig1("sig1","sig1",this,_sig1),
-  sig2("sig2","sig2",this,_sig2)
-{ 
+  sig2("sig2","sig2",this,_sig2),
+  yMax(_yMax)
+{
 } 
 
 
@@ -34,7 +36,8 @@ DoubleSidedGaussian::DoubleSidedGaussian(const DoubleSidedGaussian& other, const
   x("x",this,other.x),
   mean("mean",this,other.mean),
   sig1("sig1",this,other.sig1),
-  sig2("sig2",this,other.sig2)
+  sig2("sig2",this,other.sig2),
+  yMax(other.yMax)
 { 
 } 
 
@@ -43,17 +46,20 @@ DoubleSidedGaussian::DoubleSidedGaussian(const DoubleSidedGaussian& other, const
 Double_t DoubleSidedGaussian::evaluate() const 
 { 
   double result = -1;
-  double sqrt2divpi = TMath::Power( 2 / TMath::Pi(), 0.5); 
-  double mode = mean - sqrt2divpi * (sig2 - sig1);
-  double A = sqrt2divpi / (sig1 + sig2); 
-  double G1_at_mode = sqrt2divpi / sig1; // This constant normalizes integral of each to .5
-  double G2_at_mode = sqrt2divpi / sig2; // This constant normalizes integral of each to .5
-  double G_diff = G1_at_mode - G2_at_mode;
-  double total_integral = 1.0 + G_diff * (25 - mode);
+  double sqrt2pi = TMath::Power( 2 * TMath::Pi(), 0.5); 
+  double mode = mean - 2 / sqrt2pi * (sig2 - sig1);
+  if (mode > yMax) 
+    mode = yMax;
+//  double A = 2 / sqrt2pi / (sig1 + sig2); 
+  double A1 = 1 / (2*sig1*sqrt2pi), A2 = 1 / (2*sig2*sqrt2pi);
+  double scaleFactor = sig2 / sig1;
+  double total_integral = 0.5 * (1 + scaleFactor);
   if ( x < mode)
-    result = TMath::Exp(-1 * (x-mode) * (x-mode) / (2 * sig1 * sig1)) / total_integral;
+    result = A1 * TMath::Exp(-1 * (x-mode) * (x-mode) / (2 * sig1 * sig1)) / total_integral;
   else
-    result = (TMath::Exp(-1 * (x-mode) * (x-mode) / (2 * sig2 * sig2)) + G_diff) / total_integral;
-  return A*result ;
+    result = A2 * TMath::Exp(-1 * (x-mode) * (x-mode) / (2 * sig2 * sig2)) * scaleFactor / total_integral;
+//  std::cout << "TESTY: x=" << x << "  result=" << result << " mean=" << mean << " mode=" << mode << "  scaleFactor=" << scaleFactor << "  total_integral=" << total_integral << " sig1=" << sig1 << "  sig2=" << sig2 << " A=" << A << " yMax=" << yMax <<std::endl;
+//  return A*result ;
+  return result;
 } 
 

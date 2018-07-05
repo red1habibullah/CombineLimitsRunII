@@ -52,17 +52,11 @@ class Model(object):
             x = ws.var(self.x)
             xFrame = x.frame()
             xFrame.SetTitle('')
-            val = chi2.getVal()  # Adding chi2 info
-            xframe1.chiSquare()        # Adding chi2 info
-            # nBinsLine = "nBins: " + hist.numEntries() # Adding chi2 info
-            #nParamsLine = "nParamFit: " + model.getParameters(data).selectByAttrib("Constant",kFALSE).getSize() # Adding chi2 info
-            chi2Line = "RedChi2: " +  xframe1.chiSquare() # Adding chi2 info
-            pt = ROOT.TPaveText(.72,.1,.90,.4, "brNDC") # Adding chi2 info
-            #pt.AddText(nBinsLine ) # Adding chi2 info
-            #pt.AddText(nParamsLine ) # Adding chi2 info
-            pt.AddText(chi2Line ) # Adding chi2 info
             hist.plotOn(xFrame) # Adding chi2 info
             model.plotOn(xFrame)
+            chi2Line = "Chi2: " + str(xframe1.chiSquare()) # Adding chi2 info
+            pt = ROOT.TPaveText(.72,.1,.90,.2, "brNDC") # Adding chi2 info
+            pt.AddText(chi2Line ) # Adding chi2 info
             model.paramOn(xFrame,ROOT.RooFit.Layout(0.72,0.98,0.90))
             canvas = ROOT.TCanvas(savename,savename,800,800)
             canvas.SetRightMargin(0.3)
@@ -102,10 +96,14 @@ class Model(object):
             xFrame.SetTitle('')
             hist.plotOn(xFrame)
             model.plotOn(xFrame)
+            chi2Line = "Chi2: " +  str(xFrame.chiSquare()) # Adding chi2 info
+            pt = ROOT.TPaveText(.72,.1,.90,.2, "brNDC") # Adding chi2 info
+            pt.AddText(chi2Line ) # Adding chi2 info
             model.paramOn(xFrame,ROOT.RooFit.Layout(0.72,0.98,0.90))
             canvas = ROOT.TCanvas(savename,savename,800,800)
             canvas.SetRightMargin(0.3)
             xFrame.Draw()
+            pt.Draw()
             prims = canvas.GetListOfPrimitives()
             for prim in prims:
                 if 'paramBox' in prim.GetName():
@@ -117,8 +115,12 @@ class Model(object):
             yFrame.SetTitle('')
             hist.plotOn(yFrame)
             model.plotOn(yFrame)
+            chi2Line = "Chi2: " + str(yFrame.chiSquare()) # Adding chi2 info
+            pt1 = ROOT.TPaveText(.72,.1,.90,.2, "brNDC") # Adding chi2 info            
+            pt.AddText(chi2Line ) # Adding chi2 info
             model.paramOn(yFrame,ROOT.RooFit.Layout(0.72,0.98,0.90))
             yFrame.Draw()
+            pt1.Draw()
             prims = canvas.GetListOfPrimitives()
             for prim in prims:
                 if 'paramBox' in prim.GetName():
@@ -530,12 +532,10 @@ class DoubleCrystalBallSpline(ModelSpline):
         getattr(ws, "import")(n1Spline, ROOT.RooFit.RecycleConflictNodes())
         getattr(ws, "import")(a2Spline, ROOT.RooFit.RecycleConflictNodes())
         getattr(ws, "import")(n2Spline, ROOT.RooFit.RecycleConflictNodes())
-        print "CHECK4"
 
         # build model
         doubleCB = ROOT.DoubleCrystalBall(label, label, ws.arg(self.x), ws.arg(meanName), ws.arg(sigmaName), 
                    ws.arg(a1Name), ws.arg(n1Name), ws.arg(a2Name), ws.arg(n2Name) )
-        print  "DOUBLECV", doubleCB.Print()
         self.wsimport(ws, doubleCB)
         self.params = [meanName,sigmaName,a1Name,n1Name,a2Name,n2Name]
 
@@ -702,8 +702,6 @@ class Erf(Model):
         # variables
         ws.factory('{0}[{1}, {2}, {3}]'.format(erfScaleName,*erfScale))
         ws.factory('{0}[{1}, {2}, {3}]'.format(erfShiftName,*erfShift))
-        print 'ERFSCALE {0}[{1}, {2}, {3}]'.format(erfScaleName,*erfScale)
-        print 'ERFSHIFT {0}[{1}, {2}, {3}]'.format(erfShiftName,*erfShift)
         # build model
         ws.factory("EXPR::{0}('0.5*(TMath::Erf({2}*({1}-{3}))+1)', {1}, {2}, {3})".format(
             label,self.x,erfScaleName,erfShiftName)
