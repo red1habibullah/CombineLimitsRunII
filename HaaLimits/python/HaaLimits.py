@@ -109,12 +109,13 @@ class HaaLimits(Limits):
         #nameJ = 'jpsi_{}'.format(region)
         #jpsi.build(self.workspace,nameJ)
 
-        jpsi = {'extended': True}
-        jpsi[nameJ1] = [0.9,0,1]
-        jpsi[nameJ2] = [0.1,0,1]
-        jpsi = Models.Sum('jpsi', **jpsi)
-        nameJ = 'jpsi'
-        jpsi.build(self.workspace,nameJ)
+        if self.XRANGE[0]<3.3:
+            jpsi = {'extended': True}
+            jpsi[nameJ1] = [0.9,0,1]
+            jpsi[nameJ2] = [0.1,0,1]
+            jpsi = Models.Sum('jpsi', **jpsi)
+            nameJ = 'jpsi'
+            jpsi.build(self.workspace,nameJ)
 
         # upsilon
         upsilon1S = bgRes('upsilon1S',
