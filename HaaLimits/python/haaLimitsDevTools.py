@@ -32,7 +32,7 @@ amasses = ['3p6',4,5,6,7,9,11,13,15,17,19,21]
 signame = 'HToAAH{h}A{a}'
 
 shiftTypes = ['lep','pu','fake','trig','btag','MuonEn','TauEn','JetEn','UnclusteredEn']
-#shiftTypes = []
+shiftTypes = []
 shifts = []
 for s in shiftTypes:
     shifts += [s+'Up', s+'Down']
@@ -418,7 +418,12 @@ def create_datacard(args):
     if args.addControl: haaLimits.addControlModels(voigtian=True,logy=xRange[0]<3.3)
     haaLimits.addBackgroundModels(voigtian=True,logy=False,fixAfterControl=args.addControl)
     haaLimits.XRANGE = [0,30] # override for signal splines
-    haaLimits.addSignalModels(fit=False)#,ygausOnly=True) # dont fit, use splines
+    if 'tt' in var:
+        haaLimits.addSignalModels(fit=False,yFitFunc='errG')
+    elif 'h' in var or 'hkf' in var:
+        haaLimits.addSignalModels(fit=False,yFitFunc='DCB')
+    else:
+        haaLimits.addSignalModels(fit=False)
     haaLimits.XRANGE = xRange
     #if args.addControl: haaLimits.addControlData()
     haaLimits.addData(asimov=(blind and not doMatrix),addSignal=addSignal,**signalParams) # this will generate a dataset based on the fitted model

@@ -178,7 +178,7 @@ for k,v, in dictionary['PP'][''].items():
 LimitsClass = HaaLimits(dictionary)
 LimitsClass.XRANGE = XRANGE
 LimitsClass.UPSILONRANGE = UPSILONRANGE
-LimitsClass.SHIFTS = ['Pileup',rID','Iso','BTag']
+LimitsClass.SHIFTS = ['Pileup','rID','Iso','BTag']
 LimitsClass.REGIONS = ['FP','PP']
 LimitsClass.initializeWorkspace()
 

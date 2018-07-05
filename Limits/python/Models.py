@@ -462,9 +462,6 @@ class DoubleCrystalBall(Model):
 
     def __init__(self,name,**kwargs):
         super(DoubleCrystalBall,self).__init__(name,**kwargs)
-        filepath = '{}/src/CombineLimits/Limits/macros/DoubleCrystalBall.cpp'.format(os.environ['CMSSW_BASE'])
-        if not hasattr(ROOT,"DoubleCrystalBall"):
-            ROOT.gROOT.ProcessLine(".L " + filepath)        
         
 
     def build(self,ws,label):
@@ -499,9 +496,6 @@ class DoubleCrystalBallSpline(ModelSpline):
 
     def __init__(self,name,**kwargs):
         super(DoubleCrystalBallSpline,self).__init__(name,**kwargs)
-        filepath = '{}/src/CombineLimits/Limits/macros/DoubleCrystalBall.cpp'.format(os.environ['CMSSW_BASE'])
-        if not hasattr(ROOT,"DoubleCrystalBall"):
-            ROOT.gROOT.ProcessLine(".L " + filepath)                                                                 
 
     def build(self,ws,label):
         logging.debug('Building {}'.format(label))
@@ -543,9 +537,6 @@ class DoubleSidedGaussian(Model):
 
     def __init__(self,name,**kwargs):
         super(DoubleSidedGaussian,self).__init__(name,**kwargs)
-        filepath = '{}/src/CombineLimits/Limits/macros/DoubleSidedGaussian.cpp'.format(os.environ['CMSSW_BASE'])
-        if not hasattr(ROOT,"DoubleSidedGaussian"):
-            ROOT.gROOT.ProcessLine(".L " + filepath)                                                                 
         
 
     def build(self,ws,label):
@@ -571,9 +562,6 @@ class DoubleSidedGaussianSpline(ModelSpline):
 
     def __init__(self,name,**kwargs):
         super(DoubleSidedGaussianSpline,self).__init__(name,**kwargs)
-        filepath = '{}/src/CombineLimits/Limits/macros/DoubleSidedGaussian.cpp'.format(os.environ['CMSSW_BASE'])
-        if not hasattr(ROOT,"DoubleSidedGaussian"):
-            ROOT.gROOT.ProcessLine(".L " + filepath)                                                                 
 
     def build(self,ws,label):
         logging.debug('Building {}'.format(label))
@@ -603,9 +591,6 @@ class DoubleSidedVoigtian(Model):
 
     def __init__(self,name,**kwargs):
         super(DoubleSidedVoigtian,self).__init__(name,**kwargs)
-        filepath = '{}/src/CombineLimits/Limits/macros/DoubleSidedVoigtian.cpp'.format(os.environ['CMSSW_BASE'])
-        if not hasattr(ROOT,"DoubleSidedVoigtian"):
-            ROOT.gROOT.ProcessLine(".L " + filepath)                                                                 
         
 
     def build(self,ws,label):
@@ -637,9 +622,6 @@ class DoubleSidedVoigtianSpline(ModelSpline):
 
     def __init__(self,name,**kwargs):
         super(DoubleSidedVoigtianSpline,self).__init__(name,**kwargs)
-        filepath = '{}/src/CombineLimits/Limits/macros/DoubleSidedVoigtian.cpp'.format(os.environ['CMSSW_BASE'])
-        if not hasattr(ROOT,"DoubleSidedVoigtian"):
-            ROOT.gROOT.ProcessLine(".L " + filepath)                                                                 
 
     def build(self,ws,label):
         logging.debug('Building {}'.format(label))
