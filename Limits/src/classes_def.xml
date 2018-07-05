@@ -1,0 +1,5 @@
+<lcgdict>
+    <class name="DoubleCrystalBall" />
+    <class name="DoubleSidedGaussian" />
+    <class name="DoubleSidedVoigtian" />
+</lcgdict>

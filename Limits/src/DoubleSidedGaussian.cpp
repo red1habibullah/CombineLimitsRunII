@@ -6,7 +6,7 @@
 
 // Your description goes here... 
 
-#include "DoubleSidedGaussian.h" 
+#include "CombineLimits/Limits/interface/DoubleSidedGaussian.h" 
 #include "RooAbsReal.h" 
 #include "RooAbsCategory.h" 
 #include <math.h> 

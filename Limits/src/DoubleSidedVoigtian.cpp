@@ -6,12 +6,13 @@
 
 // Your description goes here... 
 
-#include "DoubleSidedVoigtian.h" 
+#include "CombineLimits/Limits/interface/DoubleSidedVoigtian.h" 
 #include "RooAbsReal.h" 
 #include "RooAbsCategory.h" 
 #include <math.h> 
 #include <complex>
 #include "TMath.h" 
+#include "RooMath.h"
 #include "RooVoigtian.h"
 
 ClassImp(DoubleSidedVoigtian) 
