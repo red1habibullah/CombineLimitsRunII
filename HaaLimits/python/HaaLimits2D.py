@@ -343,8 +343,8 @@ class HaaLimits2D(HaaLimits):
                         'bgsigy',
                     )
 
-            ws.Print("v")
             model.build(ws, 'sig')
+            ws.Print("v")
             hist = histMap[self.SIGNAME.format(h=h,a=a)]
             saveDir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
             results[h][a], errors[h][a] = model.fit2D(ws, hist, 'h{}_a{}_{}'.format(h,a,tag), saveDir=saveDir, save=True, doErrors=True)
@@ -749,7 +749,6 @@ class HaaLimits2D(HaaLimits):
         for region in self.REGIONS:
             for shift in ['']+self.SHIFTS:
                 for h in self.HMASSES:
-                    print "IN addSignalModel", region, shift, h
                     if shift == '':
                         self.buildSpline(h,region=region,shift=shift,yFitFunc=yFitFunc,isKinFit=True,**kwargs)
                     else:
