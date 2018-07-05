@@ -15,16 +15,16 @@ import CombineLimits.Limits.Models as Models
 from CombineLimits.Limits.Limits import Limits
 from CombineLimits.Limits.utilities import *
 from CombineLimits.Plotter.LimitPlotter import *
-from HaaLimits import HaaLimits
+from CombineLimits.HaaLimits.HaaLimits import HaaLimits
 
 Ma_list = []
 quantiles = {}
-for filename in os.listdir('/afs/cern.ch/work/k/ktos/public/Plotting/CMSSW_8_1_0/src/CombineLimits/HaaLimits/python/rValueFiles/DIRNAME/'):
+for filename in os.listdir('/afs/cern.ch/work/k/ktos/public/Plotting/CMSSW_8_1_0/src/CombineLimits/HaaLimits/python/rValueFiles/MAY1_KINFIT_mumufourBody/'):
   print "\n", filename
   if not filename.endswith(".root"):
     continue
   print filename
-  fullFileName = "/afs/cern.ch/work/k/ktos/public/Plotting/CMSSW_8_1_0/src/CombineLimits/HaaLimits/python/rValueFiles/DIRNAME/" + filename
+  fullFileName = "/afs/cern.ch/work/k/ktos/public/Plotting/CMSSW_8_1_0/src/CombineLimits/HaaLimits/python/rValueFiles/MAY1_KINFIT_mumufourBody/" + filename
   f = ROOT.TFile.Open(fullFileName )
   tree = f.Get("limit")
   quants = []
@@ -41,4 +41,4 @@ Ma_list = sorted(Ma_list)
 #for k,v in quantiles.items():
 #  print k, v
 myplot = LimitPlotter()
-myplot.plotLimit(xvals=Ma_list, quartiles=quantiles, savename="h125_100MeV_DIRNAME", xaxis="M(mu mu)")
+myplot.plotLimit(xvals=Ma_list, quartiles=quantiles, savename="h125_100MeV_MAY1_KINFIT_mumufourBody", xaxis="M(mu mu)", smooth=True)

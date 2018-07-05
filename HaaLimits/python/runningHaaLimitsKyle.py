@@ -19,7 +19,7 @@ from HaaLimits import *
 
 XRANGE = [5, 25]
 UPSILONRANGE = [8.5,11]
-subdirectoryName='UpConst_SetLambda_8p5to11p0_v4/'
+subdirectoryName='UpConst_SetLambda_8p5to11p0_TESTNEW/'
 name = 'mmmt_mm_parametric'
 
 def ScaleRooDataSets(ds, scale=1):
@@ -2061,15 +2061,19 @@ GetFPSignal(dictionary,XRANGE)
 LimitsClass = HaaLimits(dictionary)
 LimitsClass.XRANGE = XRANGE
 LimitsClass.UPSILONRANGE = UPSILONRANGE
+LimitsClass.SHIFTS = ['Pileup', 'ID','Iso', 'BTag']
+LimitsClass.REGIONS = ['FP','PP']
 LimitsClass.initializeWorkspace()
 
 ####################################
 # Devin's code
 ####################################
-LimitsClass.addBackgroundModels(fixAfterFP=False, addUpsilon=False, setUpsilonLambda=False, sidesModeled=False)
+LimitsClass.addBackgroundModels(fixAfterFP=False, addUpsilon=False, setUpsilonLambda=None)
 
-print "\n\n\n\n\n\n\n\n\n\n\n\n\nHELLOO"
-LimitsClass.addBackgroundModels(fixAfterFP=True, addUpsilon=True,  setUpsilonLambda=True,  sidesModeled=True)
+LAMBDA = LimitsClass.GetWorkspaceValue("lambda_cont1_FP")
+print "\n\n\n\n\n\n\n\n\n\n\n\n\nHELLOO", LAMBDA
+LimitsClass.initializeWorkspace()
+LimitsClass.addBackgroundModels(fixAfterFP=True, addUpsilon=True,  setUpsilonLambda=LAMBDA)
 
 LimitsClass.addSignalModels()
 LimitsClass.addData(asimov=True)#,addSignal=True)
