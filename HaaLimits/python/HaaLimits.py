@@ -190,12 +190,12 @@ class HaaLimits(Limits):
         )
         cont1.build(self.workspace,nameC1)
 
-        nameC2 = 'cont2{}'.format('_'+tag if tag else '')
-        #nameC2 = 'cont2'
-        cont2 = Models.Exponential(nameC2,
-            lamb = [-0.5,-2,0],
-        )
-        cont2.build(self.workspace,nameC2)
+        #nameC2 = 'cont2{}'.format('_'+tag if tag else '')
+        ##nameC2 = 'cont2'
+        #cont2 = Models.Exponential(nameC2,
+        #    lamb = [-0.5,-2,0],
+        #)
+        #cont2.build(self.workspace,nameC2)
     
         nameC3 = 'cont3{}'.format('_'+tag if tag else '')
         #nameC3 = 'cont3'
@@ -204,12 +204,12 @@ class HaaLimits(Limits):
         )
         cont3.build(self.workspace,nameC3)
     
-        nameC4 = 'cont4{}'.format('_'+tag if tag else '')
-        #nameC4 = 'cont4'
-        cont4 = Models.Exponential(nameC4,
-            lamb = [-2,-5,0],
-        )
-        cont4.build(self.workspace,nameC4)
+        #nameC4 = 'cont4{}'.format('_'+tag if tag else '')
+        ##nameC4 = 'cont4'
+        #cont4 = Models.Exponential(nameC4,
+        #    lamb = [-2,-5,0],
+        #)
+        #cont4.build(self.workspace,nameC4)
 
         # sum
         bgs = {'recursive': True}
@@ -220,18 +220,14 @@ class HaaLimits(Limits):
             bgs[nameC3] = [0.5,0,1]
         else:
             # jpsi
-            if self.XRANGE[0]<4:
+            if self.XRANGE[0]<3.3:
                 bgs[nameJ] = [0.9,0,1]
                 bgs[nameC3] = [0.5,0,1]
             elif self.XRANGE[0]<4:
-                print 'ADDING PSI(2S)'
                 bgs[nameJ2] = [0.9,0,1]
                 bgs[nameC3] = [0.5,0,1]
-            #if self.XRANGE[0]<8:
-            #    bgs[nameJE] = [0.9,0,1]
             # upsilon
             if addUpsilon and self.XRANGE[0]<=9 and self.XRANGE[1]>=11:
-                print 'ADDING UPSILON'
                 #bgs[nameU1] = [0.9,0,1]
                 #bgs[nameU2] = [0.9,0,1]
                 #bgs[nameU3] = [0.9,0,1]
@@ -505,7 +501,7 @@ class HaaLimits(Limits):
         self.workspace.arg('sigma_jpsi2S').setConstant(fix)
         self.workspace.arg('width_jpsi1S').setConstant(fix)
         self.workspace.arg('width_jpsi2S').setConstant(fix)
-        self.workspace.arg('jpsi1S_frac').setConstant(fix) 
+        if self.XRANGE[0]<3.3: self.workspace.arg('jpsi1S_frac').setConstant(fix) 
         self.workspace.arg('jpsi2S_frac').setConstant(fix) 
         self.workspace.arg('upsilon_frac').setConstant(fix) 
         if self.XRANGE[0]<3.3: self.workspace.arg('jpsi_frac').setConstant(fix) 

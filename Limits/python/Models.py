@@ -514,12 +514,10 @@ class DoubleCrystalBallSpline(ModelSpline):
         getattr(ws, "import")(n1Spline, ROOT.RooFit.RecycleConflictNodes())
         getattr(ws, "import")(a2Spline, ROOT.RooFit.RecycleConflictNodes())
         getattr(ws, "import")(n2Spline, ROOT.RooFit.RecycleConflictNodes())
-        print "CHECK4"
 
         # build model
         doubleCB = ROOT.DoubleCrystalBall(label, label, ws.arg(self.x), ws.arg(meanName), ws.arg(sigmaName), 
                    ws.arg(a1Name), ws.arg(n1Name), ws.arg(a2Name), ws.arg(n2Name) )
-        print  "DOUBLECV", doubleCB.Print()
         self.wsimport(ws, doubleCB)
         self.params = [meanName,sigmaName,a1Name,n1Name,a2Name,n2Name]
 
@@ -674,8 +672,6 @@ class Erf(Model):
         # variables
         ws.factory('{0}[{1}, {2}, {3}]'.format(erfScaleName,*erfScale))
         ws.factory('{0}[{1}, {2}, {3}]'.format(erfShiftName,*erfShift))
-        print 'ERFSCALE {0}[{1}, {2}, {3}]'.format(erfScaleName,*erfScale)
-        print 'ERFSHIFT {0}[{1}, {2}, {3}]'.format(erfShiftName,*erfShift)
         # build model
         ws.factory("EXPR::{0}('0.5*(TMath::Erf({2}*({1}-{3}))+1)', {1}, {2}, {3})".format(
             label,self.x,erfScaleName,erfShiftName)
