@@ -417,12 +417,13 @@ def create_datacard(args):
     haaLimits.initializeWorkspace()
     if args.addControl: haaLimits.addControlModels(voigtian=True,logy=xRange[0]<3.3)
     haaLimits.addBackgroundModels(voigtian=True,logy=False,fixAfterControl=args.addControl)
+    #return # dont do the signal portion
     haaLimits.XRANGE = [0,30] # override for signal splines
     if 'tt' in var:
         haaLimits.addSignalModels(fit=False,yFitFunc='errG')
     elif 'h' in var or 'hkf' in var:
-        #haaLimits.addSignalModels(fit=False,yFitFunc='DCB')
-        haaLimits.addSignalModels(fit=False,yFitFunc='V')
+        haaLimits.addSignalModels(fit=False,yFitFunc='DCB')
+        #haaLimits.addSignalModels(fit=False,yFitFunc='V')
     else:
         haaLimits.addSignalModels(fit=False)
     haaLimits.XRANGE = xRange
