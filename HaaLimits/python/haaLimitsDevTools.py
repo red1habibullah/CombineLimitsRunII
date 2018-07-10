@@ -32,7 +32,7 @@ amasses = ['3p6',4,5,6,7,9,11,13,15,17,19,21]
 signame = 'HToAAH{h}A{a}'
 
 shiftTypes = ['lep','pu','fake','trig','btag','MuonEn','TauEn','JetEn','UnclusteredEn']
-shiftTypes = []
+#shiftTypes = []
 shifts = []
 for s in shiftTypes:
     shifts += [s+'Up', s+'Down']

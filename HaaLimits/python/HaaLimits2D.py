@@ -45,7 +45,6 @@ class HaaLimits2D(HaaLimits):
         super(HaaLimits2D,self).__init__(histMap,tag=tag)
 
         self.plotDir = 'figures/HaaLimits2D{}'.format('_'+tag if tag else '')
-        python_mkdir(self.plotDir)
 
 
     ###########################
@@ -62,7 +61,7 @@ class HaaLimits2D(HaaLimits):
         cont1 = Models.Exponential('conty1',
             x = 'y',
             #lamb = [-0.20,-1,0], # kinfit
-            lamb = [-0.5,-1,0], # visible
+            lamb = [-0.05,-1,0], # visible
         )
         nameC1 = 'conty1{}'.format('_'+tag if tag else '')
         cont1.build(self.workspace,nameC1)
@@ -71,8 +70,8 @@ class HaaLimits2D(HaaLimits):
         if self.YRANGE[1]>100:
             erf1 = Models.Erf('erf1',
                 x = 'y',
-                erfScale = [0.01,0,1],
-                erfShift = [100,0,1000],
+                erfScale = [0.05,0,1],
+                erfShift = [70,10,200],
             )
             nameE1 = 'erf1{}'.format('_'+tag if tag else '')
             erf1.build(self.workspace,nameE1)
@@ -85,7 +84,7 @@ class HaaLimits2D(HaaLimits):
         else:
             erf1 = Models.Erf('erf1',
                 x = 'y',
-                erfScale = [2,0.01,10],
+                erfScale = [1,0.01,10],
                 erfShift = [1,0.1,10],
             )
             nameE1 = 'erf1{}'.format('_'+tag if tag else '')
@@ -99,19 +98,19 @@ class HaaLimits2D(HaaLimits):
             erfc1.build(self.workspace,nameEC1)
 
             # add an upsilon to tt resonance
-            upsilon = Models.Gaussian('upsilony',
-                x = 'y',
-                mean  = [5.5,5,6.5],
-                sigma = [0.5,0.2,1],
-            )
-            nameU = 'upsilony{}'.format('_'+tag if tag else '')
-            upsilon.build(self.workspace,nameU)
+            #upsilon = Models.Gaussian('upsilony',
+            #    x = 'y',
+            #    mean  = [5.5,5,6.5],
+            #    sigma = [0.25,0.1,1],
+            #)
+            #nameU = 'upsilony{}'.format('_'+tag if tag else '')
+            #upsilon.build(self.workspace,nameU)
 
             # add a guassian summed for tt ?
             gaus1 = Models.Gaussian('gaus1',
                 x = 'y',
-                mean = [2,0,4],
-                sigma = [0.1,0,2],
+                mean = [1.5,0,4],
+                sigma = [0.4,0,2],
             )
             nameG1 = 'gaus1{}'.format('_'+tag if tag else '')
             gaus1.build(self.workspace,nameG1)
@@ -120,7 +119,7 @@ class HaaLimits2D(HaaLimits):
                 **{ 
                     nameEC1    : [0.9,0,1],
                     nameG1     : [0.5,0,1],
-                    nameU      : [0.5,0,1],
+                    #nameU      : [0.5,0,1],
                     'recursive': True,
                 }
             )
@@ -460,7 +459,9 @@ class HaaLimits2D(HaaLimits):
             vals = [results[h][a]['{}_sigx'.format(param)] for a in amasses]
             errs = [errors[h][a]['{}_sigx'.format(param)] for a in amasses]
             graph = ROOT.TGraphErrors(len(avals),array('d',avals),array('d',vals),array('d',xerrs),array('d',errs))
-            savename = '{}/{}/{}_Fit'.format(self.plotDir,shift if shift else 'central',name)
+            savedir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
+            python_mkdir(savedir)
+            savename = '{}/{}_Fit'.format(savedir,name)
             canvas = ROOT.TCanvas(savename,savename,800,800)
             graph.Draw()
             graph.SetTitle('')
@@ -482,7 +483,9 @@ class HaaLimits2D(HaaLimits):
               vals = [results[h][a]['{}_sigy'.format(param)] for a in amasses]
               errs = [errors[h][a]['{}_sigy'.format(param)] for a in amasses]
             graph = ROOT.TGraphErrors(len(avals),array('d',avals),array('d',vals),array('d',xerrs),array('d',errs))
-            savename = '{}/{}/{}_Fit'.format(self.plotDir,shift if shift else 'central',name)
+            savedir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
+            python_mkdir(savedir)
+            savename = '{}/{}_Fit'.format(savedir,name)
             canvas = ROOT.TCanvas(savename,savename,800,800)
             graph.Draw()
             graph.SetTitle('')
@@ -640,7 +643,9 @@ class HaaLimits2D(HaaLimits):
         name = '{}_{}{}'.format(param,h,tag)
         vals = integrals
         graph = ROOT.TGraph(len(avals),array('d',avals),array('d',vals))
-        savename = '{}/{}/{}_Fit'.format(self.plotDir,shift if shift else 'central',name)
+        savedir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
+        python_mkdir(savedir)
+        savename = '{}/{}_Fit'.format(savedir,name)
         canvas = ROOT.TCanvas(savename,savename,800,800)
         graph.Draw()
         graph.SetTitle('')
@@ -680,18 +685,19 @@ class HaaLimits2D(HaaLimits):
         data.plotOn(xFrame)
         # continuum
         model.plotOn(xFrame,ROOT.RooFit.Components('cont1_{}_x'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
-        model.plotOn(xFrame,ROOT.RooFit.Components('cont2_{}_x'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
-        model.plotOn(xFrame,ROOT.RooFit.Components('cont1'),ROOT.RooFit.LineStyle(ROOT.kDashed))
-        model.plotOn(xFrame,ROOT.RooFit.Components('cont2'),ROOT.RooFit.LineStyle(ROOT.kDashed))
+        #model.plotOn(xFrame,ROOT.RooFit.Components('cont2_{}_x'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+        #model.plotOn(xFrame,ROOT.RooFit.Components('cont1'),ROOT.RooFit.LineStyle(ROOT.kDashed))
+        #model.plotOn(xFrame,ROOT.RooFit.Components('cont2'),ROOT.RooFit.LineStyle(ROOT.kDashed))
         if self.XRANGE[0]<4:
             # extended continuum when also fitting jpsi
             model.plotOn(xFrame,ROOT.RooFit.Components('cont3_{}_x'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
-            model.plotOn(xFrame,ROOT.RooFit.Components('cont4_{}_x'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
-            model.plotOn(xFrame,ROOT.RooFit.Components('cont3'),ROOT.RooFit.LineStyle(ROOT.kDashed))
-            model.plotOn(xFrame,ROOT.RooFit.Components('cont4'),ROOT.RooFit.LineStyle(ROOT.kDashed))
+            #model.plotOn(xFrame,ROOT.RooFit.Components('cont4_{}_x'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+            #model.plotOn(xFrame,ROOT.RooFit.Components('cont3'),ROOT.RooFit.LineStyle(ROOT.kDashed))
+            #model.plotOn(xFrame,ROOT.RooFit.Components('cont4'),ROOT.RooFit.LineStyle(ROOT.kDashed))
             # jpsi
-            model.plotOn(xFrame,ROOT.RooFit.Components('jpsi1S'),ROOT.RooFit.LineColor(ROOT.kRed))
             model.plotOn(xFrame,ROOT.RooFit.Components('jpsi2S'),ROOT.RooFit.LineColor(ROOT.kRed))
+        if self.XRANGE[0]<3.3:
+            model.plotOn(xFrame,ROOT.RooFit.Components('jpsi1S'),ROOT.RooFit.LineColor(ROOT.kRed))
         # upsilon
         model.plotOn(xFrame,ROOT.RooFit.Components('upsilon1S'),ROOT.RooFit.LineColor(ROOT.kRed))
         model.plotOn(xFrame,ROOT.RooFit.Components('upsilon2S'),ROOT.RooFit.LineColor(ROOT.kRed))
@@ -702,12 +708,13 @@ class HaaLimits2D(HaaLimits):
         canvas = ROOT.TCanvas('c','c',800,800)
         xFrame.Draw()
         #canvas.SetLogy()
+        python_mkdir(self.plotDir)
         canvas.Print('{}/model_fit_{}{}_xproj.png'.format(self.plotDir,region,'_'+shift if shift else ''))
 
         yFrame = self.workspace.var('y').frame()
         data.plotOn(yFrame)
         # continuum
-        model.plotOn(yFrame,ROOT.RooFit.Components('cont1_{}_y'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+        #model.plotOn(yFrame,ROOT.RooFit.Components('cont1_{}_y'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
         model.plotOn(yFrame,ROOT.RooFit.Components('conty1_{}_y'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
         # combined model
         model.plotOn(yFrame)

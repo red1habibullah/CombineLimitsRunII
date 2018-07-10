@@ -63,7 +63,6 @@ class HaaLimits(Limits):
         self.binned = self.histMap[self.histMap.keys()[0]]['']['data'].InheritsFrom('TH1')
 
         self.plotDir = 'figures/HaaLimits{}'.format('_'+tag if tag else '')
-        python_mkdir(self.plotDir)
 
 
     ###########################
@@ -227,11 +226,12 @@ class HaaLimits(Limits):
                 bgs[nameJ2] = [0.9,0,1]
                 bgs[nameC3] = [0.5,0,1]
             # upsilon
-            if addUpsilon and self.XRANGE[0]<=9 and self.XRANGE[1]>=11:
+            if self.XRANGE[0]<=9 and self.XRANGE[1]>=11:
                 #bgs[nameU1] = [0.9,0,1]
                 #bgs[nameU2] = [0.9,0,1]
                 #bgs[nameU3] = [0.9,0,1]
                 bgs[nameU] = [0.9,0,1]
+                bgs[nameC3] = [0.5,0,1]
         bg = Models.Sum('bg', **bgs)
         name = 'bg_{}'.format(region)
         bg.build(self.workspace,name)
@@ -291,7 +291,9 @@ class HaaLimits(Limits):
             vals = [results[h][a]['{}_h{}_a{}_{}'.format(param,h,a,tag)] for a in amasses]
             errs = [errors[h][a]['{}_h{}_a{}_{}'.format(param,h,a,tag)] for a in amasses]
             graph = ROOT.TGraphErrors(len(avals),array('d',avals),array('d',vals),array('d',xerrs),array('d',errs))
-            savename = '{}/{}/{}_Fit'.format(self.plotDir,shift if shift else 'central',name)
+            savedir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
+            python_mkdir(savedir)
+            savename = '{}/{}_Fit'.format(savedir,name)
             canvas = ROOT.TCanvas(savename,savename,800,800)
             graph.Draw()
             graph.SetTitle('')
@@ -336,7 +338,9 @@ class HaaLimits(Limits):
         name = '{}_{}{}'.format(param,h,tag)
         vals = integrals
         graph = ROOT.TGraph(len(avals),array('d',avals),array('d',vals))
-        savename = '{}/{}/{}_Fit'.format(self.plotDir,shift if shift else 'central',name)
+        savedir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
+        python_mkdir(savedir)
+        savename = '{}/{}_Fit'.format(savedir,name)
         canvas = ROOT.TCanvas(savename,savename,800,800)
         graph.Draw()
         graph.SetTitle('')
@@ -399,6 +403,7 @@ class HaaLimits(Limits):
         canvas = ROOT.TCanvas('c','c',800,800)
         xFrame.Draw()
         canvas.SetLogy(logy)
+        python_mkdir(self.plotDir)
         canvas.Print('{}/model_fit_{}{}.png'.format(self.plotDir,region,'_'+shift if shift else ''))
 
         pars = fr.floatParsFinal()
@@ -502,7 +507,7 @@ class HaaLimits(Limits):
         self.workspace.arg('width_jpsi1S').setConstant(fix)
         self.workspace.arg('width_jpsi2S').setConstant(fix)
         if self.XRANGE[0]<3.3: self.workspace.arg('jpsi1S_frac').setConstant(fix) 
-        self.workspace.arg('jpsi2S_frac').setConstant(fix) 
+        if self.XRANGE[0]<4: self.workspace.arg('jpsi2S_frac').setConstant(fix) 
         self.workspace.arg('upsilon_frac').setConstant(fix) 
         if self.XRANGE[0]<3.3: self.workspace.arg('jpsi_frac').setConstant(fix) 
 
