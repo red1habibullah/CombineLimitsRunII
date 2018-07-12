@@ -6,6 +6,7 @@ import numpy as np
 import argparse
 import math
 import errno
+import json
 from array import array
 
 import ROOT
@@ -45,6 +46,7 @@ class HaaLimits2D(HaaLimits):
         super(HaaLimits2D,self).__init__(histMap,tag=tag)
 
         self.plotDir = 'figures/HaaLimits2D{}'.format('_'+tag if tag else '')
+        self.fitsDir = 'fitParams/HaaLimits2D{}'.format('_'+tag if tag else '')
 
 
     ###########################
@@ -58,53 +60,21 @@ class HaaLimits2D(HaaLimits):
     def _buildYModel(self,region='PP',**kwargs):
         tag = kwargs.pop('tag',region)
 
-        cont1 = Models.Exponential('conty1',
-            x = 'y',
-            #lamb = [-0.20,-1,0], # kinfit
-            lamb = [-0.05,-1,0], # visible
-        )
-        nameC1 = 'conty1{}'.format('_'+tag if tag else '')
-        cont1.build(self.workspace,nameC1)
-
-        # higgs fit (mmtt)
+        # try landau
         if self.YRANGE[1]>100:
-            erf1 = Models.Erf('erf1',
+            bg = Models.Landau('bg',
                 x = 'y',
-                erfScale = [0.05,0,1],
-                erfShift = [70,10,200],
+                mu    = [50,0,200],
+                sigma = [10,0,100],
             )
-            nameE1 = 'erf1{}'.format('_'+tag if tag else '')
-            erf1.build(self.workspace,nameE1)
-
-            bg = Models.Prod('bg',
-                nameE1,
-                nameC1,
-            )
-        # pseudo fit (tt)
         else:
-            erf1 = Models.Erf('erf1',
+            land1 = Models.Landau('land1',
                 x = 'y',
-                erfScale = [1,0.01,10],
-                erfShift = [1,0.1,10],
+                mu    = [50,0,200],
+                sigma = [10,0,100],
             )
-            nameE1 = 'erf1{}'.format('_'+tag if tag else '')
-            erf1.build(self.workspace,nameE1)
-
-            erfc1 = Models.Prod('erfc1',
-                nameE1,
-                nameC1,
-            )
-            nameEC1 = 'erfc1{}'.format('_'+tag if tag else '')
-            erfc1.build(self.workspace,nameEC1)
-
-            # add an upsilon to tt resonance
-            #upsilon = Models.Gaussian('upsilony',
-            #    x = 'y',
-            #    mean  = [5.5,5,6.5],
-            #    sigma = [0.25,0.1,1],
-            #)
-            #nameU = 'upsilony{}'.format('_'+tag if tag else '')
-            #upsilon.build(self.workspace,nameU)
+            nameL1 = 'land1{}'.format('_'+tag if tag else '')
+            land1.build(self.workspace,nameL1)
 
             # add a guassian summed for tt ?
             gaus1 = Models.Gaussian('gaus1',
@@ -117,12 +87,78 @@ class HaaLimits2D(HaaLimits):
 
             bg = Models.Sum('bg',
                 **{ 
-                    nameEC1    : [0.9,0,1],
+                    nameL1     : [0.9,0,1],
                     nameG1     : [0.5,0,1],
-                    #nameU      : [0.5,0,1],
                     'recursive': True,
                 }
             )
+
+        #cont1 = Models.Exponential('conty1',
+        #    x = 'y',
+        #    #lamb = [-0.20,-1,0], # kinfit
+        #    lamb = [-0.05,-1,0], # visible
+        #)
+        #nameC1 = 'conty1{}'.format('_'+tag if tag else '')
+        #cont1.build(self.workspace,nameC1)
+
+
+        ## higgs fit (mmtt)
+        #if self.YRANGE[1]>100:
+        #    erf1 = Models.Erf('erf1',
+        #        x = 'y',
+        #        erfScale = [0.05,0,1],
+        #        erfShift = [70,10,200],
+        #    )
+        #    nameE1 = 'erf1{}'.format('_'+tag if tag else '')
+        #    erf1.build(self.workspace,nameE1)
+
+        #    bg = Models.Prod('bg',
+        #        nameE1,
+        #        nameC1,
+        #    )
+        ## pseudo fit (tt)
+        #else:
+        #    erf1 = Models.Erf('erf1',
+        #        x = 'y',
+        #        erfScale = [1,0.01,10],
+        #        erfShift = [1,0.1,10],
+        #    )
+        #    nameE1 = 'erf1{}'.format('_'+tag if tag else '')
+        #    erf1.build(self.workspace,nameE1)
+
+        #    erfc1 = Models.Prod('erfc1',
+        #        nameE1,
+        #        nameC1,
+        #    )
+        #    nameEC1 = 'erfc1{}'.format('_'+tag if tag else '')
+        #    erfc1.build(self.workspace,nameEC1)
+
+        #    # add an upsilon to tt resonance
+        #    #upsilon = Models.Gaussian('upsilony',
+        #    #    x = 'y',
+        #    #    mean  = [5.5,5,6.5],
+        #    #    sigma = [0.25,0.1,1],
+        #    #)
+        #    #nameU = 'upsilony{}'.format('_'+tag if tag else '')
+        #    #upsilon.build(self.workspace,nameU)
+
+        #    # add a guassian summed for tt ?
+        #    gaus1 = Models.Gaussian('gaus1',
+        #        x = 'y',
+        #        mean = [1.5,0,4],
+        #        sigma = [0.4,0,2],
+        #    )
+        #    nameG1 = 'gaus1{}'.format('_'+tag if tag else '')
+        #    gaus1.build(self.workspace,nameG1)
+
+        #    bg = Models.Sum('bg',
+        #        **{ 
+        #            nameEC1    : [0.9,0,1],
+        #            nameG1     : [0.5,0,1],
+        #            #nameU      : [0.5,0,1],
+        #            'recursive': True,
+        #        }
+        #    )
 
         name = 'bg_{}'.format(region)
         bg.build(self.workspace,name)
@@ -310,6 +346,36 @@ class HaaLimits2D(HaaLimits):
                             'ttgaus',
                             'tterf',
                     )
+                elif yFitFunc == "L":
+                    #modely = Models.Landau('sigy',
+                    #    x = 'y',
+                    #    mu  = [0.5*aval,0,30],
+                    #    sigma = [0.1*aval,0.05*aval,aval],
+                    #)
+                    ttland = Models.Landau('ttland',
+                        x = 'y',
+                        mu  = [0.5*aval,0,30],
+                        sigma = [0.1*aval,0.05*aval,aval],
+                    )
+                    ttland.build(ws,'ttland')
+                    ttgaus = Models.Gaussian('ttgaus',
+                       x = 'y',
+                       mean  = [0.5*aval,0,30],
+                       sigma = [0.1*aval,0.05*aval,0.4*aval],
+                    )
+                    ttgaus.build(ws,"ttgaus")
+                    modely = Models.Prod('sigy',
+                            'ttgaus',
+                            'ttland',
+                    )
+                    #modely = Models.Sum('sigy',
+                    #    **{ 
+                    #        'ttland'     : [0.9,0,1],
+                    #        'ttgaus'     : [0.5,0,1],
+                    #        'recursive': True,
+                    #    }
+                    #)
+
                 else:
                     raise
 
@@ -361,7 +427,6 @@ class HaaLimits2D(HaaLimits):
             results[h][a], errors[h][a] = model.fit2D(ws, hist, 'h{}_a{}_{}'.format(h,a,tag), saveDir=saveDir, save=True, doErrors=True)
             print h, a, results[h][a], errors[h][a]
     
-
         # Fit using ROOT rather than RooFit for the splines
         if yFitFunc == "V":
             fitFuncs = {
@@ -431,6 +496,16 @@ class HaaLimits2D(HaaLimits):
                 'yerfScale': 'pol2',
                 'yerfShift': 'pol2',
             }
+        elif yFitFunc == "L":
+            fitFuncs = {
+                'xmean' : 'pol1',  
+                'xwidth': 'pol2',
+                'xsigma': 'pol2',
+                'ymean' : 'pol1',
+                'ysigma': 'pol2',
+                'mu'    : 'pol2',
+                'sigma' : 'pol2',
+            }
         else:
             raise
 
@@ -452,6 +527,8 @@ class HaaLimits2D(HaaLimits):
         elif yFitFunc == "DG"  : yparameters = ['mean', 'sigma1', 'sigma2']
         elif yFitFunc == "DV"  : yparameters = ['mean', 'sigma1', 'sigma2','width1','width2']
         elif yFitFunc == "errG": yparameters = ['mean_ttgaus', 'sigma_ttgaus','erfShift_tterf','erfScale_tterf']
+        #elif yFitFunc == "L"   : yparameters = ['mu', 'sigma']
+        elif yFitFunc == "L"   : yparameters = ['mean_ttgaus', 'sigma_ttgaus','mu_ttland','sigma_ttland']
         else: raise
         for param in ['mean','width','sigma']:
             name = '{}_{}{}'.format('x'+param,h,tag)
@@ -476,12 +553,12 @@ class HaaLimits2D(HaaLimits):
         for param in yparameters:
             name = '{}_{}{}'.format('y'+param,h,tag)
             xerrs = [0]*len(amasses)
-            if yFitFunc == "errG": 
-              vals = [results[h][a][param] for a in amasses]
-              errs = [errors[h][a][param] for a in amasses]
+            if yFitFunc == "errG" or yFitFunc == "L": 
+                vals = [results[h][a][param] for a in amasses]
+                errs = [errors[h][a][param] for a in amasses]
             else:
-              vals = [results[h][a]['{}_sigy'.format(param)] for a in amasses]
-              errs = [errors[h][a]['{}_sigy'.format(param)] for a in amasses]
+                vals = [results[h][a]['{}_sigy'.format(param)] for a in amasses]
+                errs = [errors[h][a]['{}_sigy'.format(param)] for a in amasses]
             graph = ROOT.TGraphErrors(len(avals),array('d',avals),array('d',vals),array('d',xerrs),array('d',errs))
             savedir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
             python_mkdir(savedir)
@@ -623,6 +700,46 @@ class HaaLimits2D(HaaLimits):
                     '{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_gaus_y'),
                     '{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_erf_y'),
                 )
+            elif yFitFunc == "L":
+                #modely = Models.LandauSpline(self.SPLINENAME.format(h=h)+'_y',
+                #    **{
+                #        'x'       : 'y',
+                #        'masses'  : avals,
+                #        'mus'     : [results[h][a]['mu_sigy'] for a in amasses],
+                #        'sigmas'  : [results[h][a]['sigma_sigy'] for a in amasses],
+                #    }
+                #)
+                modely_gaus = Models.GaussianSpline("model_gaus",
+                    **{
+                        'x'      : 'y',
+                        'masses' :  avals,
+                        'means'  :  [results[h][a]['mean_ttgaus'] for a in amasses],
+                        'sigmas' : [results[h][a]['sigma_ttgaus'] for a in amasses],
+                    }
+                )
+                modely_gaus.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_gaus_y'))
+                modely_land = Models.LandauSpline("model_land",
+                    **{
+                        'x'         : 'y',
+                        'masses'    :  avals,
+                        'mus'       : [results[h][a]['mu_ttland'] for a in amasses],
+                        'sigmas'    : [results[h][a]['sigma_ttland'] for a in amasses],
+                    }
+                )
+                modely_land.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_land_y'))
+                modely = Models.ProdSpline(self.SPLINENAME.format(h=h)+'_y',
+                    '{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_gaus_y'),
+                    '{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_land_y'),
+                )
+                #modely = Models.Sum('sigy',
+                #    **{ 
+                #        #'ttland'     : [0.9,0,1],
+                #        #'ttgaus'     : [0.5,0,1],
+                #        '{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_gaus_y'): [0.9,0,1],
+                #        '{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_land_y'): [0.5,0,1],
+                #        'recursive': True,
+                #    }
+                #)
             else:
                 raise
         modely.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_y'))
@@ -663,6 +780,16 @@ class HaaLimits2D(HaaLimits):
         model.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag))
         model.buildIntegral(self.workspace,'integral_{}_{}'.format(self.SPLINENAME.format(h=h),tag))
 
+        savedir = '{}/{}'.format(self.fitsDir,shift if shift else 'central')
+        python_mkdir(savedir)
+        savename = '{}/h{}_{}.json'.format(savedir,h,tag)
+        jsonData = {'vals': results, 'errs': errors, 'integrals': {a:integral for a,integral in zip(avals,integrals)}}
+        self.dump(savename,jsonData)
+
+        # return the model
+        # this can be used to determine if you want to keep this shift
+        return model
+
     def fitBackground(self,region='PP',shift='',setUpsilonLambda=False,addUpsilon=True,logy=False):
 
         if region=='control':
@@ -673,9 +800,11 @@ class HaaLimits2D(HaaLimits):
         hist = self.histMap[region][shift]['dataNoSig']
         print "region=", region, "\tshift=", shift, "\t", hist.GetName()
         if hist.InheritsFrom('TH1'):
+            integral = hist.Integral() # 2D restricted integral?
             data = ROOT.RooDataHist(name,name,ROOT.RooArgList(self.workspace.var('x'),self.workspace.var('y')),hist)
         else:
             data = hist.Clone(name)
+            integral = hist.sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE))
 
         data.Print("v")
         print "DataSetName=", data.GetName()
@@ -733,6 +862,13 @@ class HaaLimits2D(HaaLimits):
         for v in sorted(vals.keys()):
             print '  ', v, vals[v], '+/-', errs[v]
 
+        python_mkdir(self.fitsDir)
+        jfile = '{}/background_{}{}.json'.format(self.fitsDir,region,'_'+shift if shift else '')
+        results = {'vals':vals, 'errs':errs, 'integral':integral}
+        self.dump(jfile,results)
+
+        return vals, errs
+
 
     ###############################
     ### Add things to workspace ###
@@ -771,23 +907,45 @@ class HaaLimits2D(HaaLimits):
     def addBackgroundModels(self, fixAfterControl=False, fixAfterFP=False, addUpsilon=True, setUpsilonLambda=False, voigtian=False, logy=False):
         if fixAfterControl:
             self.fix()
+        vals = {}
+        errs = {}
         for region in self.REGIONS:
+            vals[region] = {}
+            errs[region] = {}
             self.buildModel(region=region, addUpsilon=addUpsilon, setUpsilonLambda=setUpsilonLambda, voigtian=voigtian)
             self.workspace.factory('bg_{}_norm[1,0,2]'.format(region))
-            self.fitBackground(region=region, setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
+            for shift in ['']+self.BACKGROUNDSHIFTS:
+                if shift=='':
+                    v, e = self.fitBackground(region=region, setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
+                else:
+                    vUp, eUp = self.fitBackground(region=region, shift=shift+'Up', setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
+                    vDown, eDown = self.fitBackground(region=region, shift=shift+'Down', setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
+                    v = (vUp, vDown)
+                    e = (eUp, eDown)
+                vals[region][shift] = v
+                errs[region][shift] = e
         if fixAfterControl:
             self.fix(False)
+        self.background_vals = vals
+        self.background_errs = errs
 
     def addSignalModels(self,yFitFunc="G",isKinFit=True,**kwargs):
+        models = {}
         for region in self.REGIONS:
-            for shift in ['']+self.SHIFTS:
+            models[region] = {}
+            for shift in ['']+self.SIGNALSHIFTS:
+                models[region][shift] = {}
                 for h in self.HMASSES:
                     if shift == '':
-                        self.buildSpline(h,region=region,shift=shift,yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
+                        model = self.buildSpline(h,region=region,shift=shift,yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
                     else:
-                        self.buildSpline(h,region=region,shift=shift+'Up',yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
-                        self.buildSpline(h,region=region,shift=shift+'Down',yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
-            self.workspace.factory('{}_{}_norm[1,0,9999]'.format(self.SPLINENAME.format(h=h),region))
+                        modelUp = self.buildSpline(h,region=region,shift=shift+'Up',yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
+                        modelDown = self.buildSpline(h,region=region,shift=shift+'Down',yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
+                        model = (modelUp, modelDown)
+                    models[region][shift][h] = model
+            for h in self.HMASSES:
+                self.workspace.factory('{}_{}_norm[1,0,9999]'.format(self.SPLINENAME.format(h=h),region))
+        self.fitted_models = models
 
     ######################
     ### Setup datacard ###
