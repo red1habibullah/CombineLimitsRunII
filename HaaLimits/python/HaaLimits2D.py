@@ -1072,6 +1072,7 @@ class HaaLimits2D(HaaLimits):
     ###################
     def addSystematics(self):
         self.sigProcesses = tuple([self.SPLINENAME.format(h=h) for h in self.HMASSES])
+        self.bgProcesses = ('bg',)
         self._addLumiSystematic()
         self._addMuonSystematic()
         self._addTauSystematic()
