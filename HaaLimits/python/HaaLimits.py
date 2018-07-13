@@ -6,6 +6,7 @@ import numpy as np
 import argparse
 import math
 import errno
+import json
 from array import array
 
 import ROOT
@@ -36,6 +37,8 @@ class HaaLimits(Limits):
 
     REGIONS = ['FP','PP']
     SHIFTS = []
+    BACKGROUNDSHIFTS = []
+    SIGNALSHIFTS = []
 
 
     def __init__(self,histMap,tag=''):
@@ -63,7 +66,11 @@ class HaaLimits(Limits):
         self.binned = self.histMap[self.histMap.keys()[0]]['']['data'].InheritsFrom('TH1')
 
         self.plotDir = 'figures/HaaLimits{}'.format('_'+tag if tag else '')
+        self.fitsDir = 'fitParams/HaaLimits{}'.format('_'+tag if tag else '')
 
+    def dump(self,name,results):
+        with open(name,'w') as f:
+            f.write(json.dumps(results, indent=4, sort_keys=True))
 
     ###########################
     ### Workspace utilities ###
@@ -235,7 +242,7 @@ class HaaLimits(Limits):
         bg = Models.Sum('bg', **bgs)
         name = 'bg_{}'.format(region)
         bg.build(self.workspace,name)
-            
+
 
     def buildSpline(self,h,region='PP',shift='',**kwargs):
         '''
@@ -358,14 +365,27 @@ class HaaLimits(Limits):
         model.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag))
         model.buildIntegral(self.workspace,'integral_{}_{}'.format(self.SPLINENAME.format(h=h),tag))
 
+        savedir = '{}/{}'.format(self.fitsDir,shift if shift else 'central')
+        python_mkdir(savedir)
+        savename = '{}/h{}_{}.json'.format(savedir,h,tag)
+        jsonData = {'vals': results, 'errs': errors, 'integrals': {a:integral for a,integral in zip(avals,integrals)}}
+        self.dump(savename,jsonData)
+
+        # return the model
+        # this can be used to determine if you want to keep this shift
+        return model
+
+
     def fitBackground(self,region='PP',shift='', setUpsilonLambda=False, addUpsilon=True, logy=False):
         model = self.workspace.pdf('bg_{}'.format(region))
         name = 'data_prefit_{}{}'.format(region,'_'+shift if shift else '')
         print region, shift
         hist = self.histMap[region][shift]['dataNoSig']
         if hist.InheritsFrom('TH1'):
+            integral = hist.Integral(hist.FindBin(self.XRANGE[0]),hist.FindBin(self.XRANGE[1]))
             data = ROOT.RooDataHist(name,name,ROOT.RooArgList(self.workspace.var('x')),hist)
         else:
+            integral = hist.sumEntries('x>{} && x<{}'.format(*self.XRANGE))
             data = hist.Clone(name)
 
         if setUpsilonLambda:
@@ -414,6 +434,11 @@ class HaaLimits(Limits):
             errs[pars.at(p).GetName()] = pars.at(p).getError()
         for v in sorted(vals.keys()):
             print '  ', v, vals[v], '+/-', errs[v]
+
+        python_mkdir(self.fitsDir)
+        jfile = '{}/background_{}{}.json'.format(self.fitsDir,region,'_'+shift if shift else '')
+        results = {'vals':vals, 'errs':errs, 'integral':integral}
+        self.dump(jfile,results)
 
         return vals, errs
 
@@ -517,27 +542,49 @@ class HaaLimits(Limits):
         if setUpsilonLambda:
             self.workspace.arg('lambda_cont1_FP').setConstant(True)
             self.workspace.arg('lambda_cont1_PP').setConstant(True)
+        vals = {}
+        errs = {}
         for region in self.REGIONS:
+            vals[region] = {}
+            errs[region] = {}
             if region == 'PP' and fixAfterFP and addUpsilon and self.XRANGE[0]<=9 and self.XRANGE[1]>=11:
                 self.fix()
             self.buildModel(region=region, addUpsilon=addUpsilon, setUpsilonLambda=setUpsilonLambda, voigtian=voigtian)
             self.workspace.factory('bg_{}_norm[1,0,2]'.format(region))
-            self.fitBackground(region=region, setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
+            for shift in ['']+self.BACKGROUNDSHIFTS:
+                if shift=='':
+                    v, e = self.fitBackground(region=region, setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
+                else:
+                    vUp, eUp = self.fitBackground(region=region, shift=shift+'Up', setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
+                    vDown, eDown = self.fitBackground(region=region, shift=shift+'Down', setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
+                    v = (vUp, vDown)
+                    e = (eUp, eDown)
+                vals[region][shift] = v
+                errs[region][shift] = e
             if region == 'PP' and fixAfterFP and addUpsilon and self.XRANGE[0]<=9 and self.XRANGE[1]>=11: 
                 self.fix(False)
         if fixAfterControl:
             self.fix(False)
+        self.background_vals = vals
+        self.background_errs = errs
 
     def addSignalModels(self,**kwargs):
+        models = {}
         for region in self.REGIONS:
-            for shift in ['']+self.SHIFTS:
+            models[region] = {}
+            for shift in ['']+self.SIGNALSHIFTS:
+                models[region][shift] = {}
                 for h in self.HMASSES:
                     if shift == '':
-                        self.buildSpline(h,region=region,shift=shift,**kwargs)
+                        model = self.buildSpline(h,region=region,shift=shift,**kwargs)
                     else:
-                        self.buildSpline(h,region=region,shift=shift+'Up',**kwargs)
-                        self.buildSpline(h,region=region,shift=shift+'Down',**kwargs)
-            self.workspace.factory('{}_{}_norm[1,0,9999]'.format(self.SPLINENAME.format(h=h),region))
+                        modelUp = self.buildSpline(h,region=region,shift=shift+'Up',**kwargs)
+                        modelDown = self.buildSpline(h,region=region,shift=shift+'Down',**kwargs)
+                        model = (modelUp, modelDown)
+                    models[region][shift][h] = model
+            for h in self.HMASSES:
+                self.workspace.factory('{}_{}_norm[1,0,9999]'.format(self.SPLINENAME.format(h=h),region))
+        self.fitted_models = models
 
     ######################
     ### Setup datacard ###
@@ -590,6 +637,7 @@ class HaaLimits(Limits):
     def addSystematics(self):
         print 'ADDING SYSTEMATICS'
         self.sigProcesses = tuple([self.SPLINENAME.format(h=h) for h in self.HMASSES])
+        self.bgProcesses = ('bg',)
         self._addLumiSystematic()
         self._addMuonSystematic()
         self._addTauSystematic()
@@ -635,8 +683,37 @@ class HaaLimits(Limits):
             self.addSystematic(param, 'param', systematics=[v,e])
 
     def _addShapeSystematic(self):
-        for shift in self.SHIFTS:
+        # decide if we keep a given shape uncertainty
+        #if hasattr(self,'fitted_models'):
+        #    for shift in self.SIGNALSHIFTS:
+        #        for region in self.REGIONS:
+        #            for h in self.HMASSES:
+        #                model = self.fitted_models[region][''][h]
+        #                modelUp, modelDown = self.fitted_models[region][shift][h]
+
+        #                # check integrals
+        #                integrals = model.getIntegrals()
+        #                integralsUp = modelUp.getIntegrals()
+        #                integralsDown = modelDown.getIntegrals()
+        #                diffUp = [i[1]-i[0] for i in zip(integrals,integralsUp)]
+        #                diffDown = [i[0]-i[1] for i in zip(integrals,integralsDown)]
+        #                hasNormUp = any([abs(i[1]/i[0])>0.005 for i in zip(integrals,diffUp)])
+        #                hasNormDown = any([abs(i[1]/i[0])>0.005 for i in zip(integrals,diffDown)])
+        #                hasNorm = hasNormUp or hasNormDown
+
+        #                # check params
+        #                params = model.getParams()
+        #                for param in params:
+        #                    
+
+
+        for shift in self.SIGNALSHIFTS:
             shapeproc = self.sigProcesses
+            shapesyst = { (shapeproc, tuple(self.REGIONS)) : shift, }
+            self.addSystematic(shift, 'shape', systematics=shapesyst)
+    
+        for shift in self.BACKGROUNDSHIFTS:
+            shapeproc = self.bgProcesses
             shapesyst = { (shapeproc, tuple(self.REGIONS)) : shift, }
             self.addSystematic(shift, 'shape', systematics=shapesyst)
     
