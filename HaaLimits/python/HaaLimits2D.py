@@ -67,6 +67,11 @@ class HaaLimits2D(HaaLimits):
                 mu    = [50,0,200],
                 sigma = [10,0,100],
             )
+        elif self.YRANGE[0]>2:
+            bg = Models.Exponential('bg',
+                x = 'y',
+                lamb = [-1,-5,0],
+            )
         else:
             land1 = Models.Landau('land1',
                 x = 'y',

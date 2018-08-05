@@ -284,6 +284,7 @@ def create_datacard(args):
     global xRange
     global yRange
     if do2D and var[1]=='tt': yRange = [0,30]
+    if args.yRange: yRange = args.yRange
     xRange = args.xRange
 
     #############
@@ -430,7 +431,8 @@ def create_datacard(args):
     haaLimits.XRANGE = [0,30] # override for signal splines
     if 'tt' in var:
         #haaLimits.addSignalModels(fit=False,yFitFunc='errG')
-        haaLimits.addSignalModels(fit=False,yFitFunc='L')
+        #haaLimits.addSignalModels(fit=False,yFitFunc='L')
+        haaLimits.addSignalModels(fit=False,yFitFunc='DCB')
     elif 'h' in var or 'hkf' in var:
         haaLimits.addSignalModels(fit=False,yFitFunc='DCB')
         #haaLimits.addSignalModels(fit=False,yFitFunc='V')
@@ -461,6 +463,7 @@ def parse_command_line(argv):
     parser.add_argument('--higgs', type=int, default=125, choices=[125,300,750])
     parser.add_argument('--pseudoscalar', type=int, default=15, choices=[5,7,9,11,13,15,17,19,21])
     parser.add_argument('--xRange', type=float, nargs='*', default=[4,25])
+    parser.add_argument('--yRange', type=float, nargs='*', default=[])
     parser.add_argument('--tag', type=str, default='')
     parser.add_argument('--chi2Mass', type=int, default=0)
 
