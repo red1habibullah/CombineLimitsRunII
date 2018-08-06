@@ -67,11 +67,6 @@ class HaaLimits2D(HaaLimits):
                 mu    = [50,0,200],
                 sigma = [10,0,100],
             )
-        elif self.YRANGE[0]>2:
-            bg = Models.Exponential('bg',
-                x = 'y',
-                lamb = [-1,-5,0],
-            )
         else:
             land1 = Models.Landau('land1',
                 x = 'y',
@@ -91,7 +86,7 @@ class HaaLimits2D(HaaLimits):
             gaus1.build(self.workspace,nameG1)
 
             bg = Models.Sum('bg',
-                **{ 
+                **{
                     nameL1     : [0.9,0,1],
                     nameG1     : [0.5,0,1],
                     'recursive': True,
@@ -105,7 +100,6 @@ class HaaLimits2D(HaaLimits):
         #)
         #nameC1 = 'conty1{}'.format('_'+tag if tag else '')
         #cont1.build(self.workspace,nameC1)
-
 
         ## higgs fit (mmtt)
         #if self.YRANGE[1]>100:
@@ -190,9 +184,9 @@ class HaaLimits2D(HaaLimits):
         bg.build(self.workspace,name)
 
 
-    def buildSpline(self,h,region='PP',shift='',yFitFunc="G", isKinFit=True, **kwargs):
+    def fitSignals(self,h,region='PP',shift='',**kwargs):
         '''
-        Get the signal spline for a given Higgs mass.
+        Fit the signal model for a given Higgs mass.
         Required arguments:
             h = higgs mass
         '''
@@ -204,11 +198,14 @@ class HaaLimits2D(HaaLimits):
         avals = [float(str(x).replace('p','.')) for x in amasses]
         histMap = self.histMap[region][shift]
         tag= '{}{}'.format(region,'_'+shift if shift else '')
+
         # initial fit
         results = {}
         errors = {}
+        integrals = {}
         results[h] = {}
         errors[h] = {}
+        integrals[h] = {}
         initialValuesDCB = self.GetInitialValuesDCB(isKinFit=isKinFit)
         for a in amasses:
             aval = float(str(a).replace('p','.'))
@@ -374,13 +371,12 @@ class HaaLimits2D(HaaLimits):
                             'ttland',
                     )
                     #modely = Models.Sum('sigy',
-                    #    **{ 
+                    #    **{
                     #        'ttland'     : [0.9,0,1],
                     #        'ttgaus'     : [0.5,0,1],
                     #        'recursive': True,
                     #    }
                     #)
-
                 else:
                     raise
 
@@ -426,12 +422,23 @@ class HaaLimits2D(HaaLimits):
                     )
 
             model.build(ws, 'sig')
-            ws.Print("v")
             hist = histMap[self.SIGNAME.format(h=h,a=a)]
             saveDir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
             results[h][a], errors[h][a] = model.fit2D(ws, hist, 'h{}_a{}_{}'.format(h,a,tag), saveDir=saveDir, save=True, doErrors=True)
-            print h, a, results[h][a], errors[h][a]
+
+            if self.binned:
+                integral = histMap[self.SIGNAME.format(h=h,a=a)].Integral()
+            else:
+                integral = histMap[self.SIGNAME.format(h=h,a=a)].sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE))
+            integrals[h][a] = integral
+
     
+        savedir = '{}/{}'.format(self.fitsDir,shift if shift else 'central')
+        python_mkdir(savedir)
+        savename = '{}/h{}_{}.json'.format(savedir,h,tag)
+        jsonData = {'vals': results, 'errs': errors, 'integrals': integrals}
+        self.dump(savename,jsonData)
+
         # Fit using ROOT rather than RooFit for the splines
         if yFitFunc == "V":
             fitFuncs = {
@@ -503,7 +510,7 @@ class HaaLimits2D(HaaLimits):
             }
         elif yFitFunc == "L":
             fitFuncs = {
-                'xmean' : 'pol1',  
+                'xmean' : 'pol1',
                 'xwidth': 'pol2',
                 'xsigma': 'pol2',
                 'ymean' : 'pol1',
@@ -559,11 +566,11 @@ class HaaLimits2D(HaaLimits):
             name = '{}_{}{}'.format('y'+param,h,tag)
             xerrs = [0]*len(amasses)
             if yFitFunc == "errG" or yFitFunc == "L": 
-                vals = [results[h][a][param] for a in amasses]
-                errs = [errors[h][a][param] for a in amasses]
+              vals = [results[h][a][param] for a in amasses]
+              errs = [errors[h][a][param] for a in amasses]
             else:
-                vals = [results[h][a]['{}_sigy'.format(param)] for a in amasses]
-                errs = [errors[h][a]['{}_sigy'.format(param)] for a in amasses]
+              vals = [results[h][a]['{}_sigy'.format(param)] for a in amasses]
+              errs = [errors[h][a]['{}_sigy'.format(param)] for a in amasses]
             graph = ROOT.TGraphErrors(len(avals),array('d',avals),array('d',vals),array('d',xerrs),array('d',errs))
             savedir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
             python_mkdir(savedir)
@@ -578,192 +585,11 @@ class HaaLimits2D(HaaLimits):
                 func = graph.GetFunction(fitFuncs['y'+param])
                 fittedParams['y'+param] = [func.Eval(y) for y in ys]
             canvas.Print('{}.png'.format(savename))
-    
-        # create model
-        for a in amasses:
-            print h, a, results[h][a]
-
-        if fit:
-            modelx = Models.VoigtianSpline(self.SPLINENAME.format(h=h)+'_x',
-                **{
-                    'masses' : xs,
-                    'means'  : fittedParams['xmean'],
-                    'widths' : fittedParams['xwidth'],
-                    'sigmas' : fittedParams['xsigma'],
-                }
-            )
-        else:
-            modelx = Models.VoigtianSpline(self.SPLINENAME.format(h=h)+'_x',
-                **{
-                    'masses' : avals,
-                    'means'  : [results[h][a]['mean_sigx'] for a in amasses],
-                    'widths' : [results[h][a]['width_sigx'] for a in amasses],
-                    'sigmas' : [results[h][a]['sigma_sigx'] for a in amasses],
-                }
-            )
-        modelx.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_x'))
-
-        ym = Models.GaussianSpline if ygausOnly else Models.VoigtianSpline
-        if fit:
-            modely = ym(self.SPLINENAME.format(h=h)+'_y',
-                **{
-                    'x'      : 'y',
-                    'masses' : ys,
-                    'means'  : fittedParams['ymean'],
-                    'widths' : [] if ygausOnly else fittedParams['ywidth'],
-                    'sigmas' : fittedParams['ysigma'],
-                }
-            )
-        else:
-            if yFitFunc == "V":
-                modely = Models.VoigtianSpline(self.SPLINENAME.format(h=h)+'_y',
-                    **{
-                        'x'      : 'y',
-                        'masses' : avals,
-                        'means'  : [results[h][a]['mean_sigy'] for a in amasses],
-                        'widths' : [results[h][a]['width_sigy'] for a in amasses],
-                        'sigmas' : [results[h][a]['sigma_sigy'] for a in amasses],
-                    }
-                )
-            elif yFitFunc == "G":
-                modely = Models.GaussianSpline(self.SPLINENAME.format(h=h)+'_y',
-                    **{
-                        'x'      : 'y',
-                        'masses' : avals,
-                        'means'  : [results[h][a]['mean_sigy'] for a in amasses],
-                        'sigmas' : [results[h][a]['sigma_sigy'] for a in amasses],
-                    }
-                )
-            elif yFitFunc == "CB":
-                modely = Models.CrystalBallSpline(self.SPLINENAME.format(h=h)+'_y',
-                    **{
-                        'x'      : 'y',
-                        'masses' : avals,
-                        'means'  : [results[h][a]['mean_sigy'] for a in amasses],
-                        'sigmas' : [results[h][a]['sigma_sigy'] for a in amasses],
-                        'a_s'    : [results[h][a]['a_sigy'] for a in amasses],
-                        'n_s'    : [results[h][a]['n_sigy'] for a in amasses],
-                    }
-                )
-            elif yFitFunc == "DCB":
-                modely = Models.DoubleCrystalBallSpline(self.SPLINENAME.format(h=h)+'_y',
-                    **{
-                        'x'      : 'y',
-                        'masses' : avals,
-                        'means'  : [results[h][a]['mean_sigy'] for a in amasses],
-                        'sigmas' : [results[h][a]['sigma_sigy'] for a in amasses],
-                        'a1s'    : [results[h][a]['a1_sigy'] for a in amasses],
-                        'n1s'    : [results[h][a]['n1_sigy'] for a in amasses],
-                        'a2s'    : [results[h][a]['a2_sigy'] for a in amasses],
-                        'n2s'    : [results[h][a]['n2_sigy'] for a in amasses],
-                    }
-                )
-            elif yFitFunc == "DG":
-                modely = Models.DoubleSidedGaussianSpline(self.SPLINENAME.format(h=h)+'_y',
-                    **{
-                        'x'       : 'y',
-                        'masses'  : avals,
-                        'means'   : [results[h][a]['mean_sigy'] for a in amasses],
-                        'sigma1s' : [results[h][a]['sigma1_sigy'] for a in amasses],
-                        'sigma2s' : [results[h][a]['sigma2_sigy'] for a in amasses],
-                        'yMax'    : self.YRANGE[1], 
-                    }
-                )
-            elif yFitFunc == "DV":
-                modely = Models.DoubleSidedVoigtianSpline(self.SPLINENAME.format(h=h)+'_y',
-                    **{
-                        'x'       : 'y',
-                        'masses'  : avals,
-                        'means'   : [results[h][a]['mean_sigy'] for a in amasses],
-                        'sigma1s' : [results[h][a]['sigma1_sigy'] for a in amasses],
-                        'sigma2s' : [results[h][a]['sigma2_sigy'] for a in amasses],
-                        'width1s' : [results[h][a]['width1_sigy'] for a in amasses],
-                        'width2s' : [results[h][a]['width2_sigy'] for a in amasses],
-                        'yMax'    : self.YRANGE[1], 
-                    }
-                )
-            elif yFitFunc == "errG":
-                modely_gaus = Models.GaussianSpline("model_gaus",
-                    **{
-                        'x'      : 'y',
-                        'masses' :  avals,
-                        'means'  :  [results[h][a]['mean_ttgaus'] for a in amasses],
-                        'sigmas' : [results[h][a]['sigma_ttgaus'] for a in amasses],
-                    }
-                )
-                modely_gaus.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_gaus_y'))
-                modely_erf = Models.ErfSpline("model_erf",
-                    **{
-                        'x'         : 'y',
-                        'masses'    :  avals,
-                        'erfScales' : [results[h][a]['erfScale_tterf'] for a in amasses],
-                        'erfShifts' : [results[h][a]['erfShift_tterf'] for a in amasses],
-                    }
-                )
-                modely_erf.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_erf_y'))
-                modely = Models.ProdSpline(self.SPLINENAME.format(h=h)+'_y',
-                    '{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_gaus_y'),
-                    '{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_erf_y'),
-                )
-            elif yFitFunc == "L":
-                #modely = Models.LandauSpline(self.SPLINENAME.format(h=h)+'_y',
-                #    **{
-                #        'x'       : 'y',
-                #        'masses'  : avals,
-                #        'mus'     : [results[h][a]['mu_sigy'] for a in amasses],
-                #        'sigmas'  : [results[h][a]['sigma_sigy'] for a in amasses],
-                #    }
-                #)
-                modely_gaus = Models.GaussianSpline("model_gaus",
-                    **{
-                        'x'      : 'y',
-                        'masses' :  avals,
-                        'means'  :  [results[h][a]['mean_ttgaus'] for a in amasses],
-                        'sigmas' : [results[h][a]['sigma_ttgaus'] for a in amasses],
-                    }
-                )
-                modely_gaus.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_gaus_y'))
-                modely_land = Models.LandauSpline("model_land",
-                    **{
-                        'x'         : 'y',
-                        'masses'    :  avals,
-                        'mus'       : [results[h][a]['mu_ttland'] for a in amasses],
-                        'sigmas'    : [results[h][a]['sigma_ttland'] for a in amasses],
-                    }
-                )
-                modely_land.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_land_y'))
-                modely = Models.ProdSpline(self.SPLINENAME.format(h=h)+'_y',
-                    '{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_gaus_y'),
-                    '{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_land_y'),
-                )
-                #modely = Models.Sum('sigy',
-                #    **{ 
-                #        #'ttland'     : [0.9,0,1],
-                #        #'ttgaus'     : [0.5,0,1],
-                #        '{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_gaus_y'): [0.9,0,1],
-                #        '{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_land_y'): [0.5,0,1],
-                #        'recursive': True,
-                #    }
-                #)
-            else:
-                raise
-        modely.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_y'))
-                
-        model = Models.ProdSpline(self.SPLINENAME.format(h=h),
-            '{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_x'),
-            '{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_y'),
-        )
-
-        if self.binned:
-            integrals = [histMap[self.SIGNAME.format(h=h,a=a)].Integral() for a in amasses]
-        else:
-            integrals = [histMap[self.SIGNAME.format(h=h,a=a)].sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE)) for a in amasses]
-        print 'Integrals', tag, h, integrals
 
         param = 'integral'
         funcname = 'pol2'
         name = '{}_{}{}'.format(param,h,tag)
-        vals = integrals
+        vals = [integrals[h][a] for a in amasses]
         graph = ROOT.TGraph(len(avals),array('d',avals),array('d',vals))
         savedir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
         python_mkdir(savedir)
@@ -780,19 +606,184 @@ class HaaLimits2D(HaaLimits):
             # dont fit integrals
             #model.setIntegral(xs,newintegrals)
         canvas.Print('{}.png'.format(savename))
-        model.setIntegral(avals,integrals)
 
+        return results, errors, integrals
+
+    def buildSpline(self,h,vals,errs,integrals,region='PP',shifts=[],yFitFunc='G',isKinFit=True,**kwargs):
+        '''
+        Get the signal spline for a given Higgs mass.
+        Required arguments:
+            h = higgs mass
+            vals = dict with fitted param values
+            errs = dict with fitted param errors
+            integrals = dict with integrals for given distribution
+
+        The dict should be of the form:
+            vals = {
+                '' : vals_central,
+                'shift0Up': vals_shift0Up,
+                'shift0Down': vals_shift0Down,
+                ...
+            }
+        where vals_central, etc ar the fitted values from "fitSignal"
+        each shift key to be used should be included in the argument "shifts"
+            shifts = [
+                'shift0',
+                'shift1',
+                ...
+            ]
+        and similarly for errors and integrals.
+        '''
+        ygausOnly = kwargs.get('ygausOnly',False)
+        fit = kwargs.get('fit',False)
+        dobgsig = kwargs.get('doBackgroundSignal',False)
+        amasses = self.AMASSES
+        if h>125: amasses = [a for a in amasses if a not in ['3p6',4,6]]
+        avals = [float(str(x).replace('p','.')) for x in amasses]
+
+        # create parameter splines
+        params = ['mean','width','sigma']
+        splines = {}
+        for param in params:
+            name = 'x{param}_h{h}_{region}_sigx'.format(param=param,h=h,region=region)
+            paramMasses = avals
+            paramValues = [vals[''][h][a]['x{param}_h{h}_a{a}_{region}_sigx'.format(param=param,h=h,a=a,region=region)] for a in amasses]
+            paramShifts = {}
+            for shift in shifts:
+                shiftValuesUp   = [vals[shift+'Up'  ][h][a]['x{param}_h{h}_a{a}_{region}_{shift}Up_sigx'.format(  param=param,h=h,a=a,region=region,shift=shift)] for a in amasses]
+                shiftValuesDown = [vals[shift+'Down'][h][a]['x{param}_h{h}_a{a}_{region}_{shift}Down_sigx'.format(param=param,h=h,a=a,region=region,shift=shift)] for a in amasses]
+                paramShifts[shift] = {'up': shiftValuesUp, 'down': shiftValuesDown}
+            spline = Models.Spline(name,
+                masses = paramMasses,
+                values = paramValues,
+                shifts = paramShifts,
+            )
+            spline.build(self.workspace, name)
+            splines[name] = spline
+
+        if   yFitFunc == "V"   : yparameters = ['mean','width','sigma']
+        elif yFitFunc == "G"   : yparameters = ['mean', 'sigma']
+        elif yFitFunc == "CB"  : yparameters = ['mean', 'sigma', 'a', 'n']
+        elif yFitFunc == "DCB" : yparameters = ['mean', 'sigma', 'a1', 'n1', 'a2', 'n2']
+        elif yFitFunc == "DG"  : yparameters = ['mean', 'sigma1', 'sigma2']
+        elif yFitFunc == "DV"  : yparameters = ['mean', 'sigma1', 'sigma2','width1','width2']
+        elif yFitFunc == "errG": yparameters = ['mean_ttgaus', 'sigma_ttgaus','erfShift_tterf','erfScale_tterf']
+        #elif yFitFunc == "L"   : yparameters = ['mu', 'sigma']
+        elif yFitFunc == "L"   : yparameters = ['mean_ttgaus', 'sigma_ttgaus','mu_ttland','sigma_ttland']
+        else: raise
+
+        for param in yparameters:
+            name = 'y{param}_h{h}_{region}_sigy'.format(param=param,h=h,region=region)
+            paramMasses = avals
+            paramValues = [vals[''][h][a]['y{param}_h{h}_a{a}_{region}_sigy'.format(param=param,h=h,a=a,region=region)] for a in amasses]
+            paramShifts = {}
+            for shift in shifts:
+                shiftValuesUp   = [vals[shift+'Up'  ][h][a]['y{param}_h{h}_a{a}_{region}_{shift}Up_sigy'.format(  param=param,h=h,a=a,region=region,shift=shift)] for a in amasses]
+                shiftValuesDown = [vals[shift+'Down'][h][a]['y{param}_h{h}_a{a}_{region}_{shift}Down_sigy'.format(param=param,h=h,a=a,region=region,shift=shift)] for a in amasses]
+                paramShifts[shift] = {'up': shiftValuesUp, 'down': shiftValuesDown}
+            spline = Models.Spline(name,
+                masses = paramMasses,
+                values = paramValues,
+                shifts = paramShifts,
+            )
+            spline.build(self.workspace, name)
+            splines[name] = spline
+
+        # integral spline
+        name = 'integral_{}_{}'.format(self.SPLINENAME.format(h=h),region)
+        paramMasses = avals
+        paramValues = [integrals[''][h][a] for a in amasses]
+        paramShifts = {}
+        for shift in shifts:
+            shiftValuesUp   = [integrals[shift+'Up'  ][h][a] for a in amasses]
+            shiftValuesDown = [integrals[shift+'Down'][h][a] for a in amasses]
+            paramShifts[shift] = {'up': shiftValuesUp, 'down': shiftValuesDown}
+        spline = Models.Spline(name,
+            masses = paramMasses,
+            values = paramValues,
+            shifts = paramShifts,
+        )
+        spline.build(self.workspace, name)
+        splines[name] = spline
+
+        # create model
+        if fit:
+            print 'Need to reimplement fitting'
+            raise
+        else:
+            model = Models.Voigtian(self.SPLINENAME.format(h=h),
+                **{param: '{param}_h{h}_{region}'.format(param=param, h=h, region=region) for param in params}
+            )
+        model.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region))
+
+        return model
+    
+        # create model
+        if fit:
+            print 'Need to reimplement fitting'
+            raise
+        else:
+            modelx = Models.Voigtian(self.SPLINENAME.format(h=h)+'_x',
+                **{param: 'x{param}_h{h}_{region}_sigx'.format(param=param, h=h, region=region) for param in params}
+            )
+        modelx.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_x'))
+
+        if   yFitFunc == "V"   : ym = Models.Voigtian
+        elif yFitFunc == "G"   : ym = Models.Gaussian
+        elif yFitFunc == "CB"  : ym = Models.CrystalBall
+        elif yFitFunc == "DCB" : ym = Models.DoubleCrystalBall
+        elif yFitFunc == "DG"  : ym = Models.DoubleSidedGaussian
+        elif yFitFunc == "DV"  : ym = Models.DoubleSidedVoigtian
+        #elif yFitFunc == "errG": 
+        else: raise
+
+        if fit:
+            print 'Need to reimplement fitting'
+            raise
+        else:
+            if yFitFunc == 'errG':
+                modely_gaus = Models.Gaussian("model_gaus",
+                    x = 'y',
+                     **{param: 'y{param}_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['mean','sigma']}
+                )
+                modely_gaus.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_gaus_y'))
+                modely_erf = Models.Erf("model_erf",
+                    x = 'y',
+                     **{param: 'y{param}_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['ergScales','erfShifts']}
+                )
+                modely_erf.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_erf_y'))
+                modely = Models.Prod(self.SPLINENAME.format(h=h)+'_y',
+                    '{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_gaus_y'),
+                    '{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_erf_y'),
+                )
+            elif yFitFunc == 'L':
+                modely_gaus = Models.Gaussian("model_gaus",
+                    x = 'y',
+                     **{param: 'y{param}_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['mean','sigma']}
+                )
+                modely_gaus.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_gaus_y'))
+                modely_land = Models.Erf("model_land",
+                    x = 'y',
+                     **{param: 'y{param}_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['mu','sigma']}
+                )
+                modely_land.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_land_y'))
+                modely = Models.Prod(self.SPLINENAME.format(h=h)+'_y',
+                    '{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_gaus_y'),
+                    '{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_land_y'),
+                )
+            else:
+                modely = ym(self.SPLINENAME.format(h=h)+'_y',
+                    x = 'y',
+                    **{param: 'y{param}_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in yparameters}
+                )
+        modely.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_y'))
+                
+        model = Models.Prod(self.SPLINENAME.format(h=h),
+            '{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_x'),
+            '{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_y'),
+        )
         model.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag))
-        model.buildIntegral(self.workspace,'integral_{}_{}'.format(self.SPLINENAME.format(h=h),tag))
 
-        savedir = '{}/{}'.format(self.fitsDir,shift if shift else 'central')
-        python_mkdir(savedir)
-        savename = '{}/h{}_{}.json'.format(savedir,h,tag)
-        jsonData = {'vals': results, 'errs': errors, 'integrals': {a:integral for a,integral in zip(avals,integrals)}}
-        self.dump(savename,jsonData)
-
-        # return the model
-        # this can be used to determine if you want to keep this shift
         return model
 
     def fitBackground(self,region='PP',shift='',setUpsilonLambda=False,addUpsilon=True,logy=False):
@@ -872,7 +863,7 @@ class HaaLimits2D(HaaLimits):
         results = {'vals':vals, 'errs':errs, 'integral':integral}
         self.dump(jfile,results)
 
-        return vals, errs
+        return vals, errs, integral
 
 
     ###############################
@@ -914,41 +905,79 @@ class HaaLimits2D(HaaLimits):
             self.fix()
         vals = {}
         errs = {}
+        integrals = {}
         for region in self.REGIONS:
             vals[region] = {}
             errs[region] = {}
+            integrals[region] = {}
             self.buildModel(region=region, addUpsilon=addUpsilon, setUpsilonLambda=setUpsilonLambda, voigtian=voigtian)
             self.workspace.factory('bg_{}_norm[1,0,2]'.format(region))
-            for shift in ['']+self.BACKGROUNDSHIFTS:
+            for shift in self.BACKGROUNDSHIFTS+['']:
                 if shift=='':
-                    v, e = self.fitBackground(region=region, setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
+                    v, e, i = self.fitBackground(region=region, setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
+                    vals[region][shift] = v
+                    errs[region][shift] = e
+                    integrals[region][shift] = i
                 else:
-                    vUp, eUp = self.fitBackground(region=region, shift=shift+'Up', setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
-                    vDown, eDown = self.fitBackground(region=region, shift=shift+'Down', setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
-                    v = (vUp, vDown)
-                    e = (eUp, eDown)
-                vals[region][shift] = v
-                errs[region][shift] = e
+                    vUp, eUp, iUp = self.fitBackground(region=region, shift=shift+'Up', setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
+                    vDown, eDown, iDown = self.fitBackground(region=region, shift=shift+'Down', setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
+                    vals[region][shift+'Up'] = vUp
+                    errs[region][shift+'Up'] = eUp
+                    integrals[region][shift+'Up'] = iUp
+                    vals[region][shift+'Down'] = vDown
+                    errs[region][shift+'Down'] = eDown
+                    integrals[region][shift+'Down'] = iDown
+            # integral
+            name = 'integral_bg_{}'.format(region)
+            paramValue = integrals[region]['']
+            paramShifts = {}
+            for shift in self.BACKGROUNDSHIFTS:
+                shiftValueUp   = integrals[region][shift+'Up'  ]
+                shiftValueDown = integrals[region][shift+'Down']
+                paramShifts[shift] = {'up': shiftValueUp, 'down': shiftValueDown}
+            param = Models.Param(name,
+                value  = paramValue,
+                shifts = paramShifts,
+            )
+            param.build(self.workspace, name)
+
         if fixAfterControl:
             self.fix(False)
-        self.background_vals = vals
-        self.background_errs = errs
+        self.background_values = vals
+        self.background_errors = errs
+        self.background_integrals = integrals
 
     def addSignalModels(self,yFitFunc="G",isKinFit=True,**kwargs):
         models = {}
+        values = {}
+        errors = {}
+        integrals = {}
         for region in self.REGIONS:
             models[region] = {}
-            for shift in ['']+self.SIGNALSHIFTS:
-                models[region][shift] = {}
-                for h in self.HMASSES:
-                    if shift == '':
-                        model = self.buildSpline(h,region=region,shift=shift,yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
-                    else:
-                        modelUp = self.buildSpline(h,region=region,shift=shift+'Up',yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
-                        modelDown = self.buildSpline(h,region=region,shift=shift+'Down',yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
-                        model = (modelUp, modelDown)
-                    models[region][shift][h] = model
+            values[region] = {}
+            errors[region] = {}
+            integrals[region] = {}
             for h in self.HMASSES:
+                values[region][h] = {}
+                errors[region][h] = {}
+                integrals[region][h] = {}
+                for shift in ['']+self.SIGNALSHIFTS:
+                    if shift == '':
+                        vals, errs, ints = self.fitSignals(h,region=region,shift=shift,yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
+                        values[region][h][shift] = vals
+                        errors[region][h][shift] = errs
+                        integrals[region][h][shift] = ints
+                    else:
+                        valsUp, errsUp, intsUp = self.fitSignals(h,region=region,shift=shift+'Up',yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
+                        valsDown, errsDown, intsDown = self.fitSignals(h,region=region,shift=shift+'Down',yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
+                        valsDown, errsDown, intsDown = self.fitSignals(h,region=region,shift=shift+'Down',**kwargs)
+                        values[region][h][shift+'Up'] = valsUp
+                        errors[region][h][shift+'Up'] = errsUp
+                        integrals[region][h][shift+'Up'] = intsUp
+                        values[region][h][shift+'Down'] = valsDown
+                        errors[region][h][shift+'Down'] = errsDown
+                        integrals[region][h][shift+'Down'] = intsDown
+                models[region][h] = self.buildSpline(h,values[region][h],errors[region][h],integrals[region][h],region,self.SIGNALSHIFTS,yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
                 self.workspace.factory('{}_{}_norm[1,0,9999]'.format(self.SPLINENAME.format(h=h),region))
         self.fitted_models = models
 
@@ -969,15 +998,8 @@ class HaaLimits2D(HaaLimits):
 
         # set expected
         for region in self.REGIONS:
-            h = self.histMap[region]['']['dataNoSig']
-            if h.InheritsFrom('TH1'):
-                integral = h.Integral() # 2D restricted integral?
-            else:
-                integral = h.sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE))
-            self.setExpected('bg',region,integral)
-
-            for proc in [self.SPLINENAME.format(h=h) for h in self.HMASSES]:
-                self.setExpected(proc,region,1) # TODO: how to handle different integrals
+            for proc in [self.SPLINENAME.format(h=h) for h in self.HMASSES]+['bg']:
+                self.setExpected(proc,region,1)
                 self.addRateParam('integral_{}_{}'.format(proc,region),region,proc)
                 
             self.setObserved(region,-1) # reads from histogram
