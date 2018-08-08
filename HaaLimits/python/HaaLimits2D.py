@@ -25,6 +25,7 @@ class HaaLimits2D(HaaLimits):
 
     YRANGE = [50,1000]
     YLABEL = 'm_{#mu#mu#tau_{#mu}#tau_{h}}'
+    LOGY = False
 
     def __init__(self,histMap,tag=''):
         '''
@@ -66,11 +67,6 @@ class HaaLimits2D(HaaLimits):
                 x = 'y',
                 mu    = [50,0,200],
                 sigma = [10,0,100],
-            )
-        elif self.YRANGE[0]>2:
-            bg = Models.Exponential('bg',
-                x = 'y',
-                lamb = [-1,-5,0],
             )
         else:
             land1 = Models.Landau('land1',
@@ -190,7 +186,7 @@ class HaaLimits2D(HaaLimits):
         bg.build(self.workspace,name)
 
 
-    def buildSpline(self,h,region='PP',shift='',yFitFunc="G", isKinFit=True, **kwargs):
+    def buildSpline(self,h,region='PP',shift='',yFitFunc="G", isKinFit=True,  xFitRestrict=-1.0, yFitRestrict=-1.0, **kwargs):
         '''
         Get the signal spline for a given Higgs mass.
         Required arguments:
@@ -209,7 +205,8 @@ class HaaLimits2D(HaaLimits):
         errors = {}
         results[h] = {}
         errors[h] = {}
-        initialValuesDCB = self.GetInitialValuesDCB(isKinFit=isKinFit)
+        if self.YRANGE[1] > 100: initDCB  = self.GetInitialValuesDCB(isKinFit=isKinFit)
+        else: initLand = self.GetInitialValuesLand(reg=region)
         for a in amasses:
             aval = float(str(a).replace('p','.'))
             ws = ROOT.RooWorkspace('sig')
@@ -253,11 +250,11 @@ class HaaLimits2D(HaaLimits):
                     modely = Models.DoubleCrystalBall('sigy',
                         x = 'y',
                         mean  = [h,0,1.25*h],
-                        sigma = [initialValuesDCB["h"+str(h)+"a"+str(a)]["sigma"],0.01,0.5*h],
-                        a1    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["a1"],0.1,10],
-                        n1    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["n1"],0.1,20],
-                        a2    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["a2"],0.1,10],
-                        n2    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["n2"],0.1,20],
+                        sigma = [initDCB["h"+str(h)+"a"+str(a)]["sigma"],0.01,0.5*h],
+                        a1    = [initDCB["h"+str(h)+"a"+str(a)]["a1"],0.1,10],
+                        n1    = [initDCB["h"+str(h)+"a"+str(a)]["n1"],0.1,20],
+                        a2    = [initDCB["h"+str(h)+"a"+str(a)]["a2"],0.1,10],
+                        n2    = [initDCB["h"+str(h)+"a"+str(a)]["n2"],0.1,20],
                     )
                 elif yFitFunc == "DG":
                     modely = Models.DoubleSidedGaussian('sigy',
@@ -337,13 +334,13 @@ class HaaLimits2D(HaaLimits):
                 elif yFitFunc == "errG":
                     tterf = Models.Erf('tterf',
                        x = 'y',
-                       erfScale = [0.2,0.1,5],
-                       erfShift = [0.5*aval,0.1,30],
+                       erfScale = [0.2*aval,0.1,5],
+                       erfShift = [1,0.1,30],
                     )
                     ttgaus = Models.Gaussian('ttgaus',
                        x = 'y',
-                       mean  = [aval,0,30],
-                       sigma = [0.1*aval,0.05*aval,0.4*aval],
+                       mean  = [0.43*aval,1.0,30],
+                       sigma = [0.15*aval,0.05*aval,0.4*aval],
                     )
                     ttgaus.build(ws,"ttgaus")
                     tterf.build(ws,"tterf")
@@ -359,14 +356,14 @@ class HaaLimits2D(HaaLimits):
                     #)
                     ttland = Models.Landau('ttland',
                         x = 'y',
-                        mu  = [0.5*aval,0,30],
-                        sigma = [0.1*aval,0.05*aval,aval],
+                        mu    = [initLand["h"+str(h)+"a"+str(a)]["mu_ttland"],0.05,30], #[0.2*aval,0.5,30],
+                        sigma = [initLand["h"+str(h)+"a"+str(a)]["sigma_ttland"],0.05*aval,aval], #[0.15*aval,0.05*aval,aval],
                     )
                     ttland.build(ws,'ttland')
                     ttgaus = Models.Gaussian('ttgaus',
                        x = 'y',
-                       mean  = [0.5*aval,0,30],
-                       sigma = [0.1*aval,0.05*aval,0.4*aval],
+                       mean  = [initLand["h"+str(h)+"a"+str(a)]["mean_ttgaus"],initLand["h"+str(h)+"a"+str(a)]["mean_ttgaus_min"],30], #[0.45*aval,0.5,30],
+                       sigma = [initLand["h"+str(h)+"a"+str(a)]["sigma_ttgaus"],0.05*aval,0.5*aval], #[0.15*aval,0.05*aval,0.6*aval],
                     )
                     ttgaus.build(ws,"ttgaus")
                     modely = Models.Prod('sigy',
@@ -426,10 +423,9 @@ class HaaLimits2D(HaaLimits):
                     )
 
             model.build(ws, 'sig')
-            ws.Print("v")
             hist = histMap[self.SIGNAME.format(h=h,a=a)]
             saveDir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
-            results[h][a], errors[h][a] = model.fit2D(ws, hist, 'h{}_a{}_{}'.format(h,a,tag), saveDir=saveDir, save=True, doErrors=True)
+            results[h][a], errors[h][a] = model.fit2D(ws, hist, 'h{}_a{}_{}'.format(h,a,tag), saveDir=saveDir, save=True, doErrors=True, logy=self.LOGY)
             print h, a, results[h][a], errors[h][a]
     
         # Fit using ROOT rather than RooFit for the splines
@@ -812,8 +808,12 @@ class HaaLimits2D(HaaLimits):
             integral = hist.sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE))
 
         data.Print("v")
-        print "DataSetName=", data.GetName()
-        fr = model.fitTo(data,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True))
+#        print "DataSetName=", data.GetName()
+#        if restrictYRange != :
+#            self.workspace.var('y').setRange('low', 0,  )
+#            fr = model.fitTo(data, ROOT.RooFit.Save(), ROOT.RooFit.SumW2Error(True), ROOT.RooFit.Range('low,high') )
+#        else:
+        fr = model.fitTo(data, ROOT.RooFit.Save(), ROOT.RooFit.SumW2Error(True) )
 
         xFrame = self.workspace.var('x').frame()
         data.plotOn(xFrame)
@@ -887,13 +887,17 @@ class HaaLimits2D(HaaLimits):
             if asimov:
                 # generate a toy data observation from the model
                 # TODO addSignal
+                print "DECLARE MODEL", region, mh, ma
                 model = self.workspace.pdf('bg_{}'.format(region))
                 h = self.histMap[region]['']['dataNoSig']
+                print "GOT HIST", name
                 if h.InheritsFrom('TH1'):
                     integral = h.Integral() # 2D integral?
                 else:
                     integral = h.sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE))
+                print "BEFORE DATA_OBS AFTER INTEGRAL"
                 data_obs = model.generate(ROOT.RooArgSet(self.workspace.var('x'),self.workspace.var('y')),int(integral))
+                print "AFTER DATA_OBS"
                 if addSignal:
                     self.workspace.var('MH').setVal(ma)
                     model = self.workspace.pdf('{}_{}'.format(self.SPLINENAME.format(h=mh),region))
@@ -934,22 +938,30 @@ class HaaLimits2D(HaaLimits):
         self.background_vals = vals
         self.background_errs = errs
 
-    def addSignalModels(self,yFitFunc="G",isKinFit=True,**kwargs):
+    def addSignalModels(self,yFitFuncFP="G", yFitFuncPP="G", isKinFit=True, cutOffPP=0, cutOffFP=0, **kwargs):
         models = {}
         for region in self.REGIONS:
+            if region == 'PP': 
+              yFitFunc=yFitFuncPP
+              self.YRANGE[0] = cutOffPP
+            else: 
+              yFitFunc = yFitFuncFP
+              self.YRANGE[0] = cutOffFP
             models[region] = {}
             for shift in ['']+self.SIGNALSHIFTS:
                 models[region][shift] = {}
                 for h in self.HMASSES:
                     if shift == '':
-                        model = self.buildSpline(h,region=region,shift=shift,yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
+                        model = self.buildSpline(h,region=region,shift=shift,yFitFunc=yFitFunc,isKinFit=isKinFit, **kwargs)
                     else:
-                        modelUp = self.buildSpline(h,region=region,shift=shift+'Up',yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
-                        modelDown = self.buildSpline(h,region=region,shift=shift+'Down',yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
+                        modelUp = self.buildSpline(h,region=region,shift=shift+'Up',yFitFunc=yFitFunc,isKinFit=isKinFit, **kwargs)
+                        modelDown = self.buildSpline(h,region=region,shift=shift+'Down',yFitFunc=yFitFunc,isKinFit=isKinFit, **kwargs)
                         model = (modelUp, modelDown)
+                    print "TESTYTEST"
                     models[region][shift][h] = model
             for h in self.HMASSES:
                 self.workspace.factory('{}_{}_norm[1,0,9999]'.format(self.SPLINENAME.format(h=h),region))
+        self.workspace.Print("v")
         self.fitted_models = models
 
     ######################
@@ -1071,7 +1083,74 @@ class HaaLimits2D(HaaLimits):
             }
         return initialValues
 
-
+    def GetInitialValuesLand(self, reg='PP'):
+        if reg =='PP':
+            initialValues = {
+              "h125a3p6": { "mean_ttgaus": 1.10, "sigma_ttgaus": 0.70, "mu_ttland": 1.0, "sigma_ttland": 0.25, "mean_ttgaus_min": 0.01}, # 45.7  
+              "h125a4"  : { "mean_ttgaus": 1.20, "sigma_ttgaus": 0.80, "mu_ttland": 1.1, "sigma_ttland": 0.28, "mean_ttgaus_min": 0.01}, # 4.5
+              "h125a5"  : { "mean_ttgaus": 2.20, "sigma_ttgaus": 0.90, "mu_ttland": 1.3, "sigma_ttland": 0.25, "mean_ttgaus_min": 0.01}, # 1.7
+              "h125a6"  : { "mean_ttgaus": 3.59, "sigma_ttgaus": 1.00, "mu_ttland": 1.5, "sigma_ttland": 0.31, "mean_ttgaus_min": 0.01},
+              "h125a7"  : { "mean_ttgaus": 3.87, "sigma_ttgaus": 1.28, "mu_ttland": 2.1, "sigma_ttland": 0.75, "mean_ttgaus_min": 0.01},
+              "h125a9"  : { "mean_ttgaus": 5.60, "sigma_ttgaus": 1.52, "mu_ttland": 2.1, "sigma_ttland": 0.45, "mean_ttgaus_min": 0.01},
+              "h125a11" : { "mean_ttgaus": 6.90, "sigma_ttgaus": 1.96, "mu_ttland": 2.6, "sigma_ttland": 0.72, "mean_ttgaus_min": 0.01},
+              "h125a13" : { "mean_ttgaus": 7.80, "sigma_ttgaus": 2.28, "mu_ttland": 3.4, "sigma_ttland": 1.12, "mean_ttgaus_min": 0.01},
+              "h125a15" : { "mean_ttgaus": 7.00, "sigma_ttgaus": 3.10, "mu_ttland": 7.0, "sigma_ttland": 1.20, "mean_ttgaus_min": 0.01},
+              "h125a17" : { "mean_ttgaus": 10.1, "sigma_ttgaus": 2.66, "mu_ttland": 3.0, "sigma_ttland": 1.14, "mean_ttgaus_min": 0.01},
+              "h125a19" : { "mean_ttgaus": 10.9, "sigma_ttgaus": 3.27, "mu_ttland": 4.8, "sigma_ttland": 1.70, "mean_ttgaus_min": 0.01},
+              "h125a21" : { "mean_ttgaus": 11.8, "sigma_ttgaus": 4.09, "mu_ttland": 6.5, "sigma_ttland": 2.16, "mean_ttgaus_min": 0.01},
+              "h300a5"  : { "mean_ttgaus": 2.40, "sigma_ttgaus": 1.40, "mu_ttland": 1.6, "sigma_ttland": 0.50, "mean_ttgaus_min": 0.01}, # 49.6
+              "h300a7"  : { "mean_ttgaus": 3.40, "sigma_ttgaus": 1.50, "mu_ttland": 1.8, "sigma_ttland": 0.52, "mean_ttgaus_min": 0.01}, # 57
+              "h300a9"  : { "mean_ttgaus": 5.27, "sigma_ttgaus": 1.74, "mu_ttland": 2.0, "sigma_ttland": 0.56, "mean_ttgaus_min": 0.01}, 
+              "h300a11" : { "mean_ttgaus": 6.00, "sigma_ttgaus": 1.80, "mu_ttland": 2.3, "sigma_ttland": 0.67, "mean_ttgaus_min": 0.01}, 
+              "h300a13" : { "mean_ttgaus": 7.71, "sigma_ttgaus": 2.28, "mu_ttland": 2.4, "sigma_ttland": 0.65, "mean_ttgaus_min": 0.01}, # 295	But Looked Good
+              "h300a15" : { "mean_ttgaus": 8.86, "sigma_ttgaus": 2.60, "mu_ttland": 2.6, "sigma_ttland": 0.75, "mean_ttgaus_min": 0.01},
+              "h300a17" : { "mean_ttgaus": 10.1, "sigma_ttgaus": 2.97, "mu_ttland": 3.0, "sigma_ttland": 0.85, "mean_ttgaus_min": 0.01},
+              "h300a19" : { "mean_ttgaus": 11.2, "sigma_ttgaus": 3.32, "mu_ttland": 3.2, "sigma_ttland": 0.99, "mean_ttgaus_min": 0.01},
+              "h300a21" : { "mean_ttgaus": 12.4, "sigma_ttgaus": 3.60, "mu_ttland": 3.5, "sigma_ttland": 1.05, "mean_ttgaus_min": 0.01}, # 22 But Looked good
+              "h750a5"  : { "mean_ttgaus": 3.20, "sigma_ttgaus": 1.20, "mu_ttland": 1.4, "sigma_ttland": 0.25, "mean_ttgaus_min": 0.01}, # 59
+              "h750a7"  : { "mean_ttgaus": 4.30, "sigma_ttgaus": 1.50, "mu_ttland": 1.6, "sigma_ttland": 0.35, "mean_ttgaus_min": 0.01}, # 24621
+              "h750a9"  : { "mean_ttgaus": 5.40, "sigma_ttgaus": 1.80, "mu_ttland": 1.8, "sigma_ttland": 0.45, "mean_ttgaus_min": 0.01}, # 892
+              "h750a11" : { "mean_ttgaus": 6.50, "sigma_ttgaus": 2.11, "mu_ttland": 2.0, "sigma_ttland": 0.55, "mean_ttgaus_min": 0.01},
+              "h750a13" : { "mean_ttgaus": 7.65, "sigma_ttgaus": 2.49, "mu_ttland": 2.2, "sigma_ttland": 0.65, "mean_ttgaus_min": 0.01},
+              "h750a15" : { "mean_ttgaus": 8.78, "sigma_ttgaus": 2.85, "mu_ttland": 2.4, "sigma_ttland": 0.75, "mean_ttgaus_min": 0.01},
+              "h750a17" : { "mean_ttgaus": 9.94, "sigma_ttgaus": 3.21, "mu_ttland": 2.6, "sigma_ttland": 0.85, "mean_ttgaus_min": 0.01},
+              "h750a19" : { "mean_ttgaus": 11.0, "sigma_ttgaus": 3.53, "mu_ttland": 2.8, "sigma_ttland": 0.95, "mean_ttgaus_min": 0.01},
+              "h750a21" : { "mean_ttgaus": 12.2, "sigma_ttgaus": 3.95, "mu_ttland": 3.1, "sigma_ttland": 1.05, "mean_ttgaus_min": 0.01}
+            }
+        elif reg =='FP':
+            initialValues = {
+              "h125a3p6": { "mean_ttgaus": 2.15, "sigma_ttgaus": 1.40, "mu_ttland": 1.37, "sigma_ttland": 0.27, "mean_ttgaus_min": 1.00}, # 23.986
+              "h125a4"  : { "mean_ttgaus": 2.49, "sigma_ttgaus": 1.80, "mu_ttland": 1.54, "sigma_ttland": 0.31, "mean_ttgaus_min": 1.00}, # 16.5
+              "h125a5"  : { "mean_ttgaus": 2.65, "sigma_ttgaus": 2.00, "mu_ttland": 1.94, "sigma_ttland": 0.46, "mean_ttgaus_min": 1.00}, # 115
+              "h125a6"  : { "mean_ttgaus": 3.20, "sigma_ttgaus": 2.00, "mu_ttland": 2.80, "sigma_ttland": 0.76, "mean_ttgaus_min": 1.00},
+              "h125a7"  : { "mean_ttgaus": 3.80, "sigma_ttgaus": 3.60, "mu_ttland": 3.50, "sigma_ttland": 0.94, "mean_ttgaus_min": 1.00},
+              "h125a9"  : { "mean_ttgaus": 4.50, "sigma_ttgaus": 3.40, "mu_ttland": 7.00, "sigma_ttland": 2.00, "mean_ttgaus_min": 1.00},
+              "h125a11" : { "mean_ttgaus": 6.70, "sigma_ttgaus": 1.77, "mu_ttland": 1.90, "sigma_ttland": 0.80, "mean_ttgaus_min": 1.00},
+              "h125a13" : { "mean_ttgaus": 7.90, "sigma_ttgaus": 2.63, "mu_ttland": 3.50, "sigma_ttland": 1.40, "mean_ttgaus_min": 1.00},
+              "h125a15" : { "mean_ttgaus": 3.00, "sigma_ttgaus": 3.40, "mu_ttland": 26.0, "sigma_ttland": 8.10, "mean_ttgaus_min": 1.00},
+              "h125a17" : { "mean_ttgaus": 10.9, "sigma_ttgaus": 3.09, "mu_ttland": 1.71, "sigma_ttland": 0.85, "mean_ttgaus_min": 1.00},
+              "h125a19" : { "mean_ttgaus": 9.00, "sigma_ttgaus": 3.33, "mu_ttland": 0.20, "sigma_ttland": 19.0, "mean_ttgaus_min": 1.00},
+              "h125a21" : { "mean_ttgaus": 9.80, "sigma_ttgaus": 3.58, "mu_ttland": 0.20, "sigma_ttland": 21.0, "mean_ttgaus_min": 1.00},
+              "h300a5"  : { "mean_ttgaus": 2.43, "sigma_ttgaus": 1.50, "mu_ttland": 1.50, "sigma_ttland": 0.50, "mean_ttgaus_min": 1.00}, # 15.8
+              "h300a7"  : { "mean_ttgaus": 2.76, "sigma_ttgaus": 2.50, "mu_ttland": 1.73, "sigma_ttland": 0.74, "mean_ttgaus_min": 1.00}, # 10.3
+              "h300a9"  : { "mean_ttgaus": 4.00, "sigma_ttgaus": 3.10, "mu_ttland": 1.80, "sigma_ttland": 1.08, "mean_ttgaus_min": 1.00}, # 13.3
+              "h300a11" : { "mean_ttgaus": 5.00, "sigma_ttgaus": 3.20, "mu_ttland": 2.07, "sigma_ttland": 1.63, "mean_ttgaus_min": 1.00}, # 2.77
+              "h300a13" : { "mean_ttgaus": 6.80, "sigma_ttgaus": 3.30, "mu_ttland": 2.20, "sigma_ttland": 2.24, "mean_ttgaus_min": 1.00}, # 1.5
+              "h300a15" : { "mean_ttgaus": 8.97, "sigma_ttgaus": 3.40, "mu_ttland": 2.40, "sigma_ttland": 1.18, "mean_ttgaus_min": 1.00}, 
+              "h300a17" : { "mean_ttgaus": 8.50, "sigma_ttgaus": 3.44, "mu_ttland": 2.70, "sigma_ttland": 1.30, "mean_ttgaus_min": 1.00}, 
+              "h300a19" : { "mean_ttgaus": 10.5, "sigma_ttgaus": 3.60, "mu_ttland": 3.30, "sigma_ttland": 1.50, "mean_ttgaus_min": 1.00}, 
+              "h300a21" : { "mean_ttgaus": 11.7, "sigma_ttgaus": 4.00, "mu_ttland": 4.30, "sigma_ttland": 2.11, "mean_ttgaus_min": 1.00},
+              "h750a5"  : { "mean_ttgaus": 2.40, "sigma_ttgaus": 1.00, "mu_ttland": 1.50, "sigma_ttland": 0.26, "mean_ttgaus_min": 1.00}, #
+              "h750a7"  : { "mean_ttgaus": 3.00, "sigma_ttgaus": 1.30, "mu_ttland": 2.90, "sigma_ttland": 0.81, "mean_ttgaus_min": 1.00}, #
+              "h750a9"  : { "mean_ttgaus": 4.00, "sigma_ttgaus": 1.40, "mu_ttland": 2.13, "sigma_ttland": 0.49, "mean_ttgaus_min": 1.00}, # 
+              "h750a11" : { "mean_ttgaus": 6.00, "sigma_ttgaus": 2.00, "mu_ttland": 2.92, "sigma_ttland": 0.85, "mean_ttgaus_min": 1.00}, #
+              "h750a13" : { "mean_ttgaus": 6.00, "sigma_ttgaus": 2.40, "mu_ttland": 3.68, "sigma_ttland": 1.16, "mean_ttgaus_min": 1.00}, #
+              "h750a15" : { "mean_ttgaus": 8.00, "sigma_ttgaus": 2.80, "mu_ttland": 5.09, "sigma_ttland": 1.72, "mean_ttgaus_min": 1.00}, #
+              "h750a17" : { "mean_ttgaus": 9.94, "sigma_ttgaus": 3.20, "mu_ttland": 6.04, "sigma_ttland": 2.10, "mean_ttgaus_min": 1.00}, #
+              "h750a19" : { "mean_ttgaus": 9.00, "sigma_ttgaus": 3.40, "mu_ttland": 6.51, "sigma_ttland": 2.78, "mean_ttgaus_min": 1.00}, #
+              "h750a21" : { "mean_ttgaus": 10.6, "sigma_ttgaus": 3.50, "mu_ttland": 7.00, "sigma_ttland": 3.85, "mean_ttgaus_min": 1.00} #
+            }
+        return initialValues
     ###################
     ### Systematics ###
     ###################
