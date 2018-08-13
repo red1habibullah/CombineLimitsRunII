@@ -30,7 +30,7 @@ class Model(object):
         '''Dummy method to add model to workspace'''
         logging.debug('Building {}'.format(label))
 
-    def fit(self,ws,hist,name,save=False,doErrors=False,saveDir=''):
+    def fit(self,ws,hist,name,save=False,doErrors=False,saveDir='', xFitRange=[0,30]):
         '''Fit the model to a histogram and return the fit values'''
 
         if isinstance(hist,ROOT.TH1):
@@ -38,7 +38,9 @@ class Model(object):
             hist = ROOT.RooDataHist(dhname, dhname, ROOT.RooArgList(ws.var(self.x)), hist)
         self.build(ws,name)
         model = ws.pdf(name)
-        fr = model.fitTo(hist,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True))
+       
+        ws.var('x').setRange('xRange', xFitRange[0], xFitRange[1])
+        fr = model.fitTo(hist,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True), ROOT.RooFit.Range('xRange'))
         pars = fr.floatParsFinal()
         vals = {}
         errs = {}
@@ -54,10 +56,14 @@ class Model(object):
             xFrame.SetTitle('')
             hist.plotOn(xFrame)
             model.plotOn(xFrame)
+            chi2Line = "Chi2: " + str(xFrame.chiSquare()) # Adding chi2 info
+            pt = ROOT.TPaveText(.72,.1,.90,.2, "brNDC") # Adding chi2 info
+            pt.AddText(chi2Line ) # Adding chi2 info
             model.paramOn(xFrame,ROOT.RooFit.Layout(0.72,0.98,0.90))
             canvas = ROOT.TCanvas(savename,savename,800,800)
             canvas.SetRightMargin(0.3)
             xFrame.Draw()
+            pt.Draw()
             prims = canvas.GetListOfPrimitives()
             for prim in prims:
                 if 'paramBox' in prim.GetName():
@@ -68,7 +74,7 @@ class Model(object):
             return vals, errs
         return vals
 
-    def fit2D(self,ws,hist,name,save=False,doErrors=False,saveDir=''):
+    def fit2D(self,ws,hist,name,save=False,doErrors=False,saveDir='', xFitRange=[0,30], yFitRange=[0,30], logy=False):
         '''Fit the model to a histogram and return the fit values'''
 
         if isinstance(hist,ROOT.TH1):
@@ -76,7 +82,10 @@ class Model(object):
             hist = ROOT.RooDataHist(dhname, dhname, ROOT.RooArgList(ws.var(self.x),ws.var(self.y)), hist)
         self.build(ws,name)
         model = ws.pdf(name)
-        fr = model.fitTo(hist,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True))
+        #ws.var('x').setRange('xRange', xFitRange[0], xFitRange[1])
+        #ws.var('y').setRange('yRange', yFitRange[0], yFitRange[1])
+        #print ("X_FIT_RANGE=", xFitRange, "\tY_FIT_RANGE=", yFitRange)
+        fr = model.fitTo(hist,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True))#, ROOT.RooFit.Range('yRange'), ROOT.RooFit.Range('xRange') )
         pars = fr.floatParsFinal()
         vals = {}
         errs = {}
@@ -92,10 +101,14 @@ class Model(object):
             xFrame.SetTitle('')
             hist.plotOn(xFrame)
             model.plotOn(xFrame)
+            chi2Linex = "Chi2: " +  str(xFrame.chiSquare()) # Adding chi2 info
+            ptx = ROOT.TPaveText(.72,.1,.90,.2, "brNDC") # Adding chi2 info
+            ptx.AddText(chi2Linex) # Adding chi2 info
             model.paramOn(xFrame,ROOT.RooFit.Layout(0.72,0.98,0.90))
             canvas = ROOT.TCanvas(savename,savename,800,800)
             canvas.SetRightMargin(0.3)
             xFrame.Draw()
+            ptx.Draw()
             prims = canvas.GetListOfPrimitives()
             for prim in prims:
                 if 'paramBox' in prim.GetName():
@@ -107,8 +120,13 @@ class Model(object):
             yFrame.SetTitle('')
             hist.plotOn(yFrame)
             model.plotOn(yFrame)
+            chi2Liney = "Chi2: " + str(yFrame.chiSquare()) # Adding chi2 info
+            pty = ROOT.TPaveText(.72,.1,.90,.2, "brNDC") # Adding chi2 info            
+            pty.AddText(chi2Liney ) # Adding chi2 info
             model.paramOn(yFrame,ROOT.RooFit.Layout(0.72,0.98,0.90))
+            if logy: canvas.SetLogy()
             yFrame.Draw()
+            pty.Draw()
             prims = canvas.GetListOfPrimitives()
             for prim in prims:
                 if 'paramBox' in prim.GetName():

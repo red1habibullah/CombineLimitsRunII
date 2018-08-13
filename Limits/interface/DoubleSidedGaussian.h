@@ -36,7 +36,8 @@ public:
 	      RooAbsReal& _x,
 	      RooAbsReal& _mean,
 	      RooAbsReal& _sig1,
-	      RooAbsReal& _sig2);
+	      RooAbsReal& _sig2,
+              Double_t _yMax);
   DoubleSidedGaussian(const DoubleSidedGaussian& other, const char* name=0) ;
   virtual TObject* clone(const char* newname) const { return new DoubleSidedGaussian(*this,newname); }
   inline virtual ~DoubleSidedGaussian() { }
@@ -51,6 +52,7 @@ protected:
 
 private:
 
+  Double_t yMax;
   ClassDef(DoubleSidedGaussian,1) // Your description goes here...
 };
  
