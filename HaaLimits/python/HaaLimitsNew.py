@@ -727,7 +727,7 @@ class HaaLimits(Limits):
         self._addMuonSystematic()
         self._addTauSystematic()
         self._addShapeSystematic()
-        #self._addControlSystematics()
+        self._addControlSystematics()
 
     def _addControlSystematics(self):
         '''Add the prefit control region values to datacard'''
