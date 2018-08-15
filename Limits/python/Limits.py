@@ -54,23 +54,20 @@ class Limits(object):
                 result.SetBinError(b,hist.GetBinError(b))
         return result
 
+    def addVar(self, var, varMin, varMax, unit='', label=''):
+        self.workspace.factory('{}[{}, {}]'.format(var,varMin,varMax))
+        if unit: self.workspace.var(var).setUnit(unit)
+        if label: self.workspace.var(var).setPlotLabel(label)
+        if label: self.workspace.var(var).SetTitle(label)
+
     def addMH(self, mhMin, mhMax, unit='', label=''):
-        self.workspace.factory('MH[{0}, {1}]'.format(mhMin,mhMax))
-        if unit: self.workspace.var('MH').setUnit(unit)
-        if label: self.workspace.var('MH').setPlotLabel(label)
-        if label: self.workspace.var('MH').SetTitle(label)
+        self.addVar('MH',mhMin,mhMax,unit,label)
 
     def addX(self, xMin, xMax, unit='', label=''):
-        self.workspace.factory('x[{0}, {1}]'.format(xMin,xMax))
-        if unit: self.workspace.var('x').setUnit(unit)
-        if label: self.workspace.var('x').setPlotLabel(label)
-        if label: self.workspace.var('x').SetTitle(label)
+        self.addVar('x',xMin,xMax,unit,label)
 
     def addY(self, yMin, yMax, unit='', label=''):
-        self.workspace.factory('y[{0}, {1}]'.format(yMin,yMax))
-        if unit: self.workspace.var('y').setUnit(unit)
-        if label: self.workspace.var('y').setPlotLabel(label)
-        if label: self.workspace.var('y').SetTitle(label)
+        self.addVar('y',yMin,yMax,unit,label)
 
     def __check(self,test,stored,name='Object'):
         goodToAdd = True
@@ -103,6 +100,7 @@ class Limits(object):
         if proc in self.processes:
             logging.warning('Process {0} already added.'.format(proc))
         else:
+            logging.debug('Adding process {}'.format(proc))
             self.processes[proc] = {
                 'signal'  : signal,
             }
@@ -136,6 +134,7 @@ class Limits(object):
         if systname in self.systematics:
             logging.warning('Systematic {0} already added.'.format(systname))
         else:
+            logging.debug('Adding systematic {} ({})'.format(systname,mode))
             if mode in ['param','flatParam']:
                 self.param_systematics[systname] = {
                     'mode'  : mode,
@@ -155,9 +154,11 @@ class Limits(object):
 
     def addGroup(self,groupname,*systnames):
         '''Add a group name for a list of systematics'''
+        logging.debug('Adding group {}'.format(groupname))
         self.groups[groupname] = systnames
 
     def addRateParam(self,ratename,bin,process):
+        logging.debug('Adding rate param {}'.format(ratename))
         self.rates[ratename] = {
             'bin': bin,
             'process': process,
@@ -227,6 +228,7 @@ class Limits(object):
         goodToAdd = True
         goodToAdd = goodToAdd and self.__checkBins([bin])
         if goodToAdd:
+            logging.debug('Adding observed {} {}'.format(bin,value))
             self.observed[(bin)] = value
 
     def getObserved(self,bin,blind=True,addSignal=False):
@@ -259,6 +261,7 @@ class Limits(object):
             result = self.observed[key] if key in self.observed else 0.
         if isinstance(result,ROOT.TH2):
             result = self.__unwrap(result)
+        logging.debug('Getting observed {} {}'.format(bin,result))
         return result
 
 
@@ -268,6 +271,7 @@ class Limits(object):
         goodToAdd = goodToAdd and self.__checkProcesses([process])
         goodToAdd = goodToAdd and self.__checkBins([bin])
         if goodToAdd:
+            logging.debug('Adding expected {} {} {}'.format(process,bin,value))
             self.expected[(process,bin)] = value
 
     def getExpected(self,process,bin):
@@ -276,6 +280,7 @@ class Limits(object):
         val = self.expected[key] if key in self.expected else 0.
         if isinstance(val,ROOT.TH2):
             val = self.__unwrap(val)
+        logging.debug('Getting expected {} {} {}'.format(process,bin,val))
         return val
 
     def printCard(self,filename,bins=['all'],processes=['all'],blind=True,addSignal=False,saveWorkspace=False,suffix=''):
@@ -288,17 +293,18 @@ class Limits(object):
         shapes = self._printMultipleCards(filename,bins,processes,blind,addSignal,saveWorkspace,suffix)
         
         # shape file
-        if saveWorkspace:
+        if saveWorkspace or shapes:
             outname = filename+'.root'
             if saveWorkspace:
                 self.workspace.Print()
                 self.workspace.SaveAs(outname)
+                outfile = ROOT.TFile.Open(outname,'UPDATE')
             else:
                 outfile = ROOT.TFile.Open(outname,'RECREATE')
-                for shape in shapes:
-                    shape.Write('',ROOT.TObject.kOverwrite)
-                outfile.Write()
-                outfile.Close()
+            for shape in shapes:
+                shape.Write('',ROOT.TObject.kOverwrite)
+            outfile.Write()
+            outfile.Close()
 
     def _printMultipleCards(self,filename,bins,processes,blind,addSignal,saveWorkspace,suffix):
         shapes = []
@@ -317,6 +323,7 @@ class Limits(object):
 
 
     def _printSingleCard(self,filename,bins,processes,blind,addSignal,saveWorkspace,suffix):
+        logging.info('Preparing {0}{1}.txt'.format(filename,suffix))
         goodToPrint = True
         goodToPrint = goodToPrint and self.__checkBins(bins)
         if not goodToPrint: return
@@ -343,6 +350,7 @@ class Limits(object):
                 shapes += [obs]
                 if saveWorkspace:
                     datahist = ROOT.RooDataHist(label, label, ROOT.RooArgList(self.workspace.var("x")), obs)
+                    logging.debug('Importing {}'.format(label))
                     self.wsimport(datahist)
                     obs = -1
                 else:
@@ -363,14 +371,18 @@ class Limits(object):
         processNumbers = ['process','']+['']*totalColumns
         rates = ['rate','']+['']*totalColumns
         norms = []
-        colpos = 1
+        colpos = 2
         toSkip = []
         for bin in bins:
             for process in processesOrdered:
                 exp = self.getExpected(process,bin)
                 if not exp: 
                     toSkip += [(bin,process)]
+                    logging.debug('Skipping {} {}'.format(process,bin))
                     continue
+                binsForRates[colpos] = binName.format(bin=bin)
+                processNames[colpos] = process
+                processNumbers[colpos] = '{0:<10}'.format(processesOrdered.index(process)-len(signals)+1)
                 label = '{0}_{1}'.format(processNames[colpos],binsForRates[colpos])
                 if isinstance(exp,ROOT.TH1): # it is a histogram (for shape analysis)
                     logging.debug('{0}: {1}'.format(label,exp.Integral()))
@@ -379,6 +391,7 @@ class Limits(object):
                     shapes += [exp]
                     if saveWorkspace:
                         datahist = ROOT.RooDataHist(label, label, ROOT.RooArgList(self.workspace.var("x")), exp)
+                        logging.debug('Importing {}'.format(label))
                         self.wsimport(datahist)
                         exp = -1
                     else:
@@ -392,12 +405,9 @@ class Limits(object):
                     logging.error('Failed to understand: {} {}'.format(bin,process))
                     print exp
                     raise
+                rates[colpos] = '{0:<10.4g}'.format(exp)
                 # TODO: unbinned handling
                 colpos += 1
-                binsForRates[colpos] = binName.format(bin=bin)
-                processNames[colpos] = process
-                processNumbers[colpos] = '{0:<10}'.format(processesOrdered.index(process)-len(signals)+1)
-                rates[colpos] = '{0:<10.4g}'.format(exp)
 
         # other rateParams
         for ratename in self.rates:
@@ -439,6 +449,7 @@ class Limits(object):
                             shapes += [s]
                             if saveWorkspace:
                                 datahist = ROOT.RooDataHist(label, label, ROOT.RooArgList(self.workspace.var("x")), s)
+                                logging.debug('Importing {}'.format(label))
                                 self.wsimport(datahist)
                             s = '1'
                         elif isinstance(s,basestring):
@@ -456,7 +467,9 @@ class Limits(object):
                                 if saveWorkspace:
                                     datahist_up = ROOT.RooDataHist(label_up, label_up, ROOT.RooArgList(self.workspace.var("x")), s[0])
                                     datahist_down = ROOT.RooDataHist(label_down, label_down, ROOT.RooArgList(self.workspace.var("x")), s[1])
+                                    logging.debug('Importing {}'.format(label_up))
                                     self.wsimport(datahist_up)
+                                    logging.debug('Importing {}'.format(label_down))
                                     self.wsimport(datahist_down)
                                 s = '1'
                             elif isinstance(s[0],basestring):
@@ -519,7 +532,7 @@ class Limits(object):
             f.write('-'*lineWidth+'\n')
 
             # shape information
-            if saveWorkspace:
+            if saveWorkspace or shapes:
                 for b in binRows[1:]:
                     procString = '$PROCESS_{0}'.format(b)
                     if saveWorkspace: procString = '{0}:{1}'.format(self.name,procString)

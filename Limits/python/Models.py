@@ -39,8 +39,8 @@ class Model(object):
         self.build(ws,name)
         model = ws.pdf(name)
        
-        ws.var('x').setRange('xRange', xFitRange[0], xFitRange[1])
-        fr = model.fitTo(hist,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True), ROOT.RooFit.Range('xRange'))
+        #ws.var('x').setRange('xRange', xFitRange[0], xFitRange[1])
+        fr = model.fitTo(hist,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True))#, ROOT.RooFit.Range('xRange'))
         pars = fr.floatParsFinal()
         vals = {}
         errs = {}
