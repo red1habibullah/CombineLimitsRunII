@@ -911,7 +911,7 @@ class HaaLimits2D(HaaLimits):
             errs[region] = {}
             integrals[region] = {}
             self.buildModel(region=region, addUpsilon=addUpsilon, setUpsilonLambda=setUpsilonLambda, voigtian=voigtian)
-            self.workspace.factory('bg_{}_norm[1,0,2]'.format(region))
+            #self.workspace.factory('bg_{}_norm[1,0,2]'.format(region))
             for shift in self.BACKGROUNDSHIFTS+['']:
                 if shift=='':
                     v, e, i = self.fitBackground(region=region, setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
@@ -978,7 +978,7 @@ class HaaLimits2D(HaaLimits):
                         errors[region][h][shift+'Down'] = errsDown
                         integrals[region][h][shift+'Down'] = intsDown
                 models[region][h] = self.buildSpline(h,values[region][h],errors[region][h],integrals[region][h],region,self.SIGNALSHIFTS,yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
-                self.workspace.factory('{}_{}_norm[1,0,9999]'.format(self.SPLINENAME.format(h=h),region))
+                #self.workspace.factory('{}_{}_norm[1,0,9999]'.format(self.SPLINENAME.format(h=h),region))
         self.fitted_models = models
 
     ######################

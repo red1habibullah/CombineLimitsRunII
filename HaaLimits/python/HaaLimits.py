@@ -502,7 +502,7 @@ class HaaLimits(Limits):
     def addControlModels(self, addUpsilon=True, setUpsilonLambda=False, voigtian=False, logy=False):
         region = 'control'
         self.buildModel(region=region, addUpsilon=addUpsilon, setUpsilonLambda=setUpsilonLambda, voigtian=voigtian)
-        self.workspace.factory('bg_{}_norm[1,0,2]'.format(region))
+        #self.workspace.factory('bg_{}_norm[1,0,2]'.format(region))
         vals, errs = self.fitBackground(region=region, setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
         self.control_vals = vals
         self.control_errs = errs
@@ -550,7 +550,7 @@ class HaaLimits(Limits):
             if region == 'PP' and fixAfterFP and addUpsilon and self.XRANGE[0]<=9 and self.XRANGE[1]>=11:
                 self.fix()
             self.buildModel(region=region, addUpsilon=addUpsilon, setUpsilonLambda=setUpsilonLambda, voigtian=voigtian)
-            self.workspace.factory('bg_{}_norm[1,0,2]'.format(region))
+            #self.workspace.factory('bg_{}_norm[1,0,2]'.format(region))
             for shift in ['']+self.BACKGROUNDSHIFTS:
                 if shift=='':
                     v, e = self.fitBackground(region=region, setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
@@ -582,8 +582,8 @@ class HaaLimits(Limits):
                         modelDown = self.buildSpline(h,region=region,shift=shift+'Down',**kwargs)
                         model = (modelUp, modelDown)
                     models[region][shift][h] = model
-            for h in self.HMASSES:
-                self.workspace.factory('{}_{}_norm[1,0,9999]'.format(self.SPLINENAME.format(h=h),region))
+            #for h in self.HMASSES:
+            #    #self.workspace.factory('{}_{}_norm[1,0,9999]'.format(self.SPLINENAME.format(h=h),region))
         self.fitted_models = models
 
     ######################
