@@ -28,6 +28,7 @@ class Limits(object):
         self.systematics = {} # systematic uncertainties
         self.param_systematics = {}
         self.rates = {}
+        self.shapes = {}
         self.name = name
         self.workspace = ROOT.RooWorkspace(self.name)
 
@@ -164,6 +165,17 @@ class Limits(object):
             'process': process,
         }
         
+    def addShape(self,bin,process,shape):
+        '''
+        Add a shape definition. By default, shapes are stored
+        as [$WORKSPACE:]$PROCESS_$BIN[_$SYSTEMATIC].
+        To override, pass the name of the PDF/histogram for a
+        given bin/process as "shape".
+        Example:
+            addShape("bin0","sig","signal")
+            will change [$WORKSPACE:]sig_bin0[_$SYSTEMATIC] default to [$WORKSPACE:]signal[_$SYSTEMATIC]
+        '''
+        self.shapes[(bin,process)] = shape
 
     def getSystematic(self,systname,process,bin):
         '''Return the systematic value for a given systematic/process/bin combination.'''
@@ -537,6 +549,13 @@ class Limits(object):
                     procString = '$PROCESS_{0}'.format(b)
                     if saveWorkspace: procString = '{0}:{1}'.format(self.name,procString)
                     f.write('shapes * {0} {1}.root {2} {2}_$SYSTEMATIC\n'.format(b,filename,procString))
+                    for proc in processesOrdered:
+                        key = (b,proc)
+                        if key in self.shapes:
+                            procString = self.shapes[key]
+                            if saveWorkspace: procString = '{}:{}'.format(self.name,procString)
+                            f.write('shapes {0} {1} {2}.root {3} {3}_$SYSTEMATIC\n'.format(proc,b,filename,procString))
+
             else:
                 f.write('shapes * * FAKE\n')
             f.write('-'*lineWidth+'\n')

@@ -13,9 +13,10 @@ ROOT.gROOT.SetBatch()
 from DevTools.Plotter.NtupleWrapper import NtupleWrapper
 from DevTools.Utilities.utilities import *
 from DevTools.Plotter.haaUtils import *
-from CombineLimits.HaaLimits.HaaLimits import HaaLimits
-#from CombineLimits.HaaLimits.HaaLimitsNew import HaaLimits
-from CombineLimits.HaaLimits.HaaLimits2D import HaaLimits2D
+#from CombineLimits.HaaLimits.HaaLimits import HaaLimits
+#from CombineLimits.HaaLimits.HaaLimits2D import HaaLimits2D
+from CombineLimits.HaaLimits.HaaLimitsNew import HaaLimits
+from CombineLimits.HaaLimits.HaaLimits2DNew import HaaLimits2D
 
 logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
@@ -34,11 +35,14 @@ signame = 'HToAAH{h}A{a}'
 
 shiftTypes = ['lep','pu','fake','trig','btag','MuonEn','TauEn','JetEn','UnclusteredEn']
 shiftTypes = ['fake','lep']
+shiftTypes = []
 
 signalShiftTypes = ['lep','pu','trig','btag','MuonEn','TauEn','JetEn','UnclusteredEn']
 signalShiftTypes = ['lep']
+signalShiftTypes = []
 
 backgroundShiftTypes = ['fake']
+backgroundShiftTypes = []
 
 shifts = []
 for s in shiftTypes:
@@ -59,7 +63,9 @@ varNames = {
     'hkf': 'h_massKinFit',
 }
 rebinning = {
-    'mm' : 5, # 10 MeV -> 50 MeV
+    #'mm' : 5, # 10 MeV -> 50 MeV
+    'mm' : 10, # 10 MeV -> 100 MeV
+    #'mm' : 25, # 10 MeV -> 250 MeV
     'tt' : 1, # 100 MeV -> 100 MeV
     'h'  : 1, # 1 GeV -> 1 GeV
     'hkf': 1, # 1 GeV -> 5 GeV
@@ -217,7 +223,7 @@ def getMatrixDatadrivenHist(**kwargs):
     else:
         plot = varHists[var[0]]
     if doUnbinned:
-        plot += '_dataset'
+        lot += '_dataset'
     bpplot = ['matrixP/region{}_for{}_fakeFor{}/{}'.format(source,fakeRegion,region,plot) for source in fakeSources]
     bfplot = ['matrixF/region{}_for{}_fakeFor{}/{}'.format(source,fakeRegion,region,plot) for source in fakeSources]
     if chi2Mass:
@@ -283,7 +289,7 @@ def create_datacard(args):
 
     global xRange
     global yRange
-    if do2D and var[1]=='tt': yRange = [0,30]
+    if do2D and var[1]=='tt': yRange = [0.75,30]
     if args.yRange: yRange = args.yRange
     xRange = args.xRange
 
@@ -425,25 +431,29 @@ def create_datacard(args):
     if 'tt' in var: haaLimits.YLABEL = 'm_{#tau_{#mu}#tau_{h}}'
     if 'h' in var or 'hkf' in var: haaLimits.YLABEL = 'm_{#mu#mu#tau_{#mu}#tau_{h}}'
     haaLimits.initializeWorkspace()
-    if args.addControl: haaLimits.addControlModels(voigtian=True,logy=xRange[0]<3.3)
-    haaLimits.addBackgroundModels(voigtian=True,logy=False,fixAfterControl=args.addControl)
+    haaLimits.addControlModels(voigtian=True,logy=xRange[0]<3.3)
+    #if args.addControl: haaLimits.addControlModels(voigtian=True,logy=xRange[0]<3.3)
+    haaLimits.addBackgroundModels(voigtian=True,logy=False,fixAfterControl=True)
+    #haaLimits.addBackgroundModels(voigtian=True,logy=False,fixAfterControl=args.addControl)
     #return # dont do the signal portion
     haaLimits.XRANGE = [0,30] # override for signal splines
     if 'tt' in var:
         #haaLimits.addSignalModels(fit=False,yFitFunc='errG')
         #haaLimits.addSignalModels(fit=False,yFitFunc='L')
-        haaLimits.addSignalModels(fit=False,yFitFunc='DCB')
+        #haaLimits.addSignalModels(fit=False,yFitFunc='DCB')
+        haaLimits.addSignalModels(fit=False,yFitFuncFP='DCB',yFitFuncPP='L')#,cutOffFP=0.75,cutOffPP=0.75)
     elif 'h' in var or 'hkf' in var:
-        haaLimits.addSignalModels(fit=False,yFitFunc='DCB')
+        #haaLimits.addSignalModels(fit=False,yFitFunc='DCB')
         #haaLimits.addSignalModels(fit=False,yFitFunc='V')
+        haaLimits.addSignalModels(fit=False,yFitFuncFP='DCB',yFitFuncPP='DCB')#,cutOffFP=0.0,cutOffPP=0.0)
     else:
         haaLimits.addSignalModels(fit=False)
     haaLimits.XRANGE = xRange
-    #if args.addControl: haaLimits.addControlData()
-    haaLimits.addData(asimov=(blind and not doMatrix),addSignal=addSignal,**signalParams) # this will generate a dataset based on the fitted model
+    if args.addControl: haaLimits.addControlData()
+    haaLimits.addData(asimov=(blind and not doMatrix and doUnbinned),addSignal=addSignal,**signalParams) # this will generate a dataset based on the fitted model
     haaLimits.setupDatacard(addControl=args.addControl)
-    #haaLimits.setupDatacard()
-    haaLimits.addSystematics()
+    #haaLimits.setupDatacard()#doBinned=not doUnbinned)
+    haaLimits.addSystematics(addControl=args.addControl)#doBinned=not doUnbinned)
     name = 'mmmt_{}_parametric'.format('_'.join(var))
     if args.unbinned: name += '_unbinned'
     if args.tag: name += '_{}'.format(args.tag)
