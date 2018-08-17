@@ -83,7 +83,7 @@ class HaaLimits(Limits):
         tag = kwargs.pop('tag',region)
 
         bgRes = Models.Voigtian if voigtian else Models.Gaussian
-        bgRes = Models.BreitWigner
+        #bgRes = Models.BreitWigner
 
         # jpsi
         jpsi1S = bgRes('jpsi1S',
@@ -578,16 +578,22 @@ class HaaLimits(Limits):
             result.update(subresult)
         return result
 
-    def buildComponentIntegrals(self,region,integrals):
+    def buildComponentIntegrals(self,region,vals,errs,integrals):
         fracMap = self.getComponentFractions(self.workspace.pdf('bg_{}'.format(region)))
-        errors = {}
+        if isinstance(integrals,dict):
+            vals = vals[region]['']
+            errs = errs[region]['']
+            integrals = integrals[region]
+        allerrors = {}
         allintegrals = {}
         for component in fracMap:
             #self.workspace.factory('{}_{}_norm[1,0,2]'.format(component,region))
             subint = 1.
             suberr2 = 0.
             # TODO: errors are way larger than they should be, need to look into this
+            # dont use these uncertainties
             for frac in fracMap.get(component,[]):
+                key = frac.GetTitle()
                 if isinstance(frac,ROOT.RooRecursiveFraction):
                     subint *= frac.getVal()
                     #TODO correct this
@@ -596,15 +602,15 @@ class HaaLimits(Limits):
                     subint *= frac.getVal()
                     suberr2 += (frac.getError()/frac.getVal())**2
             suberr = suberr2**0.5
-            errors[component] = suberr
+            allerrors[component] = suberr
 
             name = 'integral_{}_{}'.format(component,region)
             if isinstance(integrals,dict):
-                paramValue = subint*integrals[region]['']
+                paramValue = subint*integrals['']
                 paramShifts = {}
                 for shift in self.BACKGROUNDSHIFTS:
-                    shiftValueUp   = subint*integrals[region][shift+'Up'  ]
-                    shiftValueDown = subint*integrals[region][shift+'Down']
+                    shiftValueUp   = subint*integrals[shift+'Up'  ]
+                    shiftValueDown = subint*integrals[shift+'Down']
                     paramShifts[shift] = {'up': shiftValueUp, 'down': shiftValueDown}
                 param = Models.Param(name,
                     value  = paramValue,
@@ -618,7 +624,7 @@ class HaaLimits(Limits):
             param.build(self.workspace, name)
             allintegrals[component] = paramValue
 
-        return allintegrals, errors
+        return allintegrals, allerrors
 
 
     def addControlModels(self, addUpsilon=True, setUpsilonLambda=False, voigtian=False, logy=False):
@@ -635,7 +641,7 @@ class HaaLimits(Limits):
         )
         param.build(self.workspace, name)
 
-        allintegrals, errors = self.buildComponentIntegrals(region,ints)
+        allintegrals, errors = self.buildComponentIntegrals(region,vals,errs,ints)
 
         self.control_vals = vals
         self.control_errs = errs
@@ -651,9 +657,9 @@ class HaaLimits(Limits):
         self.workspace.arg('mean_upsilon1S').setConstant(fix)
         self.workspace.arg('mean_upsilon2S').setConstant(fix)
         self.workspace.arg('mean_upsilon3S').setConstant(fix)
-        #self.workspace.arg('sigma_upsilon1S').setConstant(fix)
-        #self.workspace.arg('sigma_upsilon2S').setConstant(fix)
-        #self.workspace.arg('sigma_upsilon3S').setConstant(fix)
+        self.workspace.arg('sigma_upsilon1S').setConstant(fix)
+        self.workspace.arg('sigma_upsilon2S').setConstant(fix)
+        self.workspace.arg('sigma_upsilon3S').setConstant(fix)
         self.workspace.arg('width_upsilon1S').setConstant(fix)
         self.workspace.arg('width_upsilon2S').setConstant(fix)
         self.workspace.arg('width_upsilon3S').setConstant(fix)
@@ -663,8 +669,8 @@ class HaaLimits(Limits):
         self.workspace.arg('upsilon23_frac').setConstant(fix) 
         self.workspace.arg('mean_jpsi1S').setConstant(fix)
         self.workspace.arg('mean_jpsi2S').setConstant(fix)
-        #self.workspace.arg('sigma_jpsi1S').setConstant(fix)
-        #self.workspace.arg('sigma_jpsi2S').setConstant(fix)
+        self.workspace.arg('sigma_jpsi1S').setConstant(fix)
+        self.workspace.arg('sigma_jpsi2S').setConstant(fix)
         self.workspace.arg('width_jpsi1S').setConstant(fix)
         self.workspace.arg('width_jpsi2S').setConstant(fix)
         if self.XRANGE[0]<3.3: self.workspace.arg('jpsi1S_frac').setConstant(fix) 
@@ -723,7 +729,7 @@ class HaaLimits(Limits):
             )
             param.build(self.workspace, name)
 
-            allintegrals[region], errors[region] = self.buildComponentIntegrals(region,integrals)
+            allintegrals[region], errors[region] = self.buildComponentIntegrals(region,vals,errs,integrals)
 
         if fixAfterControl:
             self.fix(False)
@@ -847,7 +853,7 @@ class HaaLimits(Limits):
                 key = proc if proc in self.control_integralValues else '{}_{}'.format(proc,region)
                 integral = self.control_integralValues[key]
                 self.setExpected(proc,region,integral)
-                if cont not in proc:
+                if 'cont' not in proc and proc not in sigs:
                     self.addShape(region,proc,proc)
 
             self.setObserved(region,-1) # reads from histogram
@@ -878,9 +884,9 @@ class HaaLimits(Limits):
             'mean_upsilon1S',
             'mean_upsilon2S',
             'mean_upsilon3S',
-            #'sigma_upsilon1S',
-            #'sigma_upsilon2S',
-            #'sigma_upsilon3S',
+            'sigma_upsilon1S',
+            'sigma_upsilon2S',
+            'sigma_upsilon3S',
             'width_upsilon1S',
             'width_upsilon2S',
             'width_upsilon3S',
@@ -890,8 +896,8 @@ class HaaLimits(Limits):
             #'upsilon23_frac',
             'mean_jpsi1S',
             'mean_jpsi2S',
-            #'sigma_jpsi1S',
-            #'sigma_jpsi2S',
+            'sigma_jpsi1S',
+            'sigma_jpsi2S',
             'width_jpsi1S',
             'width_jpsi2S',
             #'jpsi1S_frac',
@@ -966,19 +972,21 @@ class HaaLimits(Limits):
 
     def _addComponentSystematic(self,addControl=False):
         bgs = self.getComponentFractions(self.workspace.pdf('bg_PP'))
-        bgs = [b.rstrip('_PP') for b in bgs]
+        bgs = [b.rstrip('_PP') for b in bgs if 'cont' not in b]
         bins = self.REGIONS
         if addControl: bins += ['control']
         syst = {}
         for bg in bgs:
             for b in bins:
-                if b=='control':
-                    key = bg if bg in self.control_integralErrors else '{}_{}'.format(bg,b)
-                    syst[(bg,),(b,)] = 1 + self.control_integralErrors[key]
-                else:
-                    key = bg if bg in self.background_integralErrors[b] else '{}_{}'.format(bg,b)
-                    syst[(bg,),(b,)] = 1 + self.background_integralErrors[b][key]
-        self.addSystematic('{process}_normUnc','lnN',systematics=syst)
+                key = bg if bg in self.control_integralErrors else '{}_control'.format(bg)
+                syst[(bg,),(b,)] = 1 + self.control_integralErrors[key]
+                #if b=='control':
+                #    key = bg if bg in self.control_integralErrors else '{}_{}'.format(bg,b)
+                #    syst[(bg,),(b,)] = 1 + self.control_integralErrors[key]
+                #else:
+                #    key = bg if bg in self.background_integralErrors[b] else '{}_{}'.format(bg,b)
+                #    syst[(bg,),(b,)] = 1 + self.background_integralErrors[b][key]
+        #self.addSystematic('{process}_normUnc','lnN',systematics=syst)
         
     ###################################
     ### Save workspace and datacard ###
