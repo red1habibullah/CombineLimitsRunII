@@ -232,7 +232,7 @@ class HaaLimits2D(HaaLimits):
         bg.build(self.workspace,name)
 
 
-    def fitSignals(self,h,region='PP',shift='',yFitFunc="V",**kwargs):
+    def fitSignals(self,h,region='PP',shift='',**kwargs):
         '''
         Fit the signal model for a given Higgs mass.
         Required arguments:
@@ -658,7 +658,7 @@ class HaaLimits2D(HaaLimits):
 
         return results, errors, integrals
 
-    def buildSpline(self,h,vals,errs,integrals,region='PP',shifts=[],yFitFunc='G',isKinFit=True,**kwargs):
+    def buildSpline(self,h,vals,errs,integrals,region='PP',shifts=[],isKinFit=True,**kwargs):
         '''
         Get the signal spline for a given Higgs mass.
         Required arguments:
@@ -683,6 +683,7 @@ class HaaLimits2D(HaaLimits):
             ]
         and similarly for errors and integrals.
         '''
+        yFitFunc = kwargs.pop('yFitFunc','G')
         ygausOnly = kwargs.get('ygausOnly',False)
         fit = kwargs.get('fit',False)
         dobgsig = kwargs.get('doBackgroundSignal',False)
@@ -693,13 +694,6 @@ class HaaLimits2D(HaaLimits):
         # create parameter splines
         params = ['mean','width','sigma']
         splines = {}
-        #print "TROUBLESHOOT:VALS VVALS", region, yFitFunc, 
-        #for k,v in vals[''].items():
-        #  for k1,v1, in vals[''][k].items():
-        #     for k2,v2 in vals[''][k][k1].items():
-        #       print "vals[''][" + str(k)+"][" + str(k1) + "][" + str(k2) + "]=", v2 
-        print "TROUBLESHOOT: PRINTING WORKSPACE BEGINNING 'buildSpline'"
-        self.workspace.Print("V")
         for param in params:
             name = 'x{param}_h{h}_{region}_sigx'.format(param=param,h=h,region=region)
             paramMasses = avals
@@ -767,9 +761,6 @@ class HaaLimits2D(HaaLimits):
         spline.build(self.workspace, name)
         splines[name] = spline
 
-        print "TROUBLESHOOT: PRINTING WORKSPACE MIDDLE buildSpline"
-        self.workspace.Print("V")
-
     
         # create model
         if fit:
@@ -780,9 +771,6 @@ class HaaLimits2D(HaaLimits):
                 **{param: 'x{param}_h{h}_{region}_sigx'.format(param=param, h=h, region=region) for param in params}
             )
         modelx.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_x'))
-
-        print "TROUBLESHOOT: PRINTING WORKSPACE after modelx.build buildSpline"
-        self.workspace.Print("V")
 
         if   yFitFunc == "V"   : ym = Models.Voigtian
         elif yFitFunc == "G"   : ym = Models.Gaussian
@@ -832,20 +820,16 @@ class HaaLimits2D(HaaLimits):
                     **{param: 'y{param}_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in yparameters}
                 )
         modely.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_y'))
-        print "TROUBLESHOOT: PRINTING WORKSPACE after modely.build buildSpline"
-        self.workspace.Print("V")
                 
         model = Models.Prod(self.SPLINENAME.format(h=h),
             '{}_{}'.format(self.SPLINENAME.format(h=h),region+'_x'),
             '{}_{}'.format(self.SPLINENAME.format(h=h),region+'_y'),
         )
         model.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region))
-        print "TROUBLESHOOT: PRINTING WORKSPACE after FINAL model.build buildSpline"
-        self.workspace.Print("V")
 
         return model
 
-    def addControlModels(self, addUpsilon=True, setUpsilonLambda=False, voigtian=False, logy=False, is2D=False):
+    def addControlModels(self, addUpsilon=True, setUpsilonLambda=False, voigtian=False, logy=False):
         region = 'control'
         super(HaaLimits2D, self).buildModel(region=region, addUpsilon=addUpsilon, setUpsilonLambda=setUpsilonLambda, voigtian=voigtian)
         #self.workspace.factory('bg_{}_norm[1,0,2]'.format(region))
@@ -860,7 +844,7 @@ class HaaLimits2D(HaaLimits):
         param.build(self.workspace, name)
         
 
-        allintegrals, errors = self.buildComponentIntegrals(region,vals,errs,ints, is2D=is2D)
+        allintegrals, errors = self.buildComponentIntegrals(region,vals,errs,ints, 'bg_control')
 
         self.control_vals = vals
         self.control_errs = errs
@@ -876,7 +860,6 @@ class HaaLimits2D(HaaLimits):
         model = self.workspace.pdf('bg_{}'.format(region))
         name = 'data_prefit_{}{}'.format(region,'_'+shift if shift else '')
         hist = self.histMap[region][shift]['dataNoSig']
-        #print "TROUBLESHOOT: region=", region, "\tshift=", shift, "\t", hist.GetName()
         if hist.InheritsFrom('TH1'):
             integral = hist.Integral() # 2D restricted integral?
             data = ROOT.RooDataHist(name,name,ROOT.RooArgList(self.workspace.var('x'),self.workspace.var('y')),hist)
@@ -884,7 +867,6 @@ class HaaLimits2D(HaaLimits):
             data = hist.Clone(name)
             integral = hist.sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE))
 
-        #print "TROUBLESHOOT: DataSetName=", data.GetName()
         fr = model.fitTo(data,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True))
 
         xFrame = self.workspace.var('x').frame()
@@ -949,8 +931,6 @@ class HaaLimits2D(HaaLimits):
     ### Add things to workspace ###
     ###############################
     def addData(self,asimov=False,addSignal=False,addControl=False,**kwargs):
-        print "TROUBLESHOOT: addData beginning"
-        self.workspace.Print("v")
         mh = kwargs.pop('h',125)
         ma = kwargs.pop('a',15)
         for region in self.REGIONS:
@@ -1043,7 +1023,7 @@ class HaaLimits2D(HaaLimits):
             )
             param.build(self.workspace, name)
 
-            allintegrals[region], errors[region] = self.buildComponentIntegrals(region,vals,errs,integrals, is2D=True)
+            allintegrals[region], errors[region] = self.buildComponentIntegrals(region,vals,errs,integrals, 'bg_{}_x'.format(region))
 
         if fixAfterControl:
             self.fix(False)
@@ -1086,8 +1066,6 @@ class HaaLimits2D(HaaLimits):
                         integrals[region][h][shift+'Down'] = intsDown
                 models[region][h] = self.buildSpline(h,values[region][h],errors[region][h],integrals[region][h],region,self.SIGNALSHIFTS,yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
                 #self.workspace.factory('{}_{}_norm[1,0,9999]'.format(self.SPLINENAME.format(h=h),region))
-        print "TROUBLESHOOT: addSignalModels End "
-        self.workspace.Print("v") 
         self.fitted_models = models
 
     ######################
@@ -1231,7 +1209,7 @@ class HaaLimits2D(HaaLimits):
         self._addControlSystematics()
         if not doBinned and not addControl: self._addControlSystematics()
 
-        self._addComponentSystematic(addControl=addControl, is2D=True)
+        #self._addComponentSystematic(addControl=addControl)
         self._addRelativeNormUnc()
         if not doBinned and not addControl: self._addControlSystematics()
 
@@ -1249,7 +1227,7 @@ class HaaLimits2D(HaaLimits):
         for h in self.HMASSES:
             processes[self.SIGNAME.format(h=h,a='X')] = [self.SPLINENAME.format(h=h)] + bgs
         if subdirectory == '':
-          self.printCard('datacards_shape/MuMuTauTau/{}'.format(name),processes=processes,blind=False,saveWorkspace=True)
+            self.printCard('datacards_shape/MuMuTauTau/{}'.format(name),processes=processes,blind=False,saveWorkspace=True)
         else:
-          self.printCard('datacards_shape/MuMuTauTau/' + subdirectory + '{}'.format(name),processes=processes,blind=False,saveWorkspace=True)
+            self.printCard('datacards_shape/MuMuTauTau/' + subdirectory + '{}'.format(name),processes=processes,blind=False,saveWorkspace=True)
 

@@ -35,14 +35,14 @@ signame = 'HToAAH{h}A{a}'
 
 shiftTypes = ['lep','pu','fake','trig','btag','MuonEn','TauEn','JetEn','UnclusteredEn']
 #shiftTypes = ['fake','lep']
-shiftTypes = []
+#shiftTypes = []
 
 signalShiftTypes = ['lep','pu','trig','btag','MuonEn','TauEn','JetEn','UnclusteredEn']
 #signalShiftTypes = ['lep']
-signalShiftTypes = []
+#signalShiftTypes = []
 
 backgroundShiftTypes = ['fake']
-backgroundShiftTypes = []
+#backgroundShiftTypes = []
 
 shifts = []
 for s in shiftTypes:

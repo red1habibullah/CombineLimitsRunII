@@ -568,6 +568,9 @@ class HaaLimits(Limits):
 
     def getComponentFractions(self,model):
         print "getComponentFractions model=", model
+        if not model:
+            self.workspace.Print()
+            raise
         if not isinstance(model,ROOT.RooAddPdf): 
             return {model.GetTitle(): []}
         pdfs = model.pdfList()
@@ -580,13 +583,13 @@ class HaaLimits(Limits):
             result.update(subresult)
         return result
 
-    def buildComponentIntegrals(self,region,vals,errs,integrals, is2D=False):
-        if is2D:
-            fracMapy = self.getComponentFractions(self.workspace.pdf('bg_{}_y'.format(region)))
-            fracMapx = self.getComponentFractions(self.workspace.pdf('bg_{}_x'.format(region)))
-            fracMap = dict(fracMapx, **fracMapy)
-        else: 
-            fracMap = self.getComponentFractions(self.workspace.pdf('bg_{}'.format(region)))
+    def buildComponentIntegrals(self,region,vals,errs,integrals, pdf):
+        #if is2D:
+        #    fracMapy = self.getComponentFractions(self.workspace.pdf('bg_{}_y'.format(region)))
+        #    fracMapx = self.getComponentFractions(self.workspace.pdf('bg_{}_x'.format(region)))
+        #    fracMap = dict(fracMapx, **fracMapy)
+        #else: 
+        fracMap = self.getComponentFractions(self.workspace.pdf(pdf))
         if isinstance(integrals,dict):
             vals = vals[region]['']
             errs = errs[region]['']
@@ -637,8 +640,7 @@ class HaaLimits(Limits):
         return allintegrals, allerrors
 
 
-    def addControlModels(self, addUpsilon=True, setUpsilonLambda=False, voigtian=False, logy=False, is2D=False):
-        print "TROUBLESHOOT: addControlModels"
+    def addControlModels(self, addUpsilon=True, setUpsilonLambda=False, voigtian=False, logy=False):
         region = 'control'
         self.buildModel(region=region, addUpsilon=addUpsilon, setUpsilonLambda=setUpsilonLambda, voigtian=voigtian)
         #self.workspace.factory('bg_{}_norm[1,0,2]'.format(region))
@@ -652,7 +654,7 @@ class HaaLimits(Limits):
         )
         param.build(self.workspace, name)
 
-        allintegrals, errors = self.buildComponentIntegrals(region,vals,errs,ints, is2D=is2D)
+        allintegrals, errors = self.buildComponentIntegrals(region,vals,errs,ints, 'bg_control')
 
         self.control_vals = vals
         self.control_errs = errs
@@ -882,7 +884,7 @@ class HaaLimits(Limits):
         self._addMuonSystematic()
         self._addTauSystematic()
         self._addShapeSystematic()
-        self._addComponentSystematic(addControl=addControl)
+        #self._addComponentSystematic(addControl=addControl)
         self._addRelativeNormUnc()
         if not doBinned and not addControl: self._addControlSystematics()
 
@@ -981,33 +983,21 @@ class HaaLimits(Limits):
         }
         self.addSystematic('tauid','lnN',systematics=tausyst)
 
-    def _addComponentSystematic(self,addControl=False, is2D=False):
-        if is2D:
-            bgsy = self.getComponentFractions(self.workspace.pdf('bg_PP_y'))
-            bgsx = self.getComponentFractions(self.workspace.pdf('bg_PP_x'))
-            bgs = dict(bgsx, **bgsx)
-        else:
-            bgs = self.getComponentFractions(self.workspace.pdf('bg_PP'))
-        print "TROUBLESHOOTING: _addComponentSystematic bgs", bgs
+    def _addComponentSystematic(self,addControl=False):
+        #if is2D:
+        #    bgsy = self.getComponentFractions(self.workspace.pdf('bg_PP_y'))
+        #    bgsx = self.getComponentFractions(self.workspace.pdf('bg_PP_x'))
+        #    bgs = dict(bgsx, **bgsx)
+        #else:
+        bgs = self.getComponentFractions(self.workspace.pdf('bg_PP'))
         bgs = [b.rstrip('_PP') for b in bgs if 'cont' not in b]
-        print "TROUBLESHOOTING: _addComponentSystematic bgs", bgs
         bins = self.REGIONS
         if addControl: bins += ['control']
-        print "TROUBLESHOOTING: _addComponentSystematic bgs=", bgs, "\nbins=", bins, "\nself.control_integralErrors=", self.control_integralErrors
         syst = {}
         for bg in bgs:
             for b in bins:
                 key = bg if bg in self.control_integralErrors else '{}_control'.format(bg)
-                print "bg=", bg, " key=", key, self.control_integralErrors[key] 
                 syst[(bg,),(b,)] = 1 + self.control_integralErrors[key]
-                #if b=='control':
-                #    key = bg if bg in self.control_integralErrors else '{}_{}'.format(bg,b)
-                #    syst[(bg,),(b,)] = 1 + self.control_integralErrors[key]
-                #else:
-                #    key = bg if bg in self.background_integralErrors[b] else '{}_{}'.format(bg,b)
-                #    syst[(bg,),(b,)] = 1 + self.background_integralErrors[b][key]
-        #self.addSystematic('{process}_normUnc','lnN',systematics=syst)
-
 
         self.addSystematic('{process}_normUnc','lnN',systematics=syst) 
 
