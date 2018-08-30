@@ -226,8 +226,10 @@ class HaaLimits(Limits):
         bgs = {'recursive': True}
         # continuum background
         bgs[nameC1] = [0.5,0,1]
-        if self.XRANGE[0]<=4 and self.XRANGE[1]>=11:
-            bgs[nameR] = [0.9,0,1]
+        if self.XRANGE[0]<4 and self.XRANGE[1]>=11:
+            #bgs[nameR] = [0.9,0,1]
+            bgs[nameJ] = [0.9,0,1]
+            bgs[nameU] = [0.9,0,1]
             bgs[nameC3] = [0.5,0,1]
         else:
             # jpsi
@@ -579,14 +581,12 @@ class HaaLimits(Limits):
         return result
 
     def buildComponentIntegrals(self,region,vals,errs,integrals, is2D=False):
-        print "TROUBLESHOOT: buildComponentIntegrals", region
         if is2D:
             fracMapy = self.getComponentFractions(self.workspace.pdf('bg_{}_y'.format(region)))
             fracMapx = self.getComponentFractions(self.workspace.pdf('bg_{}_x'.format(region)))
             fracMap = dict(fracMapx, **fracMapy)
-        else: fracMap = self.getComponentFractions(self.workspace.pdf('bg_{}'.format(region)))
-        print "TROUBLESHOOT: buildComponentIntegrals fracMap:"
-        for k,v in fracMap.items(): print k,v
+        else: 
+            fracMap = self.getComponentFractions(self.workspace.pdf('bg_{}'.format(region)))
         if isinstance(integrals,dict):
             vals = vals[region]['']
             errs = errs[region]['']
@@ -652,17 +652,13 @@ class HaaLimits(Limits):
         )
         param.build(self.workspace, name)
 
-        print "ints=", ints
-        print "vals=", vals
         allintegrals, errors = self.buildComponentIntegrals(region,vals,errs,ints, is2D=is2D)
-        print "allintegrals=", allintegrals
 
         self.control_vals = vals
         self.control_errs = errs
         self.control_integrals = ints
         self.control_integralErrors = errors
         self.control_integralValues = allintegrals
-        print "TROUBLESHOOT: addControlModels"
 
     def fix(self,fix=True):
         #self.workspace.arg('lambda_cont1').setConstant(fix)
@@ -744,7 +740,7 @@ class HaaLimits(Limits):
             )
             param.build(self.workspace, name)
 
-            allintegrals[region], errors[region] = self.buildComponentIntegrals(region,vals,errs,integrals)
+            allintegrals[region], errors[region] = self.buildComponentIntegrals(region,vals,errs,integrals,'bg_{}'.format(region))
 
         if fixAfterControl:
             self.fix(False)
@@ -830,7 +826,7 @@ class HaaLimits(Limits):
         for proc in bgs:
             self.addProcess(proc)
 
-        for proc in [self.SPLINENAME.format(h=h) for h in self.HMASSES]:
+        for proc in sigs:
             self.addProcess(proc,signal=True)
 
         if doBinned: self.addBackgroundHists()
@@ -919,7 +915,7 @@ class HaaLimits(Limits):
             #'jpsi2S_frac',
             #'upsilon_frac',
         ]
-        if self.XRANGE[0]<3.3: params += ['jpsi_frac']
+        #if self.XRANGE[0]<3.3: params += ['jpsi_frac']
 
         for param in params:
             if param not in self.control_vals: continue
@@ -1004,7 +1000,15 @@ class HaaLimits(Limits):
                 key = bg if bg in self.control_integralErrors else '{}_control'.format(bg)
                 print "bg=", bg, " key=", key, self.control_integralErrors[key] 
                 syst[(bg,),(b,)] = 1 + self.control_integralErrors[key]
-        print "SYST=", type (syst), syst
+                #if b=='control':
+                #    key = bg if bg in self.control_integralErrors else '{}_{}'.format(bg,b)
+                #    syst[(bg,),(b,)] = 1 + self.control_integralErrors[key]
+                #else:
+                #    key = bg if bg in self.background_integralErrors[b] else '{}_{}'.format(bg,b)
+                #    syst[(bg,),(b,)] = 1 + self.background_integralErrors[b][key]
+        #self.addSystematic('{process}_normUnc','lnN',systematics=syst)
+
+
         self.addSystematic('{process}_normUnc','lnN',systematics=syst) 
 
     def _addRelativeNormUnc(self):

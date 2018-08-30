@@ -34,11 +34,11 @@ amasses = ['3p6',4,5,6,7,9,11,13,15,17,19,21]
 signame = 'HToAAH{h}A{a}'
 
 shiftTypes = ['lep','pu','fake','trig','btag','MuonEn','TauEn','JetEn','UnclusteredEn']
-shiftTypes = ['fake','lep']
+#shiftTypes = ['fake','lep']
 shiftTypes = []
 
 signalShiftTypes = ['lep','pu','trig','btag','MuonEn','TauEn','JetEn','UnclusteredEn']
-signalShiftTypes = ['lep']
+#signalShiftTypes = ['lep']
 signalShiftTypes = []
 
 backgroundShiftTypes = ['fake']
@@ -441,7 +441,7 @@ def create_datacard(args):
         #haaLimits.addSignalModels(fit=False,yFitFunc='errG')
         #haaLimits.addSignalModels(fit=False,yFitFunc='L')
         #haaLimits.addSignalModels(fit=False,yFitFunc='DCB')
-        haaLimits.addSignalModels(fit=False,yFitFuncFP='DCB',yFitFuncPP='L')#,cutOffFP=0.75,cutOffPP=0.75)
+        haaLimits.addSignalModels(fit=False,yFitFuncFP='DCB',yFitFuncPP='DCB')#,cutOffFP=0.75,cutOffPP=0.75)
     elif 'h' in var or 'hkf' in var:
         #haaLimits.addSignalModels(fit=False,yFitFunc='DCB')
         #haaLimits.addSignalModels(fit=False,yFitFunc='V')
