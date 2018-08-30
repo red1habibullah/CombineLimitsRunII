@@ -80,7 +80,6 @@ class HaaLimits(Limits):
         self.addMH(*self.SPLINERANGE,unit='GeV',label=self.SPLINELABEL)
 
     def buildModel(self, region='PP', addUpsilon=True, setUpsilonLambda=False, voigtian=False, **kwargs):
-        print "HaaLimitsNew.buildModel region=", region
         tag = kwargs.pop('tag',region)
 
         bgRes = Models.Voigtian if voigtian else Models.Gaussian
@@ -436,7 +435,7 @@ class HaaLimits(Limits):
     def fitBackground(self,region='PP',shift='', setUpsilonLambda=False, addUpsilon=True, logy=False):
         model = self.workspace.pdf('bg_{}'.format(region))
         name = 'data_prefit_{}{}'.format(region,'_'+shift if shift else '')
-        print "TROUBLESHOOT: fitBackground", region, shift
+        print region, shift
         hist = self.histMap[region][shift]['dataNoSig']
         if hist.InheritsFrom('TH1'):
             integral = hist.Integral(hist.FindBin(self.XRANGE[0]),hist.FindBin(self.XRANGE[1]))
@@ -489,6 +488,8 @@ class HaaLimits(Limits):
         for p in range(pars.getSize()):
             vals[pars.at(p).GetName()] = pars.at(p).getValV()
             errs[pars.at(p).GetName()] = pars.at(p).getError()
+        for v in sorted(vals.keys()):
+            print '  ', v, vals[v], '+/-', errs[v]
 
         python_mkdir(self.fitsDir)
         jfile = '{}/background_{}{}.json'.format(self.fitsDir,region,'_'+shift if shift else '')
@@ -565,8 +566,7 @@ class HaaLimits(Limits):
             self.wsimport(data_obs, ROOT.RooFit.RecycleConflictNodes() )
 
     def getComponentFractions(self,model):
-        print "getComponentFractions model=", model
-        if not isinstance(model,ROOT.RooAddPdf): 
+        if not isinstance(model,ROOT.RooAddPdf):
             return {model.GetTitle(): []}
         pdfs = model.pdfList()
         coefs = model.coefList()
@@ -578,15 +578,8 @@ class HaaLimits(Limits):
             result.update(subresult)
         return result
 
-    def buildComponentIntegrals(self,region,vals,errs,integrals, is2D=False):
-        print "TROUBLESHOOT: buildComponentIntegrals", region
-        if is2D:
-            fracMapy = self.getComponentFractions(self.workspace.pdf('bg_{}_y'.format(region)))
-            fracMapx = self.getComponentFractions(self.workspace.pdf('bg_{}_x'.format(region)))
-            fracMap = dict(fracMapx, **fracMapy)
-        else: fracMap = self.getComponentFractions(self.workspace.pdf('bg_{}'.format(region)))
-        print "TROUBLESHOOT: buildComponentIntegrals fracMap:"
-        for k,v in fracMap.items(): print k,v
+    def buildComponentIntegrals(self,region,vals,errs,integrals):
+        fracMap = self.getComponentFractions(self.workspace.pdf('bg_{}'.format(region)))
         if isinstance(integrals,dict):
             vals = vals[region]['']
             errs = errs[region]['']
@@ -609,9 +602,6 @@ class HaaLimits(Limits):
                     subint *= frac.getVal()
                     suberr2 += (frac.getError()/frac.getVal())**2
             suberr = suberr2**0.5
-            if "cont1" in component or "cont3" in component:
-                component = component.rstrip('_x')
-                component = component.rstrip('_'+region)
             allerrors[component] = suberr
 
             name = 'integral_{}_{}'.format(component,region)
@@ -637,8 +627,7 @@ class HaaLimits(Limits):
         return allintegrals, allerrors
 
 
-    def addControlModels(self, addUpsilon=True, setUpsilonLambda=False, voigtian=False, logy=False, is2D=False):
-        print "TROUBLESHOOT: addControlModels"
+    def addControlModels(self, addUpsilon=True, setUpsilonLambda=False, voigtian=False, logy=False):
         region = 'control'
         self.buildModel(region=region, addUpsilon=addUpsilon, setUpsilonLambda=setUpsilonLambda, voigtian=voigtian)
         #self.workspace.factory('bg_{}_norm[1,0,2]'.format(region))
@@ -652,17 +641,14 @@ class HaaLimits(Limits):
         )
         param.build(self.workspace, name)
 
-        print "ints=", ints
-        print "vals=", vals
-        allintegrals, errors = self.buildComponentIntegrals(region,vals,errs,ints, is2D=is2D)
-        print "allintegrals=", allintegrals
-
+        allintegrals, errors = self.buildComponentIntegrals(region,vals,errs,ints)
+ 
+        for k,v in allintegrals.items(): print k,v
         self.control_vals = vals
         self.control_errs = errs
         self.control_integrals = ints
         self.control_integralErrors = errors
         self.control_integralValues = allintegrals
-        print "TROUBLESHOOT: addControlModels"
 
     def fix(self,fix=True):
         #self.workspace.arg('lambda_cont1').setConstant(fix)
@@ -678,20 +664,20 @@ class HaaLimits(Limits):
         self.workspace.arg('width_upsilon1S').setConstant(fix)
         self.workspace.arg('width_upsilon2S').setConstant(fix)
         self.workspace.arg('width_upsilon3S').setConstant(fix)
-        self.workspace.arg('upsilon1S_frac').setConstant(fix) 
-        self.workspace.arg('upsilon2S_frac').setConstant(fix) 
-        self.workspace.arg('upsilon3S_frac').setConstant(fix) 
-        self.workspace.arg('upsilon23_frac').setConstant(fix) 
+        #self.workspace.arg('upsilon1S_frac').setConstant(fix) 
+        #self.workspace.arg('upsilon2S_frac').setConstant(fix) 
+        #self.workspace.arg('upsilon3S_frac').setConstant(fix) 
+        #self.workspace.arg('upsilon23_frac').setConstant(fix) 
         self.workspace.arg('mean_jpsi1S').setConstant(fix)
         self.workspace.arg('mean_jpsi2S').setConstant(fix)
         self.workspace.arg('sigma_jpsi1S').setConstant(fix)
         self.workspace.arg('sigma_jpsi2S').setConstant(fix)
         self.workspace.arg('width_jpsi1S').setConstant(fix)
         self.workspace.arg('width_jpsi2S').setConstant(fix)
-        if self.XRANGE[0]<3.3: self.workspace.arg('jpsi1S_frac').setConstant(fix) 
-        if self.XRANGE[0]<4: self.workspace.arg('jpsi2S_frac').setConstant(fix) 
-        self.workspace.arg('upsilon_frac').setConstant(fix) 
-        if self.XRANGE[0]<3.3: self.workspace.arg('jpsi_frac').setConstant(fix) 
+        #if self.XRANGE[0]<3.3: self.workspace.arg('jpsi1S_frac').setConstant(fix) 
+        #if self.XRANGE[0]<4: self.workspace.arg('jpsi2S_frac').setConstant(fix) 
+        #self.workspace.arg('upsilon_frac').setConstant(fix) 
+        #if self.XRANGE[0]<3.3: self.workspace.arg('jpsi_frac').setConstant(fix) 
 
     def addBackgroundModels(self, fixAfterControl=False, fixAfterFP=False, addUpsilon=True, setUpsilonLambda=False, voigtian=False, logy=False):
         if fixAfterControl:
@@ -718,6 +704,8 @@ class HaaLimits(Limits):
                     vals[region][shift] = v
                     errs[region][shift] = e
                     integrals[region][shift] = i
+                    print "\n\n\nVALS, ERRS, INTEGRALS", shift, region, 
+                    print "VALS:", v, "\nERRS:", e, "\nINTEGRALS:", i
                 else:
                     vUp, eUp, iUp = self.fitBackground(region=region, shift=shift+'Up', setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
                     vDown, eDown, iDown = self.fitBackground(region=region, shift=shift+'Down', setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
@@ -745,7 +733,9 @@ class HaaLimits(Limits):
             param.build(self.workspace, name)
 
             allintegrals[region], errors[region] = self.buildComponentIntegrals(region,vals,errs,integrals)
-
+            print "ALL INTEGRALS:", allintegrals[region], "\nERRORS:", errors[region]    
+            for k,v in allintegrals[region].items(): print k, v   
+ 
         if fixAfterControl:
             self.fix(False)
         self.background_values = vals
@@ -753,7 +743,6 @@ class HaaLimits(Limits):
         self.background_integrals = integrals
         self.background_integralErrors = errors
         self.background_integralValues = allintegrals
-
 
     def addBackgroundHists(self):
         shifts = {}
@@ -835,23 +824,18 @@ class HaaLimits(Limits):
 
         if doBinned: self.addBackgroundHists()
 
-        # set expected. ADDED BY KYLE, switch to commented section for original
-        print "TROUBLESHOOT: setupDatacard: bgs", bgs
-        for k,v in self.background_integralValues.items():
-            for k1,v1 in self.background_integralValues[k].items():
-                print "self.background_integralValues[" + k + "][" + k1 + "]=", self.background_integralValues[k][k1]
+        # set expected
         for region in self.REGIONS:
             for proc in sigs+bgs:
-                print "TROUBLESHOOT: setupDatacard:", region, proc
                 if proc in bgs and doBinned: continue
                 if proc in sigs:
-                    self.setExpected(proc,region,1) 
+                    self.setExpected(proc,region,1)
                     self.addRateParam('integral_{}_{}'.format(proc,region),region,proc)
                 else:
                     key = proc if proc in self.background_integralValues[region] else '{}_{}'.format(proc,region)
                     integral = self.background_integralValues[region][key]
                     self.setExpected(proc,region,integral)
-                if 'cont' not in proc and proc not in sigs: 
+                if 'cont' not in proc and proc not in sigs:
                     self.addShape(region,proc,proc)
 
             self.setObserved(region,-1) # reads from histogram
@@ -861,14 +845,17 @@ class HaaLimits(Limits):
 
             self.addBin(region)
 
+            #h = self.histMap[region]['']['dataNoSig']
+            #if h.InheritsFrom('TH1'):
+            #    integral = h.Integral(h.FindBin(self.XRANGE[0]),h.FindBin(self.XRANGE[1]))
+            #else:
+            #    integral = h.sumEntries('x>{} && x<{}'.format(*self.XRANGE))
+            #self.setExpected('bg',region,integral)
             for proc in bgs:
-                print "TROUBLESHOOT: setupDatacard IF ADDCONTORL", proc
+                #self.setExpected(proc,region,1)
+                #self.addRateParam('integral_{}_{}'.format(proc,region),region,proc)
                 key = proc if proc in self.control_integralValues else '{}_{}'.format(proc,region)
-                print proc, key 
                 integral = self.control_integralValues[key]
-                print "TROUBLESHOOT: integral=" , integral,
-                for k,v in self.control_integralValues.items():
-                        print "self.control_integralValues[" + k + "]=", self.control_integralValues[k]
                 self.setExpected(proc,region,integral)
                 if 'cont' not in proc and proc not in sigs:
                     self.addShape(region,proc,proc)
@@ -880,14 +867,16 @@ class HaaLimits(Limits):
     ### Systematics ###
     ###################
     def addSystematics(self,doBinned=False,addControl=False):
-        print 'TROUBLESHOOT: ADDING SYSTEMATICS'
+        print 'ADDING SYSTEMATICS'
         self.sigProcesses = tuple([self.SPLINENAME.format(h=h) for h in self.HMASSES])
+        #self.bgProcesses = ('bg',)
+        bgs = self.getComponentFractions(self.workspace.pdf('bg_PP'))
+        bgs = tuple([b.rstrip('_PP') for b in bgs])
         self._addLumiSystematic()
         self._addMuonSystematic()
         self._addTauSystematic()
         self._addShapeSystematic()
         self._addComponentSystematic(addControl=addControl)
-        self._addRelativeNormUnc()
         if not doBinned and not addControl: self._addControlSystematics()
 
     def _addControlSystematics(self):
@@ -985,36 +974,24 @@ class HaaLimits(Limits):
         }
         self.addSystematic('tauid','lnN',systematics=tausyst)
 
-    def _addComponentSystematic(self,addControl=False, is2D=False):
-        if is2D:
-            bgsy = self.getComponentFractions(self.workspace.pdf('bg_PP_y'))
-            bgsx = self.getComponentFractions(self.workspace.pdf('bg_PP_x'))
-            bgs = dict(bgsx, **bgsx)
-        else:
-            bgs = self.getComponentFractions(self.workspace.pdf('bg_PP'))
-        print "TROUBLESHOOTING: _addComponentSystematic bgs", bgs
+    def _addComponentSystematic(self,addControl=False):
+        bgs = self.getComponentFractions(self.workspace.pdf('bg_PP'))
         bgs = [b.rstrip('_PP') for b in bgs if 'cont' not in b]
-        print "TROUBLESHOOTING: _addComponentSystematic bgs", bgs
         bins = self.REGIONS
         if addControl: bins += ['control']
-        print "TROUBLESHOOTING: _addComponentSystematic bgs=", bgs, "\nbins=", bins, "\nself.control_integralErrors=", self.control_integralErrors
         syst = {}
         for bg in bgs:
             for b in bins:
                 key = bg if bg in self.control_integralErrors else '{}_control'.format(bg)
-                print "bg=", bg, " key=", key, self.control_integralErrors[key] 
                 syst[(bg,),(b,)] = 1 + self.control_integralErrors[key]
-        print "SYST=", type (syst), syst
-        self.addSystematic('{process}_normUnc','lnN',systematics=syst) 
-
-    def _addRelativeNormUnc(self):
-        relativesyst = {
-           (tuple(['upsilon2S']),  tuple(['PP'])) : 1.05,
-           (tuple(['upsilon3S']),  tuple(['PP'])) : 1.10,
-           (tuple(['jpsi2S']), tuple(['PP'])) : 1.40,
-        }
-        self.addSystematic('control_relNormUnc', 'lnN', systematics=relativesyst)
-
+                #if b=='control':
+                #    key = bg if bg in self.control_integralErrors else '{}_{}'.format(bg,b)
+                #    syst[(bg,),(b,)] = 1 + self.control_integralErrors[key]
+                #else:
+                #    key = bg if bg in self.background_integralErrors[b] else '{}_{}'.format(bg,b)
+                #    syst[(bg,),(b,)] = 1 + self.background_integralErrors[b][key]
+        #self.addSystematic('{process}_normUnc','lnN',systematics=syst)
+        
     ###################################
     ### Save workspace and datacard ###
     ###################################
