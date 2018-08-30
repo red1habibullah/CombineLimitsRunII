@@ -1155,11 +1155,9 @@ class HaaLimits2D(HaaLimits):
             for k,v in self.control_integralValues.items():
                     print "self.control_integralValues[" + k + "]=", self.control_integralValues[k]
             for proc in bgs:
-                print "TROUBLESHOOT: setupDatacard IF ADDCONTORL", proc, bgs
                 key = proc if proc in self.control_integralValues else '{}_{}'.format(proc,region)
-                print proc, key
-                if ("FP" in key and "control" in key) or ("PP"in key and "control" in key): continue
                 integral = self.control_integralValues[key]
+                print proc, key, integral
                 self.setExpected(proc,region,integral)
                 if 'cont' not in proc and proc not in sigs:
                     self.addShape(region,proc,proc)
@@ -1273,6 +1271,7 @@ class HaaLimits2D(HaaLimits):
         bgsx = self.getComponentFractions(self.workspace.pdf('bg_PP_x'))
         bgsy = self.getComponentFractions(self.workspace.pdf('bg_PP_y'))
         bgs = dict(bgsx, **bgsy)
+        bgs = [b.rstrip('_x') for b in bgs]
         bgs = [b.rstrip('_PP') for b in bgs]
         for h in self.HMASSES:
             processes[self.SIGNAME.format(h=h,a='X')] = [self.SPLINENAME.format(h=h)] + bgs
