@@ -175,16 +175,64 @@ class HaaLimits2D(HaaLimits):
         self._buildYModel(region+'_y',**kwargs)
 
         # the 2D model
+        cont1 = Models.Prod('cont1',
+            'cont1_{}_x'.format(region),
+            'bg_{}_y'.format(region),
+        )
+        name = 'cont1_{}'.format(region)
+        cont1.build(self.workspace,name)
+
+        cont3 = Models.Prod('cont3',
+            'cont3_{}_x'.format(region),
+            'bg_{}_y'.format(region),
+        )
+        name = 'cont3_{}'.format(region)
+        cont3.build(self.workspace,name)
+
+        jpsi1S = Models.Prod('jpsi1S',
+            'jpsi1S_{}_x'.format(region),
+            'bg_{}_y'.format(region),
+        )
+        name = 'jpsi1S_{}'.format(region)
+        jpsi1S.build(self.workspace,name)
+  
+        jpsi2S = Models.Prod('jpsi2S',
+            'jpsi2S_{}_x'.format(region),
+            'bg_{}_y'.format(region),
+        )
+        name = 'jpsi2S_{}'.format(region)
+        jpsi2S.build(self.workspace,name)
+
+        upsilon1S = Models.Prod('upsilon1S',
+            'upsilon1S_{}_x'.format(region),
+            'bg_{}_y'.format(region),
+        )
+        name = 'upsilon1S_{}'.format(region)
+        upsilon1S.build(self.workspace,name)
+
+        upsilon2S = Models.Prod('upsilon2S',
+            'upsilon2S_{}_x'.format(region),
+            'bg_{}_y'.format(region),
+        )
+        name = 'upsilon2S_{}'.format(region)
+        upsilon2S.build(self.workspace,name)
+
+        upsilon3S = Models.Prod('upsilon3S',
+            'upsilon3S_{}_x'.format(region),
+            'bg_{}_y'.format(region),
+        )
+        name = 'upsilon3S_{}'.format(region)
+        upsilon3S.build(self.workspace,name)
+
         bg = Models.Prod('bg',
             'bg_{}_x'.format(region),
             'bg_{}_y'.format(region),
         )
-
         name = 'bg_{}'.format(region)
         bg.build(self.workspace,name)
 
 
-    def fitSignals(self,h,region='PP',shift='',**kwargs):
+    def fitSignals(self,h,region='PP',shift='',yFitFunc="V",**kwargs):
         '''
         Fit the signal model for a given Higgs mass.
         Required arguments:
@@ -208,7 +256,7 @@ class HaaLimits2D(HaaLimits):
         results[h] = {}
         errors[h] = {}
         integrals[h] = {}
-        initialValuesDCB = self.GetInitialValuesDCB(isKinFit=isKinFit)
+        if self.XRANGE[1] > 100: initialValuesDCB = self.GetInitialValuesDCB(isKinFit=isKinFit)
         for a in amasses:
             aval = float(str(a).replace('p','.'))
             ws = ROOT.RooWorkspace('sig')
@@ -541,7 +589,6 @@ class HaaLimits2D(HaaLimits):
         elif yFitFunc == "DG"  : yparameters = ['mean', 'sigma1', 'sigma2']
         elif yFitFunc == "DV"  : yparameters = ['mean', 'sigma1', 'sigma2','width1','width2']
         elif yFitFunc == "errG": yparameters = ['mean_ttgaus', 'sigma_ttgaus','erfShift_tterf','erfScale_tterf']
-        #elif yFitFunc == "L"   : yparameters = ['mu', 'sigma']
         elif yFitFunc == "L"   : yparameters = ['mean_ttgaus', 'sigma_ttgaus','mu_ttland','sigma_ttland']
         else: raise
         for param in ['mean','width','sigma']:
@@ -646,6 +693,13 @@ class HaaLimits2D(HaaLimits):
         # create parameter splines
         params = ['mean','width','sigma']
         splines = {}
+        print "TROUBLESHOOT:VALS VVALS", region, yFitFunc, 
+        for k,v in vals[''].items():
+          for k1,v1, in vals[''][k].items():
+             for k2,v2 in vals[''][k][k1].items():
+               print "vals[''][" + str(k)+"][" + str(k1) + "][" + str(k2) + "]=", v2 
+        print "TROUBLESHOOT: PRINTING WORKSPACE"
+        self.workspace.Print("V")
         for param in params:
             name = 'x{param}_h{h}_{region}_sigx'.format(param=param,h=h,region=region)
             paramMasses = avals
@@ -677,11 +731,16 @@ class HaaLimits2D(HaaLimits):
         for param in yparameters:
             name = 'y{param}_h{h}_{region}_sigy'.format(param=param,h=h,region=region)
             paramMasses = avals
-            paramValues = [vals[''][h][a]['{param}_sigy'.format(param=param,h=h,a=a,region=region)] for a in amasses]
+            if yFitFunc == "errG" or yFitFunc == "L": paramValues = [vals[''][h][a]['{param}'.format(param=param)] for a in amasses]
+            else: paramValues = [vals[''][h][a]['{param}_sigy'.format(param=param)] for a in amasses]
             paramShifts = {}
             for shift in shifts:
-                shiftValuesUp   = [vals[shift+'Up'  ][h][a]['{param}_sigy'.format(  param=param,h=h,a=a,region=region,shift=shift)] for a in amasses]
-                shiftValuesDown = [vals[shift+'Down'][h][a]['{param}_sigy'.format(param=param,h=h,a=a,region=region,shift=shift)] for a in amasses]
+                if yFitFunc == "errG" or yFitFunc == "L":
+                    shiftValuesUp   = [vals[shift+'Up'  ][h][a]['{param}'.format(param=param)] for a in amasses]
+                    shiftValuesDown = [vals[shift+'Down'][h][a]['{param}'.format(param=param)] for a in amasses]
+                else:
+                    shiftValuesUp   = [vals[shift+'Up'  ][h][a]['{param}_sigy'.format(param=param)] for a in amasses]
+                    shiftValuesDown = [vals[shift+'Down'][h][a]['{param}_sigy'.format(param=param)] for a in amasses]
                 paramShifts[shift] = {'up': shiftValuesUp, 'down': shiftValuesDown}
             spline = Models.Spline(name,
                 masses = paramMasses,
@@ -788,12 +847,12 @@ class HaaLimits2D(HaaLimits):
 
         return model
 
-    def addControlModels(self, addUpsilon=True, setUpsilonLambda=False, voigtian=False, logy=False):
+    def addControlModels(self, addUpsilon=True, setUpsilonLambda=False, voigtian=False, logy=False, is2D=False):
         region = 'control'
-        self.buildModel(region=region, addUpsilon=addUpsilon, setUpsilonLambda=setUpsilonLambda, voigtian=voigtian)
+        super(HaaLimits2D, self).buildModel(region=region, addUpsilon=addUpsilon, setUpsilonLambda=setUpsilonLambda, voigtian=voigtian)
         #self.workspace.factory('bg_{}_norm[1,0,2]'.format(region))
         vals, errs, ints = self.fitBackground(region=region, setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
-
+        
         # integral
         name = 'integral_bg_{}'.format(region)
         paramValue = ints
@@ -801,9 +860,9 @@ class HaaLimits2D(HaaLimits):
             value  = paramValue,
         )
         param.build(self.workspace, name)
-
-        allintegrals, errors = self.buildComponentIntegrals(region,vals,errs,ints,'bg_{}_x'.format(region))
-
+        
+        allintegrals, errors = self.buildComponentIntegrals(region,vals,errs,ints, is2D=is2D)
+        
         self.control_vals = vals
         self.control_errs = errs
         self.control_integrals = ints
@@ -818,7 +877,7 @@ class HaaLimits2D(HaaLimits):
         model = self.workspace.pdf('bg_{}'.format(region))
         name = 'data_prefit_{}{}'.format(region,'_'+shift if shift else '')
         hist = self.histMap[region][shift]['dataNoSig']
-        print "region=", region, "\tshift=", shift, "\t", hist.GetName()
+        print "TROUBLESHOOT: region=", region, "\tshift=", shift, "\t", hist.GetName()
         if hist.InheritsFrom('TH1'):
             integral = hist.Integral() # 2D restricted integral?
             data = ROOT.RooDataHist(name,name,ROOT.RooArgList(self.workspace.var('x'),self.workspace.var('y')),hist)
@@ -827,7 +886,7 @@ class HaaLimits2D(HaaLimits):
             integral = hist.sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE))
 
         data.Print("v")
-        print "DataSetName=", data.GetName()
+        print "TROUBLESHOOT: DataSetName=", data.GetName()
         fr = model.fitTo(data,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True))
 
         xFrame = self.workspace.var('x').frame()
@@ -879,8 +938,6 @@ class HaaLimits2D(HaaLimits):
         for p in range(pars.getSize()):
             vals[pars.at(p).GetName()] = pars.at(p).getValV()
             errs[pars.at(p).GetName()] = pars.at(p).getError()
-        for v in sorted(vals.keys()):
-            print '  ', v, vals[v], '+/-', errs[v]
 
         python_mkdir(self.fitsDir)
         jfile = '{}/background_{}{}.json'.format(self.fitsDir,region,'_'+shift if shift else '')
@@ -893,7 +950,7 @@ class HaaLimits2D(HaaLimits):
     ###############################
     ### Add things to workspace ###
     ###############################
-    def addData(self,asimov=False,addSignal=False,**kwargs):
+    def addData(self,asimov=False,addSignal=False,addControl=False,**kwargs):
         mh = kwargs.pop('h',125)
         ma = kwargs.pop('a',15)
         for region in self.REGIONS:
@@ -924,9 +981,23 @@ class HaaLimits2D(HaaLimits):
                     data_obs = hist.Clone(name)
             self.wsimport(data_obs)
 
+        if addControl: #ADDED BY KYLE
+            region = 'control'
+            name = 'data_obs_{}'.format(region)
+            hist = self.histMap[region]['']['data']
+            if hist.InheritsFrom('TH1'):
+                data_obs = ROOT.RooDataHist(name,name,ROOT.RooArgList(self.workspace.var('x')),hist)
+            else:
+                data_obs = hist.Clone(name)
+            self.wsimport(data_obs, ROOT.RooFit.RecycleConflictNodes() )
+
+
     def addBackgroundModels(self, fixAfterControl=False, fixAfterFP=False, addUpsilon=True, setUpsilonLambda=False, voigtian=False, logy=False):
         if fixAfterControl:
             self.fix()
+        if setUpsilonLambda:
+            self.workspace.arg('lambda_cont1_FP').setConstant(True)
+            self.workspace.arg('lambda_cont1_PP').setConstant(True)
         vals = {}
         errs = {}
         integrals = {}
@@ -936,6 +1007,8 @@ class HaaLimits2D(HaaLimits):
             vals[region] = {}
             errs[region] = {}
             integrals[region] = {}
+            if region == 'PP' and fixAfterFP and addUpsilon and self.XRANGE[0]<=9 and self.XRANGE[1]>=11:
+                self.fix()
             self.buildModel(region=region, addUpsilon=addUpsilon, setUpsilonLambda=setUpsilonLambda, voigtian=voigtian)
             #self.workspace.factory('bg_{}_norm[1,0,2]'.format(region))
             for shift in self.BACKGROUNDSHIFTS+['']:
@@ -953,6 +1026,9 @@ class HaaLimits2D(HaaLimits):
                     vals[region][shift+'Down'] = vDown
                     errs[region][shift+'Down'] = eDown
                     integrals[region][shift+'Down'] = iDown
+            if region == 'PP' and fixAfterFP and addUpsilon and self.XRANGE[0]<=9 and self.XRANGE[1]>=11:
+                self.fix(False)
+
             # integral
             name = 'integral_bg_{}'.format(region)
             paramValue = integrals[region]['']
@@ -967,7 +1043,7 @@ class HaaLimits2D(HaaLimits):
             )
             param.build(self.workspace, name)
 
-            allintegrals[region], errors[region] = self.buildComponentIntegrals(region,vals,errs,integrals,'bg_{}_x'.format(region))
+            allintegrals[region], errors[region] = self.buildComponentIntegrals(region,vals,errs,integrals, is2D=True)
 
         if fixAfterControl:
             self.fix(False)
@@ -977,7 +1053,7 @@ class HaaLimits2D(HaaLimits):
         self.background_integralErrors = errors
         self.background_integralValues = allintegrals
 
-    def addSignalModels(self,yFitFunc="G",isKinFit=True,**kwargs):
+    def addSignalModels(self,yFitFuncFP="V", yFitFuncPP="V",isKinFit=True,**kwargs):
         models = {}
         values = {}
         errors = {}
@@ -987,6 +1063,8 @@ class HaaLimits2D(HaaLimits):
             values[region] = {}
             errors[region] = {}
             integrals[region] = {}
+            if region == 'PP':  yFitFunc=yFitFuncPP
+            else: yFitFunc = yFitFuncFP
             for h in self.HMASSES:
                 values[region][h] = {}
                 errors[region][h] = {}
@@ -1000,7 +1078,6 @@ class HaaLimits2D(HaaLimits):
                     else:
                         valsUp, errsUp, intsUp = self.fitSignals(h,region=region,shift=shift+'Up',yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
                         valsDown, errsDown, intsDown = self.fitSignals(h,region=region,shift=shift+'Down',yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
-                        valsDown, errsDown, intsDown = self.fitSignals(h,region=region,shift=shift+'Down',**kwargs)
                         values[region][h][shift+'Up'] = valsUp
                         errors[region][h][shift+'Up'] = errsUp
                         integrals[region][h][shift+'Up'] = intsUp
@@ -1015,18 +1092,16 @@ class HaaLimits2D(HaaLimits):
     ### Setup datacard ###
     ######################
     def setupDatacard(self, addControl=False, doBinned=False):
-
-        #bgs = ['bg']
-        bgs = self.getComponentFractions(self.workspace.pdf('bg_PP_x'))
-        bgs = [b.rstrip('_PP_x') for b in bgs]
-        sigs = [self.SPLINENAME.format(h=h) for h in self.HMASSES]
+        bgs = self.getComponentFractions(self.workspace.pdf('bg_PP_x')) #ADDED BY KYLE
+        bgs = [b.rstrip('_x') for b in bgs]
+        bgs = [b.rstrip('_PP') for b in bgs] #ADDED BY KYLE
+        sigs = [self.SPLINENAME.format(h=h) for h in self.HMASSES] #ADDED BY KYLE
 
         # setup bins
         for region in self.REGIONS:
             self.addBin(region)
 
         # add processes
-        #self.addProcess('bg')
         for proc in bgs:
             self.addProcess(proc)
 
@@ -1035,7 +1110,6 @@ class HaaLimits2D(HaaLimits):
 
         if doBinned: self.addBackgroundHists()
 
-        # set expected
         for region in self.REGIONS:
             for proc in sigs+bgs:
                 if proc in bgs and doBinned: continue
@@ -1043,7 +1117,7 @@ class HaaLimits2D(HaaLimits):
                     self.setExpected(proc,region,1)
                     self.addRateParam('integral_{}_{}'.format(proc,region),region,proc)
                 else:
-                    key = proc if proc in self.background_integralValues[region] else '{}_{}_x'.format(proc,region)
+                    key = proc if proc in self.background_integralValues[region] else '{}_{}'.format(proc,region)
                     integral = self.background_integralValues[region][key]
                     self.setExpected(proc,region,integral)
                 if 'cont' not in proc and proc not in sigs:
@@ -1056,16 +1130,8 @@ class HaaLimits2D(HaaLimits):
 
             self.addBin(region)
 
-            #h = self.histMap[region]['']['dataNoSig']
-            #if h.InheritsFrom('TH1'):
-            #    integral = h.Integral(h.FindBin(self.XRANGE[0]),h.FindBin(self.XRANGE[1]))
-            #else:
-            #    integral = h.sumEntries('x>{} && x<{}'.format(*self.XRANGE))
-            #self.setExpected('bg',region,integral)
             for proc in bgs:
-                #self.setExpected(proc,region,1)
-                #self.addRateParam('integral_{}_{}'.format(proc,region),region,proc)
-                key = proc if proc in self.control_integralValues else '{}_{}_x'.format(proc,region)
+                key = proc if proc in self.control_integralValues else '{}_{}'.format(proc,region)
                 integral = self.control_integralValues[key]
                 self.setExpected(proc,region,integral)
                 if 'cont' not in proc and proc not in sigs:
@@ -1152,11 +1218,8 @@ class HaaLimits2D(HaaLimits):
     ###################
     ### Systematics ###
     ###################
-    def addSystematics(self,doBinned=False,addControl=False):
+    def addSystematics(self,doBinned=False,addControl=False): #ADDED BY KYLE
         self.sigProcesses = tuple([self.SPLINENAME.format(h=h) for h in self.HMASSES])
-        #self.bgProcesses = ('bg',)
-        bgs = self.getComponentFractions(self.workspace.pdf('bg_PP_x'))
-        bgs = tuple([b.rstrip('_PP_x') for b in bgs])
         self._addLumiSystematic()
         self._addMuonSystematic()
         self._addTauSystematic()
@@ -1164,31 +1227,21 @@ class HaaLimits2D(HaaLimits):
         self._addControlSystematics()
         if not doBinned and not addControl: self._addControlSystematics()
 
-    def _addComponentSystematic(self,addControl=False):
-        bgs = self.getComponentFractions(self.workspace.pdf('bg_PP_x'))
-        bgs = [b.rstrip('_PP_x') for b in bgs if 'cont' not in b]
-        bins = self.REGIONS
-        if addControl: bins += ['control']
-        syst = {}
-        for bg in bgs:
-            for b in bins:
-                key = bg if bg in self.control_integralErrors else '{}_control'.format(bg)
-                syst[(bg,),(b,)] = 1 + self.control_integralErrors[key]
-                #if b=='control':
-                #    key = bg if bg in self.control_integralErrors else '{}_{}'.format(bg,b)
-                #    syst[(bg,),(b,)] = 1 + self.control_integralErrors[key]
-                #else:
-                #    key = bg if bg in self.background_integralErrors[b] else '{}_{}'.format(bg,b)
-                #    syst[(bg,),(b,)] = 1 + self.background_integralErrors[b][key]
-        #self.addSystematic('{process}_normUnc','lnN',systematics=syst)
+        self._addComponentSystematic(addControl=addControl, is2D=True)
+        self._addRelativeNormUnc()
+        if not doBinned and not addControl: self._addControlSystematics()
+
 
     ###################################
     ### Save workspace and datacard ###
     ###################################
     def save(self,name='mmmt', subdirectory=''):
         processes = {}
-        bgs = self.getComponentFractions(self.workspace.pdf('bg_PP_x'))
-        bgs = [b.rstrip('_PP_x') for b in bgs]
+        bgsx = self.getComponentFractions(self.workspace.pdf('bg_PP_x'))
+        bgsy = self.getComponentFractions(self.workspace.pdf('bg_PP_y'))
+        bgs = dict(bgsx, **bgsy)
+        bgs = [b.rstrip('_x') for b in bgs]
+        bgs = [b.rstrip('_PP') for b in bgs]
         for h in self.HMASSES:
             processes[self.SIGNAME.format(h=h,a='X')] = [self.SPLINENAME.format(h=h)] + bgs
         if subdirectory == '':
