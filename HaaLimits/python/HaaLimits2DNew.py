@@ -693,12 +693,12 @@ class HaaLimits2D(HaaLimits):
         # create parameter splines
         params = ['mean','width','sigma']
         splines = {}
-        print "TROUBLESHOOT:VALS VVALS", region, yFitFunc, 
-        for k,v in vals[''].items():
-          for k1,v1, in vals[''][k].items():
-             for k2,v2 in vals[''][k][k1].items():
-               print "vals[''][" + str(k)+"][" + str(k1) + "][" + str(k2) + "]=", v2 
-        print "TROUBLESHOOT: PRINTING WORKSPACE"
+        #print "TROUBLESHOOT:VALS VVALS", region, yFitFunc, 
+        #for k,v in vals[''].items():
+        #  for k1,v1, in vals[''][k].items():
+        #     for k2,v2 in vals[''][k][k1].items():
+        #       print "vals[''][" + str(k)+"][" + str(k1) + "][" + str(k2) + "]=", v2 
+        print "TROUBLESHOOT: PRINTING WORKSPACE BEGINNING 'buildSpline'"
         self.workspace.Print("V")
         for param in params:
             name = 'x{param}_h{h}_{region}_sigx'.format(param=param,h=h,region=region)
@@ -767,17 +767,9 @@ class HaaLimits2D(HaaLimits):
         spline.build(self.workspace, name)
         splines[name] = spline
 
-        # create model
-        if fit:
-            print 'Need to reimplement fitting'
-            raise
-        else:
-            model = Models.Voigtian(self.SPLINENAME.format(h=h),
-                **{param: '{param}_h{h}_{region}'.format(param=param, h=h, region=region) for param in params}
-            )
-        model.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region))
+        print "TROUBLESHOOT: PRINTING WORKSPACE MIDDLE buildSpline"
+        self.workspace.Print("V")
 
-        return model
     
         # create model
         if fit:
@@ -787,7 +779,10 @@ class HaaLimits2D(HaaLimits):
             modelx = Models.Voigtian(self.SPLINENAME.format(h=h)+'_x',
                 **{param: 'x{param}_h{h}_{region}_sigx'.format(param=param, h=h, region=region) for param in params}
             )
-        modelx.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_x'))
+        modelx.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_x'))
+
+        print "TROUBLESHOOT: PRINTING WORKSPACE after modelx.build buildSpline"
+        self.workspace.Print("V")
 
         if   yFitFunc == "V"   : ym = Models.Voigtian
         elif yFitFunc == "G"   : ym = Models.Gaussian
@@ -795,8 +790,7 @@ class HaaLimits2D(HaaLimits):
         elif yFitFunc == "DCB" : ym = Models.DoubleCrystalBall
         elif yFitFunc == "DG"  : ym = Models.DoubleSidedGaussian
         elif yFitFunc == "DV"  : ym = Models.DoubleSidedVoigtian
-        #elif yFitFunc == "errG": 
-        else: raise
+        elif yFitFunc != "L" and yFitFunc != "errG": raise
 
         if fit:
             print 'Need to reimplement fitting'
@@ -807,43 +801,47 @@ class HaaLimits2D(HaaLimits):
                     x = 'y',
                      **{param: 'y{param}_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['mean','sigma']}
                 )
-                modely_gaus.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_gaus_y'))
+                modely_gaus.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_gaus_y'))
                 modely_erf = Models.Erf("model_erf",
                     x = 'y',
                      **{param: 'y{param}_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['ergScales','erfShifts']}
                 )
-                modely_erf.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_erf_y'))
+                modely_erf.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_erf_y'))
                 modely = Models.Prod(self.SPLINENAME.format(h=h)+'_y',
-                    '{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_gaus_y'),
-                    '{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_erf_y'),
+                    '{}_{}'.format(self.SPLINENAME.format(h=h),region+'_gaus_y'),
+                    '{}_{}'.format(self.SPLINENAME.format(h=h),region+'_erf_y'),
                 )
             elif yFitFunc == 'L':
                 modely_gaus = Models.Gaussian("model_gaus",
                     x = 'y',
                      **{param: 'y{param}_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['mean','sigma']}
                 )
-                modely_gaus.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_gaus_y'))
+                modely_gaus.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_gaus_y'))
                 modely_land = Models.Erf("model_land",
                     x = 'y',
                      **{param: 'y{param}_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['mu','sigma']}
                 )
-                modely_land.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_land_y'))
+                modely_land.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_land_y'))
                 modely = Models.Prod(self.SPLINENAME.format(h=h)+'_y',
-                    '{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_gaus_y'),
-                    '{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_land_y'),
+                    '{}_{}'.format(self.SPLINENAME.format(h=h),region+'_gaus_y'),
+                    '{}_{}'.format(self.SPLINENAME.format(h=h),region+'_land_y'),
                 )
             else:
                 modely = ym(self.SPLINENAME.format(h=h)+'_y',
                     x = 'y',
                     **{param: 'y{param}_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in yparameters}
                 )
-        modely.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_y'))
+        modely.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_y'))
+        print "TROUBLESHOOT: PRINTING WORKSPACE after modely.build buildSpline"
+        self.workspace.Print("V")
                 
         model = Models.Prod(self.SPLINENAME.format(h=h),
-            '{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_x'),
-            '{}_{}'.format(self.SPLINENAME.format(h=h),tag+'_y'),
+            '{}_{}'.format(self.SPLINENAME.format(h=h),region+'_x'),
+            '{}_{}'.format(self.SPLINENAME.format(h=h),region+'_y'),
         )
-        model.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),tag))
+        model.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region))
+        print "TROUBLESHOOT: PRINTING WORKSPACE after FINAL model.build buildSpline"
+        self.workspace.Print("V")
 
         return model
 
@@ -861,8 +859,9 @@ class HaaLimits2D(HaaLimits):
         )
         param.build(self.workspace, name)
         
+
         allintegrals, errors = self.buildComponentIntegrals(region,vals,errs,ints, is2D=is2D)
-        
+
         self.control_vals = vals
         self.control_errs = errs
         self.control_integrals = ints
@@ -877,7 +876,7 @@ class HaaLimits2D(HaaLimits):
         model = self.workspace.pdf('bg_{}'.format(region))
         name = 'data_prefit_{}{}'.format(region,'_'+shift if shift else '')
         hist = self.histMap[region][shift]['dataNoSig']
-        print "TROUBLESHOOT: region=", region, "\tshift=", shift, "\t", hist.GetName()
+        #print "TROUBLESHOOT: region=", region, "\tshift=", shift, "\t", hist.GetName()
         if hist.InheritsFrom('TH1'):
             integral = hist.Integral() # 2D restricted integral?
             data = ROOT.RooDataHist(name,name,ROOT.RooArgList(self.workspace.var('x'),self.workspace.var('y')),hist)
@@ -885,8 +884,7 @@ class HaaLimits2D(HaaLimits):
             data = hist.Clone(name)
             integral = hist.sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE))
 
-        data.Print("v")
-        print "TROUBLESHOOT: DataSetName=", data.GetName()
+        #print "TROUBLESHOOT: DataSetName=", data.GetName()
         fr = model.fitTo(data,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True))
 
         xFrame = self.workspace.var('x').frame()
@@ -951,6 +949,8 @@ class HaaLimits2D(HaaLimits):
     ### Add things to workspace ###
     ###############################
     def addData(self,asimov=False,addSignal=False,addControl=False,**kwargs):
+        print "TROUBLESHOOT: addData beginning"
+        self.workspace.Print("v")
         mh = kwargs.pop('h',125)
         ma = kwargs.pop('a',15)
         for region in self.REGIONS:
@@ -1086,6 +1086,8 @@ class HaaLimits2D(HaaLimits):
                         integrals[region][h][shift+'Down'] = intsDown
                 models[region][h] = self.buildSpline(h,values[region][h],errors[region][h],integrals[region][h],region,self.SIGNALSHIFTS,yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
                 #self.workspace.factory('{}_{}_norm[1,0,9999]'.format(self.SPLINENAME.format(h=h),region))
+        print "TROUBLESHOOT: addSignalModels End "
+        self.workspace.Print("v") 
         self.fitted_models = models
 
     ######################
@@ -1119,6 +1121,7 @@ class HaaLimits2D(HaaLimits):
                 else:
                     key = proc if proc in self.background_integralValues[region] else '{}_{}'.format(proc,region)
                     integral = self.background_integralValues[region][key]
+
                     self.setExpected(proc,region,integral)
                 if 'cont' not in proc and proc not in sigs:
                     self.addShape(region,proc,proc)
@@ -1133,6 +1136,7 @@ class HaaLimits2D(HaaLimits):
             for proc in bgs:
                 key = proc if proc in self.control_integralValues else '{}_{}'.format(proc,region)
                 integral = self.control_integralValues[key]
+
                 self.setExpected(proc,region,integral)
                 if 'cont' not in proc and proc not in sigs:
                     self.addShape(region,proc,proc)
