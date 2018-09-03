@@ -25,6 +25,7 @@ xRange = [4,25] # no jpsi
 #xRange = [2.5,4.5] # jpsi only
 
 yRange = [0,1200] # h, hkf
+yRange = [0,250]
 
 hmasses = [125,300,750]
 hmasses = [125]
@@ -35,14 +36,14 @@ signame = 'HToAAH{h}A{a}'
 
 shiftTypes = ['lep','pu','fake','trig','btag','MuonEn','TauEn','JetEn','UnclusteredEn']
 #shiftTypes = ['fake','lep']
-#shiftTypes = []
+shiftTypes = []
 
 signalShiftTypes = ['lep','pu','trig','btag','MuonEn','TauEn','JetEn','UnclusteredEn']
 #signalShiftTypes = ['lep']
-#signalShiftTypes = []
+signalShiftTypes = []
 
 backgroundShiftTypes = ['fake']
-#backgroundShiftTypes = []
+backgroundShiftTypes = []
 
 shifts = []
 for s in shiftTypes:
