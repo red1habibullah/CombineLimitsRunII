@@ -68,30 +68,77 @@ class HaaLimits2D(HaaLimits):
                 sigma = [10,0,100],
             )
         else:
+            # Landau only
+            #bg = Models.Landau('bg',
+            #    x = 'y',
+            #    mu    = [5,0,20],
+            #    sigma = [1,0,10],
+            #)
+
+            # landau plus gaussian
+            #land1 = Models.Landau('land1',
+            #    x = 'y',
+            #    mu    = [5,0,20],
+            #    sigma = [1,0,10],
+            #)
+            #nameL1 = 'land1{}'.format('_'+tag if tag else '')
+            #land1.build(self.workspace,nameL1)
+
+            ## add a guassian summed for tt ?
+            #gaus1 = Models.Gaussian('gaus1',
+            #    x = 'y',
+            #    mean = [1.5,0,4],
+            #    sigma = [0.4,0,2],
+            #)
+            #nameG1 = 'gaus1{}'.format('_'+tag if tag else '')
+            #gaus1.build(self.workspace,nameG1)
+
+            #bg = Models.Sum('bg',
+            #    **{
+            #        nameL1     : [0.9,0,1],
+            #        nameG1     : [0.5,0,1],
+            #        'recursive': True,
+            #    }
+            #)
+
+            # landua plus upsilon gaussian
             land1 = Models.Landau('land1',
                 x = 'y',
-                mu    = [5,0,200],
-                sigma = [1,0,100],
+                mu    = [5,0,20],
+                sigma = [1,0,10],
             )
             nameL1 = 'land1{}'.format('_'+tag if tag else '')
             land1.build(self.workspace,nameL1)
 
-            # add a guassian summed for tt ?
-            gaus1 = Models.Gaussian('gaus1',
+            # jpsi
+            #jpsi2 = Models.Voigtian('jpsi2S',
+            #    x = 'y',
+            #    mean  = [3.7,3.6,3.8],
+            #    sigma = [0.1,0.01,0.5],
+            #    width = [0.1,0.01,0.5],
+            #)
+            #nameJ2 = 'jpsi2Stt'
+            #jpsi2.build(self.workspace,nameJ2)
+
+
+            # add a guassian for upsilon
+            upsilon1 = Models.Gaussian('upsilon1',
                 x = 'y',
-                mean = [1.5,0,4],
-                sigma = [0.4,0,2],
+                mean = [6,5,7],
+                sigma = [0.2,0,1],
             )
-            nameG1 = 'gaus1{}'.format('_'+tag if tag else '')
-            gaus1.build(self.workspace,nameG1)
+            nameU1 = 'upsilontt'
+            upsilon1.build(self.workspace,nameU1)
 
             bg = Models.Sum('bg',
                 **{
                     nameL1     : [0.9,0,1],
-                    nameG1     : [0.5,0,1],
+                    #nameJ2     : [0.1,0,1],
+                    nameU1     : [0.1,0,1],
                     'recursive': True,
                 }
             )
+
 
         #cont1 = Models.Exponential('conty1',
         #    x = 'y',
@@ -242,6 +289,8 @@ class HaaLimits2D(HaaLimits):
         isKinFit = kwargs.pop('isKinFit',False)
         yFitFunc = kwargs.pop('yFitFunc','G')
         fit = kwargs.get('fit',False)
+        load = kwargs.get('load',False)
+        skipFit = kwargs.get('skipFit',False)
         dobgsig = kwargs.get('doBackgroundSignal',False)
         amasses = self.AMASSES
         if h>125: amasses = [a for a in amasses if a not in ['3p6',4,6]]
@@ -250,12 +299,19 @@ class HaaLimits2D(HaaLimits):
         tag= '{}{}'.format(region,'_'+shift if shift else '')
 
         # initial fit
-        results = {}
-        errors = {}
-        integrals = {}
-        results[h] = {}
-        errors[h] = {}
-        integrals[h] = {}
+        if load:
+            # load the previous fit
+            results, errors, integrals = self.loadSignalFit(h,tag,region,shift)
+        elif shift and not skipFit:
+            # load the central fits
+            results, errors, integrals = self.loadSignalFit(h,region,region)
+        else:
+            results = {}
+            errors = {}
+            integrals = {}
+            results[h] = {}
+            errors[h] = {}
+            integrals[h] = {}
         if self.YRANGE[1] > 100: initialValuesDCB = self.GetInitialValuesDCB(isKinFit=isKinFit)
         for a in amasses:
             aval = float(str(a).replace('p','.'))
@@ -472,15 +528,18 @@ class HaaLimits2D(HaaLimits):
                     )
 
             model.build(ws, 'sig')
+            if load or (shift and not skipFit):
+                for param in results[h][a]:
+                    ws.var(param).setVal(results[h][a][param])
             hist = histMap[self.SIGNAME.format(h=h,a=a)]
             saveDir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
-            results[h][a], errors[h][a] = model.fit2D(ws, hist, 'h{}_a{}_{}'.format(h,a,tag), saveDir=saveDir, save=True, doErrors=True)
-
-            if self.binned:
-                integral = histMap[self.SIGNAME.format(h=h,a=a)].Integral()
-            else:
-                integral = histMap[self.SIGNAME.format(h=h,a=a)].sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE))
-            integrals[h][a] = integral
+            if not skipFit:
+                results[h][a], errors[h][a] = model.fit2D(ws, hist, 'h{}_a{}_{}'.format(h,a,tag), saveDir=saveDir, save=True, doErrors=True)
+                if self.binned:
+                    integral = histMap[self.SIGNAME.format(h=h,a=a)].Integral()
+                else:
+                    integral = histMap[self.SIGNAME.format(h=h,a=a)].sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE))
+                integrals[h][a] = integral
 
     
         savedir = '{}/{}'.format(self.fitsDir,shift if shift else 'central')
@@ -829,11 +888,14 @@ class HaaLimits2D(HaaLimits):
 
         return model
 
-    def addControlModels(self, addUpsilon=True, setUpsilonLambda=False, voigtian=False, logy=False):
+    def addControlModels(self, addUpsilon=True, setUpsilonLambda=False, voigtian=False, logy=False, load=False, skipFit=False):
         region = 'control'
         super(HaaLimits2D, self).buildModel(region=region, addUpsilon=addUpsilon, setUpsilonLambda=setUpsilonLambda, voigtian=voigtian)
         #self.workspace.factory('bg_{}_norm[1,0,2]'.format(region))
-        vals, errs, ints = self.fitBackground(region=region, setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
+        if load:
+            vals, errs, ints = self.loadBackgroundFit(region)
+        if not skipFit:
+            vals, errs, ints = self.fitBackground(region=region, setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
         
         # integral
         name = 'integral_bg_{}'.format(region)
@@ -843,8 +905,10 @@ class HaaLimits2D(HaaLimits):
         )
         param.build(self.workspace, name)
         
-
-        allintegrals, errors = self.buildComponentIntegrals(region,vals,errs,ints, 'bg_control')
+        if load:
+            allintegrals, errors = self.loadComponentIntegrals(region)
+        if not skipFit:
+            allintegrals, errors = self.buildComponentIntegrals(region,vals,errs,ints, 'bg_control')
 
         self.control_vals = vals
         self.control_errs = errs
@@ -972,7 +1036,7 @@ class HaaLimits2D(HaaLimits):
             self.wsimport(data_obs, ROOT.RooFit.RecycleConflictNodes() )
 
 
-    def addBackgroundModels(self, fixAfterControl=False, fixAfterFP=False, addUpsilon=True, setUpsilonLambda=False, voigtian=False, logy=False):
+    def addBackgroundModels(self, fixAfterControl=False, fixAfterFP=False, addUpsilon=True, setUpsilonLambda=False, voigtian=False, logy=False, load=False, skipFit=False):
         if fixAfterControl:
             self.fix()
         if setUpsilonLambda:
@@ -991,15 +1055,22 @@ class HaaLimits2D(HaaLimits):
                 self.fix()
             self.buildModel(region=region, addUpsilon=addUpsilon, setUpsilonLambda=setUpsilonLambda, voigtian=voigtian)
             #self.workspace.factory('bg_{}_norm[1,0,2]'.format(region))
-            for shift in self.BACKGROUNDSHIFTS+['']:
+            for shift in ['']+self.BACKGROUNDSHIFTS:
                 if shift=='':
-                    v, e, i = self.fitBackground(region=region, setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
+                    if load:
+                        v, e, i = self.loadBackgroundFit(region)
+                    else:
+                        v, e, i = self.fitBackground(region=region, setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
                     vals[region][shift] = v
                     errs[region][shift] = e
                     integrals[region][shift] = i
                 else:
-                    vUp, eUp, iUp = self.fitBackground(region=region, shift=shift+'Up', setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
-                    vDown, eDown, iDown = self.fitBackground(region=region, shift=shift+'Down', setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
+                    if load:
+                        vUp, eUp, iUp = self.loadBackgroundFit(region,shift+'Up')
+                        vDown, eDown, iDown = self.loadBackgroundFit(region,shift+'Down')
+                    if not skipFit:
+                        vUp, eUp, iUp = self.fitBackground(region=region, shift=shift+'Up', setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
+                        vDown, eDown, iDown = self.fitBackground(region=region, shift=shift+'Down', setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
                     vals[region][shift+'Up'] = vUp
                     errs[region][shift+'Up'] = eUp
                     integrals[region][shift+'Up'] = iUp
@@ -1023,7 +1094,10 @@ class HaaLimits2D(HaaLimits):
             )
             param.build(self.workspace, name)
 
-            allintegrals[region], errors[region] = self.buildComponentIntegrals(region,vals,errs,integrals, 'bg_{}_x'.format(region))
+            if load:
+                allintegrals[region], errors[region] = self.loadComponentIntegrals(region)
+            if not skipFit:
+                allintegrals[region], errors[region] = self.buildComponentIntegrals(region,vals,errs,integrals, 'bg_{}_x'.format(region))
 
         if fixAfterControl:
             self.fix(False)

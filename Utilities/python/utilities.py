@@ -5,6 +5,8 @@ import operator
 import subprocess
 import logging
 import math
+import json
+import pickle
 
 # common definitions
 ZMASS = 91.1876
@@ -107,3 +109,13 @@ def asimovSignificanceWithError(s,b):
     bOverE = b[0]/b[1]
     if sOverB<1e-5: return poissonSignificanceWithError(s,b) # avoid floating point problems with small s
     return (2*(sPlusB*math.log(sPlusB*(b[0]+b[1]**2)/(b[0]**2+sPlusB*b[1]**2))-bOverE**2*math.log(1+b[1]**2*s[0]/(b[0]*(b[0]+b[1]**2)))))**0.5
+
+def dumpData(name,data):
+    jfile = 'jsons/{0}.json'.format(name)
+    pfile = 'pickles/{0}.pkl'.format(name)
+    python_mkdir(os.path.dirname(jfile))
+    python_mkdir(os.path.dirname(pfile))
+    with open(jfile,'w') as f:
+        f.write(json.dumps(data, indent=4, sort_keys=True))
+    with open(pfile,'wb') as f:
+        pickle.dump(data,f)

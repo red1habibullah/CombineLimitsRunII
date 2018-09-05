@@ -7,6 +7,7 @@ import argparse
 import math
 import errno
 import json
+import pickle
 from array import array
 
 import ROOT
@@ -71,6 +72,13 @@ class HaaLimits(Limits):
     def dump(self,name,results):
         with open(name,'w') as f:
             f.write(json.dumps(results, indent=4, sort_keys=True))
+        with open(name.replace('.json','.pkl'),'wb') as f:
+            pickle.dump(results,f)
+
+    def load(self,name):
+        with open(name.replace('.json','.pkl'),'rb') as f:
+            results = pickle.load(f)
+        return results
 
     ###########################
     ### Workspace utilities ###
@@ -250,6 +258,15 @@ class HaaLimits(Limits):
         name = 'bg_{}'.format(region)
         bg.build(self.workspace,name)
 
+    def loadSignalFit(self, h, tag, region, shift=''):
+        savedir = '{}/{}'.format(self.fitsDir,shift if shift else 'central')
+        savename = '{}/h{}_{}.json'.format(savedir,h,tag)
+        results = self.load(savename)
+        vals = results['vals']
+        errs = results['errs']
+        ints = results['integrals']
+        return vals, errs, ints
+
     def fitSignals(self,h,region='PP',shift='',**kwargs):
         '''
         Fit the signal model for a given Higgs mass.
@@ -257,6 +274,8 @@ class HaaLimits(Limits):
             h = higgs mass
         '''
         fit = kwargs.get('fit',False)      # will fit the spline parameters rather than a simple spline
+        load = kwargs.get('load',False)
+        skipFit = kwargs.get('skipFit',False)
         amasses = self.AMASSES
         if h>125: amasses = [a for a in amasses if a not in ['3p6',4,6]]
         avals = [float(str(x).replace('p','.')) for x in amasses]
@@ -264,12 +283,19 @@ class HaaLimits(Limits):
         tag= '{}{}'.format(region,'_'+shift if shift else '')
 
         # initial fit
-        results = {}
-        errors = {}
-        integrals = {}
-        results[h] = {}
-        errors[h] = {}
-        integrals[h] = {}
+        if load:
+            # load the previous fit
+            results, errors, integrals = self.loadSignalFit(h,tag,region,shift)
+        elif shift and not skipFit:
+            # load the central fits
+            results, errors, integrals = self.loadSignalFit(h,region,region)
+        else:
+            results = {}
+            errors = {}
+            integrals = {}
+            results[h] = {}
+            errors[h] = {}
+            integrals[h] = {}
         for a in amasses:
             aval = float(str(a).replace('p','.'))
             ws = ROOT.RooWorkspace('sig')
@@ -283,14 +309,18 @@ class HaaLimits(Limits):
                 sigma = [0.01*aval,0,5],
             )
             model.build(ws, 'sig')
+            if load or (shift and not skipFit):
+                for param in results[h][a]:
+                    ws.var(param).setVal(results[h][a][param])
             hist = histMap[self.SIGNAME.format(h=h,a=a)]
             saveDir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
-            results[h][a], errors[h][a] = model.fit(ws, hist, 'h{}_a{}_{}'.format(h,a,tag), saveDir=saveDir, save=True, doErrors=True)
-            if self.binned:
-                integral = histMap[self.SIGNAME.format(h=h,a=a)].Integral()
-            else:
-                integral = histMap[self.SIGNAME.format(h=h,a=a)].sumEntries('x>{} && x<{}'.format(*self.XRANGE))
-            integrals[h][a] = integral
+            if not skipFit:
+                results[h][a], errors[h][a] = model.fit(ws, hist, 'h{}_a{}_{}'.format(h,a,tag), saveDir=saveDir, save=True, doErrors=True)
+                if self.binned:
+                    integral = histMap[self.SIGNAME.format(h=h,a=a)].Integral()
+                else:
+                    integral = histMap[self.SIGNAME.format(h=h,a=a)].sumEntries('x>{} && x<{}'.format(*self.XRANGE))
+                integrals[h][a] = integral
     
         savedir = '{}/{}'.format(self.fitsDir,shift if shift else 'central')
         python_mkdir(savedir)
@@ -637,14 +667,40 @@ class HaaLimits(Limits):
             param.build(self.workspace, name)
             allintegrals[component] = paramValue
 
+        python_mkdir(self.fitsDir)
+        jfile = '{}/components_{}.json'.format(self.fitsDir,region)
+        results = {'errs':allerrors, 'integrals':allintegrals}
+        self.dump(jfile,results)
+
+
         return allintegrals, allerrors
 
 
-    def addControlModels(self, addUpsilon=True, setUpsilonLambda=False, voigtian=False, logy=False):
+    def loadBackgroundFit(self, region, shift=''):
+        jfile = '{}/background_{}{}.json'.format(self.fitsDir,region,shift)
+        results = self.load(jfile)
+        vals = results['vals']
+        errs = results['errs']
+        ints = results['integral']
+        for param in vals:
+            self.workspace.var(param).setVal(vals[param])
+        return vals, errs, ints
+
+    def loadComponentIntegrals(self, region):
+        jfile = '{}/components_{}.json'.format(self.fitsDir,region)
+        results = self.load(jfile)
+        allintegrals = results['integrals']
+        errors = results['errs']
+        return allintegrals, errors
+
+    def addControlModels(self, addUpsilon=True, setUpsilonLambda=False, voigtian=False, logy=False, load=False, skipFit=False):
         region = 'control'
         self.buildModel(region=region, addUpsilon=addUpsilon, setUpsilonLambda=setUpsilonLambda, voigtian=voigtian)
         #self.workspace.factory('bg_{}_norm[1,0,2]'.format(region))
-        vals, errs, ints = self.fitBackground(region=region, setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
+        if load:
+            vals, errs, ints = self.loadBackgroundFit(region)
+        if not skipFit:
+            vals, errs, ints = self.fitBackground(region=region, setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
 
         # integral
         name = 'integral_bg_{}'.format(region)
@@ -654,7 +710,10 @@ class HaaLimits(Limits):
         )
         param.build(self.workspace, name)
 
-        allintegrals, errors = self.buildComponentIntegrals(region,vals,errs,ints, 'bg_control')
+        if load:
+            allintegrals, errors = self.loadComponentIntegrals(region)
+        if not skipFit:
+            allintegrals, errors = self.buildComponentIntegrals(region,vals,errs,ints, 'bg_control')
 
         self.control_vals = vals
         self.control_errs = errs
@@ -691,7 +750,7 @@ class HaaLimits(Limits):
         self.workspace.arg('upsilon_frac').setConstant(fix) 
         if self.XRANGE[0]<3.3: self.workspace.arg('jpsi_frac').setConstant(fix) 
 
-    def addBackgroundModels(self, fixAfterControl=False, fixAfterFP=False, addUpsilon=True, setUpsilonLambda=False, voigtian=False, logy=False):
+    def addBackgroundModels(self, fixAfterControl=False, fixAfterFP=False, addUpsilon=True, setUpsilonLambda=False, voigtian=False, logy=False, load=False, skipFit=False):
         if fixAfterControl:
             self.fix()
         if setUpsilonLambda:
@@ -710,15 +769,22 @@ class HaaLimits(Limits):
                 self.fix()
             self.buildModel(region=region, addUpsilon=addUpsilon, setUpsilonLambda=setUpsilonLambda, voigtian=voigtian)
             #self.workspace.factory('bg_{}_norm[1,0,2]'.format(region))
-            for shift in self.BACKGROUNDSHIFTS+['']:
+            for shift in ['']+self.BACKGROUNDSHIFTS:
                 if shift=='':
-                    v, e, i = self.fitBackground(region=region, setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
+                    if load:
+                        v, e, i = self.loadBackgroundFit(region)
+                    else:
+                        v, e, i = self.fitBackground(region=region, setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
                     vals[region][shift] = v
                     errs[region][shift] = e
                     integrals[region][shift] = i
                 else:
-                    vUp, eUp, iUp = self.fitBackground(region=region, shift=shift+'Up', setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
-                    vDown, eDown, iDown = self.fitBackground(region=region, shift=shift+'Down', setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
+                    if load:
+                        vUp, eUp, iUp = self.loadBackgroundFit(region,shift+'Up')
+                        vDown, eDown, iDown = self.loadBackgroundFit(region,shift+'Down')
+                    if not skipFit:
+                        vUp, eUp, iUp = self.fitBackground(region=region, shift=shift+'Up', setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
+                        vDown, eDown, iDown = self.fitBackground(region=region, shift=shift+'Down', setUpsilonLambda=setUpsilonLambda, addUpsilon=addUpsilon, logy=logy)
                     vals[region][shift+'Up'] = vUp
                     errs[region][shift+'Up'] = eUp
                     integrals[region][shift+'Up'] = iUp
@@ -742,7 +808,10 @@ class HaaLimits(Limits):
             )
             param.build(self.workspace, name)
 
-            allintegrals[region], errors[region] = self.buildComponentIntegrals(region,vals,errs,integrals,'bg_{}'.format(region))
+            if load:
+                allintegrals[region], errors[region] = self.loadComponentIntegrals(region)
+            if not skipFit:
+                allintegrals[region], errors[region] = self.buildComponentIntegrals(region,vals,errs,integrals,'bg_{}'.format(region))
 
         if fixAfterControl:
             self.fix(False)
@@ -762,13 +831,13 @@ class HaaLimits(Limits):
 
             shifts[region] = {}
             for shift in self.BACKGROUNDSHIFTS:
-                    nameUp = 'bg_{}_{}Up'.format(region,shift)
-                    histUp = self.histMap[region][shift+'Up']['datadriven'].Clone(nameUp)
+                nameUp = 'bg_{}_{}Up'.format(region,shift)
+                histUp = self.histMap[region][shift+'Up']['datadriven'].Clone(nameUp)
 
-                    nameDown = 'bg_{}_{}Down'.format(region,shift)
-                    histDown = self.histMap[region][shift+'Down']['datadriven'].Clone(nameDown)
+                nameDown = 'bg_{}_{}Down'.format(region,shift)
+                histDown = self.histMap[region][shift+'Down']['datadriven'].Clone(nameDown)
 
-                    shifts[region][shift] = (histUp,histDown)
+                shifts[region][shift] = (histUp,histDown)
 
         for shift in self.BACKGROUNDSHIFTS:
             systs = {}

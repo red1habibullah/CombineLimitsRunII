@@ -28,7 +28,7 @@ yRange = [0,1200] # h, hkf
 yRange = [0,250]
 
 hmasses = [125,300,750]
-hmasses = [125]
+#hmasses = [125]
 amasses = ['3p6',4,5,6,7,9,11,13,15,17,19,21]
 #amasses = [5,11,15,21]
     
@@ -36,14 +36,14 @@ signame = 'HToAAH{h}A{a}'
 
 shiftTypes = ['lep','pu','fake','trig','btag','MuonEn','TauEn','JetEn','UnclusteredEn']
 #shiftTypes = ['fake','lep']
-shiftTypes = []
+#shiftTypes = []
 
 signalShiftTypes = ['lep','pu','trig','btag','MuonEn','TauEn','JetEn','UnclusteredEn']
 #signalShiftTypes = ['lep']
-signalShiftTypes = []
+#signalShiftTypes = []
 
 backgroundShiftTypes = ['fake']
-backgroundShiftTypes = []
+#backgroundShiftTypes = []
 
 shifts = []
 for s in shiftTypes:
@@ -72,6 +72,9 @@ rebinning = {
     'hkf': 1, # 1 GeV -> 5 GeV
 }
 
+project = False
+hCut = 'fabs(y-92)<28'
+
 #################
 ### Utilities ###
 #################
@@ -86,10 +89,16 @@ def getDataset(wrapper,plotname):
         'x' : 'x>{} && x<{}'.format(*xRange),
         'y' : 'y>{} && y<{}'.format(*yRange),
     }
-    if 'hMass' in plotname or 'attMass' in plotname:
-        return wrapper.getDataset(plotname,selection=' && '.join([selDatasets['x'],selDatasets['y']]),xRange=xRange,weight='w',yRange=yRange)
+    if project:
+        if 'hMass' in plotname:
+            return wrapper.getDataset(plotname,selection=' && '.join([selDatasets['x'],selDatasets['y'],hCut]),xRange=xRange,weight='w',yRange=yRange,project='x')
+        elif 'attMass' in plotname:
+            return wrapper.getDataset(plotname,selection=' && '.join([selDatasets['x'],selDatasets['y']]),xRange=xRange,weight='w',yRange=yRange,project='x')
     else:
-        return wrapper.getDataset(plotname,selection=selDatasets['x'],xRange=xRange,weight='w')
+        if 'hMass' in plotname or 'attMass' in plotname:
+            return wrapper.getDataset(plotname,selection=' && '.join([selDatasets['x'],selDatasets['y']]),xRange=xRange,weight='w',yRange=yRange)
+        else:
+            return wrapper.getDataset(plotname,selection=selDatasets['x'],xRange=xRange,weight='w')
 
 def getControlHist(proc,**kwargs):
     wrappers = kwargs.pop('wrappers',{})
@@ -294,6 +303,11 @@ def create_datacard(args):
     if args.yRange: yRange = args.yRange
     xRange = args.xRange
 
+    global project
+    global hCut
+    project = args.project
+    if args.selection: hCut = args.selection
+
     #############
     ### Setup ###
     #############
@@ -417,6 +431,8 @@ def create_datacard(args):
     name = n+'/'+'_'.join(name) if n else '_'.join(name)
     if var == ['mm']:
         haaLimits = HaaLimits(histMap,name)
+    elif do2D and project:
+        haaLimits = HaaLimits(histMap,name)
     elif do2D:
         haaLimits = HaaLimits2D(histMap,name)
     else:
@@ -433,12 +449,11 @@ def create_datacard(args):
     if 'h' in var or 'hkf' in var: haaLimits.YLABEL = 'm_{#mu#mu#tau_{#mu}#tau_{h}}'
     haaLimits.initializeWorkspace()
     haaLimits.addControlModels(voigtian=True,logy=xRange[0]<3.3)
-    #if args.addControl: haaLimits.addControlModels(voigtian=True,logy=xRange[0]<3.3)
     haaLimits.addBackgroundModels(voigtian=True,logy=False,fixAfterControl=True)
-    #haaLimits.addBackgroundModels(voigtian=True,logy=False,fixAfterControl=args.addControl)
-    #return # dont do the signal portion
     haaLimits.XRANGE = [0,30] # override for signal splines
-    if 'tt' in var:
+    if project:
+        haaLimits.addSignalModels(fit=False)
+    elif 'tt' in var:
         #haaLimits.addSignalModels(fit=False,yFitFunc='errG')
         #haaLimits.addSignalModels(fit=False,yFitFunc='L')
         #haaLimits.addSignalModels(fit=False,yFitFunc='DCB')
@@ -453,7 +468,6 @@ def create_datacard(args):
     if args.addControl: haaLimits.addControlData()
     haaLimits.addData(asimov=(blind and not doMatrix and doUnbinned),addSignal=addSignal,**signalParams) # this will generate a dataset based on the fitted model
     haaLimits.setupDatacard(addControl=args.addControl)
-    #haaLimits.setupDatacard()#doBinned=not doUnbinned)
     haaLimits.addSystematics(addControl=args.addControl)#doBinned=not doUnbinned)
     name = 'mmmt_{}_parametric'.format('_'.join(var))
     if args.unbinned: name += '_unbinned'
@@ -471,12 +485,14 @@ def parse_command_line(argv):
     parser.add_argument('--unbinned', action='store_true', help='Create unbinned datacards')
     parser.add_argument('--addSignal', action='store_true', help='Insert fake signal')
     parser.add_argument('--addControl', action='store_true', help='Add control channel')
+    parser.add_argument('--project', action='store_true', help='Project to 1D')
     parser.add_argument('--higgs', type=int, default=125, choices=[125,300,750])
     parser.add_argument('--pseudoscalar', type=int, default=15, choices=[5,7,9,11,13,15,17,19,21])
     parser.add_argument('--xRange', type=float, nargs='*', default=[4,25])
     parser.add_argument('--yRange', type=float, nargs='*', default=[])
     parser.add_argument('--tag', type=str, default='')
     parser.add_argument('--chi2Mass', type=int, default=0)
+    parser.add_argument('--selection', type=str, default='')
 
     return parser.parse_args(argv)
 
