@@ -196,7 +196,7 @@ class HaaLimits(Limits):
         nameC1 = 'cont1{}'.format('_'+tag if tag else '')
         #nameC1 = 'cont1'
         cont1 = Models.Exponential(nameC1,
-            lamb = [-2,-4,0],
+            lamb = [-1,-1,0],
         )
         cont1.build(self.workspace,nameC1)
 
@@ -210,7 +210,7 @@ class HaaLimits(Limits):
         nameC3 = 'cont3{}'.format('_'+tag if tag else '')
         #nameC3 = 'cont3'
         cont3 = Models.Exponential(nameC3,
-            lamb = [-0.75,-5,0],
+            lamb = [-0.5,-1,0],
         )
         cont3.build(self.workspace,nameC3)
     

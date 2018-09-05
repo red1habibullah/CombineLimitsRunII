@@ -226,8 +226,10 @@ class HaaLimits(Limits):
         bgs = {'recursive': True}
         # continuum background
         bgs[nameC1] = [0.5,0,1]
-        if self.XRANGE[0]<=4 and self.XRANGE[1]>=11:
-            bgs[nameR] = [0.9,0,1]
+        if self.XRANGE[0]<4 and self.XRANGE[1]>=11:
+            #bgs[nameR] = [0.9,0,1]
+            bgs[nameJ] = [0.9,0,1]
+            bgs[nameU] = [0.9,0,1]
             bgs[nameC3] = [0.5,0,1]
         else:
             # jpsi
@@ -460,9 +462,9 @@ class HaaLimits(Limits):
         model.plotOn(xFrame,ROOT.RooFit.Components('cont1'),ROOT.RooFit.LineStyle(ROOT.kDashed))
         model.plotOn(xFrame,ROOT.RooFit.Components('cont2'),ROOT.RooFit.LineStyle(ROOT.kDashed))
         # extended continuum when also fitting jpsi
-        model.plotOn(xFrame,ROOT.RooFit.Components('cont3_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+        model.plotOn(xFrame,ROOT.RooFit.Components('cont3_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed), ROOT.RooFit.LineColor(ROOT.kGreen))
         model.plotOn(xFrame,ROOT.RooFit.Components('cont4_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
-        model.plotOn(xFrame,ROOT.RooFit.Components('cont3'),ROOT.RooFit.LineStyle(ROOT.kDashed))
+        model.plotOn(xFrame,ROOT.RooFit.Components('cont3'),ROOT.RooFit.LineStyle(ROOT.kDashed), ROOT.RooFit.LineColor(ROOT.kGreen))
         model.plotOn(xFrame,ROOT.RooFit.Components('cont4'),ROOT.RooFit.LineStyle(ROOT.kDashed))
         if self.XRANGE[0]<4:
             # jpsi
@@ -566,6 +568,9 @@ class HaaLimits(Limits):
 
     def getComponentFractions(self,model):
         print "getComponentFractions model=", model
+        if not model:
+            self.workspace.Print()
+            raise
         if not isinstance(model,ROOT.RooAddPdf): 
             return {model.GetTitle(): []}
         pdfs = model.pdfList()
@@ -578,15 +583,13 @@ class HaaLimits(Limits):
             result.update(subresult)
         return result
 
-    def buildComponentIntegrals(self,region,vals,errs,integrals, is2D=False):
-        print "TROUBLESHOOT: buildComponentIntegrals", region
-        if is2D:
-            fracMapy = self.getComponentFractions(self.workspace.pdf('bg_{}_y'.format(region)))
-            fracMapx = self.getComponentFractions(self.workspace.pdf('bg_{}_x'.format(region)))
-            fracMap = dict(fracMapx, **fracMapy)
-        else: fracMap = self.getComponentFractions(self.workspace.pdf('bg_{}'.format(region)))
-        print "TROUBLESHOOT: buildComponentIntegrals fracMap:"
-        for k,v in fracMap.items(): print k,v
+    def buildComponentIntegrals(self,region,vals,errs,integrals, pdf):
+        #if is2D:
+        #    fracMapy = self.getComponentFractions(self.workspace.pdf('bg_{}_y'.format(region)))
+        #    fracMapx = self.getComponentFractions(self.workspace.pdf('bg_{}_x'.format(region)))
+        #    fracMap = dict(fracMapx, **fracMapy)
+        #else: 
+        fracMap = self.getComponentFractions(self.workspace.pdf(pdf))
         if isinstance(integrals,dict):
             vals = vals[region]['']
             errs = errs[region]['']
@@ -637,8 +640,7 @@ class HaaLimits(Limits):
         return allintegrals, allerrors
 
 
-    def addControlModels(self, addUpsilon=True, setUpsilonLambda=False, voigtian=False, logy=False, is2D=False):
-        print "TROUBLESHOOT: addControlModels"
+    def addControlModels(self, addUpsilon=True, setUpsilonLambda=False, voigtian=False, logy=False):
         region = 'control'
         self.buildModel(region=region, addUpsilon=addUpsilon, setUpsilonLambda=setUpsilonLambda, voigtian=voigtian)
         #self.workspace.factory('bg_{}_norm[1,0,2]'.format(region))
@@ -652,17 +654,13 @@ class HaaLimits(Limits):
         )
         param.build(self.workspace, name)
 
-        print "ints=", ints
-        print "vals=", vals
-        allintegrals, errors = self.buildComponentIntegrals(region,vals,errs,ints, is2D=is2D)
-        print "allintegrals=", allintegrals
+        allintegrals, errors = self.buildComponentIntegrals(region,vals,errs,ints, 'bg_control')
 
         self.control_vals = vals
         self.control_errs = errs
         self.control_integrals = ints
         self.control_integralErrors = errors
         self.control_integralValues = allintegrals
-        print "TROUBLESHOOT: addControlModels"
 
     def fix(self,fix=True):
         #self.workspace.arg('lambda_cont1').setConstant(fix)
@@ -690,8 +688,8 @@ class HaaLimits(Limits):
         self.workspace.arg('width_jpsi2S').setConstant(fix)
         if self.XRANGE[0]<3.3: self.workspace.arg('jpsi1S_frac').setConstant(fix) 
         if self.XRANGE[0]<4: self.workspace.arg('jpsi2S_frac').setConstant(fix) 
-        self.workspace.arg('upsilon_frac').setConstant(fix) 
-        if self.XRANGE[0]<3.3: self.workspace.arg('jpsi_frac').setConstant(fix) 
+        #self.workspace.arg('upsilon_frac').setConstant(fix) 
+        #if self.XRANGE[0]<3.3: self.workspace.arg('jpsi_frac').setConstant(fix) 
 
     def addBackgroundModels(self, fixAfterControl=False, fixAfterFP=False, addUpsilon=True, setUpsilonLambda=False, voigtian=False, logy=False):
         if fixAfterControl:
@@ -744,7 +742,7 @@ class HaaLimits(Limits):
             )
             param.build(self.workspace, name)
 
-            allintegrals[region], errors[region] = self.buildComponentIntegrals(region,vals,errs,integrals)
+            allintegrals[region], errors[region] = self.buildComponentIntegrals(region,vals,errs,integrals,'bg_{}'.format(region))
 
         if fixAfterControl:
             self.fix(False)
@@ -830,7 +828,7 @@ class HaaLimits(Limits):
         for proc in bgs:
             self.addProcess(proc)
 
-        for proc in [self.SPLINENAME.format(h=h) for h in self.HMASSES]:
+        for proc in sigs:
             self.addProcess(proc,signal=True)
 
         if doBinned: self.addBackgroundHists()
@@ -886,7 +884,7 @@ class HaaLimits(Limits):
         self._addMuonSystematic()
         self._addTauSystematic()
         self._addShapeSystematic()
-        self._addComponentSystematic(addControl=addControl)
+        #self._addComponentSystematic(addControl=addControl)
         self._addRelativeNormUnc()
         if not doBinned and not addControl: self._addControlSystematics()
 
@@ -919,7 +917,7 @@ class HaaLimits(Limits):
             #'jpsi2S_frac',
             #'upsilon_frac',
         ]
-        if self.XRANGE[0]<3.3: params += ['jpsi_frac']
+        #if self.XRANGE[0]<3.3: params += ['jpsi_frac']
 
         for param in params:
             if param not in self.control_vals: continue
@@ -985,26 +983,22 @@ class HaaLimits(Limits):
         }
         self.addSystematic('tauid','lnN',systematics=tausyst)
 
-    def _addComponentSystematic(self,addControl=False, is2D=False):
-        if is2D:
-            bgsy = self.getComponentFractions(self.workspace.pdf('bg_PP_y'))
-            bgsx = self.getComponentFractions(self.workspace.pdf('bg_PP_x'))
-            bgs = dict(bgsx, **bgsx)
-        else:
-            bgs = self.getComponentFractions(self.workspace.pdf('bg_PP'))
-        print "TROUBLESHOOTING: _addComponentSystematic bgs", bgs
+    def _addComponentSystematic(self,addControl=False):
+        #if is2D:
+        #    bgsy = self.getComponentFractions(self.workspace.pdf('bg_PP_y'))
+        #    bgsx = self.getComponentFractions(self.workspace.pdf('bg_PP_x'))
+        #    bgs = dict(bgsx, **bgsx)
+        #else:
+        bgs = self.getComponentFractions(self.workspace.pdf('bg_PP'))
         bgs = [b.rstrip('_PP') for b in bgs if 'cont' not in b]
-        print "TROUBLESHOOTING: _addComponentSystematic bgs", bgs
         bins = self.REGIONS
         if addControl: bins += ['control']
-        print "TROUBLESHOOTING: _addComponentSystematic bgs=", bgs, "\nbins=", bins, "\nself.control_integralErrors=", self.control_integralErrors
         syst = {}
         for bg in bgs:
             for b in bins:
                 key = bg if bg in self.control_integralErrors else '{}_control'.format(bg)
-                print "bg=", bg, " key=", key, self.control_integralErrors[key] 
                 syst[(bg,),(b,)] = 1 + self.control_integralErrors[key]
-        print "SYST=", type (syst), syst
+
         self.addSystematic('{process}_normUnc','lnN',systematics=syst) 
 
     def _addRelativeNormUnc(self):
@@ -1032,3 +1026,4 @@ class HaaLimits(Limits):
     def GetWorkspaceValue(self, variable):
         lam = self.workspace.argSet(variable)
         return lam.getRealValue(variable)
+
