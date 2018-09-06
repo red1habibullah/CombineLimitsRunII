@@ -308,14 +308,18 @@ class HaaLimits(Limits):
                 width = [0.01*aval,0,5],
                 sigma = [0.01*aval,0,5],
             )
-            model.build(ws, 'sig')
-            if load or (shift and not skipFit):
+            name = 'h{}_a{}_{}'.format(h,a,tag)
+            model.build(ws, name)
+            if load:
                 for param in results[h][a]:
                     ws.var(param).setVal(results[h][a][param])
+            elif shift and not skipFit:
+                for param in results[h][a]:
+                    ws.var(param+'_{}'.format(shift)).setVal(results[h][a][param])
             hist = histMap[self.SIGNAME.format(h=h,a=a)]
             saveDir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
             if not skipFit:
-                results[h][a], errors[h][a] = model.fit(ws, hist, 'h{}_a{}_{}'.format(h,a,tag), saveDir=saveDir, save=True, doErrors=True)
+                results[h][a], errors[h][a] = model.fit(ws, hist, name, saveDir=saveDir, save=True, doErrors=True)
                 if self.binned:
                     integral = histMap[self.SIGNAME.format(h=h,a=a)].Integral()
                 else:

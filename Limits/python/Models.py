@@ -36,7 +36,7 @@ class Model(object):
         if isinstance(hist,ROOT.TH1):
             dhname = 'dh_{0}'.format(name)
             hist = ROOT.RooDataHist(dhname, dhname, ROOT.RooArgList(ws.var(self.x)), hist)
-        self.build(ws,name)
+        #self.build(ws,name)
         model = ws.pdf(name)
        
         #ws.var('x').setRange('xRange', xFitRange[0], xFitRange[1])
@@ -80,7 +80,7 @@ class Model(object):
         if isinstance(hist,ROOT.TH1):
             dhname = 'dh_{0}'.format(name)
             hist = ROOT.RooDataHist(dhname, dhname, ROOT.RooArgList(ws.var(self.x),ws.var(self.y)), hist)
-        self.build(ws,name)
+        #self.build(ws,name)
         model = ws.pdf(name)
         #ws.var('x').setRange('xRange', xFitRange[0], xFitRange[1])
         #ws.var('y').setRange('yRange', yFitRange[0], yFitRange[1])
@@ -231,7 +231,9 @@ class Spline(object):
                 down = [c-d for d,c in zip(shifts[shift]['down'],values)]
                 upName = '{0}_{1}Up'.format(splineName,shift)
                 downName = '{0}_{1}Down'.format(splineName,shift)
-                if any([abs(u/v)>uncertainty for u,v in zip(up,values)]) or any([abs(d/v)>uncertainty for d,v in zip(down,values)]):
+                if any([ v == 0 for v in values]):
+                    logging.warning('Zero value for {}: {}'.format(splineName, ' '.join(['{}'.format(v) for v in values])))
+                if any([abs(u/v)>uncertainty if v else u for u,v in zip(up,values)]) or any([abs(d/v)>uncertainty if v else d for d,v in zip(down,values)]):
                     ws.factory('{}[0,-10,10]'.format(shift))
                     splineUp   = ROOT.RooSpline1D(upName,  upName,  ws.var(self.mh), len(masses), array('d',masses), array('d',up))
                     splineDown = ROOT.RooSpline1D(downName,downName,ws.var(self.mh), len(masses), array('d',masses), array('d',down))

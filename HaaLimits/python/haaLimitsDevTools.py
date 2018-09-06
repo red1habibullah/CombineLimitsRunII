@@ -20,30 +20,32 @@ from CombineLimits.HaaLimits.HaaLimits2DNew import HaaLimits2D
 
 logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
+
+testing = False
+detailed = False
+
 #xRange = [2,25] # with jpsi
 xRange = [4,25] # no jpsi
 #xRange = [2.5,4.5] # jpsi only
 
 yRange = [0,1200] # h, hkf
-yRange = [0,250]
+#yRange = [0,250]
 
 hmasses = [125,300,750]
-#hmasses = [125]
+if testing: hmasses = [125]
 amasses = ['3p6',4,5,6,7,9,11,13,15,17,19,21]
 #amasses = [5,11,15,21]
     
 signame = 'HToAAH{h}A{a}'
 
-shiftTypes = ['lep','pu','fake','trig','btag','MuonEn','TauEn','JetEn','UnclusteredEn']
-#shiftTypes = ['fake','lep']
-#shiftTypes = []
+shiftTypes = ['lep','pu','fake','trig','btag','MuonEn','TauEn']#,'JetEn','UnclusteredEn']
+if testing: shiftTypes = ['fake','lep'] if detailed else []
 
-signalShiftTypes = ['lep','pu','trig','btag','MuonEn','TauEn','JetEn','UnclusteredEn']
-#signalShiftTypes = ['lep']
-#signalShiftTypes = []
+signalShiftTypes = ['lep','pu','trig','btag','MuonEn','TauEn']#,'JetEn','UnclusteredEn']
+if testing: signalShiftTypes = ['lep'] if detailed else []
 
 backgroundShiftTypes = ['fake']
-#backgroundShiftTypes = []
+if testing: backgroundShiftTypes = ['fake'] if detailed else []
 
 shifts = []
 for s in shiftTypes:
@@ -73,7 +75,7 @@ rebinning = {
 }
 
 project = False
-hCut = 'fabs(y-92)<28'
+hCut = '1'
 
 #################
 ### Utilities ###
@@ -458,6 +460,7 @@ def create_datacard(args):
         #haaLimits.addSignalModels(fit=False,yFitFunc='L')
         #haaLimits.addSignalModels(fit=False,yFitFunc='DCB')
         haaLimits.addSignalModels(fit=False,yFitFuncFP='DCB',yFitFuncPP='DCB')#,cutOffFP=0.75,cutOffPP=0.75)
+        #haaLimits.addSignalModels(fit=False,yFitFuncFP='errG',yFitFuncPP='errG')#,cutOffFP=0.75,cutOffPP=0.75)
     elif 'h' in var or 'hkf' in var:
         #haaLimits.addSignalModels(fit=False,yFitFunc='DCB')
         #haaLimits.addSignalModels(fit=False,yFitFunc='V')
@@ -487,7 +490,7 @@ def parse_command_line(argv):
     parser.add_argument('--addControl', action='store_true', help='Add control channel')
     parser.add_argument('--project', action='store_true', help='Project to 1D')
     parser.add_argument('--higgs', type=int, default=125, choices=[125,300,750])
-    parser.add_argument('--pseudoscalar', type=int, default=15, choices=[5,7,9,11,13,15,17,19,21])
+    parser.add_argument('--pseudoscalar', type=int, default=7, choices=[5,7,9,11,13,15,17,19,21])
     parser.add_argument('--xRange', type=float, nargs='*', default=[4,25])
     parser.add_argument('--yRange', type=float, nargs='*', default=[])
     parser.add_argument('--tag', type=str, default='')

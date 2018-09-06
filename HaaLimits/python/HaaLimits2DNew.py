@@ -391,20 +391,20 @@ class HaaLimits2D(HaaLimits):
                 if yFitFunc == "G":
                     modely = Models.Gaussian('sigy',
                         x = 'y',
-                        mean  = [aval,0,1.25*aval],
+                        mean  = [0.5*aval,0,1.25*aval],
                         sigma = [0.1*aval,0.01,0.5*aval],
                     )
                 elif yFitFunc == "V":
                     modely = Models.Voigtian('sigy',
                         x = 'y',
-                        mean  = [aval,0,30],
+                        mean  = [0.5*aval,0,30],
                         width = [0.1*aval,0.01,5],
                         sigma = [0.1*aval,0.01,5],
                     )
                 elif yFitFunc == "CB":
                     modely = Models.CrystalBall('sigy',
                         x = 'y',
-                        mean  = [aval,0,30],
+                        mean  = [0.5*aval,0,30],
                         sigma = [0.1*aval,0,5],
                         a = [1.0,0.5,5],
                         n = [0.5,0.1,10],
@@ -412,8 +412,8 @@ class HaaLimits2D(HaaLimits):
                 elif yFitFunc == "DCB":
                     modely = Models.DoubleCrystalBall('sigy',
                         x = 'y',
-                        mean  = [aval,0,30],
-                        sigma = [0.1*aval,0,5],
+                        mean  = [0.5*aval,0.5,30],
+                        sigma = [0.1*aval,0.1,5],
                         a1 = [1.0,0.1,6],
                         n1 = [0.9,0.1,6],
                         a2 = [2.0,0.1,10],
@@ -422,7 +422,7 @@ class HaaLimits2D(HaaLimits):
                 elif yFitFunc == "DG":
                     modely = Models.DoubleSidedGaussian('sigy',
                         x = 'y',
-                        mean  = [aval,0,30],
+                        mean  = [0.5*aval,0,30],
                         sigma1 = [0.1*aval,0.05*aval,0.4*aval],
                         sigma2 = [0.3*aval,0.05*aval,0.4*aval],
                         yMax = self.YRANGE[1],
@@ -430,7 +430,7 @@ class HaaLimits2D(HaaLimits):
                 elif yFitFunc == "DV":
                     modely = Models.DoubleSidedVoigtian('sigy',
                         x = 'y',
-                        mean  = [aval,0,30],
+                        mean  = [0.5*aval,0,30],
                         sigma1 = [0.1*aval,0.05*aval,0.4*aval],
                         sigma2 = [0.3*aval,0.05*aval,0.4*aval],
                         width1 = [0.1,0.01,5],
@@ -440,12 +440,12 @@ class HaaLimits2D(HaaLimits):
                 elif yFitFunc == "errG":
                     tterf = Models.Erf('tterf',
                        x = 'y',
-                       erfScale = [0.2,0.1,5],
-                       erfShift = [0.5*aval,0.1,30],
+                       erfScale = [0.4,0.1,5],
+                       erfShift = [0.25*aval,0.1,30],
                     )
                     ttgaus = Models.Gaussian('ttgaus',
                        x = 'y',
-                       mean  = [aval,0,30],
+                       mean  = [0.5*aval,0,30],
                        sigma = [0.1*aval,0.05*aval,0.4*aval],
                     )
                     ttgaus.build(ws,"ttgaus")
@@ -527,14 +527,18 @@ class HaaLimits2D(HaaLimits):
                         'bgsigy',
                     )
 
-            model.build(ws, 'sig')
-            if load or (shift and not skipFit):
+            name = 'h{}_a{}_{}'.format(h,a,tag)
+            model.build(ws, name)
+            if load:
                 for param in results[h][a]:
                     ws.var(param).setVal(results[h][a][param])
+            elif shift and not skipFit:
+                for param in results[h][a]:
+                    ws.var(param+'_{}'.format(shift)).setVal(results[h][a][param])
             hist = histMap[self.SIGNAME.format(h=h,a=a)]
             saveDir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
             if not skipFit:
-                results[h][a], errors[h][a] = model.fit2D(ws, hist, 'h{}_a{}_{}'.format(h,a,tag), saveDir=saveDir, save=True, doErrors=True)
+                results[h][a], errors[h][a] = model.fit2D(ws, hist, name, saveDir=saveDir, save=True, doErrors=True)
                 if self.binned:
                     integral = histMap[self.SIGNAME.format(h=h,a=a)].Integral()
                 else:
@@ -864,7 +868,7 @@ class HaaLimits2D(HaaLimits):
                      **{param: 'y{param}_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['mean','sigma']}
                 )
                 modely_gaus.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_gaus_y'))
-                modely_land = Models.Erf("model_land",
+                modely_land = Models.Landau("model_land",
                     x = 'y',
                      **{param: 'y{param}_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['mu','sigma']}
                 )
