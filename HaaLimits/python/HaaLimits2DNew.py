@@ -441,11 +441,11 @@ class HaaLimits2D(HaaLimits):
                     tterf = Models.Erf('tterf',
                        x = 'y',
                        erfScale = [0.4,0.1,5],
-                       erfShift = [0.25*aval,0.1,30],
+                       erfShift = [0.2*aval,0.05*aval,aval],
                     )
                     ttgaus = Models.Gaussian('ttgaus',
                        x = 'y',
-                       mean  = [0.5*aval,0,30],
+                       mean  = [0.45*aval,0,aval],
                        sigma = [0.1*aval,0.05*aval,0.4*aval],
                     )
                     ttgaus.build(ws,"ttgaus")
@@ -534,7 +534,8 @@ class HaaLimits2D(HaaLimits):
                     ws.var(param).setVal(results[h][a][param])
             elif shift and not skipFit:
                 for param in results[h][a]:
-                    ws.var(param+'_{}'.format(shift)).setVal(results[h][a][param])
+                    #ws.var(param+'_{}'.format(shift)).setVal(results[h][a][param])
+                    ws.var(param).setVal(results[h][a][param])
             hist = histMap[self.SIGNAME.format(h=h,a=a)]
             saveDir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
             if not skipFit:
@@ -678,11 +679,11 @@ class HaaLimits2D(HaaLimits):
             name = '{}_{}{}'.format('y'+param,h,tag)
             xerrs = [0]*len(amasses)
             if yFitFunc == "errG" or yFitFunc == "L": 
-              vals = [results[h][a][param] for a in amasses]
-              errs = [errors[h][a][param] for a in amasses]
+                vals = [results[h][a][param] for a in amasses]
+                errs = [errors[h][a][param] for a in amasses]
             else:
-              vals = [results[h][a]['{}_sigy'.format(param)] for a in amasses]
-              errs = [errors[h][a]['{}_sigy'.format(param)] for a in amasses]
+                vals = [results[h][a]['{}_sigy'.format(param)] for a in amasses]
+                errs = [errors[h][a]['{}_sigy'.format(param)] for a in amasses]
             graph = ROOT.TGraphErrors(len(avals),array('d',avals),array('d',vals),array('d',xerrs),array('d',errs))
             savedir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
             python_mkdir(savedir)
@@ -850,12 +851,12 @@ class HaaLimits2D(HaaLimits):
             if yFitFunc == 'errG':
                 modely_gaus = Models.Gaussian("model_gaus",
                     x = 'y',
-                     **{param: 'y{param}_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['mean','sigma']}
+                     **{param: 'y{param}_ttgaus_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['mean','sigma']}
                 )
                 modely_gaus.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_gaus_y'))
                 modely_erf = Models.Erf("model_erf",
                     x = 'y',
-                     **{param: 'y{param}_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['ergScales','erfShifts']}
+                     **{param: 'y{param}_tterf_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['ergScales','erfShifts']}
                 )
                 modely_erf.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_erf_y'))
                 modely = Models.Prod(self.SPLINENAME.format(h=h)+'_y',
@@ -865,12 +866,12 @@ class HaaLimits2D(HaaLimits):
             elif yFitFunc == 'L':
                 modely_gaus = Models.Gaussian("model_gaus",
                     x = 'y',
-                     **{param: 'y{param}_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['mean','sigma']}
+                     **{param: 'y{param}_ttgaus_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['mean','sigma']}
                 )
                 modely_gaus.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_gaus_y'))
                 modely_land = Models.Landau("model_land",
                     x = 'y',
-                     **{param: 'y{param}_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['mu','sigma']}
+                     **{param: 'y{param}_ttland_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['mu','sigma']}
                 )
                 modely_land.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_land_y'))
                 modely = Models.Prod(self.SPLINENAME.format(h=h)+'_y',
@@ -1015,6 +1016,7 @@ class HaaLimits2D(HaaLimits):
                     integral = h.sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE))
                 data_obs = model.generate(ROOT.RooArgSet(self.workspace.var('x'),self.workspace.var('y')),int(integral))
                 if addSignal:
+                    logging.info('Generating dataset with signal {}'.format(region))
                     self.workspace.var('MH').setVal(ma)
                     model = self.workspace.pdf('{}_{}'.format(self.SPLINENAME.format(h=mh),region))
                     integral = self.workspace.function('integral_{}_{}'.format(self.SPLINENAME.format(h=mh),region)).getVal()

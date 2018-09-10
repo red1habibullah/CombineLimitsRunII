@@ -36,7 +36,7 @@ class HaaLimits(Limits):
     XLABEL = 'm_{#mu#mu}'
     UPSILONRANGE = [7, 12]
 
-    REGIONS = ['FP','PP']
+    REGIONS = ['PP','FP']
     SHIFTS = []
     BACKGROUNDSHIFTS = []
     SIGNALSHIFTS = []

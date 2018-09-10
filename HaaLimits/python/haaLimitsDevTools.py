@@ -22,7 +22,7 @@ logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format='%(asctime)s.
 
 
 testing = False
-detailed = False
+detailed = True
 
 #xRange = [2,25] # with jpsi
 xRange = [4,25] # no jpsi
@@ -302,6 +302,7 @@ def create_datacard(args):
     global xRange
     global yRange
     if do2D and var[1]=='tt': yRange = [0.75,30]
+    #if do2D and var[1]=='tt': yRange = [0,25]
     if args.yRange: yRange = args.yRange
     xRange = args.xRange
 
@@ -459,8 +460,9 @@ def create_datacard(args):
         #haaLimits.addSignalModels(fit=False,yFitFunc='errG')
         #haaLimits.addSignalModels(fit=False,yFitFunc='L')
         #haaLimits.addSignalModels(fit=False,yFitFunc='DCB')
-        haaLimits.addSignalModels(fit=False,yFitFuncFP='DCB',yFitFuncPP='DCB')#,cutOffFP=0.75,cutOffPP=0.75)
+        #haaLimits.addSignalModels(fit=False,yFitFuncFP='DCB',yFitFuncPP='DCB')#,cutOffFP=0.75,cutOffPP=0.75)
         #haaLimits.addSignalModels(fit=False,yFitFuncFP='errG',yFitFuncPP='errG')#,cutOffFP=0.75,cutOffPP=0.75)
+        haaLimits.addSignalModels(fit=False,yFitFuncFP='L',yFitFuncPP='L')#,cutOffFP=0.75,cutOffPP=0.75)
     elif 'h' in var or 'hkf' in var:
         #haaLimits.addSignalModels(fit=False,yFitFunc='DCB')
         #haaLimits.addSignalModels(fit=False,yFitFunc='V')
