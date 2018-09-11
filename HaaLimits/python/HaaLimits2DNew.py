@@ -104,8 +104,8 @@ class HaaLimits2D(HaaLimits):
             # landua plus upsilon gaussian
             land1 = Models.Landau('land1',
                 x = 'y',
-                mu    = [5,0,20],
-                sigma = [1,0,10],
+                mu    = [1.5,0,5],
+                sigma = [0.4,0,2],
             )
             nameL1 = 'land1{}'.format('_'+tag if tag else '')
             land1.build(self.workspace,nameL1)
@@ -125,14 +125,14 @@ class HaaLimits2D(HaaLimits):
             upsilon1 = Models.Gaussian('upsilon1',
                 x = 'y',
                 mean = [6,5,7],
-                sigma = [0.2,0,1],
+                sigma = [0.02,0,1],
             )
             nameU1 = 'upsilontt'
             upsilon1.build(self.workspace,nameU1)
 
             bg = Models.Sum('bg',
                 **{
-                    nameL1     : [0.9,0,1],
+                    nameL1     : [0.95,0,1],
                     #nameJ2     : [0.1,0,1],
                     nameU1     : [0.1,0,1],
                     'recursive': True,
