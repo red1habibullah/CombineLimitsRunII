@@ -197,7 +197,7 @@ class HaaLimits(Limits):
         nameC1 = 'cont1{}'.format('_'+tag if tag else '')
         #nameC1 = 'cont1'
         cont1 = Models.Exponential(nameC1,
-            lamb = [-2,-4,0],
+            lamb = [-0.2,-0.5,-0.05],
         )
         cont1.build(self.workspace,nameC1)
 
@@ -211,7 +211,7 @@ class HaaLimits(Limits):
         nameC3 = 'cont3{}'.format('_'+tag if tag else '')
         #nameC3 = 'cont3'
         cont3 = Models.Exponential(nameC3,
-            lamb = [-0.75,-5,0],
+            lamb = [-0.75,-1.0,-0.5],
         )
         cont3.build(self.workspace,nameC3)
     
@@ -1002,11 +1002,22 @@ class HaaLimits(Limits):
         self.addSystematic('{process}_normUnc','lnN',systematics=syst) 
 
     def _addRelativeNormUnc(self):
-        relativesyst = {
-           (tuple(['upsilon2S']),  tuple(['PP'])) : 1.05,
-           (tuple(['upsilon3S']),  tuple(['PP'])) : 1.10,
-           (tuple(['jpsi2S']), tuple(['PP'])) : 1.40,
-        }
+        if self.XRANGE[1] >= 11 and self.XRANGE[0] <=3:
+            relativesyst = {
+               (tuple(['upsilon2S']),  tuple(['PP'])) : 1.16,
+               (tuple(['upsilon3S']),  tuple(['PP'])) : 1.11,
+               (tuple(['jpsi2S']), tuple(['PP'])) : 1.15,
+            }
+        elif self.XRANGE[1] >= 11 and self.XRANGE[0] <=8:
+            relativesyst = {
+               (tuple(['upsilon2S']),  tuple(['PP'])) : 1.16,
+               (tuple(['upsilon3S']),  tuple(['PP'])) : 1.11,
+            }
+        elif self.XRANGE[1] >= 8 and self.XRANGE[0] <=3:
+            relativesyst = {
+               (tuple(['jpsi2S']), tuple(['PP'])) : 1.15,
+            }
+        else: return
         self.addSystematic('control_relNormUnc', 'lnN', systematics=relativesyst)
 
     ###################################
@@ -1026,4 +1037,3 @@ class HaaLimits(Limits):
     def GetWorkspaceValue(self, variable):
         lam = self.workspace.argSet(variable)
         return lam.getRealValue(variable)
-
