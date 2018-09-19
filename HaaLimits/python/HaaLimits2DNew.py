@@ -313,6 +313,8 @@ class HaaLimits2D(HaaLimits):
             errors[h] = {}
             integrals[h] = {}
         if self.YRANGE[1] > 100: initialValuesDCB = self.GetInitialValuesDCB(isKinFit=isKinFit)
+        elif yFitFunc == "L": initialValuesL = self.GetInitialValuesDitau(isLandau=True)
+        elif yFitFunc == "V": initialValuesV = self.GetInitialValuesDitau(isLandau=False)
         for a in amasses:
             aval = float(str(a).replace('p','.'))
             ws = ROOT.RooWorkspace('sig')
@@ -340,7 +342,7 @@ class HaaLimits2D(HaaLimits):
                 elif yFitFunc == "V":
                     modely = Models.Voigtian('sigy',
                         x = 'y',
-                        mean  = [h,0,1.25*h],
+                        mean  = [0.75*h,0,1.25*h],
                         width = [0.1*h,0.01,0.5*h],
                         sigma = [0.1*h,0.01,0.5*h],
                     )
@@ -397,9 +399,9 @@ class HaaLimits2D(HaaLimits):
                 elif yFitFunc == "V":
                     modely = Models.Voigtian('sigy',
                         x = 'y',
-                        mean  = [0.5*aval,0,30],
-                        width = [0.1*aval,0.01,5],
-                        sigma = [0.1*aval,0.01,5],
+                        mean  = [initialValuesV["h"+str(h)+"a"+str(a)]["mean_sigy"],0.75,30],
+                        width = [initialValuesV["h"+str(h)+"a"+str(a)]["width_sigy"],0.01,5],
+                        sigma = [initialValuesV["h"+str(h)+"a"+str(a)]["sigma_sigy"],0.01,5],
                     )
                 elif yFitFunc == "CB":
                     modely = Models.CrystalBall('sigy',
@@ -462,14 +464,14 @@ class HaaLimits2D(HaaLimits):
                     #)
                     ttland = Models.Landau('ttland',
                         x = 'y',
-                        mu  = [0.5*aval,0,30],
-                        sigma = [0.1*aval,0.05*aval,aval],
+                        mu  = [initialValuesL["h"+str(h)+"a"+str(a)]["mu_ttland"],0.1,30],
+                        sigma = [initialValuesL["h"+str(h)+"a"+str(a)]["sigma_ttland"],0.01,aval],
                     )
                     ttland.build(ws,'ttland')
                     ttgaus = Models.Gaussian('ttgaus',
                        x = 'y',
-                       mean  = [0.5*aval,0,30],
-                       sigma = [0.1*aval,0.05*aval,0.4*aval],
+                       mean  = [initialValuesL["h"+str(h)+"a"+str(a)]["mean_ttgaus"],0.1,30],
+                       sigma = [initialValuesL["h"+str(h)+"a"+str(a)]["sigma_ttgaus"],0.01,aval],
                     )
                     ttgaus.build(ws,"ttgaus")
                     modely = Models.Prod('sigy',
@@ -1200,6 +1202,76 @@ class HaaLimits2D(HaaLimits):
                     self.addShape(region,proc,proc)
 
             self.setObserved(region,-1) # reads from histogram
+
+    def GetInitialValuesDitau(self, isLandau=False):
+        if isLandau:
+            initialValues = {
+              "h125a3p6": { "mean_ttgaus": 1.50, "sigma_ttgaus": 1.30, "mu_ttland": 1.69, "sigma_ttland": 0.35},
+              "h125a4"  : { "mean_ttgaus": 1.75, "sigma_ttgaus": 1.45, "mu_ttland": 1.88, "sigma_ttland": 0.39},
+              "h125a5"  : { "mean_ttgaus": 2.00, "sigma_ttgaus": 2.00, "mu_ttland": 2.41, "sigma_ttland": 0.59},
+              "h125a6"  : { "mean_ttgaus": 2.25, "sigma_ttgaus": 2.00, "mu_ttland": 3.60, "sigma_ttland": 1.00},
+              "h125a7"  : { "mean_ttgaus": 3.45, "sigma_ttgaus": 1.57, "mu_ttland": 2.86, "sigma_ttland": 0.90},
+              "h125a9"  : { "mean_ttgaus": 5.60, "sigma_ttgaus": 1.50, "mu_ttland": 1.80, "sigma_ttland": 1.00},
+              "h125a11" : { "mean_ttgaus": 6.83, "sigma_ttgaus": 1.82, "mu_ttland": 2.30, "sigma_ttland": 0.79},
+              "h125a13" : { "mean_ttgaus": 7.87, "sigma_ttgaus": 2.30, "mu_ttland": 3.38, "sigma_ttland": 1.11},
+              "h125a15" : { "mean_ttgaus": 8.99, "sigma_ttgaus": 2.59, "mu_ttland": 3.70, "sigma_ttland": 1.20},
+              "h125a17" : { "mean_ttgaus": 10.0, "sigma_ttgaus": 2.90, "mu_ttland": 4.00, "sigma_ttland": 2.00},
+              "h125a19" : { "mean_ttgaus": 10.0, "sigma_ttgaus": 4.00, "mu_ttland": 6.00, "sigma_ttland": 2.00},
+              "h125a21" : { "mean_ttgaus": 12.0, "sigma_ttgaus": 3.80, "mu_ttland": 6.00, "sigma_ttland": 1.90},
+              "h300a5"  : { "mean_ttgaus": 1.50, "sigma_ttgaus": 2.00, "mu_ttland": 2.28, "sigma_ttland": 0.54},
+              "h300a7"  : { "mean_ttgaus": 1.75, "sigma_ttgaus": 2.25, "mu_ttland": 2.75, "sigma_ttland": 0.70},
+              "h300a9"  : { "mean_ttgaus": 5.35, "sigma_ttgaus": 1.60, "mu_ttland": 1.77, "sigma_ttland": 0.50},
+              "h300a11" : { "mean_ttgaus": 6.60, "sigma_ttgaus": 2.00, "mu_ttland": 2.10, "sigma_ttland": 1.00},
+              "h300a13" : { "mean_ttgaus": 7.00, "sigma_ttgaus": 3.00, "mu_ttland": 5.00, "sigma_ttland": 2.00},
+              "h300a15" : { "mean_ttgaus": 8.90, "sigma_ttgaus": 2.60, "mu_ttland": 3.00, "sigma_ttland": 1.00},
+              "h300a17" : { "mean_ttgaus": 10.2, "sigma_ttgaus": 2.97, "mu_ttland": 2.95, "sigma_ttland": 1.00},
+              "h300a19" : { "mean_ttgaus": 11.0, "sigma_ttgaus": 3.00, "mu_ttland": 3.00, "sigma_ttland": 1.00},
+              "h300a21" : { "mean_ttgaus": 12.5, "sigma_ttgaus": 3.61, "mu_ttland": 1.75, "sigma_ttland": 0.65},
+              "h750a5"  : { "mean_ttgaus": 2.25, "sigma_ttgaus": 1.00, "mu_ttland": 2.00, "sigma_ttland": 0.80},
+              "h750a7"  : { "mean_ttgaus": 3.25, "sigma_ttgaus": 1.50, "mu_ttland": 2.50, "sigma_ttland": 0.90},
+              "h750a9"  : { "mean_ttgaus": 4.25, "sigma_ttgaus": 1.75, "mu_ttland": 3.00, "sigma_ttland": 1.00},
+              "h750a11" : { "mean_ttgaus": 6.50, "sigma_ttgaus": 2.10, "mu_ttland": 4.00, "sigma_ttland": 1.50},
+              "h750a13" : { "mean_ttgaus": 7.68, "sigma_ttgaus": 3.00, "mu_ttland": 5.00, "sigma_ttland": 2.00},
+              "h750a15" : { "mean_ttgaus": 8.50, "sigma_ttgaus": 3.90, "mu_ttland": 6.00, "sigma_ttland": 2.50},
+              "h750a17" : { "mean_ttgaus": 9.50, "sigma_ttgaus": 4.60, "mu_ttland": 6.50, "sigma_ttland": 3.00},
+              "h750a19" : { "mean_ttgaus": 11.0, "sigma_ttgaus": 5.00, "mu_ttland": 6.50, "sigma_ttland": 3.50},
+              "h750a21" : { "mean_ttgaus": 12.0, "sigma_ttgaus": 6.00, "mu_ttland": 7.00, "sigma_ttland": 4.00},
+            }
+        else:
+            initialValues = {
+              "h125a3p6": { "mean_sigy": 1.55, "sigma_sigy": 0.16, "width_sigy": 0.36},
+              "h125a4"  : { "mean_sigy": 1.79, "sigma_sigy": 0.27, "width_sigy": 0.58},
+              "h125a5"  : { "mean_sigy": 2.25, "sigma_sigy": 0.59, "width_sigy": 0.56},
+              "h125a6"  : { "mean_sigy": 2.85, "sigma_sigy": 0.86, "width_sigy": 0.45},
+              "h125a7"  : { "mean_sigy": 3.40, "sigma_sigy": 1.12, "width_sigy": 0.24},
+              "h125a9"  : { "mean_sigy": 4.52, "sigma_sigy": 1.49, "width_sigy": 0.40},
+              "h125a11" : { "mean_sigy": 5.50, "sigma_sigy": 1.88, "width_sigy": 0.50},
+              "h125a13" : { "mean_sigy": 6.64, "sigma_sigy": 2.23, "width_sigy": 0.60},
+              "h125a15" : { "mean_sigy": 7.52, "sigma_sigy": 2.44, "width_sigy": 0.70},
+              "h125a17" : { "mean_sigy": 8.51, "sigma_sigy": 3.15, "width_sigy": 0.80},
+              "h125a19" : { "mean_sigy": 8.78, "sigma_sigy": 3.34, "width_sigy": 0.90},
+              "h125a21" : { "mean_sigy": 9.91, "sigma_sigy": 4.00, "width_sigy": 1.00},
+              "h300a5"  : { "mean_sigy": 2.21, "sigma_sigy": 5.80, "width_sigy": 0.50},
+              "h300a7"  : { "mean_sigy": 3.07, "sigma_sigy": 1.06, "width_sigy": 1.75},
+              "h300a9"  : { "mean_sigy": 3.99, "sigma_sigy": 1.50, "width_sigy": 2.00},
+              "h300a11" : { "mean_sigy": 4.85, "sigma_sigy": 1.98, "width_sigy": 2.15},
+              "h300a13" : { "mean_sigy": 5.86, "sigma_sigy": 2.30, "width_sigy": 2.30},
+              "h300a15" : { "mean_sigy": 6.73, "sigma_sigy": 2.80, "width_sigy": 2.45},
+              "h300a17" : { "mean_sigy": 7.68, "sigma_sigy": 3.10, "width_sigy": 2.60},
+              "h300a19" : { "mean_sigy": 8.59, "sigma_sigy": 3.50, "width_sigy": 2.75},
+              "h300a21" : { "mean_sigy": 9.33, "sigma_sigy": 3.80, "width_sigy": 2.90},
+              "h750a5"  : { "mean_sigy": 2.10, "sigma_sigy": 0.50, "width_sigy": 0.50},
+              "h750a7"  : { "mean_sigy": 2.90, "sigma_sigy": 1.10, "width_sigy": 0.75},
+              "h750a9"  : { "mean_sigy": 3.80, "sigma_sigy": 1.50, "width_sigy": 1.00},
+              "h750a11" : { "mean_sigy": 4.60, "sigma_sigy": 1.90, "width_sigy": 1.25},
+              "h750a13" : { "mean_sigy": 5.40, "sigma_sigy": 2.40, "width_sigy": 1.50},
+              "h750a15" : { "mean_sigy": 6.20, "sigma_sigy": 2.80, "width_sigy": 1.75},
+              "h750a17" : { "mean_sigy": 7.10, "sigma_sigy": 3.10, "width_sigy": 2.00},
+              "h750a19" : { "mean_sigy": 8.00, "sigma_sigy": 3.50, "width_sigy": 2.25},
+              "h750a21" : { "mean_sigy": 8.80, "sigma_sigy": 4.00, "width_sigy": 2.50}
+            }
+        return initialValues
+
 
     def GetInitialValuesDCB(self, isKinFit=False):
         if isKinFit:
