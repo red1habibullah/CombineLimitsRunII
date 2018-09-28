@@ -16,9 +16,9 @@ name_addon=$6
 
 echo ""
 echo ""
-mkdir -p BSUB/${dir_name}${name_addon}
-cd BSUB/${dir_name}${name_addon}
-eos mkdir /eos/cms/store/user/ktos/rValues/${dir_name}
+mkdir -p BSUB/${dir_name}${name_addon}_NODE
+cd BSUB/${dir_name}${name_addon}_NODE
+eos mkdir /eos/cms/store/user/ktos/rValues/${dir_name}_NODE
 
 REQ=$(echo "(0)" | bc -l )
 INC=$(echo "(0.1)" | bc -l)

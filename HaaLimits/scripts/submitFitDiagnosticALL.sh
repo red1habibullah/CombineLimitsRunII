@@ -14,7 +14,7 @@ step_val=$4
 queue=$5
 name_addon=$6
 
-for dir in ../python/datacards_shape/MuMuTauTau/*mumu_C*;
+for dir in ../python/datacards_shape/MuMuTauTau/*mu_AUG19*;
 do
   dir_name=${dir##*/}
   curr_val=$(echo "($start_val)" | bc -l )
