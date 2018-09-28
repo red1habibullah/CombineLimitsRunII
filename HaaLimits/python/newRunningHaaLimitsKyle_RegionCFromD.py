@@ -17,9 +17,9 @@ from CombineLimits.Limits.utilities import *
 
 from HaaLimitsNewRegionCorD import *
 
-XRANGE = [2.5,30]
+XRANGE = [6,30]
 UPSILONRANGE = [8,11]
-subdirectoryName='KinFit_mumu_RegionCFromDUP/'
+subdirectoryName='KinFit_mumu_RegionCFromDUP_UpsilonOnly/'
 name = 'mmmt_mm_parametric'
 IFCONTROL = True
 
@@ -50,7 +50,7 @@ def getTH1F(hist, dic, xMin=0, xMax=30, shift='', name='', region='PP'):
 
 def GetFPData(dictionary,xRange=[],yRange=[], rooDataSet=False):
 
-   f_FakeRateRegionB = ROOT.TFile.Open("/eos/cms/store/user/ktos/ShapeDifferences/FINAL_RooDataSet_MiniAOD_SingleMu_AntiMedIsoMu2_TauDMAntiMedIso_AUG19_CFromDUP_Plots.root")
+   f_FakeRateRegionB = ROOT.TFile.Open("/eos/cms/store/user/ktos/ShapeDifferences/FINAL_RooDataSet_MiniAOD_SingleMu_AntiMedIsoMu2_TauDMAntiMedIso_SEP2_CFromDUP_Plots.root")
    if rooDataSet:
       SingleMu_RegionB = f_FakeRateRegionB.Get("mumumass_dataset")
       SingleMu_RegionB = getDataset(SingleMu_RegionB, selection='x <= ' + str(XRANGE[1]) + ' && x >= ' + str(XRANGE[0]), xRange=xRange, yRange=yRange)
@@ -82,7 +82,7 @@ else:
 GetFPData(dictionary, rooDataSet=True)
 
 
-LimitsClass = HaaLimits(dictionary, tag='KinFit_mumu_RegionCFromDUP')
+LimitsClass = HaaLimits(dictionary, tag='KinFit_mumu_RegionCFromDUP_UpsilonOnly')
 LimitsClass.XRANGE = XRANGE
 LimitsClass.UPSILONRANGE = UPSILONRANGE
 LimitsClass.REGIONS = ['FP']
@@ -93,4 +93,4 @@ print "self.binned=" , LimitsClass.binned
 # Devin's code
 ####################################
 LimitsClass.addControlModels(voigtian=True)
-LimitsClass.addBackgroundModels(voigtian=True,logy=True,fixAfterControl=True)
+LimitsClass.addBackgroundModels(voigtian=True,logy=False,fixAfterControl=True)
