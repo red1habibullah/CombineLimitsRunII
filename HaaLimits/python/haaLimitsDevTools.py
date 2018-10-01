@@ -33,15 +33,17 @@ yRange = [0,1200] # h, hkf
 
 hmasses = [125,300,750]
 if testing: hmasses = [125]
+#if testing: hmasses = [300]
+#if testing: hmasses = [750]
 amasses = ['3p6',4,5,6,7,9,11,13,15,17,19,21]
 #amasses = [5,11,15,21]
     
 signame = 'HToAAH{h}A{a}'
 
-shiftTypes = ['lep','pu','fake','trig','btag','MuonEn','TauEn']#,'JetEn','UnclusteredEn']
+shiftTypes = ['lep','pu','fake','trig','btag','tau','MuonEn','TauEn']#,'JetEn','UnclusteredEn']
 if testing: shiftTypes = ['fake','lep'] if detailed else []
 
-signalShiftTypes = ['lep','pu','trig','btag','MuonEn','TauEn']#,'JetEn','UnclusteredEn']
+signalShiftTypes = ['lep','pu','trig','btag','tau','MuonEn','TauEn']#,'JetEn','UnclusteredEn']
 if testing: signalShiftTypes = ['lep'] if detailed else []
 
 backgroundShiftTypes = ['fake']
@@ -462,7 +464,8 @@ def create_datacard(args):
         #haaLimits.addSignalModels(fit=False,yFitFunc='DCB')
         #haaLimits.addSignalModels(fit=False,yFitFuncFP='DCB',yFitFuncPP='DCB')#,cutOffFP=0.75,cutOffPP=0.75)
         #haaLimits.addSignalModels(fit=False,yFitFuncFP='errG',yFitFuncPP='errG')#,cutOffFP=0.75,cutOffPP=0.75)
-        haaLimits.addSignalModels(fit=False,yFitFuncFP='L',yFitFuncPP='L')#,cutOffFP=0.75,cutOffPP=0.75)
+        #haaLimits.addSignalModels(fit=False,yFitFuncFP='L',yFitFuncPP='L')#,cutOffFP=0.75,cutOffPP=0.75)
+        haaLimits.addSignalModels(fit=False,yFitFuncFP='V',yFitFuncPP='L')#,cutOffFP=0.75,cutOffPP=0.75)
     elif 'h' in var or 'hkf' in var:
         #haaLimits.addSignalModels(fit=False,yFitFunc='DCB')
         #haaLimits.addSignalModels(fit=False,yFitFunc='V')
