@@ -469,7 +469,8 @@ def create_datacard(args):
     elif 'h' in var or 'hkf' in var:
         #haaLimits.addSignalModels(fit=False,yFitFunc='DCB')
         #haaLimits.addSignalModels(fit=False,yFitFunc='V')
-        haaLimits.addSignalModels(fit=False,yFitFuncFP='DCB',yFitFuncPP='DCB')#,cutOffFP=0.0,cutOffPP=0.0)
+        #haaLimits.addSignalModels(fit=False,yFitFuncFP='DCB',yFitFuncPP='DCB')#,cutOffFP=0.0,cutOffPP=0.0)
+        haaLimits.addSignalModels(fit=False,yFitFuncFP='DCB',yFitFuncPP='DG')#,cutOffFP=0.0,cutOffPP=0.0)
     else:
         haaLimits.addSignalModels(fit=False)
     haaLimits.XRANGE = xRange

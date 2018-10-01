@@ -320,12 +320,16 @@ class HaaLimits2D(HaaLimits):
         elif yFitFunc == "V": initialValuesV = self.GetInitialValuesDitau(isLandau=False)
         for a in amasses:
             aval = float(str(a).replace('p','.'))
+            thisxrange = [0.8*aval, 1.2*aval]
+            thisyrange = [0.15*h, 1.2*h] if self.YRANGE[1]>100 else [0, 1.2*aval]
             ws = ROOT.RooWorkspace('sig')
-            ws.factory('x[{0}, {1}]'.format(*self.XRANGE))
+            #ws.factory('x[{0}, {1}]'.format(*self.XRANGE))
+            ws.factory('x[{0}, {1}]'.format(*thisxrange))
             ws.var('x').setUnit('GeV')
             ws.var('x').setPlotLabel(self.XLABEL)
             ws.var('x').SetTitle(self.XLABEL)
-            ws.factory('y[{0}, {1}]'.format(*self.YRANGE))
+            #ws.factory('y[{0}, {1}]'.format(*self.YRANGE))
+            ws.factory('y[{0}, {1}]'.format(*thisyrange))
             ws.var('y').setUnit('GeV')
             ws.var('y').setPlotLabel(self.YLABEL)
             ws.var('y').SetTitle(self.YLABEL)
@@ -382,9 +386,12 @@ class HaaLimits2D(HaaLimits):
                 elif yFitFunc == "DG":
                     modely = Models.DoubleSidedGaussian('sigy',
                         x = 'y',
-                        mean  = [h,0,1.25*h],
-                        sigma1 = [0.1*h,0.05*h,0.5*h],
-                        sigma2 = [0.2*h,0.05*h,0.5*h],
+                        #mean  = [h,0,1.25*h],
+                        #sigma1 = [0.1*h,0.05*h,0.5*h],
+                        #sigma2 = [0.2*h,0.05*h,0.5*h],
+                        mean    = [initialValuesDG["h"+str(h)+"a"+str(a)]["mean"],0,1.1*h],
+                        sigma1  = [initialValuesDG["h"+str(h)+"a"+str(a)]["sigma1"],0.05*h,0.5*h],
+                        sigma2  = [initialValuesDG["h"+str(h)+"a"+str(a)]["sigma2"],0.05*h,0.5*h],
                         yMax = self.YRANGE[1],
                     )
                 elif yFitFunc == "DV":
@@ -1470,18 +1477,18 @@ class HaaLimits2D(HaaLimits):
 
     def GetInitialValuesDG(self):
         initialValues = {
-            "h125a3p6": { "mean": 94.1, "sigma1": 10.4, "sigma2": 17.5},
-            "h125a4"  : { "mean": 94.0, "sigma1": 12.3, "sigma2": 16.8},
-            "h125a5"  : { "mean": 94.1, "sigma1": 15.5, "sigma2": 12.1},
-            "h125a6"  : { "mean": 93.1, "sigma1": 15.3, "sigma2": 12.3},
-            "h125a7"  : { "mean": 93.3, "sigma1": 15.1, "sigma2": 13.8},
-            "h125a9"  : { "mean": 92.2, "sigma1": 15.1, "sigma2": 13.7},
-            "h125a11" : { "mean": 92.2, "sigma1": 14.9, "sigma2": 14.1},
-            "h125a13" : { "mean": 91.8, "sigma1": 14.1, "sigma2": 15.4},
-            "h125a15" : { "mean": 91.2, "sigma1": 13.8, "sigma2": 15.8},
-            "h125a17" : { "mean": 91.1, "sigma1": 14.2, "sigma2": 13.8},
-            "h125a19" : { "mean": 90.7, "sigma1": 13.6, "sigma2": 14.9},
-            "h125a21" : { "mean": 91.3, "sigma1": 10.3, "sigma2": 20.0},
+            "h125a3p6": { "mean": 95.0, "sigma1": 15.0, "sigma2": 13.0},
+            "h125a4"  : { "mean": 94.5, "sigma1": 15.0, "sigma2": 13.0},
+            "h125a5"  : { "mean": 94.1, "sigma1": 15.0, "sigma2": 13.0},
+            "h125a6"  : { "mean": 94.1, "sigma1": 15.0, "sigma2": 13.0},
+            "h125a7"  : { "mean": 93.3, "sigma1": 15.0, "sigma2": 13.0},
+            "h125a9"  : { "mean": 92.2, "sigma1": 15.0, "sigma2": 13.0},
+            "h125a11" : { "mean": 92.2, "sigma1": 15.0, "sigma2": 13.0},
+            "h125a13" : { "mean": 91.8, "sigma1": 15.0, "sigma2": 13.0},
+            "h125a15" : { "mean": 91.2, "sigma1": 15.0, "sigma2": 13.0},
+            "h125a17" : { "mean": 91.1, "sigma1": 15.0, "sigma2": 13.0},
+            "h125a19" : { "mean": 91.0, "sigma1": 15.0, "sigma2": 13.0},
+            "h125a21" : { "mean": 95.0, "sigma1": 15.0, "sigma2": 13.0},
             "h300a5"  : { "mean": 215, "sigma1": 44.1, "sigma2": 26.9},
             "h300a7"  : { "mean": 211, "sigma1": 44.7, "sigma2": 29.6},
             "h300a9"  : { "mean": 209, "sigma1": 48.5, "sigma2": 30.1},
