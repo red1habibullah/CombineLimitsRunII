@@ -51,15 +51,13 @@ Double_t DoubleSidedGaussian::evaluate() const
   if (mode > yMax) 
     mode = yMax;
 //  double A = 2 / sqrt2pi / (sig1 + sig2); 
-  double A1 = 1 / (2*sig1*sqrt2pi), A2 = 1 / (2*sig2*sqrt2pi);
+  double A1 = 1 / (sig1*sqrt2pi), A2 = 1 / (sig2*sqrt2pi);
   double scaleFactor = sig2 / sig1;
   double total_integral = 0.5 * (1 + scaleFactor);
   if ( x < mode)
     result = A1 * TMath::Exp(-1 * (x-mode) * (x-mode) / (2 * sig1 * sig1)) / total_integral;
   else
     result = A2 * TMath::Exp(-1 * (x-mode) * (x-mode) / (2 * sig2 * sig2)) * scaleFactor / total_integral;
-//  std::cout << "TESTY: x=" << x << "  result=" << result << " mean=" << mean << " mode=" << mode << "  scaleFactor=" << scaleFactor << "  total_integral=" << total_integral << " sig1=" << sig1 << "  sig2=" << sig2 << " A=" << A << " yMax=" << yMax <<std::endl;
-//  return A*result ;
   return result;
 } 
 

@@ -303,7 +303,7 @@ class Limits(object):
         '''
 
         shapes = self._printMultipleCards(filename,bins,processes,blind,addSignal,saveWorkspace,suffix)
-        
+
         # shape file
         if saveWorkspace or shapes:
             outname = filename+'.root'

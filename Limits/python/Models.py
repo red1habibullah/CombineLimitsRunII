@@ -85,7 +85,7 @@ class Model(object):
         #ws.var('x').setRange('xRange', xFitRange[0], xFitRange[1])
         #ws.var('y').setRange('yRange', yFitRange[0], yFitRange[1])
         #print ("X_FIT_RANGE=", xFitRange, "\tY_FIT_RANGE=", yFitRange)
-        fr = model.fitTo(hist,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True))#, ROOT.RooFit.Range('yRange'), ROOT.RooFit.Range('xRange') )
+        fr = model.fitTo(hist,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True), ROOT.RooFit.Range('yRange'), ROOT.RooFit.Range('xRange') )
         pars = fr.floatParsFinal()
         vals = {}
         errs = {}
