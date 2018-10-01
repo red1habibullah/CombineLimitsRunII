@@ -312,7 +312,10 @@ class HaaLimits2D(HaaLimits):
             results[h] = {}
             errors[h] = {}
             integrals[h] = {}
-        if self.YRANGE[1] > 100: initialValuesDCB = self.GetInitialValuesDCB(isKinFit=isKinFit)
+        if self.YRANGE[1] > 100: 
+            if yFitFunc == "DCB_Fix": initialMeans = self.GetInitialDCBMean()
+            if "DCB" in yFitFunc: initialValuesDCB = self.GetInitialValuesDCB(isKinFit=isKinFit)
+            elif yFitFunc == "DG": initialValuesDG = self.GetInitialValuesDG()
         elif yFitFunc == "L": initialValuesL = self.GetInitialValuesDitau(isLandau=True)
         elif yFitFunc == "V": initialValuesV = self.GetInitialValuesDitau(isLandau=False)
         for a in amasses:
@@ -363,6 +366,18 @@ class HaaLimits2D(HaaLimits):
                         n1    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["n1"],1,30],
                         a2    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["a2"],0.1,10],
                         n2    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["n2"],0.1,30],
+                    )
+                elif yFitFunc == "DCB_Fix":
+                    MEAN = initialMeans["h"+str(h)+"a"+str(a)]["mean"]
+                    self.YRANGE[0] = MEAN
+                    modely = Models.DoubleCrystalBall('sigy',
+                        x = 'y',
+                        mean  = [MEAN, MEAN-2, MEAN+2],
+                        sigma = [initialValuesDCB["h"+str(h)+"a"+str(a)]["sigma"],0.05*h,0.5*h],
+                        a1    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["a1"],0.1,10],
+                        n1    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["n1"],1,20],
+                        a2    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["a2"],0.1,10],
+                        n2    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["n2"],0.1,5],
                     )
                 elif yFitFunc == "DG":
                     modely = Models.DoubleSidedGaussian('sigy',
@@ -886,6 +901,7 @@ class HaaLimits2D(HaaLimits):
             else:
                 modely = ym(self.SPLINENAME.format(h=h)+'_y',
                     x = 'y',
+                    yMax = self.YRANGE[1],
                     **{param: 'y{param}_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in yparameters}
                 )
         modely.build(self.workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_y'))
@@ -1383,6 +1399,109 @@ class HaaLimits2D(HaaLimits):
             }
         return initialValues
 
+    def GetInitialDCBMean(self, isRegFP=False):
+        if isRegFP:
+            initialValues = {
+              "h125a3p6": { "mean": 100},
+              "h125a4"  : { "mean": 105},
+              "h125a5"  : { "mean": 100},
+              "h125a6"  : { "mean": 100},
+              "h125a7"  : { "mean": 100},
+              "h125a9"  : { "mean": 100},
+              "h125a11" : { "mean": 95},
+              "h125a13" : { "mean": 95},
+              "h125a15" : { "mean": 90},
+              "h125a17" : { "mean": 90},
+              "h125a19" : { "mean": 90},
+              "h125a21" : { "mean": 85},
+              "h300a5"  : { "mean": 225},
+              "h300a7"  : { "mean": 220},
+              "h300a9"  : { "mean": 220},
+              "h300a11" : { "mean": 220},
+              "h300a13" : { "mean": 210},
+              "h300a15" : { "mean": 205},
+              "h300a17" : { "mean": 203},
+              "h300a19" : { "mean": 205},
+              "h300a21" : { "mean": 205},
+              "h750a5"  : { "mean": 555},
+              "h750a7"  : { "mean": 550},
+              "h750a9"  : { "mean": 543},
+              "h750a11" : { "mean": 545},
+              "h750a13" : { "mean": 540},
+              "h750a15" : { "mean": 538},
+              "h750a17" : { "mean": 545},
+              "h750a19" : { "mean": 550},
+              "h750a21" : { "mean": 550},
+            }
+        else:
+            initialValues = {
+              "h125a3p6": { "mean": 100},
+              "h125a4"  : { "mean": 100},
+              "h125a5"  : { "mean": 100},
+              "h125a6"  : { "mean": 96},
+              "h125a7"  : { "mean": 100},
+              "h125a9"  : { "mean": 95},
+              "h125a11" : { "mean": 90},
+              "h125a13" : { "mean": 97},
+              "h125a15" : { "mean": 95},
+              "h125a17" : { "mean": 97},
+              "h125a19" : { "mean": 93},
+              "h125a21" : { "mean": 97},
+              "h300a5"  : { "mean": 225},
+              "h300a7"  : { "mean": 225},
+              "h300a9"  : { "mean": 220},
+              "h300a11" : { "mean": 220},
+              "h300a13" : { "mean": 220},
+              "h300a15" : { "mean": 210},
+              "h300a17" : { "mean": 215},
+              "h300a19" : { "mean": 207},
+              "h300a21" : { "mean": 205},
+              "h750a5"  : { "mean": 555},
+              "h750a7"  : { "mean": 545},
+              "h750a9"  : { "mean": 543},
+              "h750a11" : { "mean": 543},
+              "h750a13" : { "mean": 540},
+              "h750a15" : { "mean": 525},
+              "h750a17" : { "mean": 540},
+              "h750a19" : { "mean": 545},
+              "h750a21" : { "mean": 550}
+            }
+        return initialValues
+
+    def GetInitialValuesDG(self):
+        initialValues = {
+            "h125a3p6": { "mean": 94.1, "sigma1": 10.4, "sigma2": 17.5},
+            "h125a4"  : { "mean": 94.0, "sigma1": 12.3, "sigma2": 16.8},
+            "h125a5"  : { "mean": 94.1, "sigma1": 15.5, "sigma2": 12.1},
+            "h125a6"  : { "mean": 93.1, "sigma1": 15.3, "sigma2": 12.3},
+            "h125a7"  : { "mean": 93.3, "sigma1": 15.1, "sigma2": 13.8},
+            "h125a9"  : { "mean": 92.2, "sigma1": 15.1, "sigma2": 13.7},
+            "h125a11" : { "mean": 92.2, "sigma1": 14.9, "sigma2": 14.1},
+            "h125a13" : { "mean": 91.8, "sigma1": 14.1, "sigma2": 15.4},
+            "h125a15" : { "mean": 91.2, "sigma1": 13.8, "sigma2": 15.8},
+            "h125a17" : { "mean": 91.1, "sigma1": 14.2, "sigma2": 13.8},
+            "h125a19" : { "mean": 90.7, "sigma1": 13.6, "sigma2": 14.9},
+            "h125a21" : { "mean": 91.3, "sigma1": 10.3, "sigma2": 20.0},
+            "h300a5"  : { "mean": 215, "sigma1": 44.1, "sigma2": 26.9},
+            "h300a7"  : { "mean": 211, "sigma1": 44.7, "sigma2": 29.6},
+            "h300a9"  : { "mean": 209, "sigma1": 48.5, "sigma2": 30.1},
+            "h300a11" : { "mean": 208, "sigma1": 47.9, "sigma2": 31.2},
+            "h300a13" : { "mean": 207, "sigma1": 48.6, "sigma2": 32.3},
+            "h300a15" : { "mean": 207, "sigma1": 47.9, "sigma2": 31.9},
+            "h300a17" : { "mean": 206, "sigma1": 46.8, "sigma2": 33.5},
+            "h300a19" : { "mean": 206, "sigma1": 48.8, "sigma2": 32.3},
+            "h300a21" : { "mean": 206, "sigma1": 49.5, "sigma2": 31.2},
+            "h750a5"  : { "mean": 522, "sigma1": 122, "sigma2": 68},
+            "h750a7"  : { "mean": 510, "sigma1": 127, "sigma2": 78},
+            "h750a9"  : { "mean": 502, "sigma1": 144, "sigma2": 80},
+            "h750a11" : { "mean": 505, "sigma1": 151, "sigma2": 79},
+            "h750a13" : { "mean": 505, "sigma1": 153, "sigma2": 73},
+            "h750a15" : { "mean": 502, "sigma1": 152, "sigma2": 75},
+            "h750a17" : { "mean": 499, "sigma1": 156, "sigma2": 74},
+            "h750a19" : { "mean": 501, "sigma1": 146, "sigma2": 77},
+            "h750a21" : { "mean": 500, "sigma1": 145, "sigma2": 79}
+        }
+        return initialValues
 
     ###################
     ### Systematics ###

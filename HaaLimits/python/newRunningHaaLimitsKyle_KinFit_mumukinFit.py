@@ -15,14 +15,15 @@ import CombineLimits.Limits.Models as Models
 from CombineLimits.Limits.Limits import Limits
 from CombineLimits.Limits.utilities import *
 
-from HaaLimits2D import *
+from HaaLimits2DNew import *
 
 XRANGE = [3.5, 25]
 YRANGE = [0,1200]
 UPSILONRANGE = [8,11]
-subdirectoryName='KinFit_mumukinFit_3p5_yDCB/'
+subdirectoryName='KinFit_mumukinFit_CombShape_yDCB/'
 name = 'mmmt_mm_parametric'
 IFCONTROL = True
+CHI_CUTS = [30,50,750]
 
 def getDataset(ds,weight='w',selection='1',xRange=[],yRange=[]):
    args = ds.get()
@@ -36,7 +37,7 @@ def getDataset(ds,weight='w',selection='1',xRange=[],yRange=[]):
    return ds
 
 def GetPPData(dictionary,xRange=[],yRange=[]):
-   f_FRC = ROOT.TFile.Open("/eos/cms/store/user/ktos/ShapeDifferences/FINAL_RooDataSet_MiniAOD_SingleMu_MedIsoMu2_TauDMAntiMedIso_MAY1_AFromB_HKinFit.root")
+   f_FRC = ROOT.TFile.Open("/eos/cms/store/user/ktos/ShapeDifferences/FINAL_RooDataSet_MiniAOD_SingleMu_MedIsoMu2_TauDMAntiMedIso_AUG2_AFromB_HKinFit_Plots.root")
    
    SingleMu_FakeRateCentral = f_FRC.Get("mumufourBodyKinFitmass_dataset")
    SingleMu_FakeRateCentral = getDataset(SingleMu_FakeRateCentral, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
@@ -44,30 +45,33 @@ def GetPPData(dictionary,xRange=[],yRange=[]):
    dictionary['PP']['']['dataNoSig'] = SingleMu_FakeRateCentral
 
 def GetPPSignal(dictionary,xRange=[],yRange=[]):
-  f = ROOT.TFile.Open("/eos/cms/store/user/ktos/ShapeDifferences/FINAL_AllRooDataSet_MedIsoMu2_TauDMMedIso_MAY1_HKinFit.root")
+  f = ROOT.TFile.Open("/eos/cms/store/user/ktos/ShapeDifferences/FINAL_AllRooDataSet_MedIsoMu2_TauDMMedIso_AUG2_HKinFit.root")
 
   for hMass in ["125","300","750"]:
      for aMass in ["3p6","4","5","6","7","9","11","13","15","17","19","21"]:
        if (hMass == "300" or hMass == "750") and (aMass == "3p6" or aMass == "4" or aMass == "6"): continue
-       h_Central = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMMedIso_MAY1_Central_kinFit")
-       h_IDDOWN = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMMedIso_MAY1_IDDOWN_kinFit")
-       h_IDUP = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMMedIso_MAY1_IDUP_kinFit")
-       h_IsoDOWN = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMMedIso_MAY1_IsoDOWN_kinFit")
-       h_IsoUP = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMMedIso_MAY1_IsoUP_kinFit")
-       h_BTagDOWN = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMMedIso_MAY1_BTagDOWN_kinFit")
-       h_BTagUP = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMMedIso_MAY1_BTagUP_kinFit")
-       h_PileupDOWN = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMMedIso_MAY1_PileupDOWN_kinFit")
-       h_PileupUP = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMMedIso_MAY1_PileupUP_kinFit")
+       if hMass == "125": chiLimit = CHI_CUTS[0]
+       if hMass == "300": chiLimit = CHI_CUTS[1]
+       if hMass == "750": chiLimit = CHI_CUTS[2]
+       h_Central = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMMedIso_AUG2_Central_kinFit")
+       h_IDDOWN = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMMedIso_AUG2_IDDOWN_kinFit")
+       h_IDUP = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMMedIso_AUG2_IDUP_kinFit")
+       h_IsoDOWN = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMMedIso_AUG2_IsoDOWN_kinFit")
+       h_IsoUP = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMMedIso_AUG2_IsoUP_kinFit")
+       h_BTagDOWN = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMMedIso_AUG2_BTagDOWN_kinFit")
+       h_BTagUP = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMMedIso_AUG2_BTagUP_kinFit")
+       h_PileupDOWN = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMMedIso_AUG2_PileupDOWN_kinFit")
+       h_PileupUP = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMMedIso_AUG2_PileupUP_kinFit")
      
-       h_Central = getDataset(h_Central, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
-       h_IDDOWN = getDataset(h_IDDOWN, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
-       h_IDUP = getDataset(h_IDUP, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
-       h_IsoDOWN = getDataset(h_IsoDOWN, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
-       h_IsoUP = getDataset(h_IsoUP, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
-       h_BTagDOWN = getDataset(h_BTagDOWN, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
-       h_BTagUP = getDataset(h_BTagUP, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
-       h_PileupDOWN = getDataset(h_PileupDOWN, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
-       h_PileupUP = getDataset(h_PileupUP, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
+       h_Central = getDataset(h_Central, selection='x <= 25 && x >= 2.5 && y>=0 && chi<' + str(chiLimit), xRange=xRange, yRange=yRange)
+       h_IDDOWN = getDataset(h_IDDOWN, selection='x <= 25 && x >= 2.5 && y>=0 && chi<' + str(chiLimit), xRange=xRange, yRange=yRange)
+       h_IDUP = getDataset(h_IDUP, selection='x <= 25 && x >= 2.5 && y>=0 && chi<' + str(chiLimit), xRange=xRange, yRange=yRange)
+       h_IsoDOWN = getDataset(h_IsoDOWN, selection='x <= 25 && x >= 2.5 && y>=0 && chi<' + str(chiLimit), xRange=xRange, yRange=yRange)
+       h_IsoUP = getDataset(h_IsoUP, selection='x <= 25 && x >= 2.5 && y>=0 && chi<' + str(chiLimit), xRange=xRange, yRange=yRange)
+       h_BTagDOWN = getDataset(h_BTagDOWN, selection='x <= 25 && x >= 2.5 && y>=0 && chi<' + str(chiLimit), xRange=xRange, yRange=yRange)
+       h_BTagUP = getDataset(h_BTagUP, selection='x <= 25 && x >= 2.5 && y>=0 && chi<' + str(chiLimit), xRange=xRange, yRange=yRange)
+       h_PileupDOWN = getDataset(h_PileupDOWN, selection='x <= 25 && x >= 2.5 && y>=0 && chi<' + str(chiLimit), xRange=xRange, yRange=yRange)
+       h_PileupUP = getDataset(h_PileupUP, selection='x <= 25 && x >= 2.5 && y>=0 && chi<' + str(chiLimit), xRange=xRange, yRange=yRange)
     
        dictionary['PP']['']["HToAAH" + hMass + "A" + aMass] = h_Central
        dictionary['PP']['IDUp']["HToAAH" + hMass + "A" + aMass] = h_IDUP
@@ -82,7 +86,7 @@ def GetPPSignal(dictionary,xRange=[],yRange=[]):
 
 def GetFPData(dictionary,xRange=[],yRange=[]):
 
-   f_FakeRateRegionB = ROOT.TFile.Open("/eos/cms/store/user/ktos/ShapeDifferences/FINAL_RooDataSet_MiniAOD_SingleMu_MedIsoMu2_TauDMAntiMedIso_MAY1_BItself_HKinFit.root")
+   f_FakeRateRegionB = ROOT.TFile.Open("/eos/cms/store/user/ktos/ShapeDifferences/FINAL_RooDataSet_MiniAOD_SingleMu_MedIsoMu2_TauDMAntiMedIso_AUG2_BItself_HKinFit_Plots.root")
    SingleMu_RegionB = f_FakeRateRegionB.Get("mumufourBodyKinFitmass_dataset")
    SingleMu_RegionB = getDataset(SingleMu_RegionB, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
 
@@ -90,30 +94,33 @@ def GetFPData(dictionary,xRange=[],yRange=[]):
    dictionary['FP']['']['dataNoSig'] = SingleMu_RegionB
 
 def GetFPSignal(dictionary,xRange=[],yRange=[]):
-  f = ROOT.TFile.Open("/eos/cms/store/user/ktos/ShapeDifferences/FINAL_AllRooDataSet_MedIsoMu2_TauDMAntiMedIso_MAY1_HKinFit.root")
+  f = ROOT.TFile.Open("/eos/cms/store/user/ktos/ShapeDifferences/FINAL_AllRooDataSet_MedIsoMu2_TauDMAntiMedIso_AUG2_HKinFit.root")
    
   for hMass in ["125","300","750"]:
      for aMass in ["3p6","4","5","6","7","9","11","13","15","17","19","21"]:
        if (hMass == "300" or hMass == "750") and (aMass == "3p6" or aMass == "4" or aMass == "6"): continue
-       h_Central = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMAntiMedIso_MAY1_Central_kinFit")
-       h_IDDOWN = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMAntiMedIso_MAY1_IDDOWN_kinFit")
-       h_IDUP = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMAntiMedIso_MAY1_IDUP_kinFit")
-       h_IsoDOWN = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMAntiMedIso_MAY1_IsoDOWN_kinFit")
-       h_IsoUP = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMAntiMedIso_MAY1_IsoUP_kinFit")
-       h_BTagDOWN = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMAntiMedIso_MAY1_BTagDOWN_kinFit")
-       h_BTagUP = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMAntiMedIso_MAY1_BTagUP_kinFit")
-       h_PileupDOWN = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMAntiMedIso_MAY1_PileupDOWN_kinFit")
-       h_PileupUP = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMAntiMedIso_MAY1_PileupUP_kinFit")
+       if hMass == "125": chiLimit = CHI_CUTS[0]
+       if hMass == "300": chiLimit = CHI_CUTS[1]
+       if hMass == "750": chiLimit = CHI_CUTS[2]
+       h_Central = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMAntiMedIso_AUG2_Central_kinFit")
+       h_IDDOWN = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMAntiMedIso_AUG2_IDDOWN_kinFit")
+       h_IDUP = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMAntiMedIso_AUG2_IDUP_kinFit")
+       h_IsoDOWN = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMAntiMedIso_AUG2_IsoDOWN_kinFit")
+       h_IsoUP = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMAntiMedIso_AUG2_IsoUP_kinFit")
+       h_BTagDOWN = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMAntiMedIso_AUG2_BTagDOWN_kinFit")
+       h_BTagUP = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMAntiMedIso_AUG2_BTagUP_kinFit")
+       h_PileupDOWN = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMAntiMedIso_AUG2_PileupDOWN_kinFit")
+       h_PileupUP = f.Get("SIG_h" + hMass + "a" + aMass + "_MedIsoMu2_TauDMAntiMedIso_AUG2_PileupUP_kinFit")
 
-       h_Central = getDataset(h_Central, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
-       h_IDDOWN = getDataset(h_IDDOWN, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
-       h_IDUP = getDataset(h_IDUP, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
-       h_IsoDOWN = getDataset(h_IsoDOWN, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
-       h_IsoUP = getDataset(h_IsoUP, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
-       h_BTagDOWN = getDataset(h_BTagDOWN, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
-       h_BTagUP = getDataset(h_BTagUP, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
-       h_PileupDOWN = getDataset(h_PileupDOWN, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
-       h_PileupUP = getDataset(h_PileupUP, selection='x <= 25 && x >= 2.5 && y>=0', xRange=xRange, yRange=yRange)
+       h_Central = getDataset(h_Central, selection='x <= 25 && x >= 2.5 && y>=0 && chi<' + str(chiLimit), xRange=xRange, yRange=yRange)
+       h_IDDOWN = getDataset(h_IDDOWN, selection='x <= 25 && x >= 2.5 && y>=0 && chi<' + str(chiLimit), xRange=xRange, yRange=yRange)
+       h_IDUP = getDataset(h_IDUP, selection='x <= 25 && x >= 2.5 && y>=0 && chi<' + str(chiLimit), xRange=xRange, yRange=yRange)
+       h_IsoDOWN = getDataset(h_IsoDOWN, selection='x <= 25 && x >= 2.5 && y>=0 && chi<' + str(chiLimit), xRange=xRange, yRange=yRange)
+       h_IsoUP = getDataset(h_IsoUP, selection='x <= 25 && x >= 2.5 && y>=0 && chi<' + str(chiLimit), xRange=xRange, yRange=yRange)
+       h_BTagDOWN = getDataset(h_BTagDOWN, selection='x <= 25 && x >= 2.5 && y>=0 && chi<' + str(chiLimit), xRange=xRange, yRange=yRange)
+       h_BTagUP = getDataset(h_BTagUP, selection='x <= 25 && x >= 2.5 && y>=0 && chi<' + str(chiLimit), xRange=xRange, yRange=yRange)
+       h_PileupDOWN = getDataset(h_PileupDOWN, selection='x <= 25 && x >= 2.5 && y>=0 && chi<' + str(chiLimit), xRange=xRange, yRange=yRange)
+       h_PileupUP = getDataset(h_PileupUP, selection='x <= 25 && x >= 2.5 && y>=0 && chi<' + str(chiLimit), xRange=xRange, yRange=yRange)
  
        dictionary['FP']['']["HToAAH" + hMass + "A" + aMass] = h_Central
        dictionary['FP']['IDUp']["HToAAH" + hMass + "A" + aMass] = h_IDUP
@@ -189,12 +196,15 @@ GetPPData(dictionary,XRANGE,YRANGE)
 GetFPData(dictionary,XRANGE,YRANGE)
 GetFPSignal(dictionary,XRANGE,YRANGE)
 
-LimitsClass = HaaLimits2D(dictionary, tag='KinFit_mumukinFit_3p5_yDCB')
+LimitsClass = HaaLimits2D(dictionary, tag='KinFit_mumukinFit_CombShape_yDCB')
 LimitsClass.XRANGE = XRANGE
 LimitsClass.YRANGE = YRANGE
 LimitsClass.UPSILONRANGE = UPSILONRANGE
-LimitsClass.SHIFTS = ['']#['Pileup','ID','Iso','BTag']
+LimitsClass.SHIFTS = ['Pileup','ID','Iso','BTag']
+LimitsClass.SIGNALSHIFTS = ['Pileup','ID','Iso','BTag']
 LimitsClass.REGIONS = ['FP','PP']
+LimitsClass.YLABEL = 'm_{#tau_{#mu}#tau_{h}}'
+LimitsClass.HMASSES = [125]#,300,750]
 LimitsClass.initializeWorkspace()
 
 ####################################
@@ -203,7 +213,7 @@ LimitsClass.initializeWorkspace()
 LimitsClass.addControlModels(voigtian=True)
 LimitsClass.addBackgroundModels(voigtian=True,logy=False,fixAfterControl=IFCONTROL)
 
-LimitsClass.addSignalModels(fit=False, yFitFunc="DCB")
+LimitsClass.addSignalModels(fit=False, yFitFuncFP="DCB", yFitFuncPP="DCB", isKinFit=True)
 LimitsClass.addData(asimov=True)
 
 LimitsClass.setupDatacard()

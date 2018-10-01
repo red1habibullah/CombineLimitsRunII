@@ -18,11 +18,11 @@ from CombineLimits.Limits.utilities import *
 from HaaLimits2DNew import *
 
 XRANGE = [2.5, 30]
-YRANGE = [0.75,30]
+YRANGE = [0.75, 30]
 UPSILONRANGE = [8,11]
 AMASSES =['3p6',4,5,6,7,9,11,13,15,17,19,21]
-HMASSES = [125]#[125,300,750]
-subdirectoryName='mumutautau_PPyL_FPyVmin0p75/'
+HMASSES = [125,300,750]
+subdirectoryName='mumutautau_SEP5_PPyLmin0p75_FPyVmin0p75/'
 name = 'mmmt_mm_parametric'
 IFCONTROL = True
 
@@ -57,17 +57,17 @@ def getTH1F(hist, dic, xMin=0, xMax=30, shift='', name='', region='PP'):
    dic[region][shift][name] = newHist
 
 def GetPPData(dictionary,xRange=[], yRange=[], rooDataSet=False):
-   f_FRC = ROOT.TFile.Open("/eos/cms/store/user/ktos/ShapeDifferences/FINAL_RooDataSet_MiniAOD_SingleMu_MedIsoMu2_TauDMAntiMedIso_AUG19_AFromB_Plots.root")
-   f_FRD = ROOT.TFile.Open("/eos/cms/store/user/ktos/ShapeDifferences/FINAL_RooDataSet_MiniAOD_SingleMu_MedIsoMu2_TauDMAntiMedIso_AUG19_AFromBDOWN_Plots.root")
-   f_FRU = ROOT.TFile.Open("/eos/cms/store/user/ktos/ShapeDifferences/FINAL_RooDataSet_MiniAOD_SingleMu_MedIsoMu2_TauDMAntiMedIso_AUG19_AFromBUP_Plots.root")
+   f_FRC = ROOT.TFile.Open("/eos/cms/store/user/ktos/ShapeDifferences/FINAL_RooDataSet_MiniAOD_SingleMu_MedIsoMu2_TauDMAntiMedIso_SEP2_AFromB_Plots.root")
+   f_FRD = ROOT.TFile.Open("/eos/cms/store/user/ktos/ShapeDifferences/FINAL_RooDataSet_MiniAOD_SingleMu_MedIsoMu2_TauDMAntiMedIso_SEP2_AFromBDOWN_Plots.root")
+   f_FRU = ROOT.TFile.Open("/eos/cms/store/user/ktos/ShapeDifferences/FINAL_RooDataSet_MiniAOD_SingleMu_MedIsoMu2_TauDMAntiMedIso_SEP2_AFromBUP_Plots.root")
 
    if rooDataSet:
       SingleMu_FakeRateCentral = f_FRC.Get("mumutautaumass_dataset")
       SingleMu_FakeRateDOWN    = f_FRD.Get("mumutautaumass_dataset")
       SingleMu_FakeRateUP      = f_FRU.Get("mumutautaumass_dataset")
-      getDataset(SingleMu_FakeRateCentral, selection='x <= ' + str(XRANGE[1]) + ' && x >= ' + str(XRANGE[0]), xRange=xRange, yRange=yRange)
-      getDataset(SingleMu_FakeRateDOWN,    selection='x <= ' + str(XRANGE[1]) + ' && x >= ' + str(XRANGE[0]), xRange=xRange, yRange=yRange)
-      getDataset(SingleMu_FakeRateUP,      selection='x <= ' + str(XRANGE[1]) + ' && x >= ' + str(XRANGE[0]), xRange=xRange, yRange=yRange)
+      SingleMu_FakeRateCentral = getDataset(SingleMu_FakeRateCentral, selection='x <= ' + str(XRANGE[1]) + ' && x >= ' + str(XRANGE[0]), xRange=xRange, yRange=yRange)
+      SingleMu_FakeRateDOWN = getDataset(SingleMu_FakeRateDOWN,    selection='x <= ' + str(XRANGE[1]) + ' && x >= ' + str(XRANGE[0]), xRange=xRange, yRange=yRange)
+      SingleMu_FakeRateUP = getDataset(SingleMu_FakeRateUP,      selection='x <= ' + str(XRANGE[1]) + ' && x >= ' + str(XRANGE[0]), xRange=xRange, yRange=yRange)
       dictionary['PP']['']['data']         = SingleMu_FakeRateCentral
       dictionary['PP']['FakeUp']['data']   = SingleMu_FakeRateUP
       dictionary['PP']['FakeDown']['data'] = SingleMu_FakeRateDOWN
@@ -86,20 +86,20 @@ def GetPPData(dictionary,xRange=[], yRange=[], rooDataSet=False):
       getTH1F(SingleMu_FakeRateUP,      xMin=XRANGE[0], xMax=XRANGE[1], shift='FakeUp',   name='dataNoSig', dic=dictionary, region='PP')
 
 def GetPPSignal(dictionary,xRange=[],yRange=[], rooDataSet=False):
-  f = ROOT.TFile.Open("/eos/cms/store/user/ktos/ShapeDifferences/FINAL_AllRooDataSet_MedIsoMu2_TauDMMedIso_AUG19.root")
+  f = ROOT.TFile.Open("/eos/cms/store/user/ktos/ShapeDifferences/FINAL_AllRooDataSet_MedIsoMu2_TauDMMedIso_SEP2.root")
 
   for hMass in HMASSES:
      for aMass in AMASSES:
        if (str(hMass) == "300" or str(hMass) == "750") and (str(aMass) == "3p6" or str(aMass) == "4" or str(aMass) == "6"): continue
-       h_Central    = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMMedIso_AUG19_Central_Plots_ditau")
-       h_IDDOWN     = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMMedIso_AUG19_IDDOWN_Plots_ditau")
-       h_IDUP       = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMMedIso_AUG19_IDUP_Plots_ditau")
-       h_IsoDOWN    = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMMedIso_AUG19_IsoDOWN_Plots_ditau")
-       h_IsoUP      = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMMedIso_AUG19_IsoUP_Plots_ditau")
-       h_BTagDOWN   = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMMedIso_AUG19_BTagDOWN_Plots_ditau")
-       h_BTagUP     = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMMedIso_AUG19_BTagUP_Plots_ditau")
-       h_PileupDOWN = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMMedIso_AUG19_PileupDOWN_Plots_ditau")
-       h_PileupUP   = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMMedIso_AUG19_PileupUP_Plots_ditau")
+       h_Central    = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMMedIso_SEP2_Central_Plots_ditau")
+       h_IDDOWN     = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMMedIso_SEP2_IDDOWN_Plots_ditau")
+       h_IDUP       = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMMedIso_SEP2_IDUP_Plots_ditau")
+       h_IsoDOWN    = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMMedIso_SEP2_IsoDOWN_Plots_ditau")
+       h_IsoUP      = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMMedIso_SEP2_IsoUP_Plots_ditau")
+       #h_BTagDOWN   = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMMedIso_SEP2_BTagDOWN_Plots_ditau")
+       #h_BTagUP     = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMMedIso_SEP2_BTagUP_Plots_ditau")
+       h_PileupDOWN = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMMedIso_SEP2_PileupDOWN_Plots_ditau")
+       h_PileupUP   = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMMedIso_SEP2_PileupUP_Plots_ditau")
 
        if not rooDataSet:
           getTH1F(h_Central,    xMin=0, xMax=30, shift='',           name="HToAAH" + str(hMass) + "A" + str(aMass), dic=dictionary, region='PP')
@@ -107,8 +107,8 @@ def GetPPSignal(dictionary,xRange=[],yRange=[], rooDataSet=False):
           getTH1F(h_IDUP,       xMin=0, xMax=30, shift='IDUp',       name="HToAAH" + str(hMass) + "A" + str(aMass), dic=dictionary, region='PP')
           getTH1F(h_IsoDOWN,    xMin=0, xMax=30, shift='IsoDown',    name="HToAAH" + str(hMass) + "A" + str(aMass), dic=dictionary, region='PP')
           getTH1F(h_IsoUP,      xMin=0, xMax=30, shift='IsoUp',      name="HToAAH" + str(hMass) + "A" + str(aMass), dic=dictionary, region='PP')
-          getTH1F(h_BTagDOWN,   xMin=0, xMax=30, shift='BTagDown',   name="HToAAH" + str(hMass) + "A" + str(aMass), dic=dictionary, region='PP')
-          getTH1F(h_BTagUP,     xMin=0, xMax=30, shift='BTagUp',     name="HToAAH" + str(hMass) + "A" + str(aMass), dic=dictionary, region='PP')
+          #getTH1F(h_BTagDOWN,   xMin=0, xMax=30, shift='BTagDown',   name="HToAAH" + str(hMass) + "A" + str(aMass), dic=dictionary, region='PP')
+          #getTH1F(h_BTagUP,     xMin=0, xMax=30, shift='BTagUp',     name="HToAAH" + str(hMass) + "A" + str(aMass), dic=dictionary, region='PP')
           getTH1F(h_PileupDOWN, xMin=0, xMax=30, shift='PileupDown', name="HToAAH" + str(hMass) + "A" + str(aMass), dic=dictionary, region='PP')
           getTH1F(h_PileupUP,   xMin=0, xMax=30, shift='PileupUp',   name="HToAAH" + str(hMass) + "A" + str(aMass), dic=dictionary, region='PP')
        else:
@@ -117,8 +117,8 @@ def GetPPSignal(dictionary,xRange=[],yRange=[], rooDataSet=False):
           h_IDUP      = getDataset(h_IDUP,       selection='', xRange=[0,30], yRange=yRange)
           h_IsoDOWN   = getDataset(h_IsoDOWN,    selection='', xRange=[0,30], yRange=yRange)
           h_IsoUP     = getDataset(h_IsoUP,      selection='', xRange=[0,30], yRange=yRange)
-          h_BTagDOWN  = getDataset(h_BTagDOWN,   selection='', xRange=[0,30], yRange=yRange)
-          h_BTagUP    = getDataset(h_BTagUP,     selection='', xRange=[0,30], yRange=yRange)
+          #h_BTagDOWN  = getDataset(h_BTagDOWN,   selection='', xRange=[0,30], yRange=yRange)
+          #h_BTagUP    = getDataset(h_BTagUP,     selection='', xRange=[0,30], yRange=yRange)
           h_PileupDOWN= getDataset(h_PileupDOWN, selection='', xRange=[0,30], yRange=yRange)
           h_PileupUP  = getDataset(h_PileupUP,   selection='', xRange=[0,30], yRange=yRange)
           dictionary['PP']['']["HToAAH" + str(hMass) + "A" + str(aMass)]           = h_Central
@@ -126,15 +126,15 @@ def GetPPSignal(dictionary,xRange=[],yRange=[], rooDataSet=False):
           dictionary['PP']['IDDown']["HToAAH" + str(hMass) + "A" + str(aMass)]     = h_IDDOWN
           dictionary['PP']['IsoUp']["HToAAH" + str(hMass) + "A" + str(aMass)]      = h_IsoUP
           dictionary['PP']['IsoDown']["HToAAH" + str(hMass) + "A" + str(aMass)]    = h_IsoDOWN
-          dictionary['PP']['BTagUp']["HToAAH" + str(hMass) + "A" + str(aMass)]     = h_BTagUP
-          dictionary['PP']['BTagDown']["HToAAH" + str(hMass) + "A" + str(aMass)]   = h_BTagDOWN
+          #dictionary['PP']['BTagUp']["HToAAH" + str(hMass) + "A" + str(aMass)]     = h_BTagUP
+          #dictionary['PP']['BTagDown']["HToAAH" + str(hMass) + "A" + str(aMass)]   = h_BTagDOWN
           dictionary['PP']['PileupUp']["HToAAH" + str(hMass) + "A" + str(aMass)]   = h_PileupUP
           dictionary['PP']['PileupDown']["HToAAH" + str(hMass) + "A" + str(aMass)] = h_PileupDOWN
 
 
 def GetFPData(dictionary,xRange=[],yRange=[], rooDataSet=False):
 
-   f_FakeRateRegionB = ROOT.TFile.Open("/eos/cms/store/user/ktos/ShapeDifferences/MiniAOD_SingleMu_MedIsoMu2_TauDMAntiMedIso_AUG19_BItself_Plots.root")
+   f_FakeRateRegionB = ROOT.TFile.Open("/eos/cms/store/user/ktos/ShapeDifferences/MiniAOD_SingleMu_MedIsoMu2_TauDMAntiMedIso_SEP2_BItself_Plots.root")
    if rooDataSet:
       SingleMu_RegionB = f_FakeRateRegionB.Get("mumutautaumass_dataset")
       SingleMu_RegionB = getDataset(SingleMu_RegionB, selection='x <= ' + str(XRANGE[1]) + ' && x >= ' + str(XRANGE[0]), xRange=xRange, yRange=yRange)
@@ -154,20 +154,20 @@ def GetFPData(dictionary,xRange=[],yRange=[], rooDataSet=False):
       getTH1F(SingleMu_RegionB, xMin=XRANGE[0], xMax=XRANGE[1], shift='FakeDown', name='dataNoSig', dic=dictionary, region='FP')
 
 def GetFPSignal(dictionary,xRange=[], yRange=[], rooDataSet=False):
-  f = ROOT.TFile.Open("/eos/cms/store/user/ktos/ShapeDifferences/FINAL_AllRooDataSet_MedIsoMu2_TauDMAntiMedIso_AUG19.root")
+  f = ROOT.TFile.Open("/eos/cms/store/user/ktos/ShapeDifferences/FINAL_AllRooDataSet_MedIsoMu2_TauDMAntiMedIso_SEP2.root")
 
   for hMass in HMASSES:
      for aMass in AMASSES:
        if (str(hMass) == "300" or str(hMass) == "750") and (str(aMass) == "3p6" or str(aMass) == "4" or str(aMass) == "6"): continue
-       h_Central    = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMAntiMedIso_AUG19_Central_Plots_ditau")
-       h_IDDOWN     = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMAntiMedIso_AUG19_IDDOWN_Plots_ditau")
-       h_IDUP       = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMAntiMedIso_AUG19_IDUP_Plots_ditau")
-       h_IsoDOWN    = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMAntiMedIso_AUG19_IsoDOWN_Plots_ditau")
-       h_IsoUP      = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMAntiMedIso_AUG19_IsoUP_Plots_ditau")
-       h_BTagDOWN   = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMAntiMedIso_AUG19_BTagDOWN_Plots_ditau")
-       h_BTagUP     = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMAntiMedIso_AUG19_BTagUP_Plots_ditau")
-       h_PileupDOWN = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMAntiMedIso_AUG19_PileupDOWN_Plots_ditau")
-       h_PileupUP   = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMAntiMedIso_AUG19_PileupUP_Plots_ditau")
+       h_Central    = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMAntiMedIso_SEP2_Central_Plots_ditau")
+       h_IDDOWN     = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMAntiMedIso_SEP2_IDDOWN_Plots_ditau")
+       h_IDUP       = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMAntiMedIso_SEP2_IDUP_Plots_ditau")
+       h_IsoDOWN    = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMAntiMedIso_SEP2_IsoDOWN_Plots_ditau")
+       h_IsoUP      = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMAntiMedIso_SEP2_IsoUP_Plots_ditau")
+       #h_BTagDOWN   = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMAntiMedIso_SEP2_BTagDOWN_Plots_ditau")
+       #h_BTagUP     = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMAntiMedIso_SEP2_BTagUP_Plots_ditau")
+       h_PileupDOWN = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMAntiMedIso_SEP2_PileupDOWN_Plots_ditau")
+       h_PileupUP   = f.Get("SIG_h" + str(hMass) + "a" + str(aMass) + "_MedIsoMu2_TauDMAntiMedIso_SEP2_PileupUP_Plots_ditau")
 
        if not rooDataSet:
            getTH1F(h_Central,    xMin=0, xMax=30, shift='',           name="HToAAH" + str(hMass) + "A" + str(aMass), dic=dictionary, region='FP')
@@ -175,8 +175,8 @@ def GetFPSignal(dictionary,xRange=[], yRange=[], rooDataSet=False):
            getTH1F(h_IDUP,       xMin=0, xMax=30, shift='IDUp',       name="HToAAH" + str(hMass) + "A" + str(aMass), dic=dictionary, region='FP')
            getTH1F(h_IsoDOWN,    xMin=0, xMax=30, shift='IsoDown',    name="HToAAH" + str(hMass) + "A" + str(aMass), dic=dictionary, region='FP')
            getTH1F(h_IsoUP,      xMin=0, xMax=30, shift='IsoUp',      name="HToAAH" + str(hMass) + "A" + str(aMass), dic=dictionary, region='FP')
-           getTH1F(h_BTagDOWN,   xMin=0, xMax=30, shift='BTagDown',   name="HToAAH" + str(hMass) + "A" + str(aMass), dic=dictionary, region='FP')
-           getTH1F(h_BTagUP,     xMin=0, xMax=30, shift='BTagUp',     name="HToAAH" + str(hMass) + "A" + str(aMass), dic=dictionary, region='FP')
+           #getTH1F(h_BTagDOWN,   xMin=0, xMax=30, shift='BTagDown',   name="HToAAH" + str(hMass) + "A" + str(aMass), dic=dictionary, region='FP')
+           #getTH1F(h_BTagUP,     xMin=0, xMax=30, shift='BTagUp',     name="HToAAH" + str(hMass) + "A" + str(aMass), dic=dictionary, region='FP')
            getTH1F(h_PileupDOWN, xMin=0, xMax=30, shift='PileupDown', name="HToAAH" + str(hMass) + "A" + str(aMass), dic=dictionary, region='FP')
            getTH1F(h_PileupUP,   xMin=0, xMax=30, shift='PileupUp',   name="HToAAH" + str(hMass) + "A" + str(aMass), dic=dictionary, region='FP')
        else:
@@ -186,8 +186,8 @@ def GetFPSignal(dictionary,xRange=[], yRange=[], rooDataSet=False):
           h_IDUP       = getDataset(h_IDUP,       selection='', xRange=[0,30], yRange=yRange)
           h_IsoDOWN    = getDataset(h_IsoDOWN,    selection='', xRange=[0,30], yRange=yRange)
           h_IsoUP      = getDataset(h_IsoUP,      selection='', xRange=[0,30], yRange=yRange)
-          h_BTagDOWN   = getDataset(h_BTagDOWN,   selection='', xRange=[0,30], yRange=yRange)
-          h_BTagUP     = getDataset(h_BTagUP,     selection='', xRange=[0,30], yRange=yRange)
+          #h_BTagDOWN   = getDataset(h_BTagDOWN,   selection='', xRange=[0,30], yRange=yRange)
+          #h_BTagUP     = getDataset(h_BTagUP,     selection='', xRange=[0,30], yRange=yRange)
           h_PileupDOWN = getDataset(h_PileupDOWN, selection='', xRange=[0,30], yRange=yRange)
           h_PileupUP   = getDataset(h_PileupUP,   selection='', xRange=[0,30], yRange=yRange)
           dictionary['FP']['']["HToAAH" + str(hMass) + "A" + str(aMass)]           = h_Central
@@ -195,16 +195,16 @@ def GetFPSignal(dictionary,xRange=[], yRange=[], rooDataSet=False):
           dictionary['FP']['IDDown']["HToAAH" + str(hMass) + "A" + str(aMass)]     = h_IDDOWN
           dictionary['FP']['IsoUp']["HToAAH" + str(hMass) + "A" + str(aMass)]      = h_IsoUP
           dictionary['FP']['IsoDown']["HToAAH" + str(hMass) + "A" + str(aMass)]    = h_IsoDOWN
-          dictionary['FP']['BTagUp']["HToAAH" + str(hMass) + "A" + str(aMass)]     = h_BTagUP
-          dictionary['FP']['BTagDown']["HToAAH" + str(hMass) + "A" + str(aMass)]   = h_BTagDOWN
+          #dictionary['FP']['BTagUp']["HToAAH" + str(hMass) + "A" + str(aMass)]     = h_BTagUP
+          #dictionary['FP']['BTagDown']["HToAAH" + str(hMass) + "A" + str(aMass)]   = h_BTagDOWN
           dictionary['FP']['PileupUp']["HToAAH" + str(hMass) + "A" + str(aMass)]   = h_PileupUP
           dictionary['FP']['PileupDown']["HToAAH" + str(hMass) + "A" + str(aMass)] = h_PileupDOWN
 
 if not IFCONTROL:
   dictionary = {'PP' : {
                    '' : {},
-                   'BTagUp' : {},
-                   'BTagDown' : {},
+                   #'BTagUp' : {},
+                   #'BTagDown' : {},
                    'IDUp' : {},
                    'IDDown' : {},
                    'PileupUp' : {},
@@ -216,8 +216,8 @@ if not IFCONTROL:
                        },
                 'FP' : {
                    '' : {},
-                   'BTagUp' : {},
-                   'BTagDown' : {},
+                   #'BTagUp' : {},
+                   #'BTagDown' : {},
                    'IDUp' : {},
                    'IDDown' : {},
                    'PileupUp' : {},
@@ -231,8 +231,8 @@ if not IFCONTROL:
 else:
   dictionary = {'PP' : {
                    '' : {},
-                   'BTagUp' : {},
-                   'BTagDown' : {},
+                   #'BTagUp' : {},
+                   #'BTagDown' : {},
                    'IDUp' : {},
                    'IDDown' : {},
                    'PileupUp' : {},
@@ -244,8 +244,8 @@ else:
                        },
                 'FP' : {
                    '' : {},
-                   'BTagUp' : {},
-                   'BTagDown' : {},
+                   #'BTagUp' : {},
+                   #'BTagDown' : {},
                    'IDUp' : {},
                    'IDDown' : {},
                    'PileupUp' : {},
@@ -271,13 +271,13 @@ GetPPData(dictionary,   xRange=XRANGE, yRange=YRANGE, rooDataSet=True)
 GetFPData(dictionary,   xRange=XRANGE, yRange=YRANGE, rooDataSet=True)
 GetFPSignal(dictionary, xRange=XRANGE, yRange=YRANGE, rooDataSet=True)
 
-LimitsClass = HaaLimits2D(dictionary, tag='mumutautau_PPyL_FPyVmin0p75')
+LimitsClass = HaaLimits2D(dictionary, tag='mumutautau_SEP5_PPyLmin0p75_FPyVmin0p75')
 LimitsClass.YRANGE = YRANGE
 LimitsClass.XRANGE = XRANGE
 LimitsClass.UPSILONRANGE = UPSILONRANGE
-LimitsClass.SHIFTS = []#['Pileup','ID','Iso','BTag', 'Fake']
-LimitsClass.BACKGROUNDSHIFTS = []#['Fake']
-LimitsClass.SIGNALSHIFTS = []#['Pileup','ID','Iso','BTag']
+LimitsClass.SHIFTS = ['Pileup','ID','Iso',' Fake']#BTag',
+LimitsClass.BACKGROUNDSHIFTS = ['Fake']
+LimitsClass.SIGNALSHIFTS = ['Pileup','ID','Iso']#,'BTag']
 LimitsClass.HMASSES = HMASSES
 LimitsClass.REGIONS = ['FP','PP']
 LimitsClass.AMASSES = AMASSES
@@ -286,15 +286,17 @@ LimitsClass.initializeWorkspace()
 ####################################
 # Devin's code
 ####################################
-if IFCONTROL: LimitsClass.addControlModels(voigtian=True, is2D=False)
+if IFCONTROL: LimitsClass.addControlModels(voigtian=True)#, is2D=False)
 LimitsClass.addBackgroundModels(voigtian=True,logy=False,fixAfterControl=IFCONTROL)
 
 LimitsClass.XRANGE = [0,30]
-LimitsClass.addSignalModels(fit=False, yFitFuncFP="V", yFitFuncPP="L", isKinFit=False)
+LimitsClass.addSignalModels(fit=False, yFitFuncFP="V", yFitFuncPP="L", cutOffPP=0.75, cutOffFP=0.75, isKinFit=False)
 LimitsClass.XRANGE = XRANGE
 if IFCONTROL: LimitsClass.addControlData()
 LimitsClass.addData(asimov=True)
 
+print "TROUBLESHOOT: IN CFG FILE:"
+LimitsClass.workspace.Print("v")
 LimitsClass.setupDatacard(addControl=IFCONTROL)
 LimitsClass.addSystematics(addControl=IFCONTROL)
 LimitsClass.save(name=name, subdirectory=subdirectoryName)
