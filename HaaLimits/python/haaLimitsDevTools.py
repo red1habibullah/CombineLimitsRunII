@@ -24,8 +24,8 @@ logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format='%(asctime)s.
 testing = False
 detailed = True
 
-#xRange = [2,25] # with jpsi
-xRange = [4,25] # no jpsi
+xRange = [2.5,25] # with jpsi
+#xRange = [4,25] # no jpsi
 #xRange = [2.5,4.5] # jpsi only
 
 yRange = [0,1200] # h, hkf
@@ -89,20 +89,28 @@ def getControlDataset(wrapper,plotname):
     return wrapper.getDataset(plotname,selection=selDatasets['x'],xRange=xRange,weight='w')
 
 def getDataset(wrapper,plotname):
+    thisxrange = xRange
+    thisyrange = yRange
+    sample = wrapper.sample
+    if 'SUSY' in sample:
+        if yRange[1]>100:
+            if '300' in sample:   thisyrange = [40,360]
+            elif '750' in sample: thisyrange = [140,900]
+            else:                 thisyrange = [20,150]
     selDatasets = {
-        'x' : 'x>{} && x<{}'.format(*xRange),
-        'y' : 'y>{} && y<{}'.format(*yRange),
+        'x' : 'x>{} && x<{}'.format(*thisxrange),
+        'y' : 'y>{} && y<{}'.format(*thisyrange),
     }
     if project:
         if 'hMass' in plotname:
-            return wrapper.getDataset(plotname,selection=' && '.join([selDatasets['x'],selDatasets['y'],hCut]),xRange=xRange,weight='w',yRange=yRange,project='x')
+            return wrapper.getDataset(plotname,selection=' && '.join([selDatasets['x'],selDatasets['y'],hCut]),xRange=thisxrange,weight='w',yRange=thisyrange,project='x')
         elif 'attMass' in plotname:
-            return wrapper.getDataset(plotname,selection=' && '.join([selDatasets['x'],selDatasets['y']]),xRange=xRange,weight='w',yRange=yRange,project='x')
+            return wrapper.getDataset(plotname,selection=' && '.join([selDatasets['x'],selDatasets['y']]),xRange=thisxrange,weight='w',yRange=thisyrange,project='x')
     else:
         if 'hMass' in plotname or 'attMass' in plotname:
-            return wrapper.getDataset(plotname,selection=' && '.join([selDatasets['x'],selDatasets['y']]),xRange=xRange,weight='w',yRange=yRange)
+            return wrapper.getDataset(plotname,selection=' && '.join([selDatasets['x'],selDatasets['y']]),xRange=thisxrange,weight='w',yRange=thisyrange)
         else:
-            return wrapper.getDataset(plotname,selection=selDatasets['x'],xRange=xRange,weight='w')
+            return wrapper.getDataset(plotname,selection=selDatasets['x'],xRange=thisxrange,weight='w')
 
 def getControlHist(proc,**kwargs):
     wrappers = kwargs.pop('wrappers',{})
@@ -470,7 +478,8 @@ def create_datacard(args):
         #haaLimits.addSignalModels(fit=False,yFitFunc='DCB')
         #haaLimits.addSignalModels(fit=False,yFitFunc='V')
         #haaLimits.addSignalModels(fit=False,yFitFuncFP='DCB',yFitFuncPP='DCB')#,cutOffFP=0.0,cutOffPP=0.0)
-        haaLimits.addSignalModels(fit=False,yFitFuncFP='DCB',yFitFuncPP='DG')#,cutOffFP=0.0,cutOffPP=0.0)
+        #haaLimits.addSignalModels(fit=False,yFitFuncFP='DCB',yFitFuncPP='DG')#,cutOffFP=0.0,cutOffPP=0.0)
+        haaLimits.addSignalModels(fit=False,yFitFuncFP='DG',yFitFuncPP='DG')#,cutOffFP=0.0,cutOffPP=0.0)
     else:
         haaLimits.addSignalModels(fit=False)
     haaLimits.XRANGE = xRange
