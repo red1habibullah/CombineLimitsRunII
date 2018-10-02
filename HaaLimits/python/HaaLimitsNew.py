@@ -351,6 +351,7 @@ class HaaLimits(Limits):
             vals = [results[h][a]['{}_h{}_a{}_{}'.format(param,h,a,tag)] for a in amasses]
             errs = [errors[h][a]['{}_h{}_a{}_{}'.format(param,h,a,tag)] for a in amasses]
             graph = ROOT.TGraphErrors(len(avals),array('d',avals),array('d',vals),array('d',xerrs),array('d',errs))
+            #graph = ROOT.TGraph(len(avals),array('d',avals),array('d',vals))
             savedir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
             python_mkdir(savedir)
             savename = '{}/{}_Fit'.format(savedir,name)
@@ -955,7 +956,7 @@ class HaaLimits(Limits):
         self.sigProcesses = tuple([self.SPLINENAME.format(h=h) for h in self.HMASSES])
         self._addLumiSystematic()
         self._addMuonSystematic()
-        self._addTauSystematic()
+        #self._addTauSystematic()
         self._addShapeSystematic()
         #self._addComponentSystematic(addControl=addControl)
         self._addRelativeNormUnc()
@@ -1078,7 +1079,7 @@ class HaaLimits(Limits):
         relativesyst = {
            (tuple(['upsilon2S']),  tuple(['PP'])) : 1.05,
            (tuple(['upsilon3S']),  tuple(['PP'])) : 1.10,
-           (tuple(['jpsi2S']), tuple(['PP'])) : 1.40,
+           (tuple(['jpsi2S']), tuple(['PP'])) : 1.20,
         }
         self.addSystematic('control_relNormUnc', 'lnN', systematics=relativesyst)
 

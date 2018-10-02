@@ -293,6 +293,8 @@ class LimitPlotter(PlotterBase):
         modelkey = kwargs.pop('modelkey',None)
         xVar = kwargs.pop('x',None)
         expectedBands = kwargs.pop('expectedBands', [])
+        zmin = kwargs.pop('zmin',1e-2)
+        zmax = kwargs.pop('zmax',1)
 
         logging.info('Plotting {0}'.format(savename))
 
@@ -523,7 +525,7 @@ class LimitPlotter(PlotterBase):
         expectedHist.GetYaxis().SetTitleOffset(1.2)
         expectedHist.GetZaxis().SetTitleSize(0.05)
         expectedHist.GetZaxis().SetTitleOffset(1.5)
-        expectedHist.GetZaxis().SetRangeUser(1e-2,1)
+        expectedHist.GetZaxis().SetRangeUser(zmin,zmax)
 
         def get_contours(hist,val=1.0):
             contours = array('d',[val])
@@ -581,8 +583,8 @@ class LimitPlotter(PlotterBase):
             #    #g.Draw('same')
 
         # special legend
-        entries = [[expected_graphs[eb][0],'#splitline{{Expected exclusion}}{{BR(H #rightarrow a_{{1}}a_{{1}}) = {}}}'.format(eb),'l'] for eb in expectedBands if len(expected_graphs[eb])]
-        title = 'NMSSM Type {}'.format(modelkey)
+        entries = [[expected_graphs[eb][0],'#splitline{{Expected exclusion}}{{BR(H #rightarrow aa) = {}}}'.format(eb),'l'] for eb in expectedBands if len(expected_graphs[eb])]
+        title = '2HDM Type {}'.format(modelkey)
         legend = self._getLegend(entries=entries,numcol=1,position=24,title=title)
         legend.Draw()
 
