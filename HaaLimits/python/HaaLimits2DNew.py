@@ -321,7 +321,7 @@ class HaaLimits2D(HaaLimits):
         for a in amasses:
             aval = float(str(a).replace('p','.'))
             thisxrange = [0.8*aval, 1.2*aval]
-            thisyrange = [0.15*h, 1.2*h] if self.YRANGE[1]>100 else [0, 1.2*aval]
+            thisyrange = [0.15*h, 1.2*h] if self.YRANGE[1]>100 else [self.YRANGE[0], 1.2*aval]
             if self.YRANGE[1]>100:
                 if  h == 125:  thisyrange = [20, 150]
                 elif h == 300: thisyrange = [40,360]
