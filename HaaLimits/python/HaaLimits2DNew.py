@@ -294,9 +294,9 @@ class HaaLimits2D(HaaLimits):
         dobgsig = kwargs.get('doBackgroundSignal',False)
         amasses = self.AMASSES
         if h>125:      amasses = [a for a in amasses if a not in ['3p6',4,6]]
-        if  h == 125:  self.YRANGE = [20, 150]
-        elif h == 300: self.YRANGE = [40,360]
-        elif h == 750: self.YRANGE = [140,900]
+        if  h == 125:  thisyrange = [20, 150]
+        elif h == 300: thisyrange = [40,360]
+        elif h == 750: thisyrange = [140,900]
         avals = [float(str(x).replace('p','.')) for x in amasses]
         histMap = self.histMap[region][shift]
         tag= '{}{}'.format(region,'_'+shift if shift else '')
@@ -323,16 +323,16 @@ class HaaLimits2D(HaaLimits):
         elif yFitFunc == "V": initialValuesV = self.GetInitialValuesDitau(isLandau=False)
         for a in amasses:
             aval = float(str(a).replace('p','.'))
-            #thisxrange = [0.8*aval, 1.2*aval]
+            thisxrange = [0.8*aval, 1.2*aval]
             #thisyrange = [0.15*h, 1.2*h] if self.YRANGE[1]>100 else [0, 1.2*aval]            
             ws = ROOT.RooWorkspace('sig')
-            #ws.factory('x[{0}, {1}]'.format(*thisxrange)) 
-            ws.factory('x[{0}, {1}]'.format(*self.XRANGE))
+            ws.factory('x[{0}, {1}]'.format(*thisxrange)) 
+            #ws.factory('x[{0}, {1}]'.format(*self.XRANGE))
             ws.var('x').setUnit('GeV')
             ws.var('x').setPlotLabel(self.XLABEL)
             ws.var('x').SetTitle(self.XLABEL)
-            #ws.factory('y[{0}, {1}]'.format(*thisyrange)) 
-            ws.factory('y[{0}, {1}]'.format(*self.YRANGE))
+            ws.factory('y[{0}, {1}]'.format(*thisyrange)) 
+            #ws.factory('y[{0}, {1}]'.format(*self.YRANGE))
             ws.var('y').setUnit('GeV')
             ws.var('y').setPlotLabel(self.YLABEL)
             ws.var('y').SetTitle(self.YLABEL)
