@@ -19,10 +19,9 @@ from HaaLimits2DNew import *
 
 XRANGE = [2.5, 30]
 YRANGE = [0, 1200]
-#YRANGE = [40,360]
 UPSILONRANGE = [8,11]
 AMASSES = ['3p6',4,5,6,7,9,11,13,15,17,19,21]
-HMASSES = [300] #[125,300,750]
+HMASSES = [[125,300,750]
 subdirectoryName='mumufourBody_SEP5_DG/'
 name = 'mmmt_mm_parametric'
 IFCONTROL = True

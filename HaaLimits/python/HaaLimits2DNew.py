@@ -1515,8 +1515,8 @@ class HaaLimits2D(HaaLimits):
             }
         elif region == "FP": 
             initialValues = {
-                "h125a3p6": { "mean": 99.8, "sigma1": 5.00, "sigma2": 12.0},
-                "h125a4"  : { "mean": 100., "sigma1": 6.00, "sigma2": 10.5},
+                "h125a3p6": { "mean": 99.8, "sigma1": 7.00, "sigma2": 12.0},
+                "h125a4"  : { "mean": 100., "sigma1": 7.00, "sigma2": 10.5},
                 "h125a5"  : { "mean": 105., "sigma1": 7.50, "sigma2": 12.0},
                 "h125a6"  : { "mean": 93.1, "sigma1": 15.3, "sigma2": 12.3},
                 "h125a7"  : { "mean": 93.3, "sigma1": 15.1, "sigma2": 13.8},
