@@ -1081,7 +1081,7 @@ class HaaLimits(Limits):
            (tuple(['upsilon3S']),  tuple(['PP'])) : 1.10,
            (tuple(['jpsi2S']), tuple(['PP'])) : 1.20,
         }
-        self.addSystematic('control_relNormUnc', 'lnN', systematics=relativesyst)
+        self.addSystematic('relNormUnc_{process}', 'lnN', systematics=relativesyst)
 
     ###################################
     ### Save workspace and datacard ###

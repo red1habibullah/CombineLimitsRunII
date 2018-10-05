@@ -583,7 +583,7 @@ class DoubleSidedGaussian(Model):
         mean   = self.kwargs.get('mean',  [1,0,1000])
         sigma1 = self.kwargs.get('sigma1', [1,0,100])
         sigma2 = self.kwargs.get('sigma2', [1,0,100])
-        yMax   = self.kwargs.get('yMax')
+        yMax   = self.kwargs.get('yMax',9999999)
         meanName   = mean if isinstance(mean,str) else 'mean_{0}'.format(label)
         sigma1Name = sigma1 if isinstance(sigma1,str) else 'sigma1_{0}'.format(label)
         sigma2Name = sigma2 if isinstance(sigma2,str) else 'sigma2_{0}'.format(label)

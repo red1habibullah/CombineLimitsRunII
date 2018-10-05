@@ -214,7 +214,8 @@ class LimitPlotter(PlotterBase):
         oneSigma.SetFillColor(ROOT.kGreen+1)
         oneSigma.SetLineColor(ROOT.kGreen+1)
         oneSigma.SetMarkerStyle(0)
-        expected.SetLineStyle(7)
+        expected.SetLineStyle(5)
+        expected.SetLineColor(ROOT.kAzure)
         expected.SetMarkerStyle(0)
         expected.SetFillStyle(0)
         observed.SetMarkerStyle(0)
@@ -235,7 +236,7 @@ class LimitPlotter(PlotterBase):
         expected.Draw('same')
         ROOT.gPad.RedrawAxis()
 
-        colors = [ROOT.kRed, ROOT.kBlue-4, ROOT.kMagenta+1, ROOT.kCyan+1, ROOT.kOrange+7]
+        colors = [ROOT.kRed, ROOT.kBlue-4, ROOT.kMagenta+1, ROOT.kAzure, ROOT.kOrange+7]
         if overlay:
             c = 0
             for graph in overlay:
@@ -257,7 +258,7 @@ class LimitPlotter(PlotterBase):
             [twoSigma,'95% expected','F'],
         ]
         if not blind: entries = [[observed,'Observed','l']] + entries
-        legend = self._getLegend(entries=entries,numcol=numcol,position=legendpos)
+        legend = self._getLegend(entries=entries,numcol=numcol,position=legendpos,title='95% CL upper limits')
         legend.Draw()
 
 
@@ -687,7 +688,8 @@ class LimitPlotter(PlotterBase):
                     if x>9 and x<11: continue # upsilon
                     expected.SetPoint(     i,   expectedSmooth.GetX()[i],         expectedSmooth.GetY()[i])
 
-        expected.SetLineStyle(7)
+        expected.SetLineStyle(5)
+        expected.SetLineColor(ROOT.kAzure)
         expected.SetMarkerStyle(0)
         expected.SetFillStyle(0)
         observed.SetMarkerStyle(0)
@@ -806,7 +808,8 @@ class LimitPlotter(PlotterBase):
                         if xi>9 and xi<11: continue # upsilon
                         expected[x].SetPoint(     i,   expectedSmooth[x].GetX()[i],         expectedSmooth[x].GetY()[i])
 
-            expected[x].SetLineStyle(7)
+            expected[x].SetLineStyle(5)
+            expected[x].SetLineColor(ROOT.kAzure)
             expected[x].SetLineWidth(2)
             expected[x].SetMarkerStyle(0)
             expected[x].SetFillStyle(0)

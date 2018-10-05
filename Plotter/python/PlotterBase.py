@@ -46,7 +46,7 @@ class PlotterBase(object):
         # ----------------
         # | 11 | 21 | 31 |
         # ----------------
-        width = widthScale*(0.17*numcol+0.1)
+        width = widthScale*(0.21*numcol+0.1)
         numentries = len(entryArgs)
         height = heightScale*(math.ceil(float(numentries)/numcol)*0.07+0.04)
         if position % 10 == 1:   # bottom
@@ -71,11 +71,11 @@ class PlotterBase(object):
             xend = 0.95
             xstart = xend-width
         legend = ROOT.TLegend(xstart,ystart,xend,yend,'','NDC')
-        if title: legend.SetHeader(title)
         if numcol>1: legend.SetNColumns(int(numcol))
         legend.SetTextFont(42)
         legend.SetBorderSize(0)
         legend.SetFillColor(0)
+        if title: legend.SetHeader(title)
         for entryArg in entryArgs:
             legend.AddEntry(*entryArg)
         return legend
