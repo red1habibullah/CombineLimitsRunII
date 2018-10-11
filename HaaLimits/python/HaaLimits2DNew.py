@@ -996,9 +996,10 @@ class HaaLimits2D(HaaLimits):
 
         canvas = ROOT.TCanvas('c','c',800,800)
         xFrame.Draw()
-        canvas.SetLogy(logy)
         python_mkdir(self.plotDir)
         canvas.Print('{}/model_fit_{}{}_xproj.png'.format(self.plotDir,region,'_'+shift if shift else ''))
+        canvas.SetLogy(True)
+        canvas.Print('{}/model_fit_{}{}_xproj_log.png'.format(self.plotDir,region,'_'+shift if shift else ''))
 
         yFrame = self.workspace.var('y').frame()
         data.plotOn(yFrame)
@@ -1010,8 +1011,9 @@ class HaaLimits2D(HaaLimits):
 
         canvas = ROOT.TCanvas('c','c',800,800)
         yFrame.Draw()
-        canvas.SetLogy(logy)
         canvas.Print('{}/model_fit_{}{}_yproj.png'.format(self.plotDir,region,'_'+shift if shift else ''))
+        canvas.SetLogy(True)
+        canvas.Print('{}/model_fit_{}{}_yproj_log.png'.format(self.plotDir,region,'_'+shift if shift else ''))
 
         pars = fr.floatParsFinal()
         vals = {}
@@ -1160,8 +1162,13 @@ class HaaLimits2D(HaaLimits):
                 values[region][h] = {}
                 errors[region][h] = {}
                 integrals[region][h] = {}
-                for shift in ['']+self.SIGNALSHIFTS:
+                for shift in ['']+self.SIGNALSHIFTS+self.QCDSHIFTS:
                     if shift == '':
+                        vals, errs, ints = self.fitSignals(h,region=region,shift=shift,yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
+                        values[region][h][shift] = vals
+                        errors[region][h][shift] = errs
+                        integrals[region][h][shift] = ints
+                    elif shift in self.QCDSHIFTS:
                         vals, errs, ints = self.fitSignals(h,region=region,shift=shift,yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
                         values[region][h][shift] = vals
                         errors[region][h][shift] = errs
@@ -1175,7 +1182,30 @@ class HaaLimits2D(HaaLimits):
                         values[region][h][shift+'Down'] = valsDown
                         errors[region][h][shift+'Down'] = errsDown
                         integrals[region][h][shift+'Down'] = intsDown
-                models[region][h] = self.buildSpline(h,values[region][h],errors[region][h],integrals[region][h],region,self.SIGNALSHIFTS,yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
+                if self.QCDSHIFTS:
+                    values[region][h]['qcdUp']      = {h:{a:{} for a in self.AMASSES}}
+                    values[region][h]['qcdDown']    = {h:{a:{} for a in self.AMASSES}}
+                    errors[region][h]['qcdUp']      = {h:{a:{} for a in self.AMASSES}}
+                    errors[region][h]['qcdDown']    = {h:{a:{} for a in self.AMASSES}}
+                    integrals[region][h]['qcdUp']   = {h:{a:0  for a in self.AMASSES}}
+                    integrals[region][h]['qcdDown'] = {h:{a:0  for a in self.AMASSES}}
+                    for a in values[region][h][''][h]:
+                        for val in values[region][h][''][h][a]:
+                            values[region][h]['qcdUp'  ][h][a][val] = max([values[region][h][shift][h][a][val] for shift in self.QCDSHIFTS])
+                            values[region][h]['qcdDown'][h][a][val] = min([values[region][h][shift][h][a][val] for shift in self.QCDSHIFTS])
+                            errors[region][h]['qcdUp'  ][h][a][val] = max([errors[region][h][shift][h][a][val] for shift in self.QCDSHIFTS])
+                            errors[region][h]['qcdDown'][h][a][val] = min([errors[region][h][shift][h][a][val] for shift in self.QCDSHIFTS])
+                        integrals[region][h]['qcdUp'  ][h][a] = max([integrals[region][h][shift][h][a] for shift in self.QCDSHIFTS])
+                        integrals[region][h]['qcdDown'][h][a] = min([integrals[region][h][shift][h][a] for shift in self.QCDSHIFTS])
+                    for shift in ['qcdUp','qcdDown']:
+                        savedir = '{}/{}'.format(self.fitsDir,shift)
+                        python_mkdir(savedir)
+                        savename = '{}/h{}_{}_{}.json'.format(savedir,h,region,shift)
+                        jsonData = {'vals': values[region][h][shift], 'errs': errors[region][h][shift], 'integrals': integrals[region][h][shift]}
+                        self.dump(savename,jsonData)
+                    models[region][h] = self.buildSpline(h,values[region][h],errors[region][h],integrals[region][h],region,self.SIGNALSHIFTS+['qcd'],yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
+                else:
+                    models[region][h] = self.buildSpline(h,values[region][h],errors[region][h],integrals[region][h],region,self.SIGNALSHIFTS,yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
                 #self.workspace.factory('{}_{}_norm[1,0,9999]'.format(self.SPLINENAME.format(h=h),region))
         self.fitted_models = models
 
@@ -1552,15 +1582,12 @@ class HaaLimits2D(HaaLimits):
     ###################
     ### Systematics ###
     ###################
-    def addSystematics(self,doBinned=False,addControl=False): #ADDED BY KYLE
+    def addSystematics(self,doBinned=False,addControl=False):
         self.sigProcesses = tuple([self.SPLINENAME.format(h=h) for h in self.HMASSES])
         self._addLumiSystematic()
         self._addMuonSystematic()
-        self._addTauSystematic()
+        #self._addTauSystematic()
         self._addShapeSystematic()
-        self._addControlSystematics()
-        if not doBinned and not addControl: self._addControlSystematics()
-
         #self._addComponentSystematic(addControl=addControl)
         self._addRelativeNormUnc()
         if not doBinned and not addControl: self._addControlSystematics()

@@ -40,6 +40,7 @@ class HaaLimits(Limits):
     SHIFTS = []
     BACKGROUNDSHIFTS = []
     SIGNALSHIFTS = []
+    QCDSHIFTS = [] # note, max/min of all (excluding 0.5/2)
 
 
     def __init__(self,histMap,tag=''):
@@ -136,24 +137,24 @@ class HaaLimits(Limits):
         # upsilon
         upsilon1S = bgRes('upsilon1S',
             mean  = [9.5,9.3,9.7],
-            sigma = [0.1,0.01,0.3],
-            width = [0.2,0.01,1],
+            sigma = [0.05,0.01,0.3],
+            width = [0.1,0.01,1],
         )
         nameU1 = 'upsilon1S'
         upsilon1S.build(self.workspace,nameU1)
     
         upsilon2S = bgRes('upsilon2S',
             mean  = [10.0,9.8,10.15],
-            sigma = [0.1,0.01,0.3],
-            width = [0.2,0.01,1],
+            sigma = [0.06,0.01,0.3],
+            width = [0.1,0.01,1],
         )
         nameU2 = 'upsilon2S'
         upsilon2S.build(self.workspace,nameU2)
     
         upsilon3S = bgRes('upsilon3S',
             mean  = [10.3,10.22,10.5],
-            sigma = [0.1,0.04,0.3],
-            width = [0.2,0.01,1],
+            sigma = [0.07,0.01,0.3],
+            width = [0.1,0.01,1],
         )
         nameU3 = 'upsilon3S'
         upsilon3S.build(self.workspace,nameU3)
@@ -516,9 +517,10 @@ class HaaLimits(Limits):
 
         canvas = ROOT.TCanvas('c','c',800,800)
         xFrame.Draw()
-        canvas.SetLogy(logy)
         python_mkdir(self.plotDir)
         canvas.Print('{}/model_fit_{}{}.png'.format(self.plotDir,region,'_'+shift if shift else ''))
+        canvas.SetLogy(True)
+        canvas.Print('{}/model_fit_{}{}_log.png'.format(self.plotDir,region,'_'+shift if shift else ''))
 
         pars = fr.floatParsFinal()
         vals = {}
@@ -865,8 +867,13 @@ class HaaLimits(Limits):
                 values[region][h] = {}
                 errors[region][h] = {}
                 integrals[region][h] = {}
-                for shift in ['']+self.SIGNALSHIFTS:
+                for shift in ['']+self.SIGNALSHIFTS+self.QCDSHIFTS:
                     if shift == '':
+                        vals, errs, ints = self.fitSignals(h,region=region,shift=shift,**kwargs)
+                        values[region][h][shift] = vals
+                        errors[region][h][shift] = errs
+                        integrals[region][h][shift] = ints
+                    elif shift in self.QCDSHIFTS:
                         vals, errs, ints = self.fitSignals(h,region=region,shift=shift,**kwargs)
                         values[region][h][shift] = vals
                         errors[region][h][shift] = errs
@@ -880,7 +887,32 @@ class HaaLimits(Limits):
                         values[region][h][shift+'Down'] = valsDown
                         errors[region][h][shift+'Down'] = errsDown
                         integrals[region][h][shift+'Down'] = intsDown
-                models[region][h] = self.buildSpline(h,values[region][h],errors[region][h],integrals[region][h],region,self.SIGNALSHIFTS,**kwargs)
+                # special handling for QCD scale uncertainties
+                if self.QCDSHIFTS:
+                    values[region][h]['qcdUp']      = {h:{a:{} for a in self.AMASSES}}
+                    values[region][h]['qcdDown']    = {h:{a:{} for a in self.AMASSES}}
+                    errors[region][h]['qcdUp']      = {h:{a:{} for a in self.AMASSES}}
+                    errors[region][h]['qcdDown']    = {h:{a:{} for a in self.AMASSES}}
+                    integrals[region][h]['qcdUp']   = {h:{a:0  for a in self.AMASSES}}
+                    integrals[region][h]['qcdDown'] = {h:{a:0  for a in self.AMASSES}}
+                    for a in values[region][h][''][h]:
+                        for val in values[region][h][''][h][a]:
+                            values[region][h]['qcdUp'  ][h][a][val+'_qcdUp'  ] = max([values[region][h][shift][h][a][val+'_'+shift] for shift in self.QCDSHIFTS])
+                            values[region][h]['qcdDown'][h][a][val+'_qcdDown'] = min([values[region][h][shift][h][a][val+'_'+shift] for shift in self.QCDSHIFTS])
+                            errors[region][h]['qcdUp'  ][h][a][val+'_qcdUp'  ] = max([errors[region][h][shift][h][a][val+'_'+shift] for shift in self.QCDSHIFTS])
+                            errors[region][h]['qcdDown'][h][a][val+'_qcdDown'] = min([errors[region][h][shift][h][a][val+'_'+shift] for shift in self.QCDSHIFTS])
+                        integrals[region][h]['qcdUp'  ][h][a] = max([integrals[region][h][shift][h][a] for shift in self.QCDSHIFTS])
+                        integrals[region][h]['qcdDown'][h][a] = min([integrals[region][h][shift][h][a] for shift in self.QCDSHIFTS])
+                    for shift in ['qcdUp','qcdDown']:
+                        savedir = '{}/{}'.format(self.fitsDir,shift)
+                        python_mkdir(savedir)
+                        savename = '{}/h{}_{}_{}.json'.format(savedir,h,region,shift)
+                        jsonData = {'vals': values[region][h][shift], 'errs': errors[region][h][shift], 'integrals': integrals[region][h][shift]}
+                        self.dump(savename,jsonData)
+
+                    models[region][h] = self.buildSpline(h,values[region][h],errors[region][h],integrals[region][h],region,self.SIGNALSHIFTS+['qcd'],**kwargs)
+                else:
+                    models[region][h] = self.buildSpline(h,values[region][h],errors[region][h],integrals[region][h],region,self.SIGNALSHIFTS,**kwargs)
                 #self.workspace.factory('{}_{}_norm[1,0,9999]'.format(self.SPLINENAME.format(h=h),region))
         self.fitted_models = models
 
@@ -952,7 +984,6 @@ class HaaLimits(Limits):
     ### Systematics ###
     ###################
     def addSystematics(self,doBinned=False,addControl=False):
-        print 'TROUBLESHOOT: ADDING SYSTEMATICS'
         self.sigProcesses = tuple([self.SPLINENAME.format(h=h) for h in self.HMASSES])
         self._addLumiSystematic()
         self._addMuonSystematic()
@@ -1025,7 +1056,8 @@ class HaaLimits(Limits):
         #                    
 
 
-        for shift in self.SHIFTS:
+        for shift in self.SHIFTS+['qcd']:
+            if shift=='qcd' and not self.QCDSHIFTS: continue
             if self.workspace.var(shift): self.addSystematic(shift, 'param', systematics=[0,1])
     
     def _addLumiSystematic(self):

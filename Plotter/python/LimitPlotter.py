@@ -585,7 +585,7 @@ class LimitPlotter(PlotterBase):
 
         # special legend
         entries = [[expected_graphs[eb][0],'#splitline{{Expected exclusion}}{{BR(H #rightarrow aa) = {}}}'.format(eb),'l'] for eb in expectedBands if len(expected_graphs[eb])]
-        title = '2HDM Type {}'.format(modelkey)
+        title = '#splitline{{2HDM+S Type {}}}{{95% CL upper limits}}'.format(modelkey)
         legend = self._getLegend(entries=entries,numcol=1,position=24,title=title)
         legend.Draw()
 

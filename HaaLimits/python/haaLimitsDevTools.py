@@ -49,9 +49,17 @@ if testing: signalShiftTypes = ['lep'] if detailed else []
 backgroundShiftTypes = ['fake']
 if testing: backgroundShiftTypes = ['fake'] if detailed else []
 
+qcdShifts = []
+for muR in [0.5,1.0,2.0]:
+    for muF in [0.5,1.0,2.0]:
+        if muR/muF>=4 or muF/muR>=4: continue
+        qcdShifts += ['muR{muR:3.1f}muF{muF:3.1f}'.format(muR=muR,muF=muF)]
+if testing: qcdShifts = []
+
 shifts = []
 for s in shiftTypes:
     shifts += [s+'Up', s+'Down']
+shifts += qcdShifts
 
 
 
@@ -454,6 +462,7 @@ def create_datacard(args):
     haaLimits.SHIFTS = shiftTypes
     haaLimits.SIGNALSHIFTS = signalShiftTypes
     haaLimits.BACKGROUNDSHIFTS = backgroundShiftTypes
+    haaLimits.QCDSHIFTS = qcdShifts
     haaLimits.AMASSES = amasses
     haaLimits.HMASSES = [chi2Mass] if chi2Mass else hmasses
     haaLimits.XRANGE = xRange
