@@ -62,10 +62,53 @@ class HaaLimits2D(HaaLimits):
 
         # try landau
         if self.YRANGE[1]>100:
-            bg = Models.Landau('bg',
+            #bg = Models.Landau('bg',
+            #    x = 'y',
+            #    mu    = [50,0,200],
+            #   sigma = [10,0,100],
+            #)
+            #bg = Models.Polynomial('bg',
+            #    order = 3,
+            #    p0 = [50,0,10000],
+            #    p1 = [-5,-100,100],
+            #    p2 = [-0.3,-100,100],
+            #)
+
+            #bg = Models.Polynomial('bg',
+            #    order = 4,
+            #    p0 = [-1,0,10000],
+            #    p1 = [0.25,-100,100],
+            #    p2 = [0.03,-100,100],
+            #    p3 = [0.5,-100,100],
+            #)
+
+            #bg = Models.Polynomial('bg',
+            #    order = 5,
+            #    p0 = [965,0,10000],
+            #    p1 = [-12, -100, 100],
+            #    p2 = [0.06,-100,100],
+            #    p3 = [-0.1,-100,100],
+            #    p4 = [-0.01,-100,100],
+            #)
+
+            erf1 = Models.Erf('erf1',
                 x = 'y',
-                mu    = [50,0,200],
-                sigma = [10,0,100],
+                erfScale = [0.05,0,10],
+                erfShift = [70,10,200],
+            )
+            nameE1 = 'erf1{}'.format('_'+tag if tag else '')
+            erf1.build(self.workspace,nameE1)
+
+            cont1 = Models.Exponential('conty1',
+                x = 'y',
+                lamb = [-0.05,-1,0],
+            )
+            nameC1 = 'conty1{}'.format('_'+tag if tag else '')
+            cont1.build(self.workspace,nameC1)
+
+            bg = Models.Prod('bg',
+                nameE1,
+                nameC1,
             )
         else:
             # Landau only
@@ -565,6 +608,7 @@ class HaaLimits2D(HaaLimits):
                 for param in results[h][a]:
                     #ws.var(param+'_{}'.format(shift)).setVal(results[h][a][param])
                     ws.var(param).setVal(results[h][a][param])
+            print "TROUBLESHOOT:", h, a, region, shift
             hist = histMap[self.SIGNAME.format(h=h,a=a)]
             saveDir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
             if not skipFit:
@@ -1512,69 +1556,69 @@ class HaaLimits2D(HaaLimits):
     def GetInitialValuesDG(self, region="FP"):
         if region == "PP": 
             initialValues = {
-                "h125a3p6": { "mean": 94.1, "sigma1": 10.4, "sigma2": 17.5},
-                "h125a4"  : { "mean": 94.0, "sigma1": 12.3, "sigma2": 16.8},
-                "h125a5"  : { "mean": 94.1, "sigma1": 15.5, "sigma2": 12.1},
-                "h125a6"  : { "mean": 93.1, "sigma1": 15.3, "sigma2": 12.3},
-                "h125a7"  : { "mean": 93.3, "sigma1": 15.1, "sigma2": 13.8},
-                "h125a9"  : { "mean": 92.2, "sigma1": 15.1, "sigma2": 13.7},
-                "h125a11" : { "mean": 92.2, "sigma1": 14.9, "sigma2": 14.1},
-                "h125a13" : { "mean": 91.8, "sigma1": 14.1, "sigma2": 15.4},
-                "h125a15" : { "mean": 91.2, "sigma1": 13.8, "sigma2": 15.8},
-                "h125a17" : { "mean": 91.1, "sigma1": 14.2, "sigma2": 13.8},
-                "h125a19" : { "mean": 90.7, "sigma1": 13.6, "sigma2": 14.9},
-                "h125a21" : { "mean": 91.3, "sigma1": 10.3, "sigma2": 20.0},
-                "h300a5"  : { "mean": 215, "sigma1": 44.1, "sigma2": 26.9},
+                "h125a3p6": { "mean": 93.5, "sigma1": 14.2, "sigma2": 10.1},
+                "h125a4"  : { "mean": 93.7, "sigma1": 15.9, "sigma2": 10.4},
+                "h125a5"  : { "mean": 94.2, "sigma1": 17.0, "sigma2": 10.0},
+                "h125a6"  : { "mean": 93.1, "sigma1": 15.6, "sigma2": 11.9},
+                "h125a7"  : { "mean": 93.3, "sigma1": 16.5, "sigma2": 11.7},
+                "h125a9"  : { "mean": 92.2, "sigma1": 16.2, "sigma2": 12.1},
+                "h125a11" : { "mean": 92.2, "sigma1": 16.0, "sigma2": 12.5},
+                "h125a13" : { "mean": 91.8, "sigma1": 15.9, "sigma2": 12.5},
+                "h125a15" : { "mean": 91.2, "sigma1": 15.5, "sigma2": 12.9},
+                "h125a17" : { "mean": 91.1, "sigma1": 15.2, "sigma2": 12.2},
+                "h125a19" : { "mean": 90.7, "sigma1": 15.4, "sigma2": 12.4},
+                "h125a21" : { "mean": 91.3, "sigma1": 14.5, "sigma2": 12.3},
+                "h300a5"  : { "mean": 215, "sigma1": 44.4, "sigma2": 26.4},
                 "h300a7"  : { "mean": 211, "sigma1": 44.7, "sigma2": 29.6},
-                "h300a9"  : { "mean": 209, "sigma1": 48.5, "sigma2": 30.1},
-                "h300a11" : { "mean": 208, "sigma1": 47.9, "sigma2": 31.2},
-                "h300a13" : { "mean": 207, "sigma1": 48.6, "sigma2": 32.3},
-                "h300a15" : { "mean": 207, "sigma1": 47.9, "sigma2": 31.9},
-                "h300a17" : { "mean": 206, "sigma1": 46.8, "sigma2": 33.5},
-                "h300a19" : { "mean": 206, "sigma1": 48.8, "sigma2": 32.3},
-                "h300a21" : { "mean": 206, "sigma1": 49.5, "sigma2": 31.2},
-                "h750a5"  : { "mean": 522, "sigma1": 122, "sigma2": 68},
-                "h750a7"  : { "mean": 510, "sigma1": 127, "sigma2": 78},
-                "h750a9"  : { "mean": 502, "sigma1": 144, "sigma2": 80},
-                "h750a11" : { "mean": 505, "sigma1": 151, "sigma2": 79},
-                "h750a13" : { "mean": 505, "sigma1": 153, "sigma2": 73},
-                "h750a15" : { "mean": 502, "sigma1": 152, "sigma2": 75},
-                "h750a17" : { "mean": 499, "sigma1": 156, "sigma2": 74},
-                "h750a19" : { "mean": 501, "sigma1": 146, "sigma2": 77},
-                "h750a21" : { "mean": 500, "sigma1": 145, "sigma2": 79}
+                "h300a9"  : { "mean": 209, "sigma1": 49.0, "sigma2": 39.5},
+                "h300a11" : { "mean": 208, "sigma1": 48.2, "sigma2": 30.8},
+                "h300a13" : { "mean": 207, "sigma1": 49.5, "sigma2": 31.3},
+                "h300a15" : { "mean": 207, "sigma1": 48.4, "sigma2": 31.3},
+                "h300a17" : { "mean": 206, "sigma1": 47.0, "sigma2": 33.0},
+                "h300a19" : { "mean": 206, "sigma1": 49.4, "sigma2": 31.9},
+                "h300a21" : { "mean": 206, "sigma1": 50.3, "sigma2": 30.4},
+                "h750a5"  : { "mean": 522, "sigma1": 121, "sigma2": 68},
+                "h750a7"  : { "mean": 510, "sigma1": 130, "sigma2": 75},
+                "h750a9"  : { "mean": 508, "sigma1": 133, "sigma2": 80},
+                "h750a11" : { "mean": 505, "sigma1": 137, "sigma2": 80},
+                "h750a13" : { "mean": 503, "sigma1": 138, "sigma2": 82},
+                "h750a15" : { "mean": 501, "sigma1": 145, "sigma2": 80},
+                "h750a17" : { "mean": 500, "sigma1": 149, "sigma2": 76},
+                "h750a19" : { "mean": 500, "sigma1": 154, "sigma2": 73},
+                "h750a21" : { "mean": 499, "sigma1": 153, "sigma2": 75}
             }
         elif region == "FP": 
             initialValues = {
-                "h125a3p6": { "mean": 99.8, "sigma1": 7.00, "sigma2": 12.0},
-                "h125a4"  : { "mean": 100., "sigma1": 7.00, "sigma2": 10.5},
-                "h125a5"  : { "mean": 105., "sigma1": 7.50, "sigma2": 12.0},
-                "h125a6"  : { "mean": 93.1, "sigma1": 15.3, "sigma2": 12.3},
-                "h125a7"  : { "mean": 93.3, "sigma1": 15.1, "sigma2": 13.8},
-                "h125a9"  : { "mean": 92.2, "sigma1": 15.1, "sigma2": 13.7},
-                "h125a11" : { "mean": 92.2, "sigma1": 14.9, "sigma2": 14.1},
-                "h125a13" : { "mean": 91.8, "sigma1": 14.1, "sigma2": 15.4},
-                "h125a15" : { "mean": 91.2, "sigma1": 13.8, "sigma2": 15.8},
-                "h125a17" : { "mean": 91.1, "sigma1": 14.2, "sigma2": 13.8},
-                "h125a19" : { "mean": 90.7, "sigma1": 13.6, "sigma2": 14.9},
-                "h125a21" : { "mean": 91.3, "sigma1": 10.3, "sigma2": 20.0},
-                "h300a5"  : { "mean": 215, "sigma1": 44.1, "sigma2": 26.9},
-                "h300a7"  : { "mean": 211, "sigma1": 44.7, "sigma2": 29.6},
-                "h300a9"  : { "mean": 209, "sigma1": 48.5, "sigma2": 30.1},
-                "h300a11" : { "mean": 208, "sigma1": 47.9, "sigma2": 31.2},
-                "h300a13" : { "mean": 207, "sigma1": 48.6, "sigma2": 32.3},
-                "h300a15" : { "mean": 207, "sigma1": 47.9, "sigma2": 31.9},
-                "h300a17" : { "mean": 206, "sigma1": 46.8, "sigma2": 33.5},
-                "h300a19" : { "mean": 206, "sigma1": 48.8, "sigma2": 32.3},
-                "h300a21" : { "mean": 206, "sigma1": 49.5, "sigma2": 31.2},
-                "h750a5"  : { "mean": 522, "sigma1": 122, "sigma2": 68},
-                "h750a7"  : { "mean": 510, "sigma1": 127, "sigma2": 78},
-                "h750a9"  : { "mean": 502, "sigma1": 144, "sigma2": 80},
-                "h750a11" : { "mean": 505, "sigma1": 151, "sigma2": 79},
-                "h750a13" : { "mean": 505, "sigma1": 153, "sigma2": 73},
-                "h750a15" : { "mean": 502, "sigma1": 152, "sigma2": 75},
-                "h750a17" : { "mean": 499, "sigma1": 156, "sigma2": 74},
-                "h750a19" : { "mean": 501, "sigma1": 146, "sigma2": 77},
-                "h750a21" : { "mean": 500, "sigma1": 145, "sigma2": 79}
+                "h125a3p6": { "mean": 93.4, "sigma1": 13.5, "sigma2": 13.0},
+                "h125a4"  : { "mean": 95.8, "sigma1": 15.8, "sigma2": 12.2},
+                "h125a5"  : { "mean": 96.1, "sigma1": 16.4, "sigma2": 12.1},
+                "h125a6"  : { "mean": 94.9, "sigma1": 15.9, "sigma2": 12.8},
+                "h125a7"  : { "mean": 94.5, "sigma1": 17.2, "sigma2": 12.4},
+                "h125a9"  : { "mean": 93.6, "sigma1": 17.2, "sigma2": 12.2},
+                "h125a11" : { "mean": 93.4, "sigma1": 15.8, "sigma2": 13.8},
+                "h125a13" : { "mean": 94.0, "sigma1": 15.8, "sigma2": 12.3},
+                "h125a15" : { "mean": 93.3, "sigma1": 14.3, "sigma2": 13.8},
+                "h125a17" : { "mean": 93.5, "sigma1": 15.6, "sigma2": 13.9},
+                "h125a19" : { "mean": 91.0, "sigma1": 13.9, "sigma2": 15.5},
+                "h125a21" : { "mean": 93.2, "sigma1": 14.5, "sigma2": 15.8},
+                "h300a5"  : { "mean": 215, "sigma1": 47.0, "sigma2": 27.7},
+                "h300a7"  : { "mean": 211, "sigma1": 51.0, "sigma2": 27.0},
+                "h300a9"  : { "mean": 210, "sigma1": 49.0, "sigma2": 29.0},
+                "h300a11" : { "mean": 209, "sigma1": 50.0, "sigma2": 31.0},
+                "h300a13" : { "mean": 210, "sigma1": 51.0, "sigma2": 30.8},
+                "h300a15" : { "mean": 208, "sigma1": 55.0, "sigma2": 28.0},
+                "h300a17" : { "mean": 210, "sigma1": 52.0, "sigma2": 30.0},
+                "h300a19" : { "mean": 209, "sigma1": 53.0, "sigma2": 29.0},
+                "h300a21" : { "mean": 207, "sigma1": 50.0, "sigma2": 32.0},
+                "h750a5"  : { "mean": 511, "sigma1": 148, "sigma2": 65},
+                "h750a7"  : { "mean": 507, "sigma1": 150, "sigma2": 69},
+                "h750a9"  : { "mean": 504, "sigma1": 148, "sigma2": 73},
+                "h750a11" : { "mean": 507, "sigma1": 146, "sigma2": 78},
+                "h750a13" : { "mean": 505, "sigma1": 155, "sigma2": 70},
+                "h750a15" : { "mean": 502, "sigma1": 154, "sigma2": 72},
+                "h750a17" : { "mean": 500, "sigma1": 156, "sigma2": 74},
+                "h750a19" : { "mean": 502, "sigma1": 150, "sigma2": 75},
+                "h750a21" : { "mean": 500, "sigma1": 158, "sigma2": 74}
             }
 
         return initialValues
