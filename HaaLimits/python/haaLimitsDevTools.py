@@ -23,6 +23,7 @@ logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format='%(asctime)s.
 
 testing = False
 detailed = True
+skipSignal = False
 
 xRange = [2.5,25] # with jpsi
 #xRange = [4,25] # no jpsi
@@ -472,6 +473,7 @@ def create_datacard(args):
     haaLimits.initializeWorkspace()
     haaLimits.addControlModels(voigtian=True,logy=xRange[0]<3.3)
     haaLimits.addBackgroundModels(voigtian=True,logy=False,fixAfterControl=True)
+    if skipSignal: return
     haaLimits.XRANGE = [0,30] # override for signal splines
     if project:
         haaLimits.addSignalModels(fit=False)

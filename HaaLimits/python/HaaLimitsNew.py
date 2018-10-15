@@ -517,6 +517,10 @@ class HaaLimits(Limits):
 
         canvas = ROOT.TCanvas('c','c',800,800)
         xFrame.Draw()
+        mi = xFrame.GetMinimum()
+        ma = xFrame.GetMaximum()
+        if mi<0:
+            xFrame.SetMinimum(0.1)
         python_mkdir(self.plotDir)
         canvas.Print('{}/model_fit_{}{}.png'.format(self.plotDir,region,'_'+shift if shift else ''))
         canvas.SetLogy(True)
@@ -592,6 +596,22 @@ class HaaLimits(Limits):
                 else:
                     data_obs = hist.Clone(name)
             self.wsimport(data_obs, ROOT.RooFit.RecycleConflictNodes() )
+
+            if h.InheritsFrom('TH1'):
+                pass
+            else:
+                xFrame = self.workspace.var('x').frame()
+                data_obs.plotOn(xFrame)
+                canvas = ROOT.TCanvas('c','c',800,800)
+                xFrame.Draw()
+                mi = xFrame.GetMinimum()
+                ma = xFrame.GetMaximum()
+                if mi<0:
+                    xFrame.SetMinimum(0.1)
+                python_mkdir(self.plotDir)
+                canvas.Print('{}/data_obs_{}.png'.format(self.plotDir,region))
+                canvas.SetLogy(True)
+                canvas.Print('{}/data_obs_{}_log.png'.format(self.plotDir,region))
 
         if addControl:
             region = 'control'

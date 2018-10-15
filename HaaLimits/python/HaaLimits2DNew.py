@@ -1040,6 +1040,10 @@ class HaaLimits2D(HaaLimits):
 
         canvas = ROOT.TCanvas('c','c',800,800)
         xFrame.Draw()
+        mi = xFrame.GetMinimum()
+        ma = xFrame.GetMaximum()
+        if mi<0:
+            xFrame.SetMinimum(0.1)
         python_mkdir(self.plotDir)
         canvas.Print('{}/model_fit_{}{}_xproj.png'.format(self.plotDir,region,'_'+shift if shift else ''))
         canvas.SetLogy(True)
@@ -1055,6 +1059,8 @@ class HaaLimits2D(HaaLimits):
 
         canvas = ROOT.TCanvas('c','c',800,800)
         yFrame.Draw()
+        if mi<0:
+            yFrame.SetMinimum(0.1)
         canvas.Print('{}/model_fit_{}{}_yproj.png'.format(self.plotDir,region,'_'+shift if shift else ''))
         canvas.SetLogy(True)
         canvas.Print('{}/model_fit_{}{}_yproj_log.png'.format(self.plotDir,region,'_'+shift if shift else ''))
@@ -1107,6 +1113,35 @@ class HaaLimits2D(HaaLimits):
                 else:
                     data_obs = hist.Clone(name)
             self.wsimport(data_obs)
+
+            if hist.InheritsFrom('TH1'):
+                pass
+            else:
+                xFrame = self.workspace.var('x').frame()
+                data_obs.plotOn(xFrame)
+                canvas = ROOT.TCanvas('c','c',800,800)
+                xFrame.Draw()
+                mi = xFrame.GetMinimum()
+                ma = xFrame.GetMaximum()
+                if mi<0:
+                    xFrame.SetMinimum(0.1)
+                python_mkdir(self.plotDir)
+                canvas.Print('{}/data_obs_{}_xproj.png'.format(self.plotDir,region))
+                canvas.SetLogy(True)
+                canvas.Print('{}/data_obs_{}_xproj_log.png'.format(self.plotDir,region))
+
+                yFrame = self.workspace.var('y').frame()
+                data_obs.plotOn(yFrame)
+                canvas = ROOT.TCanvas('c','c',800,800)
+                yFrame.Draw()
+                if mi<0:
+                    yFrame.SetMinimum(0.1)
+                python_mkdir(self.plotDir)
+                canvas.Print('{}/data_obs_{}_yproj.png'.format(self.plotDir,region))
+                canvas.SetLogy(True)
+                canvas.Print('{}/data_obs_{}_yproj_log.png'.format(self.plotDir,region))
+
+
 
         if addControl: #ADDED BY KYLE
             region = 'control'
