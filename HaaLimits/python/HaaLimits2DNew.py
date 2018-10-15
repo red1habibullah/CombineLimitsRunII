@@ -1059,6 +1059,8 @@ class HaaLimits2D(HaaLimits):
 
         canvas = ROOT.TCanvas('c','c',800,800)
         yFrame.Draw()
+        mi = yFrame.GetMinimum()
+        ma = yFrame.GetMaximum()
         if mi<0:
             yFrame.SetMinimum(0.1)
         canvas.Print('{}/model_fit_{}{}_yproj.png'.format(self.plotDir,region,'_'+shift if shift else ''))
@@ -1134,6 +1136,8 @@ class HaaLimits2D(HaaLimits):
                 data_obs.plotOn(yFrame)
                 canvas = ROOT.TCanvas('c','c',800,800)
                 yFrame.Draw()
+                mi = yFrame.GetMinimum()
+                ma = yFrame.GetMaximum()
                 if mi<0:
                     yFrame.SetMinimum(0.1)
                 python_mkdir(self.plotDir)
