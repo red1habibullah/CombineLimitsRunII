@@ -223,7 +223,6 @@ class Spline(object):
             args = ROOT.TList()
             centralName = '{0}_central'.format(label)
             splineCentral = ROOT.RooSpline1D(centralName,  centralName,  ws.var(self.mh), len(masses), array('d',masses), array('d',values))
-            getattr(ws, "import")(splineCentral, ROOT.RooFit.RecycleConflictNodes())
             shiftFormula = '@0'
             args.Add(splineCentral)
             for shift in shifts:
@@ -237,8 +236,6 @@ class Spline(object):
                     ws.factory('{}[0,-10,10]'.format(shift))
                     splineUp   = ROOT.RooSpline1D(upName,  upName,  ws.var(self.mh), len(masses), array('d',masses), array('d',up))
                     splineDown = ROOT.RooSpline1D(downName,downName,ws.var(self.mh), len(masses), array('d',masses), array('d',down))
-                    getattr(ws, "import")(splineUp, ROOT.RooFit.RecycleConflictNodes())
-                    getattr(ws, "import")(splineDown, ROOT.RooFit.RecycleConflictNodes())
                     shiftFormula += ' + TMath::Max(0,@{shift})*@{up} + TMath::Min(0,@{shift})*@{down}'.format(shift=len(args),up=len(args)+1,down=len(args)+2)
                     args.Add(ws.var(shift))
                     args.Add(splineUp)

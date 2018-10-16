@@ -30,7 +30,7 @@ class HaaLimits(Limits):
     SIGNAME = 'HToAAH{h}A{a}'
     SPLINENAME = 'sig{h}'
     SPLINELABEL = 'm_{a}'
-    SPLINERANGE = [0,30]
+    SPLINERANGE = [3.6,21]
 
     XRANGE = [4,25]
     XLABEL = 'm_{#mu#mu}'

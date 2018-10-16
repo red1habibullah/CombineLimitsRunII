@@ -608,7 +608,6 @@ class HaaLimits2D(HaaLimits):
                 for param in results[h][a]:
                     #ws.var(param+'_{}'.format(shift)).setVal(results[h][a][param])
                     ws.var(param).setVal(results[h][a][param])
-            print "TROUBLESHOOT:", h, a, region, shift
             hist = histMap[self.SIGNAME.format(h=h,a=a)]
             saveDir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
             if not skipFit:
@@ -617,6 +616,9 @@ class HaaLimits2D(HaaLimits):
                     integral = histMap[self.SIGNAME.format(h=h,a=a)].Integral()
                 else:
                     integral = histMap[self.SIGNAME.format(h=h,a=a)].sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE))
+                    if integral!=integral:
+                        logging.error('Integral for spline is invalid: h{h} a{a} {region} {shift}'.format(h=h,a=a,region=region,shift=shift))
+                        raise
                 integrals[h][a] = integral
 
     
