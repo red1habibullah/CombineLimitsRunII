@@ -191,7 +191,7 @@ class Param(object):
         paramName = '{0}'.format(label) 
         value = self.kwargs.get('value', 0)
         shifts = self.kwargs.get('shifts', {})
-        uncertainty = self.kwargs.get('uncertainty',0.005)
+        uncertainty = self.kwargs.get('uncertainty',0.00)
         args = ROOT.TList()
         shiftFormula = '{}'.format(value)
         for shift in shifts:
@@ -217,7 +217,7 @@ class Spline(object):
         masses = self.kwargs.get('masses', [])
         values = self.kwargs.get('values', [])
         shifts = self.kwargs.get('shifts', {})
-        uncertainty = self.kwargs.get('uncertainty',0.005)
+        uncertainty = self.kwargs.get('uncertainty',0.00)
         splineName = label
         if shifts:
             args = ROOT.TList()
@@ -249,7 +249,9 @@ class Spline(object):
 class Polynomial(Model):
 
     def __init__(self,name,**kwargs):
-        super(Chebychev,self).__init__(name,**kwargs)
+        print 'DONT USE POLYNOMIAL'
+        raise
+        super(Polynomial,self).__init__(name,**kwargs)
 
     def build(self,ws,label):
         logging.debug('Building {}'.format(label))
@@ -262,7 +264,9 @@ class Polynomial(Model):
 class PolynomialSpline(ModelSpline):
 
     def __init__(self,name,**kwargs):
-        super(ChebychevSpline,self).__init__(name,**kwargs)
+        print 'DONT USE POLYNOMIAL'
+        raise
+        super(PolynomialSpline,self).__init__(name,**kwargs)
 
     def build(self,ws,label):
         logging.debug('Building {}'.format(label))
@@ -705,6 +709,42 @@ class Exponential(Model):
         # build model
         ws.factory("Exponential::{0}({1}, {2})".format(label,self.x,lambdaName))
         self.params = [lambdaName]
+
+class PolynomialExpr(Model):
+
+    def __init__(self,name,**kwargs):
+        super(PolynomialExpr,self).__init__(name,**kwargs)
+
+    def build(self,ws,label):
+        logging.debug('Building {}'.format(label))
+
+        # variables
+        order = self.kwargs.get('order',1)
+        ranges = [self.kwargs.get('p{}'.format(o),[0,-1,1]) for o in range(order+1)]
+        params = []
+        for i in range(order+1):
+            if isinstance(ranges[i],str):
+                params += [ranges[i]]
+            else:
+                name = 'p{}_{}'.format(i,label)
+                params += [name]
+                ws.factory('{}[{}, {}, {}]'.format(name,*ranges[i]))
+
+        # build model
+        expr = "EXPR::{0}('".format(label)
+        for i in range(order+1):
+            if i>1:
+                expr += " + {1}*TMath::Power({0},{2})".format(self.x,params[i],i)
+            elif i==1:
+                expr += " + {1}*{0}".format(self.x,params[i])
+            else:
+                expr += "{0}".format(params[i])
+        expr += "', {0}".format(self.x)
+        for i in range(order+1):
+            expr += ", {0}".format(params[i])
+        expr += ")"
+        ws.factory(expr)
+        self.params = params
 
 class Erf(Model):
 

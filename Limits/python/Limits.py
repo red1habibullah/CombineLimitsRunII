@@ -30,7 +30,10 @@ class Limits(object):
         self.rates = {}
         self.shapes = {}
         self.name = name
-        self.workspace = ROOT.RooWorkspace(self.name)
+        self.workspace = self.buildWorkspace(self.name)
+
+    def buildWorkspace(self,name):
+        return ROOT.RooWorkspace(name)
 
     def wsimport(self, *args) :
         # getattr since import is special in python
@@ -55,20 +58,21 @@ class Limits(object):
                 result.SetBinError(b,hist.GetBinError(b))
         return result
 
-    def addVar(self, var, varMin, varMax, unit='', label=''):
-        self.workspace.factory('{}[{}, {}]'.format(var,varMin,varMax))
-        if unit: self.workspace.var(var).setUnit(unit)
-        if label: self.workspace.var(var).setPlotLabel(label)
-        if label: self.workspace.var(var).SetTitle(label)
+    def addVar(self, var, varMin, varMax, unit='', label='', **kwargs):
+        workspace = kwargs.pop('workspace',self.workspace)
+        workspace.factory('{}[{}, {}]'.format(var,varMin,varMax))
+        if unit:  workspace.var(var).setUnit(unit)
+        if label: workspace.var(var).setPlotLabel(label)
+        if label: workspace.var(var).SetTitle(label)
 
-    def addMH(self, mhMin, mhMax, unit='', label=''):
-        self.addVar('MH',mhMin,mhMax,unit,label)
+    def addMH(self, mhMin, mhMax, unit='', label='', **kwargs):
+        self.addVar('MH',mhMin,mhMax,unit,label,**kwargs)
 
-    def addX(self, xMin, xMax, unit='', label=''):
-        self.addVar('x',xMin,xMax,unit,label)
+    def addX(self, xMin, xMax, unit='', label='',**kwargs):
+        self.addVar('x',xMin,xMax,unit,label,**kwargs)
 
-    def addY(self, yMin, yMax, unit='', label=''):
-        self.addVar('y',yMin,yMax,unit,label)
+    def addY(self, yMin, yMax, unit='', label='',**kwargs):
+        self.addVar('y',yMin,yMax,unit,label,**kwargs)
 
     def __check(self,test,stored,name='Object'):
         goodToAdd = True

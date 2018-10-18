@@ -21,7 +21,7 @@ from CombineLimits.HaaLimits.HaaLimits2DNew import HaaLimits2D
 logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
 
-testing = False
+testing = True
 detailed = True
 skipSignal = False
 
@@ -471,8 +471,8 @@ def create_datacard(args):
     if 'tt' in var: haaLimits.YLABEL = 'm_{#tau_{#mu}#tau_{h}}'
     if 'h' in var or 'hkf' in var: haaLimits.YLABEL = 'm_{#mu#mu#tau_{#mu}#tau_{h}}'
     haaLimits.initializeWorkspace()
-    haaLimits.addControlModels(voigtian=True,logy=xRange[0]<3.3)
-    haaLimits.addBackgroundModels(voigtian=True,logy=False,fixAfterControl=True)
+    haaLimits.addControlModels()
+    haaLimits.addBackgroundModels(fixAfterControl=True)
     if skipSignal: return
     haaLimits.XRANGE = [0,30] # override for signal splines
     if project:
