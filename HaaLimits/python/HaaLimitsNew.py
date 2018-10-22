@@ -33,11 +33,12 @@ class HaaLimits(Limits):
     SPLINERANGE = [3.6,21]
 
     XRANGE = [4,25]
+    XBINNING = 210
     XLABEL = 'm_{#mu#mu}'
     UPSILONRANGE = [7, 12]
 
-    REGIONS = ['PP','FP']
-    #REGIONS = ['PP']
+    #REGIONS = ['PP','FP']
+    REGIONS = ['PP']
     SHIFTS = []
     BACKGROUNDSHIFTS = []
     SIGNALSHIFTS = []
@@ -86,10 +87,14 @@ class HaaLimits(Limits):
     ### Workspace utilities ###
     ###########################
     def initializeWorkspace(self,**kwargs):
+        logging.debug('initializeWorkspace')
+        logging.debug(str(kwargs))
         self.addX(*self.XRANGE,unit='GeV',label=self.XLABEL,**kwargs)
         self.addMH(*self.SPLINERANGE,unit='GeV',label=self.SPLINELABEL,**kwargs)
 
     def buildModel(self, region='PP', **kwargs):
+        logging.debug('buildModel')
+        logging.debug(', '.join([region,str(kwargs)]))
         workspace = kwargs.pop('workspace',self.workspace)
         tag = kwargs.pop('tag',region)
 
@@ -128,7 +133,8 @@ class HaaLimits(Limits):
         #jpsi.build(workspace,nameJ)
 
         if self.XRANGE[0]<3.3:
-            jpsi = {'extended': True}
+            #jpsi = {'extended': True}
+            jpsi = {'recursive': True}
             jpsi[nameJ1] = [0.9,0,1]
             jpsi[nameJ2] = [0.1,0,1]
             jpsi = Models.Sum('jpsi', **jpsi)
@@ -172,14 +178,16 @@ class HaaLimits(Limits):
         #upsilon.build(workspace,nameU)
 
         nameU23 = 'upsilon23'
-        upsilon23 = {'extended': True}
+        #upsilon23 = {'extended': True}
+        upsilon23 = {'recursive': True}
         upsilon23[nameU2] = [0.5,0,1]
         upsilon23[nameU3] = [0.5,0,1]
         upsilon23 = Models.Sum(nameU23, **upsilon23)
         upsilon23.build(workspace,nameU23)
 
         nameU = 'upsilon'
-        upsilon = {'extended': True}
+        #upsilon = {'extended': True}
+        upsilon = {'recursive': True}
         upsilon[nameU1]  = [0.75,0,1]
         upsilon[nameU23] = [0.5,0,1]
         upsilon = Models.Sum(nameU, **upsilon)
@@ -187,7 +195,8 @@ class HaaLimits(Limits):
 
         # sum upsilon and jpsi
         nameR = 'resonant'
-        resonant = {'extended': True}
+        #resonant = {'extended': True}
+        resonant = {'recursive': True}
         resonant[nameU]  = [0.75,0,1]
         if self.XRANGE[0]<3.3:
             resonant[nameJ] = [0.5,0,1]
@@ -198,67 +207,55 @@ class HaaLimits(Limits):
 
 
         # continuum background
-        #nameC = 'cont{}'.format('_'+tag if tag else '')
-        #cont = Models.Chebychev(nameC,
-        #    order = 2,
-        #    p0 = [-1,-1.4,0],
-        #    p1 = [0.25,0,0.5],
-        #    p2 = [0.03,-1,1],
-        #)
-        #cont.build(workspace,nameC)
-    
-        nameC1 = 'cont1{}'.format('_'+tag if tag else '')
-        #nameC1 = 'cont1'
-        cont1 = Models.Exponential(nameC1,
-            lamb = kwargs.pop('lambda_{}'.format(nameC1),[-2,-4,0]),
-        )
-        cont1.build(workspace,nameC1)
+        if self.XRANGE[0]<4:
+            nameC1 = 'cont1{}'.format('_'+tag if tag else '')
+            #nameC1 = 'cont1'
+            cont1 = Models.Exponential(nameC1,
+                lamb = kwargs.pop('lambda_{}'.format(nameC1),[-2,-4,0]),
+            )
+            cont1.build(workspace,nameC1)
 
-        #nameC2 = 'cont2{}'.format('_'+tag if tag else '')
-        ##nameC2 = 'cont2'
-        #cont2 = Models.Exponential(nameC2,
-        #    lamb = [-0.5,-2,0],
-        #)
-        #cont2.build(workspace,nameC2)
-    
-        nameC3 = 'cont3{}'.format('_'+tag if tag else '')
-        #nameC3 = 'cont3'
-        cont3 = Models.Exponential(nameC3,
-            lamb = kwargs.pop('lambda_{}'.format(nameC3),[-0.75,-5,0]),
-        )
-        cont3.build(workspace,nameC3)
-    
-        #nameC4 = 'cont4{}'.format('_'+tag if tag else '')
-        ##nameC4 = 'cont4'
-        #cont4 = Models.Exponential(nameC4,
-        #    lamb = [-2,-5,0],
-        #)
-        #cont4.build(workspace,nameC4)
+            nameC2 = 'cont2{}'.format('_'+tag if tag else '')
+            #nameC2 = 'cont2'
+            cont2 = Models.Exponential(nameC2,
+                lamb = kwargs.pop('lambda_{}'.format(nameC2),[-0.75,-5,0]),
+            )
+            cont2.build(workspace,nameC2)
 
+            nameC = 'cont{}'.format('_'+tag if tag else '')
+            #cont = {'extended': True}
+            cont = {'recursive': True}
+            cont[nameC1] = [0.75,0,1]
+            cont[nameC2] = [0.5,0,1]
+            cont = Models.Sum(nameC, **cont)
+            cont.build(workspace,nameC)
+        else:
+            nameC = 'cont{}'.format('_'+tag if tag else '')
+            #nameC = 'cont'
+            cont = Models.Exponential(nameC,
+                lamb = kwargs.pop('lambda_{}'.format(nameC),[-2,-4,0]),
+            )
+            cont.build(workspace,nameC)
+    
         # sum
         bgs = {'recursive': True}
         # continuum background
-        bgs[nameC1] = [0.5,0,1]
+        # TODO, this was bugged, need to fix
+        #bgs[nameC1] = [0.5,0,1]
+        #bgs[nameC2] = [0.5,0,1]
+        bgs[nameC] = [0.5,0,1]
         if self.XRANGE[0]<4 and self.XRANGE[1]>=11:
-            #bgs[nameR] = [0.9,0,1]
             bgs[nameJ] = [0.9,0,1]
             bgs[nameU] = [0.9,0,1]
-            bgs[nameC3] = [0.5,0,1]
         else:
             # jpsi
             if self.XRANGE[0]<3.3:
                 bgs[nameJ] = [0.9,0,1]
-                bgs[nameC3] = [0.5,0,1]
             elif self.XRANGE[0]<4:
                 bgs[nameJ2] = [0.9,0,1]
-                bgs[nameC3] = [0.5,0,1]
             # upsilon
             elif self.XRANGE[0]<=9 and self.XRANGE[1]>=11:
-                #bgs[nameU1] = [0.9,0,1]
-                #bgs[nameU2] = [0.9,0,1]
-                #bgs[nameU3] = [0.9,0,1]
                 bgs[nameU] = [0.9,0,1]
-                #bgs[nameC3] = [0.5,0,1]
         bg = Models.Sum('bg', **bgs)
         name = 'bg_{}'.format(region)
         bg.build(workspace,name)
@@ -494,8 +491,8 @@ class HaaLimits(Limits):
         data.plotOn(xFrame)
         model.plotOn(xFrame,ROOT.RooFit.Components('cont1_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
         model.plotOn(xFrame,ROOT.RooFit.Components('cont1'),ROOT.RooFit.LineStyle(ROOT.kDashed))
-        model.plotOn(xFrame,ROOT.RooFit.Components('cont3_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
-        model.plotOn(xFrame,ROOT.RooFit.Components('cont3'),ROOT.RooFit.LineStyle(ROOT.kDashed))
+        model.plotOn(xFrame,ROOT.RooFit.Components('cont2_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+        model.plotOn(xFrame,ROOT.RooFit.Components('cont2'),ROOT.RooFit.LineStyle(ROOT.kDashed))
         if self.XRANGE[0]<4:
             # jpsi
             model.plotOn(xFrame,ROOT.RooFit.Components('jpsi1S'),ROOT.RooFit.LineColor(ROOT.kRed))
@@ -544,8 +541,8 @@ class HaaLimits(Limits):
     def addControlData(self,asimov=False,**kwargs):
         # build the models after doing the prefit stuff
         region = 'control'
-        self.buildModel(region=region)
-        self.loadBackgroundFit(region)
+        self.buildModel(region=region, workspace=self.workspace)
+        self.loadBackgroundFit(region, workspace=self.workspace)
 
         name = 'data_obs_{}'.format(region)
         hist = self.histMap[region]['']['data']
@@ -568,20 +565,63 @@ class HaaLimits(Limits):
         self.wsimport(data_obs, ROOT.RooFit.RecycleConflictNodes() )
 
 
-    def addData(self,asimov=False,addSignal=False,addControl=False,**kwargs):
+    def addData(self,asimov=False,addSignal=False,addControl=False,doBinned=False,**kwargs):
+        logging.debug('addData')
+        logging.debug(str(kwargs))
         mh = kwargs.pop('h',125)
         ma = kwargs.pop('a',15)
+
+        workspace = self.workspace
+
         for region in self.REGIONS:
             # build the models after doing the prefit stuff
             prebuiltParams = {p:p for p in self.background_params[region]}
-            self.buildModel(region=region,**prebuiltParams)
-            self.loadBackgroundFit(region)
+            self.buildModel(region=region,workspace=workspace,**prebuiltParams)
+            self.loadBackgroundFit(region, workspace=workspace)
+
+            # save binned data
+            if doBinned:
+
+                bgs = self.getComponentFractions(workspace.pdf('bg_{}'.format(region)))
+                
+                for bg in bgs:
+                    bgname = bg if region in bg else '{}_{}'.format(bg,region)
+                    pdf = workspace.pdf(bg)
+                    integral = workspace.function('integral_{}'.format(bgname))
+
+                    x = workspace.var('x')
+                    x.setBins(self.XBINNING)
+                    args = ROOT.RooArgSet(x)
+                    for shift in ['']+self.BACKGROUNDSHIFTS:
+                        if shift:
+                            s = workspace.var(shift)
+
+                            s.setVal(1)
+                            i = integral.getValV()
+                            dh = pdf.generateBinned(args, i, True)
+                            dh.SetName(bgname+'_binned_{}Up'.format(shift))
+                            self.wsimport(dh)
+                            
+                            s.setVal(-1)
+                            i = integral.getValV()
+                            dh = pdf.generateBinned(args, i, True)
+                            dh.SetName(bgname+'_binned_{}Down'.format(shift))
+                            self.wsimport(dh)
+
+                            s.setVal(0)
+                            
+                        else:
+                            i = integral.getValV()
+                            dh = pdf.generateBinned(args, i, True)
+                            dh.SetName(bgname+'_binned')
+                            self.wsimport(dh)
+
 
             name = 'data_obs_{}'.format(region)
             hist = self.histMap[region]['']['data']
             if asimov:
                 # generate a toy data observation from the model
-                model = self.workspace.pdf('bg_{}'.format(region))
+                model = workspace.pdf('bg_{}'.format(region))
                 h = self.histMap[region]['']['dataNoSig']
                 if h.InheritsFrom('TH1'):
                     integral = h.Integral(h.FindBin(self.XRANGE[0]),h.FindBin(self.XRANGE[1]))
@@ -603,7 +643,7 @@ class HaaLimits(Limits):
                     data_obs = hist.Clone(name)
             self.wsimport(data_obs, ROOT.RooFit.RecycleConflictNodes() )
 
-            if h.InheritsFrom('TH1'):
+            if hist.InheritsFrom('TH1'):
                 pass
             else:
                 xFrame = self.workspace.var('x').frame()
@@ -629,10 +669,11 @@ class HaaLimits(Limits):
                 data_obs = hist.Clone(name)
             self.wsimport(data_obs, ROOT.RooFit.RecycleConflictNodes() )
 
-    def getComponentFractions(self,model,**kwargs):
-        workspace = kwargs.pop('workspace',self.workspace)
+    def getComponentFractions(self,model):
+        logging.debug('getComponentFractions')
+        logging.debug(model)
         if not model:
-            workspace.Print()
+            print model
             raise
         if not isinstance(model,ROOT.RooAddPdf): 
             return {model.GetTitle(): []}
@@ -647,6 +688,8 @@ class HaaLimits(Limits):
         return result
 
     def buildParams(self,region,vals,errs,integrals,**kwargs):
+        logging.debug('buildParams')
+        logging.debug(region,vals,errs,integrals,kwargs)
         workspace = kwargs.pop('workspace',self.workspace)
         params = {}
         for param in vals[region]['']:
@@ -663,10 +706,13 @@ class HaaLimits(Limits):
             )
             paramModel.build(workspace, param)
             params[param] = paramModel
+            workspace.Print()
         return params
 
 
     def buildComponentIntegrals(self,region,vals,errs,integrals, pdf,**kwargs):
+        logging.debug('buildComponentIntegrals')
+        logging.debug(', '.join([region,str(vals),str(errs),str(integrals),str(pdf),str(kwargs)]))
         workspace = kwargs.pop('workspace',self.workspace)
         fracMap = self.getComponentFractions(pdf)
         if isinstance(integrals,dict):
@@ -690,7 +736,7 @@ class HaaLimits(Limits):
                     subint *= frac.getVal()
                     suberr2 += (frac.getError()/frac.getVal())**2
             suberr = suberr2**0.5
-            if "cont1" in component or "cont3" in component:
+            if "cont" in component:
                 component = component.rstrip('_x')
                 component = component.rstrip('_'+region)
             allerrors[component] = suberr
@@ -720,10 +766,13 @@ class HaaLimits(Limits):
         results = {'errs':allerrors, 'integrals':allintegrals}
         self.dump(jfile,results)
 
+
         return allintegrals, allerrors
 
 
     def loadBackgroundFit(self, region, shift='', **kwargs):
+        logging.debug('loadBackgroundFit')
+        logging.debug(', '.join([region,shift,str(kwargs)]))
         workspace = kwargs.pop('workspace',self.workspace)
         jfile = '{}/background_{}{}.json'.format(self.fitsDir,region,shift)
         results = self.load(jfile)
@@ -734,12 +783,17 @@ class HaaLimits(Limits):
             try:
                 workspace.var(param).setVal(vals[param])
             except:
-                print 'ERROR on finding param {} in {} workspace'.format(param,region)
-                workspace.allVars().Print()
+                try:
+                    workspace.function(param)
+                except:
+                    print 'ERROR on finding param {} in {} workspace'.format(param,region)
+                    workspace.Print()
                     
         return vals, errs, ints
 
     def loadComponentIntegrals(self, region):
+        logging.debug('loadComponentIntegrals')
+        logging.debug(region)
         jfile = '{}/components_{}.json'.format(self.fitsDir,region)
         results = self.load(jfile)
         allintegrals = results['integrals']
@@ -759,7 +813,7 @@ class HaaLimits(Limits):
         if load:
             allintegrals, errors = self.loadComponentIntegrals(region)
         if not skipFit:
-            allintegrals, errors = self.buildComponentIntegrals(region,vals,errs,ints, workspace.pdf('bg_control'))
+            allintegrals, errors = self.buildComponentIntegrals(region,vals,errs,ints, workspace.pdf('bg_control'), workspace=self.workspace)
 
         self.control_vals = vals
         self.control_errs = errs
@@ -771,8 +825,6 @@ class HaaLimits(Limits):
         workspace = kwargs.pop('workspace',self.workspace)
         #workspace.arg('lambda_cont1').setConstant(fix)
         #workspace.arg('lambda_cont2').setConstant(fix)
-        #workspace.arg('lambda_cont3').setConstant(fix)
-        #workspace.arg('lambda_cont4').setConstant(fix)
         workspace.arg('mean_upsilon1S').setConstant(fix)
         workspace.arg('mean_upsilon2S').setConstant(fix)
         workspace.arg('mean_upsilon3S').setConstant(fix)
@@ -792,10 +844,10 @@ class HaaLimits(Limits):
         workspace.arg('sigma_jpsi2S').setConstant(fix)
         workspace.arg('width_jpsi1S').setConstant(fix)
         workspace.arg('width_jpsi2S').setConstant(fix)
-        if self.XRANGE[0]<3.3: workspace.arg('jpsi1S_frac').setConstant(fix) 
-        if self.XRANGE[0]<4: workspace.arg('jpsi2S_frac').setConstant(fix) 
-        workspace.arg('upsilon_frac').setConstant(fix) 
-        if self.XRANGE[0]<3.3: workspace.arg('jpsi_frac').setConstant(fix) 
+        #if self.XRANGE[0]<3.3: workspace.arg('jpsi1S_frac').setConstant(fix) 
+        #if self.XRANGE[0]<4: workspace.arg('jpsi2S_frac').setConstant(fix) 
+        #workspace.arg('upsilon_frac').setConstant(fix) 
+        #if self.XRANGE[0]<3.3: workspace.arg('jpsi_frac').setConstant(fix) 
 
     def addBackgroundModels(self, fixAfterControl=False, fixAfterFP=False, load=False, skipFit=False):
         workspace = self.buildWorkspace('bg')
@@ -824,6 +876,7 @@ class HaaLimits(Limits):
                     vals[region][shift] = v
                     errs[region][shift] = e
                     integrals[region][shift] = i
+                    
                 else:
                     if load:
                         vUp, eUp, iUp = self.loadBackgroundFit(region,shift+'Up',workspace=workspace)
@@ -838,12 +891,13 @@ class HaaLimits(Limits):
                     errs[region][shift+'Down'] = eDown
                     integrals[region][shift+'Down'] = iDown
 
+
         for region in self.REGIONS:
             if load:
                 allintegrals[region], errors[region] = self.loadComponentIntegrals(region)
             if not skipFit:
-                allparams[region] = self.buildParams(region,vals,errs,integrals)
-                allintegrals[region], errors[region] = self.buildComponentIntegrals(region,vals,errs,integrals,workspace.pdf('bg_{}'.format(region)))
+                allparams[region] = self.buildParams(region,vals,errs,integrals,workspace=self.workspace)
+                allintegrals[region], errors[region] = self.buildComponentIntegrals(region,vals,errs,integrals,workspace.pdf('bg_{}'.format(region)), workspace=self.workspace)
 
         if fixAfterControl:
             self.fix(False, workspace=workspace)
@@ -876,7 +930,7 @@ class HaaLimits(Limits):
             systs = {}
             for region in self.REGIONS:
                 systs[(('bg',),(region,))] = shifts[region][shift]
-            self.addSystematic(shift,'shape',**systs)
+            self.addSystematic(shift,'shape',systematics=systs)
 
 
     def addSignalModels(self,**kwargs):
@@ -945,8 +999,8 @@ class HaaLimits(Limits):
     ### Setup datacard ###
     ######################
     def setupDatacard(self, addControl=False, doBinned=False):
-        #bgs = ['bg']
         bgs = self.getComponentFractions(self.workspace.pdf('bg_PP'))
+
         bgs = [b.rstrip('_PP') for b in bgs]
         sigs = [self.SPLINENAME.format(h=h) for h in self.HMASSES]
 
@@ -962,12 +1016,15 @@ class HaaLimits(Limits):
         for proc in sigs:
             self.addProcess(proc,signal=True)
 
-        if doBinned: self.addBackgroundHists()
+        #if doBinned: self.addBackgroundHists()
 
         # set expected
         for region in self.REGIONS:
             for proc in sigs+bgs:
-                if proc in bgs and doBinned: continue
+                if proc in bgs and doBinned:
+                    self.setExpected(proc,region,-1) 
+                    self.addShape(region,proc,'{}_{}_binned'.format(proc,region))
+                    continue
                 self.setExpected(proc,region,1) 
                 self.addRateParam('integral_{}_{}'.format(proc,region),region,proc)
                 #self.addRateParam('integral_{}_{}'.format(proc,region),region,proc)
@@ -991,7 +1048,6 @@ class HaaLimits(Limits):
 
             for proc in bgs:
                 key = proc if proc in self.control_integralValues else '{}_{}'.format(proc,region)
-                print proc, key 
                 integral = self.control_integralValues[key]
                 self.setExpected(proc,region,integral)
                 if 'cont' not in proc and proc not in sigs:
@@ -1004,11 +1060,15 @@ class HaaLimits(Limits):
     ### Systematics ###
     ###################
     def addSystematics(self,doBinned=False,addControl=False):
+        logging.debug('addSystematics')
         self.sigProcesses = tuple([self.SPLINENAME.format(h=h) for h in self.HMASSES])
+        bgs = self.getComponentFractions(self.workspace.pdf('bg_PP'))
+        bgs = [b.rstrip('_PP') for b in bgs]
+        self.bgProcesses = bgs
         self._addLumiSystematic()
         self._addMuonSystematic()
         #self._addTauSystematic()
-        self._addShapeSystematic()
+        self._addShapeSystematic(doBinned=doBinned)
         #self._addComponentSystematic(addControl=addControl)
         self._addRelativeNormUnc()
         if not doBinned and not addControl: self._addControlSystematics()
@@ -1051,34 +1111,18 @@ class HaaLimits(Limits):
             rel_err = e/v
             self.addSystematic(param, 'param', systematics=[v,e])
 
-    def _addShapeSystematic(self):
-        # decide if we keep a given shape uncertainty
-        #if hasattr(self,'fitted_models'):
-        #    for shift in self.SIGNALSHIFTS:
-        #        for region in self.REGIONS:
-        #            for h in self.HMASSES:
-        #                model = self.fitted_models[region][''][h]
-        #                modelUp, modelDown = self.fitted_models[region][shift][h]
-
-        #                # check integrals
-        #                integrals = model.getIntegrals()
-        #                integralsUp = modelUp.getIntegrals()
-        #                integralsDown = modelDown.getIntegrals()
-        #                diffUp = [i[1]-i[0] for i in zip(integrals,integralsUp)]
-        #                diffDown = [i[0]-i[1] for i in zip(integrals,integralsDown)]
-        #                hasNormUp = any([abs(i[1]/i[0])>0.005 for i in zip(integrals,diffUp)])
-        #                hasNormDown = any([abs(i[1]/i[0])>0.005 for i in zip(integrals,diffDown)])
-        #                hasNorm = hasNormUp or hasNormDown
-
-        #                # check params
-        #                params = model.getParams()
-        #                for param in params:
-        #                    
-
-
+    def _addShapeSystematic(self,doBinned=False):
         for shift in self.SHIFTS+['qcd']:
             if shift=='qcd' and not self.QCDSHIFTS: continue
-            if self.workspace.var(shift): self.addSystematic(shift, 'param', systematics=[0,1])
+            if shift in self.BACKGROUNDSHIFTS and doBinned:
+                syst = {}
+                for proc in self.bgProcesses:
+                    for region in self.REGIONS:
+                        basename = '{}_{}_{}'.format(proc,region,shift)
+                        syst[((proc,),(region,))] = (basename+'Up', basename+'Down')
+                self.addSystematic(shift,'shape',systematics=syst)
+            else:
+                if self.workspace.var(shift): self.addSystematic(shift, 'param', systematics=[0,1])
     
     def _addLumiSystematic(self):
         # lumi: 2.5% 2016

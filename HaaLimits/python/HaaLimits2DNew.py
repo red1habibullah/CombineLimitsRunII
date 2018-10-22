@@ -24,6 +24,7 @@ class HaaLimits2D(HaaLimits):
     '''
 
     YRANGE = [50,1000]
+    YBINNING = 19
     YLABEL = 'm_{#mu#mu#tau_{#mu}#tau_{h}}'
 
     def __init__(self,histMap,tag=''):
@@ -284,12 +285,12 @@ class HaaLimits2D(HaaLimits):
         name = 'cont1_{}_xy'.format(region)
         cont1.build(workspace,name)
 
-        cont3 = Models.Prod('cont3',
-            'cont3_{}_x'.format(region),
+        cont2 = Models.Prod('cont2',
+            'cont2_{}_x'.format(region),
             'bg_{}_y'.format(region),
         )
-        name = 'cont3_{}_xy'.format(region)
-        cont3.build(workspace,name)
+        name = 'cont2_{}_xy'.format(region)
+        cont2.build(workspace,name)
 
         jpsi1S = Models.Prod('jpsi1S',
             'jpsi1S',
@@ -1099,20 +1100,62 @@ class HaaLimits2D(HaaLimits):
     ###############################
     ### Add things to workspace ###
     ###############################
-    def addData(self,asimov=False,addSignal=False,addControl=False,**kwargs):
+    def addData(self,asimov=False,addSignal=False,addControl=False,doBinned=False,**kwargs):
         mh = kwargs.pop('h',125)
         ma = kwargs.pop('a',15)
+
+        workspace = self.workspace
+
         for region in self.REGIONS:
             # build the models after doing the prefit stuff
             prebuiltParams = {p:p for p in self.background_params[region]}
-            self.buildModel(region=region,**prebuiltParams)
-            self.loadBackgroundFit(region)
+            self.buildModel(region=region,workspace=workspace,**prebuiltParams)
+            self.loadBackgroundFit(region,workspace=workspace)
+
+            # save binned data
+            if doBinned:
+
+                bgs = self.getComponentFractions(workspace.pdf('bg_{}_x'.format(region)))
+
+                for bg in bgs:
+                    bgname = bg.strip('_x') if region in bg else '{}_{}'.format(bg,region)
+                    pdf = workspace.pdf(bg)
+                    integral = workspace.function('integral_{}'.format(bgname))
+
+                    x = workspace.var('x')
+                    x.setBins(self.XBINNING)
+                    y = workspace.var('y')
+                    y.setBins(self.YBINNING)
+                    args = ROOT.RooArgSet(x,y)
+                    for shift in ['']+self.BACKGROUNDSHIFTS:
+                        if shift:
+                            s = workspace.var(shift)
+
+                            s.setVal(1)
+                            i = integral.getValV()
+                            dh = pdf.generateBinned(args, i, True)
+                            dh.SetName(bgname+'_binned_{}Up'.format(shift))
+                            self.wsimport(dh)
+
+                            s.setVal(-1)
+                            i = integral.getValV()
+                            dh = pdf.generateBinned(args, i, True)
+                            dh.SetName(bgname+'_binned_{}Down'.format(shift))
+                            self.wsimport(dh)
+
+                            s.setVal(0)
+
+                        else:
+                            i = integral.getValV()
+                            dh = pdf.generateBinned(args, i, True)
+                            dh.SetName(bgname+'_binned')
+                            self.wsimport(dh)
 
             name = 'data_obs_{}'.format(region)
             hist = self.histMap[region]['']['data']
             if asimov:
                 # generate a toy data observation from the model
-                model = self.workspace.pdf('bg_{}_xy'.format(region))
+                model = workspace.pdf('bg_{}_xy'.format(region))
                 h = self.histMap[region]['']['dataNoSig']
                 if h.InheritsFrom('TH1'):
                     integral = h.Integral() # 2D integral?
@@ -1317,11 +1360,14 @@ class HaaLimits2D(HaaLimits):
         for proc in sigs:
             self.addProcess(proc,signal=True)
 
-        if doBinned: self.addBackgroundHists()
+        #if doBinned: self.addBackgroundHists()
 
         for region in self.REGIONS:
             for proc in sigs+bgs:
-                if proc in bgs and doBinned: continue
+                if proc in bgs and doBinned: 
+                    self.setExpected(proc,region,-1)
+                    self.addShape(region,proc,'{}_{}_binned'.format(proc,region))
+                    continue
                 self.setExpected(proc,region,1)
                 self.addRateParam('integral_{}_{}'.format(proc,region),region,proc)
                 #if proc in sigs:
@@ -1678,10 +1724,13 @@ class HaaLimits2D(HaaLimits):
     ###################
     def addSystematics(self,doBinned=False,addControl=False):
         self.sigProcesses = tuple([self.SPLINENAME.format(h=h) for h in self.HMASSES])
+        bgs = self.getComponentFractions(self.workspace.pdf('bg_PP_x'))
+        bgs = [b.rstrip('_PP_x') for b in bgs]
+        self.bgProcesses = bgs
         self._addLumiSystematic()
         self._addMuonSystematic()
         #self._addTauSystematic()
-        self._addShapeSystematic()
+        self._addShapeSystematic(doBinned=doBinned)
         #self._addComponentSystematic(addControl=addControl)
         self._addRelativeNormUnc()
         if not doBinned and not addControl: self._addControlSystematics()

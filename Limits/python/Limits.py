@@ -136,6 +136,8 @@ class Limits(object):
         For asymmetric uncertainties, a tuple should be passed with the first the shift up
         and the second the shift down.
         '''
+        logging.debug('addSystematic')
+        logging.debug(', '.join([systname,mode,str(systematics)]))
         if systname in self.systematics:
             logging.warning('Systematic {0} already added.'.format(systname))
         else:

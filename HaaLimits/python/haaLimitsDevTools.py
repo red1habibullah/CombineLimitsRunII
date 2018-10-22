@@ -467,37 +467,30 @@ def create_datacard(args):
     haaLimits.AMASSES = amasses
     haaLimits.HMASSES = [chi2Mass] if chi2Mass else hmasses
     haaLimits.XRANGE = xRange
-    if do2D: haaLimits.YRANGE = yRange
+    haaLimits.XBINNING = int((xRange[1]-xRange[0]) * 10)
+    if do2D: 
+        haaLimits.YRANGE = yRange
+        haaLimits.YBINNING = int((yRange[1]-yRange[0]) * 0.02)
     if 'tt' in var: haaLimits.YLABEL = 'm_{#tau_{#mu}#tau_{h}}'
     if 'h' in var or 'hkf' in var: haaLimits.YLABEL = 'm_{#mu#mu#tau_{#mu}#tau_{h}}'
     haaLimits.initializeWorkspace()
     haaLimits.addControlModels()
     haaLimits.addBackgroundModels(fixAfterControl=True)
-    if skipSignal: return
-    haaLimits.XRANGE = [0,30] # override for signal splines
-    if project:
-        haaLimits.addSignalModels(fit=False)
-    elif 'tt' in var:
-        #haaLimits.addSignalModels(fit=False,yFitFunc='errG')
-        #haaLimits.addSignalModels(fit=False,yFitFunc='L')
-        #haaLimits.addSignalModels(fit=False,yFitFunc='DCB')
-        #haaLimits.addSignalModels(fit=False,yFitFuncFP='DCB',yFitFuncPP='DCB')#,cutOffFP=0.75,cutOffPP=0.75)
-        #haaLimits.addSignalModels(fit=False,yFitFuncFP='errG',yFitFuncPP='errG')#,cutOffFP=0.75,cutOffPP=0.75)
-        #haaLimits.addSignalModels(fit=False,yFitFuncFP='L',yFitFuncPP='L')#,cutOffFP=0.75,cutOffPP=0.75)
-        haaLimits.addSignalModels(fit=False,yFitFuncFP='V',yFitFuncPP='L')#,cutOffFP=0.75,cutOffPP=0.75)
-    elif 'h' in var or 'hkf' in var:
-        #haaLimits.addSignalModels(fit=False,yFitFunc='DCB')
-        #haaLimits.addSignalModels(fit=False,yFitFunc='V')
-        #haaLimits.addSignalModels(fit=False,yFitFuncFP='DCB',yFitFuncPP='DCB')#,cutOffFP=0.0,cutOffPP=0.0)
-        #haaLimits.addSignalModels(fit=False,yFitFuncFP='DCB',yFitFuncPP='DG')#,cutOffFP=0.0,cutOffPP=0.0)
-        haaLimits.addSignalModels(fit=False,yFitFuncFP='DG',yFitFuncPP='DG')#,cutOffFP=0.0,cutOffPP=0.0)
-    else:
-        haaLimits.addSignalModels(fit=False)
-    haaLimits.XRANGE = xRange
+    if not skipSignal:
+        haaLimits.XRANGE = [0,30] # override for signal splines
+        if project:
+            haaLimits.addSignalModels(fit=False)
+        elif 'tt' in var:
+            haaLimits.addSignalModels(fit=False,yFitFuncFP='V',yFitFuncPP='L')#,cutOffFP=0.75,cutOffPP=0.75)
+        elif 'h' in var or 'hkf' in var:
+            haaLimits.addSignalModels(fit=False,yFitFuncFP='DG',yFitFuncPP='DG')#,cutOffFP=0.0,cutOffPP=0.0)
+        else:
+            haaLimits.addSignalModels(fit=False)
+        haaLimits.XRANGE = xRange
     if args.addControl: haaLimits.addControlData()
-    haaLimits.addData(asimov=(blind and not doMatrix and doUnbinned),addSignal=addSignal,**signalParams) # this will generate a dataset based on the fitted model
-    haaLimits.setupDatacard(addControl=args.addControl)
-    haaLimits.addSystematics(addControl=args.addControl)#doBinned=not doUnbinned)
+    haaLimits.addData(asimov=(blind and not doMatrix and doUnbinned),addSignal=addSignal,doBinned=not doUnbinned,**signalParams) # this will generate a dataset based on the fitted model
+    haaLimits.setupDatacard(addControl=args.addControl,doBinned=not doUnbinned)
+    haaLimits.addSystematics(addControl=args.addControl,doBinned=not doUnbinned)
     name = 'mmmt_{}_parametric'.format('_'.join(var))
     if args.unbinned: name += '_unbinned'
     if args.tag: name += '_{}'.format(args.tag)
