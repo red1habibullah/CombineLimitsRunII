@@ -60,16 +60,19 @@ class HaaLimits2D(HaaLimits):
 
     def _buildYModel(self,region='PP',**kwargs):
         workspace = kwargs.pop('workspace',self.workspace)
+        xVar = kwargs.pop('xVar','x')
+        yVar = kwargs.pop('yVar','y')
         tag = kwargs.pop('tag',region)
 
         # try landau
         if self.YRANGE[1]>100:
             #bg = Models.Landau('bg',
-            #    x = 'y',
+            #    x = yVar,
             #    mu    = [50,0,200],
             #   sigma = [10,0,100],
             #)
             #bg = Models.Polynomial('bg',
+            #    x = yVar,
             #    order = 3,
             #    p0 = [50,0,10000],
             #    p1 = [-5,-100,100],
@@ -77,6 +80,7 @@ class HaaLimits2D(HaaLimits):
             #)
 
             #bg = Models.Polynomial('bg',
+            #    x = yVar,
             #    order = 4,
             #    p0 = [-1,0,10000],
             #    p1 = [0.25,-100,100],
@@ -85,6 +89,7 @@ class HaaLimits2D(HaaLimits):
             #)
 
             #bg = Models.Polynomial('bg',
+            #    x = yVar,
             #    order = 5,
             #    p0 = [965,0,10000],
             #    p1 = [-12, -100, 100],
@@ -95,7 +100,7 @@ class HaaLimits2D(HaaLimits):
 
             #nameP1 = 'erfShiftPoly{}'.format('_'+tag if tag else '')
             #poly1 = Models.PolynomialExpr('poly1',
-            #    x = 'x',
+            #    x = xVar,
             #    order = 1,
             #    p0 = kwargs.pop('p0_{}'.format(nameP1), [45,30,70]),
             #    p1 = kwargs.pop('p1_{}'.format(nameP1), [0.75,0,2]),
@@ -104,7 +109,7 @@ class HaaLimits2D(HaaLimits):
 
             nameE1 = 'erf1{}'.format('_'+tag if tag else '')
             erf1 = Models.Erf('erf1',
-                x = 'y',
+                x = yVar,
                 erfScale = kwargs.pop('erfScale_{}'.format(nameE1), [0.05,0,10]),
                 erfShift = kwargs.pop('erfShift_{}'.format(nameE1), [70,10,200]),
                 #erfShift = nameP1,
@@ -113,7 +118,7 @@ class HaaLimits2D(HaaLimits):
 
             nameC1 = 'conty1{}'.format('_'+tag if tag else '')
             cont1 = Models.Exponential('conty1',
-                x = 'y',
+                x = yVar,
                 lamb = kwargs.pop('lambda_{}'.format(nameC1), [-0.05,-1,0]),
             )
             cont1.build(workspace,nameC1)
@@ -125,14 +130,14 @@ class HaaLimits2D(HaaLimits):
         else:
             # Landau only
             #bg = Models.Landau('bg',
-            #    x = 'y',
+            #    x = yVar,
             #    mu    = [5,0,20],
             #    sigma = [1,0,10],
             #)
 
             # landau plus gaussian
             #land1 = Models.Landau('land1',
-            #    x = 'y',
+            #    x = yVar,
             #    mu    = [5,0,20],
             #    sigma = [1,0,10],
             #)
@@ -141,7 +146,7 @@ class HaaLimits2D(HaaLimits):
 
             ## add a guassian summed for tt ?
             #gaus1 = Models.Gaussian('gaus1',
-            #    x = 'y',
+            #    x = yVar,
             #    mean = [1.5,0,4],
             #    sigma = [0.4,0,2],
             #)
@@ -159,7 +164,7 @@ class HaaLimits2D(HaaLimits):
             # landua plus upsilon gaussian
             nameL1 = 'land1{}'.format('_'+tag if tag else '')
             land1 = Models.Landau('land1',
-                x = 'y',
+                x = yVar,
                 mu    = kwargs.pop('mu_{}'.format(nameL1), [1.5,0,5]),
                 sigma = kwargs.pop('sigma_{}'.format(nameL1), [0.4,0,2]),
             )
@@ -167,7 +172,7 @@ class HaaLimits2D(HaaLimits):
 
             # jpsi
             #jpsi2 = Models.Voigtian('jpsi2S',
-            #    x = 'y',
+            #    x = yVar,
             #    mean  = [3.7,3.6,3.8],
             #    sigma = [0.1,0.01,0.5],
             #    width = [0.1,0.01,0.5],
@@ -179,7 +184,7 @@ class HaaLimits2D(HaaLimits):
             # add a guassian for upsilon
             nameU1 = 'upsilontt'
             upsilon1 = Models.Gaussian('upsilon1',
-                x = 'y',
+                x = yVar,
                 mean  = kwargs.pop('mean_{}'.format(nameU1), [6,5,7]),
                 sigma = kwargs.pop('sigma_{}'.format(nameU1), [0.02,0,1]),
             )
@@ -196,7 +201,7 @@ class HaaLimits2D(HaaLimits):
 
 
         #cont1 = Models.Exponential('conty1',
-        #    x = 'y',
+        #    x = yVar,
         #    #lamb = [-0.20,-1,0], # kinfit
         #    lamb = [-0.05,-1,0], # visible
         #)
@@ -206,7 +211,7 @@ class HaaLimits2D(HaaLimits):
         ## higgs fit (mmtt)
         #if self.YRANGE[1]>100:
         #    erf1 = Models.Erf('erf1',
-        #        x = 'y',
+        #        x = yVar,
         #        erfScale = [0.05,0,1],
         #        erfShift = [70,10,200],
         #    )
@@ -220,7 +225,7 @@ class HaaLimits2D(HaaLimits):
         ## pseudo fit (tt)
         #else:
         #    erf1 = Models.Erf('erf1',
-        #        x = 'y',
+        #        x = yVar,
         #        erfScale = [1,0.01,10],
         #        erfShift = [1,0.1,10],
         #    )
@@ -236,7 +241,7 @@ class HaaLimits2D(HaaLimits):
 
         #    # add an upsilon to tt resonance
         #    #upsilon = Models.Gaussian('upsilony',
-        #    #    x = 'y',
+        #    #    x = yVar,
         #    #    mean  = [5.5,5,6.5],
         #    #    sigma = [0.25,0.1,1],
         #    #)
@@ -245,7 +250,7 @@ class HaaLimits2D(HaaLimits):
 
         #    # add a guassian summed for tt ?
         #    gaus1 = Models.Gaussian('gaus1',
-        #        x = 'y',
+        #        x = yVar,
         #        mean = [1.5,0,4],
         #        sigma = [0.4,0,2],
         #    )
@@ -293,35 +298,40 @@ class HaaLimits2D(HaaLimits):
         cont2.build(workspace,name)
 
         jpsi1S = Models.Prod('jpsi1S',
-            'jpsi1S',
+            #'jpsi1S',
+            'jpsi1S_{}_x'.format(region),
             'bg_{}_y'.format(region),
         )
         name = 'jpsi1S_{}_xy'.format(region)
         jpsi1S.build(workspace,name)
   
         jpsi2S = Models.Prod('jpsi2S',
-            'jpsi2S',
+            #'jpsi2S',
+            'jpsi2S_{}_x'.format(region),
             'bg_{}_y'.format(region),
         )
         name = 'jpsi2S_{}_xy'.format(region)
         jpsi2S.build(workspace,name)
 
         upsilon1S = Models.Prod('upsilon1S',
-            'upsilon1S',
+            #'upsilon1S',
+            'upsilon1S_{}_x'.format(region),
             'bg_{}_y'.format(region),
         )
         name = 'upsilon1S_{}_xy'.format(region)
         upsilon1S.build(workspace,name)
 
         upsilon2S = Models.Prod('upsilon2S',
-            'upsilon2S',
+            #'upsilon2S',
+            'upsilon2S_{}_x'.format(region),
             'bg_{}_y'.format(region),
         )
         name = 'upsilon2S_{}_xy'.format(region)
         upsilon2S.build(workspace,name)
 
         upsilon3S = Models.Prod('upsilon3S',
-            'upsilon3S',
+            #'upsilon3S',
+            'upsilon3S_{}_x'.format(region),
             'bg_{}_y'.format(region),
         )
         name = 'upsilon3S_{}_xy'.format(region)
@@ -838,6 +848,8 @@ class HaaLimits2D(HaaLimits):
         and similarly for errors and integrals.
         '''
         workspace = kwargs.pop('workspace',self.workspace)
+        xVar = kwargs.pop('xVar','x')
+        yVar = kwargs.pop('yVar','y')
         yFitFunc = kwargs.pop('yFitFunc','G')
         ygausOnly = kwargs.get('ygausOnly',False)
         fit = kwargs.get('fit',False)
@@ -923,6 +935,7 @@ class HaaLimits2D(HaaLimits):
             raise
         else:
             modelx = Models.Voigtian(self.SPLINENAME.format(h=h)+'_x',
+                x = xVar,
                 **{param: 'x{param}_h{h}_{region}_sigx'.format(param=param, h=h, region=region) for param in params}
             )
         modelx.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_x'))
@@ -941,12 +954,12 @@ class HaaLimits2D(HaaLimits):
         else:
             if yFitFunc == 'errG':
                 modely_gaus = Models.Gaussian("model_gaus",
-                    x = 'y',
+                    x = yVar,
                      **{param: 'y{param}_ttgaus_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['mean','sigma']}
                 )
                 modely_gaus.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_gaus_y'))
                 modely_erf = Models.Erf("model_erf",
-                    x = 'y',
+                    x = yVar,
                      **{param: 'y{param}_tterf_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['ergScales','erfShifts']}
                 )
                 modely_erf.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_erf_y'))
@@ -956,12 +969,12 @@ class HaaLimits2D(HaaLimits):
                 )
             elif yFitFunc == 'L':
                 modely_gaus = Models.Gaussian("model_gaus",
-                    x = 'y',
+                    x = yVar,
                      **{param: 'y{param}_ttgaus_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['mean','sigma']}
                 )
                 modely_gaus.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_gaus_y'))
                 modely_land = Models.Landau("model_land",
-                    x = 'y',
+                    x = yVar,
                      **{param: 'y{param}_ttland_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['mu','sigma']}
                 )
                 modely_land.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_land_y'))
@@ -971,7 +984,7 @@ class HaaLimits2D(HaaLimits):
                 )
             else:
                 modely = ym(self.SPLINENAME.format(h=h)+'_y',
-                    x = 'y',
+                    x = yVar,
                     yMax = self.YRANGE[1],
                     **{param: 'y{param}_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in yparameters}
                 )
@@ -1012,6 +1025,8 @@ class HaaLimits2D(HaaLimits):
             return super(HaaLimits2D, self).fitBackground(region=region, shift=shift, **kwargs)
 
         workspace = kwargs.pop('workspace',self.workspace)
+        xVar = kwargs.pop('xVar','x')
+        yVar = kwargs.pop('yVar','y')
 
         model = workspace.pdf('bg_{}_xy'.format(region))
         name = 'data_prefit_{}{}'.format(region,'_'+shift if shift else '')
@@ -1025,7 +1040,7 @@ class HaaLimits2D(HaaLimits):
 
         fr = model.fitTo(data,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True))
 
-        xFrame = workspace.var('x').frame()
+        xFrame = workspace.var(xVar).frame()
         data.plotOn(xFrame)
         # continuum
         model.plotOn(xFrame,ROOT.RooFit.Components('cont1_{}_x'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
@@ -1059,7 +1074,7 @@ class HaaLimits2D(HaaLimits):
         canvas.SetLogy(True)
         canvas.Print('{}/model_fit_{}{}_xproj_log.png'.format(self.plotDir,region,'_'+shift if shift else ''))
 
-        yFrame = workspace.var('y').frame()
+        yFrame = workspace.var(yVar).frame()
         data.plotOn(yFrame)
         # continuum
         model.plotOn(yFrame,ROOT.RooFit.Components('conty1_{}_y'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
@@ -1100,16 +1115,40 @@ class HaaLimits2D(HaaLimits):
     ###############################
     ### Add things to workspace ###
     ###############################
-    def addData(self,asimov=False,addSignal=False,addControl=False,doBinned=False,**kwargs):
+    def addControlData(self,**kwargs):
+        # build the models after doing the prefit stuff
+        region = 'control'
+        xVar = 'x_{}'.format(region)
+        #xVar = 'x'
+        self.addVar(xVar, *self.XRANGE, unit='GeV', label=self.XLABEL, workspace=self.workspace)
+        super(HaaLimits2D, self).buildModel(region=region, workspace=self.workspace, xVar=xVar)
+        self.loadBackgroundFit(region, workspace=self.workspace)
+
+        name = 'data_obs_{}'.format(region)
+        hist = self.histMap[region]['']['data']
+        # use the provided data
+        if hist.InheritsFrom('TH1'):
+            data_obs = ROOT.RooDataHist(name,name,ROOT.RooArgList(self.workspace.var(xVar)),self.histMap[region]['']['data'])
+        else:
+            # TODO add support for xVar
+            data_obs = hist.Clone(name)
+        self.wsimport(data_obs, ROOT.RooFit.RecycleConflictNodes() )
+
+    def addData(self,blind=True,asimov=False,addSignal=False,addControl=False,doBinned=False,**kwargs):
         mh = kwargs.pop('h',125)
         ma = kwargs.pop('a',15)
 
         workspace = self.workspace
 
         for region in self.REGIONS:
+            xVar = 'x'
+            yVar = 'y'
+
             # build the models after doing the prefit stuff
             prebuiltParams = {p:p for p in self.background_params[region]}
-            self.buildModel(region=region,workspace=workspace,**prebuiltParams)
+            self.addVar(xVar, *self.XRANGE, unit='GeV', label=self.XLABEL, workspace=workspace)
+            self.addVar(yVar, *self.YRANGE, unit='GeV', label=self.XLABEL, workspace=workspace)
+            self.buildModel(region=region,workspace=workspace,xVar=xVar,yVar=yVar,**prebuiltParams)
             self.loadBackgroundFit(region,workspace=workspace)
 
             # save binned data
@@ -1122,9 +1161,9 @@ class HaaLimits2D(HaaLimits):
                     pdf = workspace.pdf(bg)
                     integral = workspace.function('integral_{}'.format(bgname))
 
-                    x = workspace.var('x')
+                    x = workspace.var(xVar)
                     x.setBins(self.XBINNING)
-                    y = workspace.var('y')
+                    y = workspace.var(yVar)
                     y.setBins(self.YBINNING)
                     args = ROOT.RooArgSet(x,y)
                     for shift in ['']+self.BACKGROUNDSHIFTS:
@@ -1153,7 +1192,11 @@ class HaaLimits2D(HaaLimits):
 
             name = 'data_obs_{}'.format(region)
             hist = self.histMap[region]['']['data']
-            if asimov:
+            if blind:
+                x = workspace.var(xVar)
+                x.setBins(self.XBINNING)
+                y = workspace.var(yVar)
+                y.setBins(self.YBINNING)
                 # generate a toy data observation from the model
                 model = workspace.pdf('bg_{}_xy'.format(region))
                 h = self.histMap[region]['']['dataNoSig']
@@ -1161,19 +1204,26 @@ class HaaLimits2D(HaaLimits):
                     integral = h.Integral() # 2D integral?
                 else:
                     integral = h.sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE))
-                data_obs = model.generate(ROOT.RooArgSet(self.workspace.var('x'),self.workspace.var('y')),int(integral))
+                if asimov:
+                    data_obs = model.generateBinned(ROOT.RooArgSet(self.workspace.var(xVar),self.workspace.var(yVar)),integral,1)
+                else:
+                    data_obs = model.generate(ROOT.RooArgSet(self.workspace.var(xVar),self.workspace.var(yVar)),int(integral))
                 if addSignal:
                     logging.info('Generating dataset with signal {}'.format(region))
                     self.workspace.var('MH').setVal(ma)
                     model = self.workspace.pdf('{}_{}'.format(self.SPLINENAME.format(h=mh),region))
                     integral = self.workspace.function('integral_{}_{}'.format(self.SPLINENAME.format(h=mh),region)).getVal()
-                    sig_obs = model.generate(ROOT.RooArgSet(self.workspace.var('x'),self.workspace.var('y')),int(integral))
-                    data_obs.append(sig_obs)
+                    if asimov:
+                        sig_obs = model.generate(ROOT.RooArgSet(self.workspace.var(xVar),self.workspace.var(yVar)),integral,1)
+                        data_obs.add(sig_obs)
+                    else:
+                        sig_obs = model.generate(ROOT.RooArgSet(self.workspace.var(xVar),self.workspace.var(yVar)),int(integral))
+                        data_obs.append(sig_obs)
                 data_obs.SetName(name)
             else:
                 # use the provided data
                 if hist.InheritsFrom('TH1'):
-                    data_obs = ROOT.RooDataHist(name,name,ROOT.RooArgList(self.workspace.var('x'),self.workspace.var('y')),self.histMap[region]['']['data'])
+                    data_obs = ROOT.RooDataHist(name,name,ROOT.RooArgList(self.workspace.var(xVar),self.workspace.var(yVar)),self.histMap[region]['']['data'])
                 else:
                     data_obs = hist.Clone(name)
             self.wsimport(data_obs)
@@ -1181,7 +1231,7 @@ class HaaLimits2D(HaaLimits):
             if hist.InheritsFrom('TH1'):
                 pass
             else:
-                xFrame = self.workspace.var('x').frame()
+                xFrame = self.workspace.var(xVar).frame()
                 data_obs.plotOn(xFrame)
                 canvas = ROOT.TCanvas('c','c',800,800)
                 xFrame.Draw()
@@ -1194,7 +1244,7 @@ class HaaLimits2D(HaaLimits):
                 canvas.SetLogy(True)
                 canvas.Print('{}/data_obs_{}_xproj_log.png'.format(self.plotDir,region))
 
-                yFrame = self.workspace.var('y').frame()
+                yFrame = self.workspace.var(yVar).frame()
                 data_obs.plotOn(yFrame)
                 canvas = ROOT.TCanvas('c','c',800,800)
                 yFrame.Draw()
@@ -1214,7 +1264,7 @@ class HaaLimits2D(HaaLimits):
             name = 'data_obs_{}'.format(region)
             hist = self.histMap[region]['']['data']
             if hist.InheritsFrom('TH1'):
-                data_obs = ROOT.RooDataHist(name,name,ROOT.RooArgList(self.workspace.var('x')),hist)
+                data_obs = ROOT.RooDataHist(name,name,ROOT.RooArgList(self.workspace.var(xVar)),hist)
             else:
                 data_obs = hist.Clone(name)
             self.wsimport(data_obs, ROOT.RooFit.RecycleConflictNodes() )
@@ -1391,14 +1441,14 @@ class HaaLimits2D(HaaLimits):
             self.addBin(region)
 
             for proc in bgs:
-                key = proc if proc in self.control_integralValues else '{}_{}_x'.format(proc,region)
+                key = proc if proc in self.control_integralValues else '{}_{}'.format(proc,region)
                 integral = self.control_integralValues[key]
 
                 self.setExpected(proc,region,integral)
-                if 'cont' not in proc and proc not in sigs:
-                    self.addShape(region,proc,proc)
-                if 'cont' in proc:
-                    self.addShape(region,proc,'{}_{}_x'.format(proc,region))
+                #if 'cont' not in proc and proc not in sigs:
+                #    self.addShape(region,proc,proc)
+                #if 'cont' in proc:
+                self.addShape(region,proc,'{}_{}'.format(proc,region))
 
             self.setObserved(region,-1) # reads from histogram
 

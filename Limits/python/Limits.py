@@ -543,7 +543,8 @@ class Limits(object):
                     raise
 
             # header
-            f.write('imax {0} number of bins\n'.format(imax))
+            #f.write('imax {0} number of bins\n'.format(imax))
+            f.write('imax * number of bins\n')
             #f.write('jmax {0} number of processes\n'.format(jmax))
             f.write('jmax * number of processes\n')
             f.write('kmax * number of nuissances\n')

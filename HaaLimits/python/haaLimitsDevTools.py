@@ -21,7 +21,7 @@ from CombineLimits.HaaLimits.HaaLimits2DNew import HaaLimits2D
 logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
 
-testing = True
+testing = False
 detailed = True
 skipSignal = False
 
@@ -330,6 +330,11 @@ def create_datacard(args):
     project = args.project
     if args.selection: hCut = args.selection
 
+    xBinWidth = 0.1
+    if do2D:
+        xBinWidth = 0.2
+        yBinWidth = 2 if var[1]=='tt' else 20
+
     #############
     ### Setup ###
     #############
@@ -375,26 +380,32 @@ def create_datacard(args):
                 if proc=='datadriven':
                     if mode=='PP':
                         if doMatrix:
-                            histMap[mode][shift][proc] = getMatrixDatadrivenHist(doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
+                            #histMap[mode][shift][proc] = getMatrixDatadrivenHist(doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
+                            histMap[mode][shift][proc] = getMatrixDatadrivenHist(doUnbinned=True,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
                         else:
-                            histMap[mode][shift][proc] = getDatadrivenHist(doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
+                            #histMap[mode][shift][proc] = getDatadrivenHist(doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
+                            histMap[mode][shift][proc] = getDatadrivenHist(doUnbinned=True,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
                     else:
                         if doMatrix:
-                            histMap[mode][shift][proc] = getMatrixHist('data',doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
+                            #histMap[mode][shift][proc] = getMatrixHist('data',doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
+                            histMap[mode][shift][proc] = getMatrixHist('data',doUnbinned=True,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
                         else:
-                            histMap[mode][shift][proc] = getHist('data',doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
+                            #histMap[mode][shift][proc] = getHist('data',doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
+                            histMap[mode][shift][proc] = getHist('data',doUnbinned=True,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
                 else:
                     # override xRange for signal only
                     xRange = [0,30]
                     if doMatrix:
-                        histMap[mode][shift][proc] = getMatrixHist(proc,doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
+                        #histMap[mode][shift][proc] = getMatrixHist(proc,doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
+                        histMap[mode][shift][proc] = getMatrixHist(proc,doUnbinned=True,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
                     else:
-                        histMap[mode][shift][proc] = getHist(proc,doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
+                        #histMap[mode][shift][proc] = getHist(proc,doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
+                        histMap[mode][shift][proc] = getHist(proc,doUnbinned=True,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
                     xRange = args.xRange
-                if do2D or doUnbinned:
-                    pass # TODO, figure out how to rebin 2D
-                else:
-                    histMap[mode][shift][proc].Rebin(rebinning[var[0]])
+                #if do2D or doUnbinned:
+                #    pass # TODO, figure out how to rebin 2D
+                #else:
+                #    histMap[mode][shift][proc].Rebin(rebinning[var[0]])
             #if shift: continue
             logging.info('Getting observed')
             samples = backgrounds
@@ -404,12 +415,12 @@ def create_datacard(args):
             for proc in samples:
                 hists += [histMap[mode][shift][proc].Clone()]
                 if proc!=signalToAdd: histsNoSig += [histMap[mode][shift][proc].Clone()]
-            if doUnbinned:
-                hist = sumDatasets('obs{}{}'.format(mode,shift),*hists)
-                histNoSig = sumDatasets('obsNoSig{}{}'.format(mode,shift),*histsNoSig)
-            else:
-                hist = sumHists('obs{}{}'.format(mode,shift),*hists)
-                histNoSig = sumHists('obsNoSig{}{}'.format(mode,shift),*histsNoSig)
+            #if doUnbinned:
+            hist = sumDatasets('obs{}{}'.format(mode,shift),*hists)
+            histNoSig = sumDatasets('obsNoSig{}{}'.format(mode,shift),*histsNoSig)
+            #else:
+            #    hist = sumHists('obs{}{}'.format(mode,shift),*hists)
+            #    histNoSig = sumHists('obsNoSig{}{}'.format(mode,shift),*histsNoSig)
             #for b in range(hist.GetNbinsX()+1):
             #    val = int(hist.GetBinContent(b))
             #    if val<0: val = 0
@@ -420,14 +431,15 @@ def create_datacard(args):
                 histMap[mode][shift]['data'] = hist.Clone()
                 histMap[mode][shift]['dataNoSig'] = histNoSig.Clone()
             else:
-                hist = getHist('data',doUnbinned=doUnbinned,var=var,wrappers=wrappers,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
+                #hist = getHist('data',doUnbinned=doUnbinned,var=var,wrappers=wrappers,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
+                hist = getHist('data',doUnbinned=True,var=var,wrappers=wrappers,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
                 histMap[mode][shift]['data'] = hist.Clone()
                 histMap[mode][shift]['dataNoSig'] = histNoSig.Clone()
-                if do2D or doUnbinned:
-                    pass
-                else:
-                    histMap[mode][shift]['data'].Rebin(rebinning[var[0]])
-                    histMap[mode][shift]['dataNoSig'].Rebin(rebinning[var[0]])
+                #if do2D or doUnbinned:
+                #    pass
+                #else:
+                #    histMap[mode][shift]['data'].Rebin(rebinning[var[0]])
+                #    histMap[mode][shift]['dataNoSig'].Rebin(rebinning[var[0]])
 
     for mode in ['control']:
         histMap[mode] = {}
@@ -467,10 +479,10 @@ def create_datacard(args):
     haaLimits.AMASSES = amasses
     haaLimits.HMASSES = [chi2Mass] if chi2Mass else hmasses
     haaLimits.XRANGE = xRange
-    haaLimits.XBINNING = int((xRange[1]-xRange[0]) * 10)
+    haaLimits.XBINNING = int((xRange[1]-xRange[0])/xBinWidth)
     if do2D: 
         haaLimits.YRANGE = yRange
-        haaLimits.YBINNING = int((yRange[1]-yRange[0]) * 0.02)
+        haaLimits.YBINNING = int((yRange[1]-yRange[0])/yBinWidth)
     if 'tt' in var: haaLimits.YLABEL = 'm_{#tau_{#mu}#tau_{h}}'
     if 'h' in var or 'hkf' in var: haaLimits.YLABEL = 'm_{#mu#mu#tau_{#mu}#tau_{h}}'
     haaLimits.initializeWorkspace()
@@ -488,7 +500,7 @@ def create_datacard(args):
             haaLimits.addSignalModels(fit=False)
         haaLimits.XRANGE = xRange
     if args.addControl: haaLimits.addControlData()
-    haaLimits.addData(asimov=(blind and not doMatrix and doUnbinned),addSignal=addSignal,doBinned=not doUnbinned,**signalParams) # this will generate a dataset based on the fitted model
+    haaLimits.addData(blind=blind,asimov=True,addSignal=args.addSignal,doBinned=not doUnbinned,**signalParams) # this will generate a dataset based on the fitted model
     haaLimits.setupDatacard(addControl=args.addControl,doBinned=not doUnbinned)
     haaLimits.addSystematics(addControl=args.addControl,doBinned=not doUnbinned)
     name = 'mmmt_{}_parametric'.format('_'.join(var))

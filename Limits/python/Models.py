@@ -851,27 +851,34 @@ class Sum(Model):
         logging.debug('Building {}'.format(label))
         pdfs = []
         sumpdfs = []
+        sumnames = []
         for n, (pdf, r) in enumerate(sorted(self.kwargs.iteritems())):
-            if len(r)==2:
-                ws.factory('{0}_frac[{1},{2}]'.format(pdf,*r))
+            if isinstance(r,str):
+                sumnames += [r]
+                sumpdfs += [pdf]
+            elif len(r)==2:
+                name = '{}_frac'.format(pdf)
+                ws.factory('{0}[{1},{2}]'.format(name,*r))
+                sumnames += [name]
                 sumpdfs += [pdf]
             elif len(r)==3:
-                ws.factory('{0}_frac[{1},{2},{3}]'.format(pdf,*r))
+                name = '{}_frac'.format(pdf)
+                ws.factory('{0}[{1},{2},{3}]'.format(name,*r))
+                sumnames += [name]
                 sumpdfs += [pdf]
             pdfs += [pdf]
-        pdf = sorted(pdfs)
         # build model
         if self.doRecursive:
-            sumargs = ['{0}_frac*{0}'.format(pdf) for pdf in pdfs[:-1]] + [pdfs[-1]]
+            sumargs = ['{0}*{1}'.format(name,pdf) for name,pdf in zip(sumnames[:-1],sumpdfs[:-1])] + [sumpdfs[-1]]
             ws.factory("RSUM::{0}({1})".format(label, ', '.join(sumargs)))
         elif self.doExtended:
-            sumargs = ['{0}_frac*{0}'.format(pdf) for pdf in pdfs]
+            sumargs = ['{0}*{1}'.format(name,pdf) for name,pdf in zip(sumnames,sumpdfs)]
             ws.factory("SUM::{0}({1})".format(label, ', '.join(sumargs)))
         else: # Don't do this if you have more than 2 pdfs ...
             if len(sumpdfs)>1: logging.warning('This sum is not guaranteed to be positive because there are more than two arguments. Better to use the option recursive=True.')
-            sumargs = ['{0}_frac*{0}'.format(pdf) for pdf in sumpdfs[:-1]] + [sumpdfs[-1]]
+            sumargs = ['{0}*{1}'.format(name,pdf) for name,pdf in zip(sumnames[:-1],sumpdfs[:-1])] + [sumpdfs[-1]]
             ws.factory("SUM::{0}({1})".format(label, ', '.join(sumargs)))
-        self.params = ['{}_frac'.format(pdf) for pdf in pdfs]
+        self.params = sumnames
 
 class Prod(Model):
 
