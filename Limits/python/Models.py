@@ -135,13 +135,13 @@ class Model(object):
 
             histM = model.createHistogram('x,y',100,100)
             histM.SetLineColor(ROOT.kBlue)
-            histM.Draw('surf')
+            histM.Draw('surf3')
             canvas.Print('{0}_model.png'.format(savename))
 
             if isinstance(hist,ROOT.RooDataSet):
                 histD = hist.createHistogram(x,y,20,20,'1','{}_hist'.format(savename))
                 histD.SetLineColor(ROOT.kBlack)
-                histD.Draw('surf')
+                histD.Draw('surf3')
                 canvas.Print('{0}_dataset.png'.format(savename))
 
 
@@ -160,10 +160,29 @@ class Model(object):
         if hasattr(self,'params'): return self.params
         return []
 
+def buildSpline(ws,label,MH,masses,values):
+    if isinstance(MH, list):
+        args = ROOT.RooArgList(*[ws.var(mh) for mh in MH])
+        tree = ROOT.TTree('tree','tree')
+        val = array('d',[0])
+        mhs = [array('d',[0]) for mh in MH]
+        tree.Branch('f', val, 'f/Double_t')
+        for m in range(len(MH)):
+            tree.Branch(MH[m], mhs[m], '{}/Double_t'.format(MH[m]))
+        for i in range(len(values)):
+            val[0] = values[i]
+            for m in range(len(MH)):
+                mhs[m][0] = masses[m][i]
+            tree.Fill()
+        spline = ROOT.RooSplineND(label, label, args, tree, 'f')
+    else:
+        spline  = ROOT.RooSpline1D(label,  label,  ws.var(MH), len(masses), array('d',masses), array('d',values))
+    return spline
+
 class ModelSpline(Model):
 
     def __init__(self,name,**kwargs):
-        self.MH = kwargs.pop('MH','MH')
+        self.mh = kwargs.pop('MH','MH')
         super(ModelSpline,self).__init__(name,**kwargs)
 
     def setIntegral(self,masses,integrals):
@@ -176,9 +195,9 @@ class ModelSpline(Model):
 
     def buildIntegral(self,ws,label):
         if not hasattr(self,'integrals'): return 
-        integralSpline  = ROOT.RooSpline1D(label,  label,  ws.var(self.MH), len(self.masses), array('d',self.masses), array('d',self.integrals))
+        spline = buildSpline(ws,label,self.mh,self.masses,self.integrals)
         # import to workspace
-        getattr(ws, "import")(integralSpline, ROOT.RooFit.RecycleConflictNodes())
+        getattr(ws, "import")(spline, ROOT.RooFit.RecycleConflictNodes())
 
 class Param(object):
 
@@ -222,9 +241,10 @@ class Spline(object):
         if shifts:
             args = ROOT.TList()
             centralName = '{0}_central'.format(label)
-            splineCentral = ROOT.RooSpline1D(centralName,  centralName,  ws.var(self.mh), len(masses), array('d',masses), array('d',values))
+            splineCentral = buildSpline(ws,centralName,self.mh,masses,values)
             shiftFormula = '@0'
             args.Add(splineCentral)
+            # TODO: fix spline for 2D
             for shift in shifts:
                 up = [u-c for u,c in zip(shifts[shift]['up'],values)]
                 down = [c-d for d,c in zip(shifts[shift]['down'],values)]
@@ -243,7 +263,7 @@ class Spline(object):
             arglist = ROOT.RooArgList(args)
             spline = ROOT.RooFormulaVar(splineName, splineName, shiftFormula, arglist)
         else:
-            spline = ROOT.RooSpline1D(splineName,  splineName,  ws.var(self.mh), len(masses), array('d',masses), array('d',values))
+            spline = buildSpline(ws,splineName,self.mh,masses,values)
         getattr(ws, "import")(spline, ROOT.RooFit.RecycleConflictNodes())
 
 class Polynomial(Model):
@@ -277,7 +297,7 @@ class PolynomialSpline(ModelSpline):
         for o in range(order):
             ps = self.kwargs.get('p{}'.format(o), [])
             paramName = 'p{}_{}'.format(o,label)
-            paramSplines[o] = ROOT.RooSpline1D(paramName, paramName, ws.var('MH'), len(masses), array('d',masses), array('d',ps))
+            paramsSplines[o] = buildSpline(ws,paramName,self.mh,masses,ps)
             getattr(ws, "import")(paramSplines[o], ROOT.RooFit.RecycleConflictNodes())
             params += [paramName]
         ws.factory('Polynomial::{}({}, {{ {} }})'.format(label, self.x, ', '.join(['{}[0, -10, 10]'.format(p) for p in params])))
@@ -310,7 +330,7 @@ class ChebychevSpline(ModelSpline):
         for o in range(order):
             ps = self.kwargs.get('p{}'.format(o), [])
             paramName = 'p{}_{}'.format(o,label)
-            paramSplines[o] = ROOT.RooSpline1D(paramName, paramName, ws.var('MH'), len(masses), array('d',masses), array('d',ps))
+            paramsSplines[o] = buildSpline(ws,paramName,self.mh,masses,ps)
             getattr(ws, "import")(paramSplines[o], ROOT.RooFit.RecycleConflictNodes())
             params += [paramName]
         ws.factory('Chebychev::{}({}, {{ {} }})'.format(label, self.x, ', '.join(['{}[0, -10, 10]'.format(p) for p in params])))
@@ -347,8 +367,8 @@ class GaussianSpline(ModelSpline):
         meanName  = 'mean_{0}'.format(label)
         sigmaName = 'sigma_{0}'.format(label)
         # splines
-        meanSpline  = ROOT.RooSpline1D(meanName,  meanName,  ws.var('MH'), len(masses), array('d',masses), array('d',means))
-        sigmaSpline = ROOT.RooSpline1D(sigmaName, sigmaName, ws.var('MH'), len(masses), array('d',masses), array('d',sigmas))
+        meanSpline = buildSpline(ws,meanName,self.mh,masses,means)
+        sigmaSpline = buildSpline(ws,sigmaName,self.mh,masses,sigmas)
         # import
         getattr(ws, "import")(meanSpline, ROOT.RooFit.RecycleConflictNodes())
         getattr(ws, "import")(sigmaSpline, ROOT.RooFit.RecycleConflictNodes())
@@ -387,8 +407,8 @@ class BreitWignerSpline(ModelSpline):
         meanName  = 'mean_{0}'.format(label)
         widthName = 'width_{0}'.format(label)
         # splines
-        meanSpline  = ROOT.RooSpline1D(meanName,  meanName,  ws.var('MH'), len(masses), array('d',masses), array('d',means))
-        widthSpline = ROOT.RooSpline1D(widthName, widthName, ws.var('MH'), len(masses), array('d',masses), array('d',widths))
+        meanSpline = buildSpline(ws,meanName,self.mh,masses,means)
+        widthSpline = buildSpline(ws,sigmaName,self.mh,masses,widths)
         # import
         getattr(ws, "import")(meanSpline, ROOT.RooFit.RecycleConflictNodes())
         getattr(ws, "import")(widthSpline, ROOT.RooFit.RecycleConflictNodes())
@@ -432,9 +452,9 @@ class VoigtianSpline(ModelSpline):
         widthName = 'width_{0}'.format(label)
         sigmaName = 'sigma_{0}'.format(label)
         # splines
-        meanSpline  = ROOT.RooSpline1D(meanName,  meanName,  ws.var('MH'), len(masses), array('d',masses), array('d',means))
-        widthSpline = ROOT.RooSpline1D(widthName, widthName, ws.var('MH'), len(masses), array('d',masses), array('d',widths))
-        sigmaSpline = ROOT.RooSpline1D(sigmaName, sigmaName, ws.var('MH'), len(masses), array('d',masses), array('d',sigmas))
+        meanSpline = buildSpline(ws,meanName,self.mh,masses,means)
+        widthSpline = buildSpline(ws,sigmaName,self.mh,masses,widths)
+        sigmaSpline = buildSpline(ws,sigmaName,self.mh,masses,sigmas)
         # import
         getattr(ws, "import")(meanSpline, ROOT.RooFit.RecycleConflictNodes())
         getattr(ws, "import")(widthSpline, ROOT.RooFit.RecycleConflictNodes())
@@ -485,10 +505,10 @@ class CrystalBallSpline(ModelSpline):
         aName     = 'a_{0}'.format(label)
         nName     = 'n_{0}'.format(label)
         # splines
-        meanSpline  = ROOT.RooSpline1D(meanName,  meanName,  ws.var('MH'), len(masses), array('d',masses), array('d',means))
-        sigmaSpline = ROOT.RooSpline1D(sigmaName, sigmaName, ws.var('MH'), len(masses), array('d',masses), array('d',sigmas))
-        aSpline =     ROOT.RooSpline1D(aName, aName, ws.var('MH'), len(masses), array('d',masses), array('d',a_s))
-        nSpline =     ROOT.RooSpline1D(nName, nName, ws.var('MH'), len(masses), array('d',masses), array('d',n_s))
+        meanSpline  = buildSpline(ws,meanName,self.mh,masses,means)
+        sigmaSpline = buildSpline(ws,sigmaName,self.mh,masses,sigmas)
+        aSpline     = buildSpline(ws,aName,self.mh,masses,a_s)
+        nSpline     = buildSpline(ws,nName,self.mh,masses,n_s)
         # import
         getattr(ws, "import")(meanSpline, ROOT.RooFit.RecycleConflictNodes())
         getattr(ws, "import")(sigmaSpline, ROOT.RooFit.RecycleConflictNodes())
@@ -553,12 +573,12 @@ class DoubleCrystalBallSpline(ModelSpline):
         a2Name    = 'a2_{0}'.format(label)
         n2Name    = 'n2_{0}'.format(label)
         # splines
-        meanSpline  = ROOT.RooSpline1D(meanName,  meanName,  ws.var('MH'), len(masses), array('d',masses), array('d',means))
-        sigmaSpline = ROOT.RooSpline1D(sigmaName, sigmaName, ws.var('MH'), len(masses), array('d',masses), array('d',sigmas))
-        a1Spline    = ROOT.RooSpline1D(a1Name, a1Name, ws.var('MH'), len(masses), array('d',masses), array('d',a1s))
-        n1Spline    = ROOT.RooSpline1D(n1Name, n1Name, ws.var('MH'), len(masses), array('d',masses), array('d',n1s))
-        a2Spline    = ROOT.RooSpline1D(a2Name, a2Name, ws.var('MH'), len(masses), array('d',masses), array('d',a2s))
-        n2Spline    = ROOT.RooSpline1D(n2Name, n2Name, ws.var('MH'), len(masses), array('d',masses), array('d',n2s))
+        meanSpline  = buildSpline(ws,meanName,self.mh,masses,means)
+        sigmaSpline = buildSpline(ws,sigmaName,self.mh,masses,sigmas)
+        a1Spline    = buildSpline(ws,a1Name,self.mh,masses,a1s)
+        n1Spline    = buildSpline(ws,n1Name,self.mh,masses,n1s)
+        a2Spline    = buildSpline(ws,a2Name,self.mh,masses,a2s)
+        n2Spline    = buildSpline(ws,n2Name,self.mh,masses,n2s)
         # import
         getattr(ws, "import")(meanSpline, ROOT.RooFit.RecycleConflictNodes())
         getattr(ws, "import")(sigmaSpline, ROOT.RooFit.RecycleConflictNodes())
@@ -614,9 +634,9 @@ class DoubleSidedGaussianSpline(ModelSpline):
         sigma1Name = 'sigma1_{0}'.format(label)
         sigma2Name = 'sigma2_{0}'.format(label)
         # splines
-        meanSpline   = ROOT.RooSpline1D(meanName,  meanName,  ws.var('MH'), len(masses), array('d',masses), array('d',means))
-        sigma1Spline = ROOT.RooSpline1D(sigma1Name, sigma1Name, ws.var('MH'), len(masses), array('d',masses), array('d',sigma1s))
-        sigma2Spline = ROOT.RooSpline1D(sigma2Name, sigma2Name, ws.var('MH'), len(masses), array('d',masses), array('d',sigma2s))
+        meanSpline   = buildSpline(ws,meanName,self.mh,masses,means)
+        sigma1Spline = buildSpline(ws,sigma1Name,self.mh,masses,sigma1s)
+        sigma2Spline = buildSpline(ws,sigma2Name,self.mh,masses,sigma2s)
         # import
         getattr(ws, "import")(meanSpline, ROOT.RooFit.RecycleConflictNodes())
         getattr(ws, "import")(sigma1Spline, ROOT.RooFit.RecycleConflictNodes())
@@ -678,11 +698,11 @@ class DoubleSidedVoigtianSpline(ModelSpline):
         width1Name = 'width1_{0}'.format(label)
         width2Name = 'width2_{0}'.format(label)
         # splines
-        meanSpline   = ROOT.RooSpline1D(meanName,  meanName,  ws.var('MH'), len(masses), array('d',masses), array('d',means))
-        sigma1Spline = ROOT.RooSpline1D(sigma1Name, sigma1Name, ws.var('MH'), len(masses), array('d',masses), array('d',sigma1s))
-        sigma2Spline = ROOT.RooSpline1D(sigma2Name, sigma2Name, ws.var('MH'), len(masses), array('d',masses), array('d',sigma2s))
-        width1Spline = ROOT.RooSpline1D(width1Name, width1Name, ws.var('MH'), len(masses), array('d',masses), array('d',width1s))
-        width2Spline = ROOT.RooSpline1D(width2Name, width2Name, ws.var('MH'), len(masses), array('d',masses), array('d',width2s))
+        meanSpline   = buildSpline(ws,meanName,self.mh,masses,means)
+        sigma1Spline = buildSpline(ws,sigma1Name,self.mh,masses,sigma1s)
+        sigma2Spline = buildSpline(ws,sigma2Name,self.mh,masses,sigma2s)
+        width1Spline = buildSpline(ws,width1Name,self.mh,masses,width1s)
+        width2Spline = buildSpline(ws,width2Name,self.mh,masses,width2s)
         # import
         getattr(ws, "import")(meanSpline, ROOT.RooFit.RecycleConflictNodes())
         getattr(ws, "import")(sigma1Spline, ROOT.RooFit.RecycleConflictNodes())
@@ -779,8 +799,8 @@ class ErfSpline(ModelSpline):
         erfScaleName = 'erfScale_{0}'.format(label)
         erfShiftName = 'erfShift_{0}'.format(label)
         # splines  
-        erfScaleSpline = ROOT.RooSpline1D(erfScaleName,  erfScaleName,  ws.var('MH'), len(masses), array('d',masses), array('d',erfScales))
-        erfShiftSpline = ROOT.RooSpline1D(erfShiftName, erfShiftName, ws.var('MH'), len(masses), array('d',masses), array('d',erfShifts))
+        erfScaleSpline = buildSpline(ws,erfScaleName,self.mh,masses,erfScales)
+        erfShiftSpline = buildSpline(ws,erfShiftName,self.mh,masses,erfShifts)
         # import
         getattr(ws, "import")(erfScaleSpline, ROOT.RooFit.RecycleConflictNodes())
         getattr(ws, "import")(erfShiftSpline, ROOT.RooFit.RecycleConflictNodes())
@@ -789,6 +809,57 @@ class ErfSpline(ModelSpline):
                    label,self.x,erfScaleName,erfShiftName)
         )
         self.params = [erfScaleName,erfShiftName]
+
+class Beta(Model):
+
+    def __init__(self,name,**kwargs):
+        super(Beta,self).__init__(name,**kwargs)
+
+    def build(self,ws,label):
+        logging.debug('Building {}'.format(label))
+        betaScale = self.kwargs.get('betaScale', [1,0,1])
+        betaA = self.kwargs.get('betaA', [5,0,10])
+        betaB = self.kwargs.get('betaB', [2,0,10])
+        betaScaleName = betaScale if isinstance(betaScale,str) else 'betaScale_{0}'.format(label)
+        betaAName = betaA if isinstance(betaA,str) else 'betaA_{0}'.format(label)
+        betaBName = betaB if isinstance(betaB,str) else 'betaB_{0}'.format(label)
+        # variables
+        if not isinstance(betaScale,str): ws.factory('{0}[{1}, {2}, {3}]'.format(betaScaleName,*betaScale))
+        if not isinstance(betaA,str): ws.factory('{0}[{1}, {2}, {3}]'.format(betaAName,*betaA))
+        if not isinstance(betaB,str): ws.factory('{0}[{1}, {2}, {3}]'.format(betaBName,*betaB))
+        # build model
+        ws.factory("EXPR::{0}('TMath::BetaDist({1}*{2},{3},{4})', {1}, {2}, {3}, {4})".format(
+            label,self.x,betaScaleName,betaAName,betaBName)
+        )
+        self.params = [betaScaleName,betaAName,betaBName]
+
+class BetaSpline(ModelSpline):
+        
+    def __init__(self,name,**kwargs):
+        super(BetaSpline,self).__init__(name,**kwargs)
+    
+    def build(self,ws,label):
+        logging.debug('Building {}'.format(label))
+        masses    = self.kwargs.get('masses', [])
+        betaScales = self.kwargs.get('betaScales',  [])
+        betaAs = self.kwargs.get('betaAs',  [])
+        betaBs = self.kwargs.get('betaBs',  [])
+        betaScaleName = 'betaScale_{0}'.format(label)
+        betaAName = 'betaA_{0}'.format(label)
+        betaBName = 'betaB_{0}'.format(label)
+        # splines  
+        betaScaleSpline = buildSpline(ws,betaScaleName,self.mh,masses,betaScales)
+        betaASpline = buildSpline(ws,betaAName,self.mh,masses,betaAs)
+        betaBSpline = buildSpline(ws,betaBName,self.mh,masses,betaBs)
+        # import
+        getattr(ws, "import")(betaScaleSpline, ROOT.RooFit.RecycleConflictNodes())
+        getattr(ws, "import")(betaASpline, ROOT.RooFit.RecycleConflictNodes())
+        getattr(ws, "import")(betaBSpline, ROOT.RooFit.RecycleConflictNodes())
+        # build model
+        ws.factory("EXPR::{0}('TMath::BetaDist({1}*{2},{3},{4})', {1}, {2}, {3}, {4})".format(
+                   label,self.x,betaScaleName,betaAName,betaBName)
+        )
+        self.params = [betaScaleName,betaAName,betaBName]
 
 class Landau(Model):
 
@@ -823,8 +894,8 @@ class LandauSpline(ModelSpline):
         muName    = 'mu_{0}'.format(label)
         sigmaName = 'sigma_{0}'.format(label)
         # splines  
-        muSpline    = ROOT.RooSpline1D(muName,    muName,    ws.var('MH'), len(masses), array('d',masses), array('d',mus))
-        sigmaSpline = ROOT.RooSpline1D(sigmaName, sigmaName, ws.var('MH'), len(masses), array('d',masses), array('d',sigmas))
+        muSpline    = buildSpline(ws,muName,self.mh,masses,mus)
+        sigmaSpline = buildSpline(ws,sigmaName,self.mh,masses,sigmas)
         # import
         getattr(ws, "import")(muSpline, ROOT.RooFit.RecycleConflictNodes())
         getattr(ws, "import")(sigmaSpline, ROOT.RooFit.RecycleConflictNodes())

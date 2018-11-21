@@ -522,8 +522,8 @@ class Limits(object):
         with open(filename+suffix+'.txt','w') as f:
             allRows = [binRows,observations,binsForRates,processNames,processNumbers,rates]+systRows
             lineWidth = 80
-            firstWidth = max([len(x[0]) for x in allRows])
-            restWidth = max([max([len(y) for y in x[1:]]) for x in allRows])
+            firstWidth = max([len(x[0]) for x in allRows])+1
+            restWidth = max([max([len(y) for y in x[1:]]) for x in allRows])+1
             def getline(row):
                 try:
                     return '{0} {1}\n'.format(row[0][:firstWidth]+' '*max(0,firstWidth-len(row[0])), ''.join([r[:restWidth]+' '*max(0,restWidth-len(r)) for r in row[1:]]))

@@ -344,6 +344,348 @@ class HaaLimits2D(HaaLimits):
         name = 'bg_{}_xy'.format(region)
         bg.build(workspace,name)
 
+    def fitSignal(self,h,a,region='PP',shift='',**kwargs):
+        scaleLumi = kwargs.get('scaleLumi',1)
+        ygausOnly = kwargs.get('ygausOnly',False)
+        isKinFit = kwargs.get('isKinFit',False)
+        yFitFunc = kwargs.get('yFitFunc','G')
+        dobgsig = kwargs.get('doBackgroundSignal',False)
+        results = kwargs.get('results',{})
+        histMap = self.histMap[region][shift]
+        tag = '{}{}'.format(region,'_'+shift if shift else '')
+
+        if self.YRANGE[1] > 100: 
+            if yFitFunc == "DCB_Fix": initialMeans = self.GetInitialDCBMean()
+            if "DCB" in yFitFunc: initialValuesDCB = self.GetInitialValuesDCB(isKinFit=isKinFit)
+            elif yFitFunc == "DG": initialValuesDG = self.GetInitialValuesDG(region=region)
+        elif yFitFunc == "L": initialValuesL = self.GetInitialValuesDitau(isLandau=True)
+        elif yFitFunc == "V": initialValuesV = self.GetInitialValuesDitau(isLandau=False)
+
+        aval = float(str(a).replace('p','.'))
+        thisxrange = [0.8*aval, 1.2*aval]
+        thisyrange = [0.15*h, 1.2*h] if self.YRANGE[1]>100 else [self.YRANGE[0], 1.2*aval]
+        if self.YRANGE[1]>100:
+            if  h == 125:  thisyrange = [20, 150]
+            elif h == 300: thisyrange = [40,360]
+            elif h == 750: thisyrange = [140,900]
+        ws = ROOT.RooWorkspace('sig')
+        ws.factory('x[{0}, {1}]'.format(*thisxrange)) 
+        #ws.factory('x[{0}, {1}]'.format(*self.XRANGE))
+        ws.var('x').setUnit('GeV')
+        ws.var('x').setPlotLabel(self.XLABEL)
+        ws.var('x').SetTitle(self.XLABEL)
+        ws.factory('y[{0}, {1}]'.format(*thisyrange)) 
+        #ws.factory('y[{0}, {1}]'.format(*self.YRANGE))
+        ws.var('y').setUnit('GeV')
+        ws.var('y').setPlotLabel(self.YLABEL)
+        ws.var('y').SetTitle(self.YLABEL)
+        modelx = Models.Voigtian('sigx',
+            mean  = [aval,0,30],
+            width = [0.01*aval,0.001,5],
+            sigma = [0.01*aval,0.001,5],
+        )
+        modelx.build(ws, 'sigx')
+        if self.YRANGE[1]>100: # y variable is h mass
+            if yFitFunc == "G": 
+                modely = Models.Gaussian('sigy',
+                    x = 'y',
+                    mean  = [h,0,1.25*h],
+                    sigma = [0.1*h,0.01,0.5*h],
+                )
+            elif yFitFunc == "V":
+                modely = Models.Voigtian('sigy',
+                    x = 'y',
+                    mean  = [0.75*h,0,1.25*h],
+                    width = [0.1*h,0.01,0.5*h],
+                    sigma = [0.1*h,0.01,0.5*h],
+                )
+            elif yFitFunc == "CB":
+                modely = Models.CrystalBall('sigy',
+                    x = 'y',
+                    mean  = [h,0,1.25*h],
+                    sigma = [0.1*h,0.01,0.5*h],
+                    a = [1.0,.5,5],
+                    n = [0.5,.1,10],
+                )
+            elif yFitFunc == "DCB":
+                modely = Models.DoubleCrystalBall('sigy',
+                    x = 'y',
+                    mean  = [h,0,1.25*h],
+                    sigma = [initialValuesDCB["h"+str(h)+"a"+str(a)]["sigma"],0.05*h,0.5*h],
+                    a1    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["a1"],0.1,10],
+                    n1    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["n1"],1,30],
+                    a2    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["a2"],0.1,10],
+                    n2    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["n2"],0.1,30],
+                )
+            elif yFitFunc == "DCB_Fix":
+                MEAN = initialMeans["h"+str(h)+"a"+str(a)]["mean"]
+                self.YRANGE[0] = MEAN
+                modely = Models.DoubleCrystalBall('sigy',
+                    x = 'y',
+                    mean  = [MEAN, MEAN-2, MEAN+2],
+                    sigma = [initialValuesDCB["h"+str(h)+"a"+str(a)]["sigma"],0.05*h,0.5*h],
+                    a1    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["a1"],0.1,10],
+                    n1    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["n1"],1,20],
+                    a2    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["a2"],0.1,10],
+                    n2    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["n2"],0.1,5],
+                )
+            elif yFitFunc == "DG":
+                modely = Models.DoubleSidedGaussian('sigy',
+                    x = 'y',
+                    #mean  = [h,0,1.25*h],
+                    #sigma1 = [0.1*h,0.05*h,0.5*h],
+                    #sigma2 = [0.2*h,0.05*h,0.5*h],
+                    mean    = [initialValuesDG["h"+str(h)+"a"+str(a)]["mean"],0,1.1*h],
+                    sigma1  = [initialValuesDG["h"+str(h)+"a"+str(a)]["sigma1"],0.05*h,0.5*h],
+                    sigma2  = [initialValuesDG["h"+str(h)+"a"+str(a)]["sigma2"],0.05*h,0.5*h],
+                    yMax = self.YRANGE[1],
+                )
+            elif yFitFunc == "DV":
+                modely = Models.DoubleSidedVoigtian('sigy',
+                    x = 'y',
+                    mean  = [h,0,1.25*h],
+                    sigma1 = [0.1*h,0.01,0.5*h],
+                    sigma2 = [0.2*h,0.01,0.5*h],
+                    width1 = [1.0,0.01,10.0],
+                    width2 = [2.0,0.01,10.0],
+                    yMax = self.YRANGE[1],
+                )
+            elif yFitFunc == "B":
+                modely = Models.Beta('sigy',
+                    x = 'y',
+                    betaScale = [1/h,0,1],
+                    betaA = [5,0,20],
+                    betaB = [2,0,10],
+                )
+            elif yFitFunc == "G2":
+                g1 = Models.Gaussian('g1',
+                    x = 'y',
+                    mean  = [0.7*h, 0.6*h, h],
+                    sigma = [0.1*h, 0, 0.5*h], 
+                )
+                g1.build(ws,'g1')
+                g2 = Models.Gaussian('g2',
+                    x = 'y',
+                    #mean  = 'mean_g1',
+                    mean  = [0.8*h, 0.6*h, h],
+                    sigma = [0.1*h, 0, 0.5*h], 
+                )
+                g2.build(ws,'g2')
+                modely = Models.Sum('sigy',
+                    **{
+                        'g1'     : [0.7,0.5,0.9],
+                        'g2'     : [0.5,0,1],
+                        'recursive': True,
+                    }
+                )
+            elif yFitFunc == "G3":
+                g1 = Models.Gaussian('g1',
+                    x = 'y',
+                    mean  = [0.7*h, 0.6*h, h],
+                    sigma = [0.1*h, 0, 0.5*h], 
+                )
+                g1.build(ws,'g1')
+                g2 = Models.Gaussian('g2',
+                    x = 'y',
+                    #mean  = 'mean_g1',
+                    mean  = [0.8*h, 0.6*h, h],
+                    sigma = [0.1*h, 0, 0.5*h], 
+                )
+                g2.build(ws,'g2')
+                g3 = Models.Gaussian('g3',
+                    x = 'y',
+                    #mean  = 'mean_g1',
+                    mean  = [0.8*h, 0.6*h, h],
+                    sigma = [0.1*h, 0, 0.5*h], 
+                )
+                g3.build(ws,'g3')
+                modely = Models.Sum('sigy',
+                    **{
+                        'g1'     : [0.7,0.5,0.9],
+                        'g2'     : [0.5,0,1],
+                        'g3'     : [0.5,0,1],
+                        'recursive': True,
+                    }
+                )
+            else:
+                raise
+            modely.build(ws, 'sigy')
+            model = Models.Prod('sig',
+                'sigx',
+                'sigy',
+            )
+        else: # y variable is tt
+            if yFitFunc == "G":
+                modely = Models.Gaussian('sigy',
+                    x = 'y',
+                    mean  = [0.5*aval,0,1.25*aval],
+                    sigma = [0.1*aval,0.01,0.5*aval],
+                )
+            elif yFitFunc == "V":
+                modely = Models.Voigtian('sigy',
+                    x = 'y',
+                    mean  = [initialValuesV["h"+str(h)+"a"+str(a)]["mean_sigy"],0.75,30],
+                    width = [initialValuesV["h"+str(h)+"a"+str(a)]["width_sigy"],0.01,5],
+                    sigma = [initialValuesV["h"+str(h)+"a"+str(a)]["sigma_sigy"],0.01,5],
+                )
+            elif yFitFunc == "CB":
+                modely = Models.CrystalBall('sigy',
+                    x = 'y',
+                    mean  = [0.5*aval,0,30],
+                    sigma = [0.1*aval,0,5],
+                    a = [1.0,0.5,5],
+                    n = [0.5,0.1,10],
+                )
+            elif yFitFunc == "DCB":
+                modely = Models.DoubleCrystalBall('sigy',
+                    x = 'y',
+                    mean  = [0.5*aval,0.5,30],
+                    sigma = [0.1*aval,0.1,5],
+                    a1 = [1.0,0.1,6],
+                    n1 = [0.9,0.1,6],
+                    a2 = [2.0,0.1,10],
+                    n2 = [1.5,0.1,10],
+                )
+            elif yFitFunc == "DG":
+                modely = Models.DoubleSidedGaussian('sigy',
+                    x = 'y',
+                    mean  = [0.5*aval,0,30],
+                    sigma1 = [0.1*aval,0.05*aval,0.4*aval],
+                    sigma2 = [0.3*aval,0.05*aval,0.4*aval],
+                    yMax = self.YRANGE[1],
+                )
+            elif yFitFunc == "DV":
+                modely = Models.DoubleSidedVoigtian('sigy',
+                    x = 'y',
+                    mean  = [0.5*aval,0,30],
+                    sigma1 = [0.1*aval,0.05*aval,0.4*aval],
+                    sigma2 = [0.3*aval,0.05*aval,0.4*aval],
+                    width1 = [0.1,0.01,5],
+                    width2 = [0.3,0.01,5],
+                    yMax = self.YRANGE[1],
+                )
+            elif yFitFunc == "B":
+                modely = Models.Beta('sigy',
+                    x = 'y',
+                    betaScale = [1/a,0,1],
+                    betaA = [5,0,20],
+                    betaB = [2,0,10],
+                )
+            elif yFitFunc == "errG":
+                tterf = Models.Erf('tterf',
+                   x = 'y',
+                   erfScale = [0.4,0.1,5],
+                   erfShift = [0.2*aval,0.05*aval,aval],
+                )
+                ttgaus = Models.Gaussian('ttgaus',
+                   x = 'y',
+                   mean  = [0.45*aval,0,aval],
+                   sigma = [0.1*aval,0.05*aval,0.4*aval],
+                )
+                ttgaus.build(ws,"ttgaus")
+                tterf.build(ws,"tterf")
+                modely = Models.Prod('sigy',
+                        'ttgaus',
+                        'tterf',
+                )
+            elif yFitFunc == "L":
+                #modely = Models.Landau('sigy',
+                #    x = 'y',
+                #    mu  = [0.5*aval,0,30],
+                #    sigma = [0.1*aval,0.05*aval,aval],
+                #)
+                ttland = Models.Landau('ttland',
+                    x = 'y',
+                    mu  = [initialValuesL["h"+str(h)+"a"+str(a)]["mu_ttland"],0.1*aval,0.7*aval],
+                    sigma = [initialValuesL["h"+str(h)+"a"+str(a)]["sigma_ttland"],0.01,aval],
+                )
+                ttland.build(ws,'ttland')
+                ttgaus = Models.Gaussian('ttgaus',
+                   x = 'y',
+                   mean  = [initialValuesL["h"+str(h)+"a"+str(a)]["mean_ttgaus"],0.1*aval,0.7*aval],
+                   #mean  = [initialValuesL["h"+str(h)+"a"+str(a)]["mean_ttgaus"],0.2*initialValuesL["h"+str(h)+"a"+str(a)]["mean_ttgaus"],30],
+                   sigma = [initialValuesL["h"+str(h)+"a"+str(a)]["sigma_ttgaus"],0.01,aval],
+                )
+                ttgaus.build(ws,"ttgaus")
+                modely = Models.Prod('sigy',
+                        'ttgaus',
+                        'ttland',
+                )
+                #modely = Models.Sum('sigy',
+                #    **{
+                #        'ttland'     : [0.9,0,1],
+                #        'ttgaus'     : [0.5,0,1],
+                #        'recursive': True,
+                #    }
+                #)
+            else:
+                raise
+
+            modely.build(ws, 'sigy')
+
+            if region=='PP' or not dobgsig:
+                model = Models.Prod('sig',
+                    'sigx',
+                    'sigy',
+                )
+            else:
+                conty = Models.Exponential('conty',
+                    x = 'y',
+                    lamb = [-0.25,-1,-0.001], # visible
+                )
+                conty.build(ws,'conty')
+
+                erfy = Models.Erf('erfy',
+                    x = 'y',
+                    erfScale = [0.1,0.01,10],
+                    erfShift = [2,0,10],
+                )
+                erfy.build(ws,'erfy')
+
+                erfc = Models.Prod('erfcy',
+                    'erfy',
+                    'conty',
+                )
+                erfc.build(ws,'erfcy')
+
+                modelymod = Models.Sum('bgsigy',
+                    **{ 
+                        'erfcy'    : [0.5,0,1],
+                        'sigy'     : [0.5,0,1],
+                        'recursive': True,
+                    }
+                )
+                modelymod.build(ws,'bgsigy')
+
+                model = Models.Prod('sig',
+                    'sigx',
+                    'bgsigy',
+                )
+
+        name = 'h{}_a{}_{}'.format(h,a,tag)
+        model.build(ws, name)
+        if results:
+            for param in results:
+                ws.var(param).setVal(results[param])
+        hist = histMap[self.SIGNAME.format(h=h,a=a)]
+        saveDir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
+        results, errors = model.fit2D(ws, hist, name, saveDir=saveDir, save=True, doErrors=True)
+        if self.binned:
+            integral = histMap[self.SIGNAME.format(h=h,a=a)].Integral() * scaleLumi
+        else:
+            integral = histMap[self.SIGNAME.format(h=h,a=a)].sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE)) * scaleLumi
+            if integral!=integral:
+                logging.error('Integral for spline is invalid: h{h} a{a} {region} {shift}'.format(h=h,a=a,region=region,shift=shift))
+                raise
+    
+        savedir = '{}/{}'.format(self.fitsDir,shift if shift else 'central')
+        python_mkdir(savedir)
+        savename = '{}/h{}_a{}_{}.json'.format(savedir,h,a,tag)
+        jsonData = {'vals': results, 'errs': errors, 'integrals': integral}
+        self.dump(savename,jsonData)
+
+        return results, errors, integral
+
 
     def fitSignals(self,h,region='PP',shift='',**kwargs):
         '''
@@ -351,9 +693,10 @@ class HaaLimits2D(HaaLimits):
         Required arguments:
             h = higgs mass
         '''
+        scaleLumi = kwargs.get('scaleLumi',1)
         ygausOnly = kwargs.get('ygausOnly',False)
-        isKinFit = kwargs.pop('isKinFit',False)
-        yFitFunc = kwargs.pop('yFitFunc','G')
+        isKinFit = kwargs.get('isKinFit',False)
+        yFitFunc = kwargs.get('yFitFunc','G')
         fit = kwargs.get('fit',False)
         load = kwargs.get('load',False)
         skipFit = kwargs.get('skipFit',False)
@@ -367,10 +710,10 @@ class HaaLimits2D(HaaLimits):
         # initial fit
         if load:
             # load the previous fit
-            results, errors, integrals = self.loadSignalFit(h,tag,region,shift)
+            results, errors, integrals = self.loadSignalFits(h,tag,region,shift)
         elif shift and not skipFit:
             # load the central fits
-            results, errors, integrals = self.loadSignalFit(h,region,region)
+            results, errors, integrals = self.loadSignalFits(h,region,region)
         else:
             results = {}
             errors = {}
@@ -378,271 +721,11 @@ class HaaLimits2D(HaaLimits):
             results[h] = {}
             errors[h] = {}
             integrals[h] = {}
-        if self.YRANGE[1] > 100: 
-            if yFitFunc == "DCB_Fix": initialMeans = self.GetInitialDCBMean()
-            if "DCB" in yFitFunc: initialValuesDCB = self.GetInitialValuesDCB(isKinFit=isKinFit)
-            elif yFitFunc == "DG": initialValuesDG = self.GetInitialValuesDG(region=region)
-        elif yFitFunc == "L": initialValuesL = self.GetInitialValuesDitau(isLandau=True)
-        elif yFitFunc == "V": initialValuesV = self.GetInitialValuesDitau(isLandau=False)
         for a in amasses:
-            aval = float(str(a).replace('p','.'))
-            thisxrange = [0.8*aval, 1.2*aval]
-            thisyrange = [0.15*h, 1.2*h] if self.YRANGE[1]>100 else [self.YRANGE[0], 1.2*aval]
-            if self.YRANGE[1]>100:
-                if  h == 125:  thisyrange = [20, 150]
-                elif h == 300: thisyrange = [40,360]
-                elif h == 750: thisyrange = [140,900]
-            ws = ROOT.RooWorkspace('sig')
-            ws.factory('x[{0}, {1}]'.format(*thisxrange)) 
-            #ws.factory('x[{0}, {1}]'.format(*self.XRANGE))
-            ws.var('x').setUnit('GeV')
-            ws.var('x').setPlotLabel(self.XLABEL)
-            ws.var('x').SetTitle(self.XLABEL)
-            ws.factory('y[{0}, {1}]'.format(*thisyrange)) 
-            #ws.factory('y[{0}, {1}]'.format(*self.YRANGE))
-            ws.var('y').setUnit('GeV')
-            ws.var('y').setPlotLabel(self.YLABEL)
-            ws.var('y').SetTitle(self.YLABEL)
-            modelx = Models.Voigtian('sigx',
-                mean  = [aval,0,30],
-                width = [0.01*aval,0.001,5],
-                sigma = [0.01*aval,0.001,5],
-            )
-            modelx.build(ws, 'sigx')
-            if self.YRANGE[1]>100: # y variable is h mass
-                if yFitFunc == "G": 
-                    modely = Models.Gaussian('sigy',
-                        x = 'y',
-                        mean  = [h,0,1.25*h],
-                        sigma = [0.1*h,0.01,0.5*h],
-                    )
-                elif yFitFunc == "V":
-                    modely = Models.Voigtian('sigy',
-                        x = 'y',
-                        mean  = [0.75*h,0,1.25*h],
-                        width = [0.1*h,0.01,0.5*h],
-                        sigma = [0.1*h,0.01,0.5*h],
-                    )
-                elif yFitFunc == "CB":
-                    modely = Models.CrystalBall('sigy',
-                        x = 'y',
-                        mean  = [h,0,1.25*h],
-                        sigma = [0.1*h,0.01,0.5*h],
-                        a = [1.0,.5,5],
-                        n = [0.5,.1,10],
-                    )
-                elif yFitFunc == "DCB":
-                    modely = Models.DoubleCrystalBall('sigy',
-                        x = 'y',
-                        mean  = [h,0,1.25*h],
-                        sigma = [initialValuesDCB["h"+str(h)+"a"+str(a)]["sigma"],0.05*h,0.5*h],
-                        a1    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["a1"],0.1,10],
-                        n1    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["n1"],1,30],
-                        a2    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["a2"],0.1,10],
-                        n2    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["n2"],0.1,30],
-                    )
-                elif yFitFunc == "DCB_Fix":
-                    MEAN = initialMeans["h"+str(h)+"a"+str(a)]["mean"]
-                    self.YRANGE[0] = MEAN
-                    modely = Models.DoubleCrystalBall('sigy',
-                        x = 'y',
-                        mean  = [MEAN, MEAN-2, MEAN+2],
-                        sigma = [initialValuesDCB["h"+str(h)+"a"+str(a)]["sigma"],0.05*h,0.5*h],
-                        a1    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["a1"],0.1,10],
-                        n1    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["n1"],1,20],
-                        a2    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["a2"],0.1,10],
-                        n2    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["n2"],0.1,5],
-                    )
-                elif yFitFunc == "DG":
-                    modely = Models.DoubleSidedGaussian('sigy',
-                        x = 'y',
-                        #mean  = [h,0,1.25*h],
-                        #sigma1 = [0.1*h,0.05*h,0.5*h],
-                        #sigma2 = [0.2*h,0.05*h,0.5*h],
-                        mean    = [initialValuesDG["h"+str(h)+"a"+str(a)]["mean"],0,1.1*h],
-                        sigma1  = [initialValuesDG["h"+str(h)+"a"+str(a)]["sigma1"],0.05*h,0.5*h],
-                        sigma2  = [initialValuesDG["h"+str(h)+"a"+str(a)]["sigma2"],0.05*h,0.5*h],
-                        yMax = self.YRANGE[1],
-                    )
-                elif yFitFunc == "DV":
-                    modely = Models.DoubleSidedVoigtian('sigy',
-                        x = 'y',
-                        mean  = [h,0,1.25*h],
-                        sigma1 = [0.1*h,0.01,0.5*h],
-                        sigma2 = [0.2*h,0.01,0.5*h],
-                        width1 = [1.0,0.01,10.0],
-                        width2 = [2.0,0.01,10.0],
-                        yMax = self.YRANGE[1],
-                    )
-                else:
-                    raise
-                modely.build(ws, 'sigy')
-                model = Models.Prod('sig',
-                    'sigx',
-                    'sigy',
-                )
-            else: # y variable is tt
-                if yFitFunc == "G":
-                    modely = Models.Gaussian('sigy',
-                        x = 'y',
-                        mean  = [0.5*aval,0,1.25*aval],
-                        sigma = [0.1*aval,0.01,0.5*aval],
-                    )
-                elif yFitFunc == "V":
-                    modely = Models.Voigtian('sigy',
-                        x = 'y',
-                        mean  = [initialValuesV["h"+str(h)+"a"+str(a)]["mean_sigy"],0.75,30],
-                        width = [initialValuesV["h"+str(h)+"a"+str(a)]["width_sigy"],0.01,5],
-                        sigma = [initialValuesV["h"+str(h)+"a"+str(a)]["sigma_sigy"],0.01,5],
-                    )
-                elif yFitFunc == "CB":
-                    modely = Models.CrystalBall('sigy',
-                        x = 'y',
-                        mean  = [0.5*aval,0,30],
-                        sigma = [0.1*aval,0,5],
-                        a = [1.0,0.5,5],
-                        n = [0.5,0.1,10],
-                    )
-                elif yFitFunc == "DCB":
-                    modely = Models.DoubleCrystalBall('sigy',
-                        x = 'y',
-                        mean  = [0.5*aval,0.5,30],
-                        sigma = [0.1*aval,0.1,5],
-                        a1 = [1.0,0.1,6],
-                        n1 = [0.9,0.1,6],
-                        a2 = [2.0,0.1,10],
-                        n2 = [1.5,0.1,10],
-                    )
-                elif yFitFunc == "DG":
-                    modely = Models.DoubleSidedGaussian('sigy',
-                        x = 'y',
-                        mean  = [0.5*aval,0,30],
-                        sigma1 = [0.1*aval,0.05*aval,0.4*aval],
-                        sigma2 = [0.3*aval,0.05*aval,0.4*aval],
-                        yMax = self.YRANGE[1],
-                    )
-                elif yFitFunc == "DV":
-                    modely = Models.DoubleSidedVoigtian('sigy',
-                        x = 'y',
-                        mean  = [0.5*aval,0,30],
-                        sigma1 = [0.1*aval,0.05*aval,0.4*aval],
-                        sigma2 = [0.3*aval,0.05*aval,0.4*aval],
-                        width1 = [0.1,0.01,5],
-                        width2 = [0.3,0.01,5],
-                        yMax = self.YRANGE[1],
-                    )
-                elif yFitFunc == "errG":
-                    tterf = Models.Erf('tterf',
-                       x = 'y',
-                       erfScale = [0.4,0.1,5],
-                       erfShift = [0.2*aval,0.05*aval,aval],
-                    )
-                    ttgaus = Models.Gaussian('ttgaus',
-                       x = 'y',
-                       mean  = [0.45*aval,0,aval],
-                       sigma = [0.1*aval,0.05*aval,0.4*aval],
-                    )
-                    ttgaus.build(ws,"ttgaus")
-                    tterf.build(ws,"tterf")
-                    modely = Models.Prod('sigy',
-                            'ttgaus',
-                            'tterf',
-                    )
-                elif yFitFunc == "L":
-                    #modely = Models.Landau('sigy',
-                    #    x = 'y',
-                    #    mu  = [0.5*aval,0,30],
-                    #    sigma = [0.1*aval,0.05*aval,aval],
-                    #)
-                    ttland = Models.Landau('ttland',
-                        x = 'y',
-                        mu  = [initialValuesL["h"+str(h)+"a"+str(a)]["mu_ttland"],0.01,30],
-                        sigma = [initialValuesL["h"+str(h)+"a"+str(a)]["sigma_ttland"],0.01,aval],
-                    )
-                    ttland.build(ws,'ttland')
-                    ttgaus = Models.Gaussian('ttgaus',
-                       x = 'y',
-                       mean  = [initialValuesL["h"+str(h)+"a"+str(a)]["mean_ttgaus"],0.01,30],
-                       #mean  = [initialValuesL["h"+str(h)+"a"+str(a)]["mean_ttgaus"],0.2*initialValuesL["h"+str(h)+"a"+str(a)]["mean_ttgaus"],30],
-                       sigma = [initialValuesL["h"+str(h)+"a"+str(a)]["sigma_ttgaus"],0.01,aval],
-                    )
-                    ttgaus.build(ws,"ttgaus")
-                    modely = Models.Prod('sigy',
-                            'ttgaus',
-                            'ttland',
-                    )
-                    #modely = Models.Sum('sigy',
-                    #    **{
-                    #        'ttland'     : [0.9,0,1],
-                    #        'ttgaus'     : [0.5,0,1],
-                    #        'recursive': True,
-                    #    }
-                    #)
-                else:
-                    raise
-
-                modely.build(ws, 'sigy')
-
-                if region=='PP' or not dobgsig:
-                    model = Models.Prod('sig',
-                        'sigx',
-                        'sigy',
-                    )
-                else:
-                    conty = Models.Exponential('conty',
-                        x = 'y',
-                        lamb = [-0.25,-1,-0.001], # visible
-                    )
-                    conty.build(ws,'conty')
-
-                    erfy = Models.Erf('erfy',
-                        x = 'y',
-                        erfScale = [0.1,0.01,10],
-                        erfShift = [2,0,10],
-                    )
-                    erfy.build(ws,'erfy')
-
-                    erfc = Models.Prod('erfcy',
-                        'erfy',
-                        'conty',
-                    )
-                    erfc.build(ws,'erfcy')
-
-                    modelymod = Models.Sum('bgsigy',
-                        **{ 
-                            'erfcy'    : [0.5,0,1],
-                            'sigy'     : [0.5,0,1],
-                            'recursive': True,
-                        }
-                    )
-                    modelymod.build(ws,'bgsigy')
-
-                    model = Models.Prod('sig',
-                        'sigx',
-                        'bgsigy',
-                    )
-
-            name = 'h{}_a{}_{}'.format(h,a,tag)
-            model.build(ws, name)
-            if load:
-                for param in results[h][a]:
-                    ws.var(param).setVal(results[h][a][param])
-            elif shift and not skipFit:
-                for param in results[h][a]:
-                    #ws.var(param+'_{}'.format(shift)).setVal(results[h][a][param])
-                    ws.var(param).setVal(results[h][a][param])
-            hist = histMap[self.SIGNAME.format(h=h,a=a)]
-            saveDir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
-            if not skipFit:
-                results[h][a], errors[h][a] = model.fit2D(ws, hist, name, saveDir=saveDir, save=True, doErrors=True)
-                if self.binned:
-                    integral = histMap[self.SIGNAME.format(h=h,a=a)].Integral()
-                else:
-                    integral = histMap[self.SIGNAME.format(h=h,a=a)].sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE))
-                    if integral!=integral:
-                        logging.error('Integral for spline is invalid: h{h} a{a} {region} {shift}'.format(h=h,a=a,region=region,shift=shift))
-                        raise
-                integrals[h][a] = integral
+            if load or (shift and not skipFit):
+                results[h][a], errors[h][a], integrals[h][a] = self.fitSignal(h,a,region,shift,results=results[h][a],**kwargs)
+            elif not skipFit:
+                results[h][a], errors[h][a], integrals[h][a] = self.fitSignal(h,a,region,shift,**kwargs)
 
     
         savedir = '{}/{}'.format(self.fitsDir,shift if shift else 'central')
@@ -710,6 +793,15 @@ class HaaLimits2D(HaaLimits):
                 'ywidth1': 'pol2',
                 'ywidth2': 'pol2',
             }
+        elif yFitFunc == "B":
+            fitFuncs = {
+                'xmean' : 'pol1',  
+                'xwidth': 'pol2',
+                'xsigma': 'pol2',
+                'ybetaScale': 'pol2',
+                'ybetaA': 'pol2',
+                'ybetaB': 'pol2',
+            }
         elif yFitFunc == "errG":
             fitFuncs = {
                 'xmean' : 'pol1',  
@@ -729,6 +821,22 @@ class HaaLimits2D(HaaLimits):
                 'ysigma': 'pol2',
                 'mu'    : 'pol2',
                 'sigma' : 'pol2',
+            }
+        elif yFitFunc == "G2":
+            fitFuncs = {
+                'xmean' : 'pol1',
+                'xwidth': 'pol2',
+                'xsigma': 'pol2',
+                'ymean' : 'pol1',
+                'ysigma': 'pol2',
+            }
+        elif yFitFunc == "G3":
+            fitFuncs = {
+                'xmean' : 'pol1',
+                'xwidth': 'pol2',
+                'xsigma': 'pol2',
+                'ymean' : 'pol1',
+                'ysigma': 'pol2',
             }
         else:
             raise
@@ -750,8 +858,11 @@ class HaaLimits2D(HaaLimits):
         elif yFitFunc == "DCB" : yparameters = ['mean', 'sigma', 'a1', 'n1', 'a2', 'n2']
         elif yFitFunc == "DG"  : yparameters = ['mean', 'sigma1', 'sigma2']
         elif yFitFunc == "DV"  : yparameters = ['mean', 'sigma1', 'sigma2','width1','width2']
+        elif yFitFunc == "B"   : yparameters = ['betaScale','betaA','betaB']
         elif yFitFunc == "errG": yparameters = ['mean_ttgaus', 'sigma_ttgaus','erfShift_tterf','erfScale_tterf']
         elif yFitFunc == "L"   : yparameters = ['mean_ttgaus', 'sigma_ttgaus','mu_ttland','sigma_ttland']
+        elif yFitFunc == "G2"  : yparameters = ['mean_g1', 'sigma_g1','mean_g2','sigma_g2','g1_frac']
+        elif yFitFunc == "G3"  : yparameters = ['mean_g1', 'sigma_g1','mean_g2','sigma_g2','mean_g3','sigma_g3','g1_frac','g2_frac']
         else: raise
         for param in ['mean','width','sigma']:
             name = '{}_{}{}'.format('x'+param,h,tag)
@@ -777,7 +888,7 @@ class HaaLimits2D(HaaLimits):
         for param in yparameters:
             name = '{}_{}{}'.format('y'+param,h,tag)
             xerrs = [0]*len(amasses)
-            if yFitFunc == "errG" or yFitFunc == "L": 
+            if yFitFunc == "errG" or yFitFunc == "L" or yFitFunc == "G3" or yFitFunc == "G2": 
                 vals = [results[h][a][param] for a in amasses]
                 errs = [errors[h][a][param] for a in amasses]
             else:
@@ -884,19 +995,24 @@ class HaaLimits2D(HaaLimits):
         elif yFitFunc == "DCB" : yparameters = ['mean', 'sigma', 'a1', 'n1', 'a2', 'n2']
         elif yFitFunc == "DG"  : yparameters = ['mean', 'sigma1', 'sigma2']
         elif yFitFunc == "DV"  : yparameters = ['mean', 'sigma1', 'sigma2','width1','width2']
+        elif yFitFunc == "B"   : yparameters = ['betaScale','betaA','betaB']
         elif yFitFunc == "errG": yparameters = ['mean_ttgaus', 'sigma_ttgaus','erfShift_tterf','erfScale_tterf']
         #elif yFitFunc == "L"   : yparameters = ['mu', 'sigma']
         elif yFitFunc == "L"   : yparameters = ['mean_ttgaus', 'sigma_ttgaus','mu_ttland','sigma_ttland']
+        elif yFitFunc == "G2"  : yparameters = ['mean_g1', 'sigma_g1','mean_g2','sigma_g2','g1_frac']
+        elif yFitFunc == "G3"  : yparameters = ['mean_g1', 'sigma_g1','mean_g2','sigma_g2','mean_g3','sigma_g3','g1_frac','g2_frac']
         else: raise
 
         for param in yparameters:
             name = 'y{param}_h{h}_{region}_sigy'.format(param=param,h=h,region=region)
             paramMasses = avals
-            if yFitFunc == "errG" or yFitFunc == "L": paramValues = [vals[''][h][a]['{param}'.format(param=param)] for a in amasses]
-            else: paramValues = [vals[''][h][a]['{param}_sigy'.format(param=param)] for a in amasses]
+            if yFitFunc == "errG" or yFitFunc == "L" or yFitFunc == "G3" or yFitFunc == "G2": 
+                paramValues = [vals[''][h][a]['{param}'.format(param=param)] for a in amasses]
+            else: 
+                paramValues = [vals[''][h][a]['{param}_sigy'.format(param=param)] for a in amasses]
             paramShifts = {}
             for shift in shifts:
-                if yFitFunc == "errG" or yFitFunc == "L":
+                if yFitFunc == "errG" or yFitFunc == "L" or yFitFunc == "G3" or yFitFunc == "G2":
                     shiftValuesUp   = [vals[shift+'Up'  ][h][a]['{param}'.format(param=param)] for a in amasses]
                     shiftValuesDown = [vals[shift+'Down'][h][a]['{param}'.format(param=param)] for a in amasses]
                 else:
@@ -946,7 +1062,8 @@ class HaaLimits2D(HaaLimits):
         elif yFitFunc == "DCB" : ym = Models.DoubleCrystalBall
         elif yFitFunc == "DG"  : ym = Models.DoubleSidedGaussian
         elif yFitFunc == "DV"  : ym = Models.DoubleSidedVoigtian
-        elif yFitFunc != "L" and yFitFunc != "errG": raise
+        elif yFitFunc == "B"   : ym = Models.Beta
+        elif yFitFunc != "L" and yFitFunc != "errG" and yFitFunc != "G3" and yFitFunc != "G2": raise
 
         if fit:
             print 'Need to reimplement fitting'
@@ -981,6 +1098,47 @@ class HaaLimits2D(HaaLimits):
                 modely = Models.Prod(self.SPLINENAME.format(h=h)+'_y',
                     '{}_{}'.format(self.SPLINENAME.format(h=h),region+'_gaus_y'),
                     '{}_{}'.format(self.SPLINENAME.format(h=h),region+'_land_y'),
+                )
+            elif yFitFunc == 'G2':
+                modely_g1 = Models.Gaussian("model_g1",
+                    x = yVar,
+                     **{param: 'y{param}_g1_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['mean','sigma']}
+                )
+                modely_g1.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_g1_y'))
+                modely_g2 = Models.Gaussian("model_g2",
+                    x = yVar,
+                     **{param: 'y{param}_g2_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['mean','sigma']}
+                )
+                modely_g2.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_g2_y'))
+                gs = {}
+                for i in range(2):
+                    gs['{}_{}'.format(self.SPLINENAME.format(h=h),region+'_g{}_y'.format(i+1))] = 'yg{i}_frac_h{h}_{region}_sigy'.format(i=i+1, h=h, region=region)
+                modely = Models.Sum(self.SPLINENAME.format(h=h)+'_y',
+                    recursive = True,
+                    **gs
+                )
+            elif yFitFunc == 'G3':
+                modely_g1 = Models.Gaussian("model_g1",
+                    x = yVar,
+                     **{param: 'y{param}_g1_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['mean','sigma']}
+                )
+                modely_g1.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_g1_y'))
+                modely_g2 = Models.Gaussian("model_g2",
+                    x = yVar,
+                     **{param: 'y{param}_g2_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['mean','sigma']}
+                )
+                modely_g2.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_g2_y'))
+                modely_g3 = Models.Gaussian("model_g3",
+                    x = yVar,
+                     **{param: 'y{param}_g3_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['mean','sigma']}
+                )
+                modely_g3.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_g3_y'))
+                gs = {}
+                for i in range(3):
+                    gs['{}_{}'.format(self.SPLINENAME.format(h=h),region+'_g{}_y'.format(i+1))] = 'yg{i}_frac_h{h}_{region}_sigy'.format(i=i+1, h=h, region=region)
+                modely = Models.Sum(self.SPLINENAME.format(h=h)+'_y',
+                    recursive = True,
+                    **gs
                 )
             else:
                 modely = ym(self.SPLINENAME.format(h=h)+'_y',
@@ -1020,6 +1178,7 @@ class HaaLimits2D(HaaLimits):
         self.control_integralValues = allintegrals
 
     def fitBackground(self,region='PP',shift='',**kwargs):
+        scaleLumi = kwargs.pop('scaleLumi',1)
 
         if region=='control':
             return super(HaaLimits2D, self).fitBackground(region=region, shift=shift, **kwargs)
@@ -1032,11 +1191,11 @@ class HaaLimits2D(HaaLimits):
         name = 'data_prefit_{}{}'.format(region,'_'+shift if shift else '')
         hist = self.histMap[region][shift]['dataNoSig']
         if hist.InheritsFrom('TH1'):
-            integral = hist.Integral() # 2D restricted integral?
+            integral = hist.Integral() * scaleLumi # 2D restricted integral?
             data = ROOT.RooDataHist(name,name,ROOT.RooArgList(workspace.var('x'),workspace.var('y')),hist)
         else:
             data = hist.Clone(name)
-            integral = hist.sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE))
+            integral = hist.sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE)) * scaleLumi
 
         fr = model.fitTo(data,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True))
 
@@ -1137,6 +1296,7 @@ class HaaLimits2D(HaaLimits):
     def addData(self,blind=True,asimov=False,addSignal=False,addControl=False,doBinned=False,**kwargs):
         mh = kwargs.pop('h',125)
         ma = kwargs.pop('a',15)
+        scaleLumi = kwargs.pop('scaleLumi',1)
 
         workspace = self.workspace
 
@@ -1201,9 +1361,9 @@ class HaaLimits2D(HaaLimits):
                 model = workspace.pdf('bg_{}_xy'.format(region))
                 h = self.histMap[region]['']['dataNoSig']
                 if h.InheritsFrom('TH1'):
-                    integral = h.Integral() # 2D integral?
+                    integral = h.Integral() * scaleLumi # 2D integral?
                 else:
-                    integral = h.sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE))
+                    integral = h.sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE)) * scaleLumi
                 if asimov:
                     data_obs = model.generateBinned(ROOT.RooArgSet(self.workspace.var(xVar),self.workspace.var(yVar)),integral,1)
                 else:
@@ -1270,7 +1430,7 @@ class HaaLimits2D(HaaLimits):
             self.wsimport(data_obs, ROOT.RooFit.RecycleConflictNodes() )
 
 
-    def addBackgroundModels(self, fixAfterControl=False, fixAfterFP=False, load=False, skipFit=False):
+    def addBackgroundModels(self, fixAfterControl=False, fixAfterFP=False, load=False, skipFit=False, **kwargs):
         workspace = self.buildWorkspace('bg')
         self.initializeWorkspace(workspace=workspace)
         super(HaaLimits2D, self).buildModel(region='control', workspace=workspace)
@@ -1293,7 +1453,7 @@ class HaaLimits2D(HaaLimits):
                     if load:
                         v, e, i = self.loadBackgroundFit(region, workspace=workspace)
                     else:
-                        v, e, i = self.fitBackground(region=region, workspace=workspace)
+                        v, e, i = self.fitBackground(region=region, workspace=workspace, **kwargs)
                     vals[region][shift] = v
                     errs[region][shift] = e
                     integrals[region][shift] = i
@@ -1302,8 +1462,8 @@ class HaaLimits2D(HaaLimits):
                         vUp, eUp, iUp = self.loadBackgroundFit(region,shift+'Up', workspace=workspace)
                         vDown, eDown, iDown = self.loadBackgroundFit(region,shift+'Down', workspace=workspace)
                     if not skipFit:
-                        vUp, eUp, iUp = self.fitBackground(region=region, shift=shift+'Up', workspace=workspace)
-                        vDown, eDown, iDown = self.fitBackground(region=region, shift=shift+'Down', workspace=workspace)
+                        vUp, eUp, iUp = self.fitBackground(region=region, shift=shift+'Up', workspace=workspace, **kwargs)
+                        vDown, eDown, iDown = self.fitBackground(region=region, shift=shift+'Down', workspace=workspace, **kwargs)
                     vals[region][shift+'Up'] = vUp
                     errs[region][shift+'Up'] = eUp
                     integrals[region][shift+'Up'] = iUp
@@ -1783,6 +1943,7 @@ class HaaLimits2D(HaaLimits):
         self._addShapeSystematic(doBinned=doBinned)
         #self._addComponentSystematic(addControl=addControl)
         self._addRelativeNormUnc()
+        self._addHiggsSystematic()
         if not doBinned and not addControl: self._addControlSystematics()
 
 

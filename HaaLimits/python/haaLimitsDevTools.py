@@ -21,31 +21,31 @@ from CombineLimits.HaaLimits.HaaLimits2DNew import HaaLimits2D
 logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
 
-testing = False
+testing = True
 detailed = True
 skipSignal = False
 
+scaleLumi = 1
+#scaleLumi = 3.75
+
 xRange = [2.5,25] # with jpsi
-#xRange = [4,25] # no jpsi
-#xRange = [2.5,4.5] # jpsi only
 
 yRange = [0,1200] # h, hkf
-#yRange = [0,250]
 
 hmasses = [125,300,750]
 if testing: hmasses = [125]
 #if testing: hmasses = [300]
 #if testing: hmasses = [750]
 amasses = ['3p6',4,5,6,7,9,11,13,15,17,19,21]
-#amasses = [5,11,15,21]
+#amasses = ['3p6',5,9,13,17,21]
     
 signame = 'HToAAH{h}A{a}'
 
 shiftTypes = ['lep','pu','fake','trig','btag','tau','MuonEn','TauEn']#,'JetEn','UnclusteredEn']
-if testing: shiftTypes = ['fake','lep'] if detailed else []
+if testing: shiftTypes = ['fake','tau'] if detailed else []
 
 signalShiftTypes = ['lep','pu','trig','btag','tau','MuonEn','TauEn']#,'JetEn','UnclusteredEn']
-if testing: signalShiftTypes = ['lep'] if detailed else []
+if testing: signalShiftTypes = ['tau'] if detailed else []
 
 backgroundShiftTypes = ['fake']
 if testing: backgroundShiftTypes = ['fake'] if detailed else []
@@ -487,20 +487,21 @@ def create_datacard(args):
     if 'h' in var or 'hkf' in var: haaLimits.YLABEL = 'm_{#mu#mu#tau_{#mu}#tau_{h}}'
     haaLimits.initializeWorkspace()
     haaLimits.addControlModels()
-    haaLimits.addBackgroundModels(fixAfterControl=True)
+    haaLimits.addBackgroundModels(fixAfterControl=True,scaleLumi=scaleLumi)
     if not skipSignal:
         haaLimits.XRANGE = [0,30] # override for signal splines
         if project:
-            haaLimits.addSignalModels(fit=False)
+            haaLimits.addSignalModels(fit=False,scaleLumi=scaleLumi)
         elif 'tt' in var:
-            haaLimits.addSignalModels(fit=False,yFitFuncFP='V',yFitFuncPP='L')#,cutOffFP=0.75,cutOffPP=0.75)
+            haaLimits.addSignalModels(fit=False,yFitFuncFP='V',yFitFuncPP='L',scaleLumi=scaleLumi)#,cutOffFP=0.75,cutOffPP=0.75)
         elif 'h' in var or 'hkf' in var:
-            haaLimits.addSignalModels(fit=False,yFitFuncFP='DG',yFitFuncPP='DG')#,cutOffFP=0.0,cutOffPP=0.0)
+            #haaLimits.addSignalModels(fit=False,yFitFuncFP='DG',yFitFuncPP='DG',scaleLumi=scaleLumi)#,cutOffFP=0.0,cutOffPP=0.0)
+            haaLimits.addSignalModels(fit=False,yFitFuncFP=args.yFitFunc,yFitFuncPP=args.yFitFunc,scaleLumi=scaleLumi)#,cutOffFP=0.0,cutOffPP=0.0)
         else:
             haaLimits.addSignalModels(fit=False)
         haaLimits.XRANGE = xRange
     if args.addControl: haaLimits.addControlData()
-    haaLimits.addData(blind=blind,asimov=True,addSignal=args.addSignal,doBinned=not doUnbinned,**signalParams) # this will generate a dataset based on the fitted model
+    haaLimits.addData(blind=blind,asimov=args.asimov,addSignal=args.addSignal,doBinned=not doUnbinned,scaleLumi=scaleLumi,**signalParams) # this will generate a dataset based on the fitted model
     haaLimits.setupDatacard(addControl=args.addControl,doBinned=not doUnbinned)
     haaLimits.addSystematics(addControl=args.addControl,doBinned=not doUnbinned)
     name = 'mmmt_{}_parametric'.format('_'.join(var))
@@ -519,9 +520,11 @@ def parse_command_line(argv):
     parser.add_argument('--unbinned', action='store_true', help='Create unbinned datacards')
     parser.add_argument('--addSignal', action='store_true', help='Insert fake signal')
     parser.add_argument('--addControl', action='store_true', help='Add control channel')
+    parser.add_argument('--asimov', action='store_true', help='Use asimov dataset (if blind)')
     parser.add_argument('--project', action='store_true', help='Project to 1D')
     parser.add_argument('--higgs', type=int, default=125, choices=[125,300,750])
     parser.add_argument('--pseudoscalar', type=int, default=7, choices=[5,7,9,11,13,15,17,19,21])
+    parser.add_argument('--yFitFunc', type=str, default='DG', choices=['G','V','CB','DCB','DG','DV','B','G2','G3','errG','L'])
     parser.add_argument('--xRange', type=float, nargs='*', default=[4,25])
     parser.add_argument('--yRange', type=float, nargs='*', default=[])
     parser.add_argument('--tag', type=str, default='')

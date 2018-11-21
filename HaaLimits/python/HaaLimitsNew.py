@@ -281,7 +281,7 @@ class HaaLimits(Limits):
         name = 'bg_{}'.format(region)
         bg.build(workspace,name)
 
-    def loadSignalFit(self, h, tag, region, shift=''):
+    def loadSignalFits(self, h, tag, region, shift=''):
         savedir = '{}/{}'.format(self.fitsDir,shift if shift else 'central')
         savename = '{}/h{}_{}.json'.format(savedir,h,tag)
         results = self.load(savename)
@@ -290,12 +290,52 @@ class HaaLimits(Limits):
         ints = results['integrals']
         return vals, errs, ints
 
+    def fitSignal(self,h,a,region='PP',shift='',**kwargs):
+        scaleLumi = kwargs.get('scaleLumi',1)
+        results = kwargs.get('results',{})
+        histMap = self.histMap[region][shift]
+        tag = '{}{}'.format(region,'_'+shift if shift else '')
+
+        aval = float(str(a).replace('p','.'))
+        ws = ROOT.RooWorkspace('sig')
+        ws.factory('x[{0}, {1}]'.format(*self.XRANGE))
+        ws.var('x').setUnit('GeV')
+        ws.var('x').setPlotLabel(self.XLABEL)
+        ws.var('x').SetTitle(self.XLABEL)
+        model = Models.Voigtian('sig',
+            mean  = [aval,0,30],
+            width = [0.01*aval,0,5],
+            sigma = [0.01*aval,0,5],
+        )
+        name = 'h{}_a{}_{}'.format(h,a,tag)
+        model.build(ws, name)
+        if results:
+            for param in results:
+                ws.var(param+'_{}'.format(shift) if shift else param).setVal(results[param])
+        hist = histMap[self.SIGNAME.format(h=h,a=a)]
+        saveDir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
+        results, errors = model.fit(ws, hist, name, saveDir=saveDir, save=True, doErrors=True)
+        if self.binned:
+            integral = histMap[self.SIGNAME.format(h=h,a=a)].Integral() * scaleLumi
+        else:
+            integral = histMap[self.SIGNAME.format(h=h,a=a)].sumEntries('x>{} && x<{}'.format(*self.XRANGE)) * scaleLumi
+
+        savedir = '{}/{}'.format(self.fitsDir,shift if shift else 'central')
+        python_mkdir(savedir)
+        savename = '{}/h{}_a{}_{}.json'.format(savedir,h,a,tag)
+        jsonData = {'vals': results, 'errs': errors, 'integrals': integral}
+        self.dump(savename,jsonData)
+
+        return results, errors, integral
+        
+
     def fitSignals(self,h,region='PP',shift='',**kwargs):
         '''
         Fit the signal model for a given Higgs mass.
         Required arguments:
             h = higgs mass
         '''
+        scaleLumi = kwargs.get('scaleLumi',1)
         fit = kwargs.get('fit',False)      # will fit the spline parameters rather than a simple spline
         load = kwargs.get('load',False)
         skipFit = kwargs.get('skipFit',False)
@@ -308,10 +348,10 @@ class HaaLimits(Limits):
         # initial fit
         if load:
             # load the previous fit
-            results, errors, integrals = self.loadSignalFit(h,tag,region,shift)
+            results, errors, integrals = self.loadSignalFits(h,tag,region,shift)
         elif shift and not skipFit:
             # load the central fits
-            results, errors, integrals = self.loadSignalFit(h,region,region)
+            results, errors, integrals = self.loadSignalFits(h,region,region)
         else:
             results = {}
             errors = {}
@@ -320,34 +360,10 @@ class HaaLimits(Limits):
             errors[h] = {}
             integrals[h] = {}
         for a in amasses:
-            aval = float(str(a).replace('p','.'))
-            ws = ROOT.RooWorkspace('sig')
-            ws.factory('x[{0}, {1}]'.format(*self.XRANGE))
-            ws.var('x').setUnit('GeV')
-            ws.var('x').setPlotLabel(self.XLABEL)
-            ws.var('x').SetTitle(self.XLABEL)
-            model = Models.Voigtian('sig',
-                mean  = [aval,0,30],
-                width = [0.01*aval,0,5],
-                sigma = [0.01*aval,0,5],
-            )
-            name = 'h{}_a{}_{}'.format(h,a,tag)
-            model.build(ws, name)
-            if load:
-                for param in results[h][a]:
-                    ws.var(param).setVal(results[h][a][param])
-            elif shift and not skipFit:
-                for param in results[h][a]:
-                    ws.var(param+'_{}'.format(shift)).setVal(results[h][a][param])
-            hist = histMap[self.SIGNAME.format(h=h,a=a)]
-            saveDir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
-            if not skipFit:
-                results[h][a], errors[h][a] = model.fit(ws, hist, name, saveDir=saveDir, save=True, doErrors=True)
-                if self.binned:
-                    integral = histMap[self.SIGNAME.format(h=h,a=a)].Integral()
-                else:
-                    integral = histMap[self.SIGNAME.format(h=h,a=a)].sumEntries('x>{} && x<{}'.format(*self.XRANGE))
-                integrals[h][a] = integral
+            if load or (shift and not skipFit):
+                results[h][a], errors[h][a], integrals[h][a] = self.fitSignal(h,a,region,shift,results=results[h][a],**kwargs)
+            elif not skipFit:
+                results[h][a], errors[h][a], integrals[h][a] = self.fitSignal(h,a,region,shift,**kwargs)
     
         savedir = '{}/{}'.format(self.fitsDir,shift if shift else 'central')
         python_mkdir(savedir)
@@ -497,16 +513,17 @@ class HaaLimits(Limits):
 
 
     def fitBackground(self,region='PP',shift='', **kwargs):
+        scaleLumi = kwargs.pop('scaleLumi',1)
         workspace = kwargs.pop('workspace',self.workspace)
         xVar = kwargs.pop('xVar','x')
         model = workspace.pdf('bg_{}'.format(region))
         name = 'data_prefit_{}{}'.format(region,'_'+shift if shift else '')
         hist = self.histMap[region][shift]['dataNoSig']
         if hist.InheritsFrom('TH1'):
-            integral = hist.Integral(hist.FindBin(self.XRANGE[0]),hist.FindBin(self.XRANGE[1]))
+            integral = hist.Integral(hist.FindBin(self.XRANGE[0]),hist.FindBin(self.XRANGE[1])) * scaleLumi
             data = ROOT.RooDataHist(name,name,ROOT.RooArgList(workspace.var(xVar)),hist)
         else:
-            integral = hist.sumEntries('x>{} && x<{}'.format(*self.XRANGE))
+            integral = hist.sumEntries('x>{} && x<{}'.format(*self.XRANGE)) * scaleLumi
             # TODO add support for xVar
             data = hist.Clone(name)
 
@@ -593,6 +610,7 @@ class HaaLimits(Limits):
         logging.debug(str(kwargs))
         mh = kwargs.pop('h',125)
         ma = kwargs.pop('a',15)
+        scaleLumi = kwargs.pop('scaleLumi',1)
 
         workspace = self.workspace
 
@@ -652,9 +670,9 @@ class HaaLimits(Limits):
                 model = workspace.pdf('bg_{}'.format(region))
                 h = self.histMap[region]['']['dataNoSig']
                 if h.InheritsFrom('TH1'):
-                    integral = h.Integral(h.FindBin(self.XRANGE[0]),h.FindBin(self.XRANGE[1]))
+                    integral = h.Integral(h.FindBin(self.XRANGE[0]),h.FindBin(self.XRANGE[1])) * scaleLumi
                 else:
-                    integral = h.sumEntries('x>{} && x<{}'.format(*self.XRANGE))
+                    integral = h.sumEntries('x>{} && x<{}'.format(*self.XRANGE)) * scaleLumi
                 if asimov:
                     data_obs = model.generateBinned(ROOT.RooArgSet(self.workspace.var(xVar)),integral,1)
                 else:
@@ -887,7 +905,7 @@ class HaaLimits(Limits):
         #workspace.arg('upsilon_frac').setConstant(fix) 
         #if self.XRANGE[0]<3.3: workspace.arg('jpsi_frac').setConstant(fix) 
 
-    def addBackgroundModels(self, fixAfterControl=False, fixAfterFP=False, load=False, skipFit=False):
+    def addBackgroundModels(self, fixAfterControl=False, fixAfterFP=False, load=False, skipFit=False, **kwargs):
         workspace = self.buildWorkspace('bg')
         self.initializeWorkspace(workspace=workspace)
         self.buildModel(region='control', workspace=workspace)
@@ -910,7 +928,7 @@ class HaaLimits(Limits):
                     if load:
                         v, e, i = self.loadBackgroundFit(region,workspace=workspace)
                     else:
-                        v, e, i = self.fitBackground(region=region, workspace=workspace)
+                        v, e, i = self.fitBackground(region=region, workspace=workspace, **kwargs)
                     vals[region][shift] = v
                     errs[region][shift] = e
                     integrals[region][shift] = i
@@ -920,8 +938,9 @@ class HaaLimits(Limits):
                         vUp, eUp, iUp = self.loadBackgroundFit(region,shift+'Up',workspace=workspace)
                         vDown, eDown, iDown = self.loadBackgroundFit(region,shift+'Down',workspace=workspace)
                     if not skipFit:
-                        vUp, eUp, iUp = self.fitBackground(region=region, shift=shift+'Up', workspace=workspace)
-                        vDown, eDown, iDown = self.fitBackground(region=region, shift=shift+'Down', workspace=workspace)
+                        vUp, eUp, iUp = self.fitBackground(region=region, shift=shift+'Up', workspace=workspace, **kwargs)
+                        vDown, eDown, iDown = self.fitBackground(region=region, shift=shift+'Down', workspace=workspace, **kwargs
+                        )
                     vals[region][shift+'Up'] = vUp
                     errs[region][shift+'Up'] = eUp
                     integrals[region][shift+'Up'] = iUp
@@ -1109,6 +1128,7 @@ class HaaLimits(Limits):
         self._addShapeSystematic(doBinned=doBinned)
         #self._addComponentSystematic(addControl=addControl)
         self._addRelativeNormUnc()
+        self._addHiggsSystematic()
         if not doBinned and not addControl: self._addControlSystematics()
 
     def _addControlSystematics(self):
@@ -1148,6 +1168,22 @@ class HaaLimits(Limits):
             e = self.control_errs[param]
             rel_err = e/v
             self.addSystematic(param, 'param', systematics=[v,e])
+
+    def _addHiggsSystematic(self):
+        # theory
+        syst = {}
+        if 125 in self.HMASSES: syst[((self.SPLINENAME.format(h=125),), tuple(self.REGIONS))] = (1+(0.046*48.52+0.004*3.779)/(48.52+3.779)    , 1+(-0.067*48.52-0.003*3.779)/(48.52+3.779))
+        if 300 in self.HMASSES: syst[((self.SPLINENAME.format(h=300),), tuple(self.REGIONS))] = (1+(0.015*6.59+0.003*1.256)/(6.59+1.256)      , 1+(-0.032*6.59-0.001*1.256)/(6.59+1.256))
+        if 750 in self.HMASSES: syst[((self.SPLINENAME.format(h=750),), tuple(self.REGIONS))] = (1+(0.020*0.4969+0.003*0.1915)/(0.4969+0.1915), 1+(-0.037*0.4969-0.004*0.1915)/(0.4969+0.1915))
+        self.addSystematic('higgs_theory','lnN',systematics=syst)
+
+        # pdf+alpha_s
+        syst = {}
+        if 125 in self.HMASSES: syst[((self.SPLINENAME.format(h=125),), tuple(self.REGIONS))] = 1+(0.032*48.52+0.021*3.779)/(48.52+3.779)
+        if 300 in self.HMASSES: syst[((self.SPLINENAME.format(h=300),), tuple(self.REGIONS))] = 1+(0.030*6.59+0.014*1.256)/(6.59+1.256)
+        if 750 in self.HMASSES: syst[((self.SPLINENAME.format(h=750),), tuple(self.REGIONS))] = 1+(0.040*0.4969+0.022*0.1915)/(0.4969+0.1915)
+        self.addSystematic('pdf_alpha','lnN',systematics=syst)
+
 
     def _addShapeSystematic(self,doBinned=False):
         for shift in self.SHIFTS+['qcd']:
