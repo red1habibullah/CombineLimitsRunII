@@ -67,7 +67,10 @@ class HaaLimits(Limits):
         self.histMap = histMap
         self.tag = tag
 
-        self.binned = self.histMap[self.histMap.keys()[0]]['']['data'].InheritsFrom('TH1')
+        top = [k for k in self.histMap.keys() if 'PP' in k][0]
+        sample = self.histMap[top][''].keys()[0]
+
+        self.binned = self.histMap[top][''][sample].InheritsFrom('TH1')
 
         self.plotDir = 'figures/HaaLimits{}'.format('_'+tag if tag else '')
         self.fitsDir = 'fitParams/HaaLimits{}'.format('_'+tag if tag else '')
@@ -92,7 +95,7 @@ class HaaLimits(Limits):
         self.addX(*self.XRANGE,unit='GeV',label=self.XLABEL,**kwargs)
         self.addMH(*self.SPLINERANGE,unit='GeV',label=self.SPLINELABEL,**kwargs)
 
-    def buildModel(self, region='PP', **kwargs):
+    def buildModel(self, region, **kwargs):
         logging.debug('buildModel')
         logging.debug(', '.join([region,str(kwargs)]))
         workspace = kwargs.pop('workspace',self.workspace)
@@ -290,11 +293,11 @@ class HaaLimits(Limits):
         ints = results['integrals']
         return vals, errs, ints
 
-    def fitSignal(self,h,a,region='PP',shift='',**kwargs):
+    def fitSignal(self,h,a,region,shift='',**kwargs):
         scaleLumi = kwargs.get('scaleLumi',1)
         results = kwargs.get('results',{})
         histMap = self.histMap[region][shift]
-        tag = '{}{}'.format(region,'_'+shift if shift else '')
+        tag = kwargs.get('tag','{}{}'.format(region,'_'+shift if shift else ''))
 
         aval = float(str(a).replace('p','.'))
         ws = ROOT.RooWorkspace('sig')
@@ -329,7 +332,7 @@ class HaaLimits(Limits):
         return results, errors, integral
         
 
-    def fitSignals(self,h,region='PP',shift='',**kwargs):
+    def fitSignals(self,h,region,shift='',**kwargs):
         '''
         Fit the signal model for a given Higgs mass.
         Required arguments:
@@ -343,7 +346,7 @@ class HaaLimits(Limits):
         if h>125: amasses = [a for a in amasses if a not in ['3p6',4,6]]
         avals = [float(str(x).replace('p','.')) for x in amasses]
         histMap = self.histMap[region][shift]
-        tag= '{}{}'.format(region,'_'+shift if shift else '')
+        tag = kwargs.get('tag','{}{}'.format(region,'_'+shift if shift else ''))
 
         # initial fit
         if load:
@@ -429,7 +432,7 @@ class HaaLimits(Limits):
         return results, errors, integrals
 
 
-    def buildSpline(self,h,vals,errs,integrals,region='PP',shifts=[],**kwargs):
+    def buildSpline(self,h,vals,errs,integrals,region,shifts=[],**kwargs):
         '''
         Get the signal spline for a given Higgs mass.
         Required arguments:
@@ -512,7 +515,7 @@ class HaaLimits(Limits):
         return model
 
 
-    def fitBackground(self,region='PP',shift='', **kwargs):
+    def fitBackground(self,region,shift='', **kwargs):
         scaleLumi = kwargs.pop('scaleLumi',1)
         workspace = kwargs.pop('workspace',self.workspace)
         xVar = kwargs.pop('xVar','x')
@@ -1056,9 +1059,9 @@ class HaaLimits(Limits):
     ### Setup datacard ###
     ######################
     def setupDatacard(self, addControl=False, doBinned=False):
-        bgs = self.getComponentFractions(self.workspace.pdf('bg_PP'))
+        bgs = self.getComponentFractions(self.workspace.pdf('bg_'+self.REGIONS[0]))
 
-        bgs = [b.rstrip('_PP') for b in bgs]
+        bgs = [b.rstrip('_'+self.REGIONS[0]) for b in bgs]
         sigs = [self.SPLINENAME.format(h=h) for h in self.HMASSES]
 
         # setup bins
@@ -1119,9 +1122,9 @@ class HaaLimits(Limits):
     def addSystematics(self,doBinned=False,addControl=False):
         logging.debug('addSystematics')
         self.sigProcesses = tuple([self.SPLINENAME.format(h=h) for h in self.HMASSES])
-        bgs = self.getComponentFractions(self.workspace.pdf('bg_PP'))
-        bgs = [b.rstrip('_PP') for b in bgs]
-        self.bgProcesses = bgs
+        bgs = self.getComponentFractions(self.workspace.pdf('bg_'+self.REGIONS[0]))
+        bgs = [b.rstrip('_'+self.REGIONS[0]) for b in bgs]
+        self.bgProcesses = tuple(bgs)
         self._addLumiSystematic()
         self._addMuonSystematic()
         #self._addTauSystematic()
@@ -1228,9 +1231,9 @@ class HaaLimits(Limits):
         self.addSystematic('tauid','lnN',systematics=tausyst)
 
     def _addComponentSystematic(self,addControl=False):
-        bgs = self.getComponentFractions(self.workspace.pdf('bg_PP'))
-        #bgs = [b.rstrip('_PP') for b in bgs if 'cont' not in b]
-        bgs = [b.rstrip('_PP') for b in bgs]
+        bgs = self.getComponentFractions(self.workspace.pdf('bg_'+self.REGIONS[0]))
+        #bgs = [b.rstrip('_'+self.REGIONS[0]) for b in bgs if 'cont' not in b]
+        bgs = [b.rstrip('_'+self.REGIONS[0]) for b in bgs]
         bins = self.REGIONS
         if addControl: bins += ['control']
         syst = {}
@@ -1243,9 +1246,9 @@ class HaaLimits(Limits):
 
     def _addRelativeNormUnc(self):
         relativesyst = {
-           (tuple(['upsilon2S']),  tuple(['PP'])) : 1.05,
-           (tuple(['upsilon3S']),  tuple(['PP'])) : 1.10,
-           (tuple(['jpsi2S']), tuple(['PP'])) : 1.20,
+           (tuple(['upsilon2S']),  tuple([self.REGIONS[0]])) : 1.05,
+           (tuple(['upsilon3S']),  tuple([self.REGIONS[0]])) : 1.10,
+           (tuple(['jpsi2S']),     tuple([self.REGIONS[0]])) : 1.20,
         }
         self.addSystematic('relNormUnc_{process}', 'lnN', systematics=relativesyst)
 
@@ -1254,8 +1257,8 @@ class HaaLimits(Limits):
     ###################################
     def save(self,name='mmmt', subdirectory=''):
         processes = {}
-        bgs = self.getComponentFractions(self.workspace.pdf('bg_PP'))
-        bgs = [b.rstrip('_PP') for b in bgs]
+        bgs = self.getComponentFractions(self.workspace.pdf('bg_'+self.REGIONS[0]))
+        bgs = [b.rstrip('_'+self.REGIONS[0]) for b in bgs]
         for h in self.HMASSES:
             processes[self.SIGNAME.format(h=h,a='X')] = [self.SPLINENAME.format(h=h)] + bgs
         if subdirectory == '':

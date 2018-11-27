@@ -94,6 +94,7 @@ class Limits(object):
         if b in self.bins:
             logging.warning('Bin {0} already added.'.format(b))
         else:
+            logging.debug('Adding bin {}'.format(b))
             self.bins += [b]
 
     def addProcess(self,proc,signal=False):

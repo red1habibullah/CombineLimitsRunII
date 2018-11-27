@@ -58,7 +58,7 @@ class HaaLimits2D(HaaLimits):
         self.addY(*self.YRANGE,unit='GeV',label=self.YLABEL,**kwargs)
         self.addMH(*self.SPLINERANGE,unit='GeV',label=self.SPLINELABEL,**kwargs)
 
-    def _buildYModel(self,region='PP',**kwargs):
+    def _buildYModel(self,region,**kwargs):
         workspace = kwargs.pop('workspace',self.workspace)
         xVar = kwargs.pop('xVar','x')
         yVar = kwargs.pop('yVar','y')
@@ -269,10 +269,10 @@ class HaaLimits2D(HaaLimits):
         name = 'bg_{}'.format(region)
         bg.build(workspace,name)
 
-    def _buildXModel(self,region='PP',**kwargs):
+    def _buildXModel(self,region,**kwargs):
         super(HaaLimits2D,self).buildModel(region,**kwargs)
 
-    def buildModel(self,region='PP',**kwargs):
+    def buildModel(self,region,**kwargs):
         workspace = kwargs.pop('workspace',self.workspace)
         tag = kwargs.pop('tag',region)
 
@@ -344,7 +344,7 @@ class HaaLimits2D(HaaLimits):
         name = 'bg_{}_xy'.format(region)
         bg.build(workspace,name)
 
-    def fitSignal(self,h,a,region='PP',shift='',**kwargs):
+    def fitSignal(self,h,a,region,shift='',**kwargs):
         scaleLumi = kwargs.get('scaleLumi',1)
         ygausOnly = kwargs.get('ygausOnly',False)
         isKinFit = kwargs.get('isKinFit',False)
@@ -352,7 +352,7 @@ class HaaLimits2D(HaaLimits):
         dobgsig = kwargs.get('doBackgroundSignal',False)
         results = kwargs.get('results',{})
         histMap = self.histMap[region][shift]
-        tag = '{}{}'.format(region,'_'+shift if shift else '')
+        tag = kwargs.get('tag','{}{}'.format(region,'_'+shift if shift else ''))
 
         if self.YRANGE[1] > 100: 
             if yFitFunc == "DCB_Fix": initialMeans = self.GetInitialDCBMean()
@@ -623,7 +623,7 @@ class HaaLimits2D(HaaLimits):
 
             modely.build(ws, 'sigy')
 
-            if region=='PP' or not dobgsig:
+            if 'PP' in region or not dobgsig:
                 model = Models.Prod('sig',
                     'sigx',
                     'sigy',
@@ -687,7 +687,7 @@ class HaaLimits2D(HaaLimits):
         return results, errors, integral
 
 
-    def fitSignals(self,h,region='PP',shift='',**kwargs):
+    def fitSignals(self,h,region,shift='',**kwargs):
         '''
         Fit the signal model for a given Higgs mass.
         Required arguments:
@@ -705,7 +705,7 @@ class HaaLimits2D(HaaLimits):
         if h>125:      amasses = [a for a in amasses if a not in ['3p6',4,6]]
         avals = [float(str(x).replace('p','.')) for x in amasses]
         histMap = self.histMap[region][shift]
-        tag= '{}{}'.format(region,'_'+shift if shift else '')
+        tag = kwargs.get('tag','{}{}'.format(region,'_'+shift if shift else ''))
 
         # initial fit
         if load:
@@ -933,7 +933,7 @@ class HaaLimits2D(HaaLimits):
 
         return results, errors, integrals
 
-    def buildSpline(self,h,vals,errs,integrals,region='PP',shifts=[],isKinFit=False,**kwargs):
+    def buildSpline(self,h,vals,errs,integrals,region,shifts=[],isKinFit=False,**kwargs):
         '''
         Get the signal spline for a given Higgs mass.
         Required arguments:
@@ -1177,7 +1177,7 @@ class HaaLimits2D(HaaLimits):
         self.control_integralErrors = errors
         self.control_integralValues = allintegrals
 
-    def fitBackground(self,region='PP',shift='',**kwargs):
+    def fitBackground(self,region,shift='',**kwargs):
         scaleLumi = kwargs.pop('scaleLumi',1)
 
         if region=='control':
@@ -1497,7 +1497,7 @@ class HaaLimits2D(HaaLimits):
             values[region] = {}
             errors[region] = {}
             integrals[region] = {}
-            if region == 'PP':  yFitFunc=yFitFuncPP
+            if 'PP' in region:  yFitFunc=yFitFuncPP
             else: yFitFunc = yFitFuncFP
             for h in self.HMASSES:
                 values[region][h] = {}
@@ -1554,9 +1554,9 @@ class HaaLimits2D(HaaLimits):
     ### Setup datacard ###
     ######################
     def setupDatacard(self, addControl=False, doBinned=False):
-        bgs = self.getComponentFractions(self.workspace.pdf('bg_PP_x'))
+        bgs = self.getComponentFractions(self.workspace.pdf('bg_{}_x'.format(self.REGIONS[0])))
         bgs = [b.rstrip('_x') for b in bgs]
-        bgs = [b.rstrip('_PP') for b in bgs]
+        bgs = [b.rstrip('_'+self.REGIONS[0]) for b in bgs]
         sigs = [self.SPLINENAME.format(h=h) for h in self.HMASSES]
 
         # setup bins
@@ -1860,7 +1860,7 @@ class HaaLimits2D(HaaLimits):
         return initialValues
 
     def GetInitialValuesDG(self, region="FP"):
-        if region == "PP": 
+        if 'PP' in region: 
             initialValues = {
                 "h125a3p6": { "mean": 93.5, "sigma1": 14.2, "sigma2": 10.1},
                 "h125a4"  : { "mean": 93.7, "sigma1": 15.9, "sigma2": 10.4},
@@ -1934,8 +1934,8 @@ class HaaLimits2D(HaaLimits):
     ###################
     def addSystematics(self,doBinned=False,addControl=False):
         self.sigProcesses = tuple([self.SPLINENAME.format(h=h) for h in self.HMASSES])
-        bgs = self.getComponentFractions(self.workspace.pdf('bg_PP_x'))
-        bgs = [b.rstrip('_PP_x') for b in bgs]
+        bgs = self.getComponentFractions(self.workspace.pdf('bg_{}_x'.format(self.REGIONS[0])))
+        bgs = [b.rstrip('_{}_x'.format(self.REGIONS[0])) for b in bgs]
         self.bgProcesses = bgs
         self._addLumiSystematic()
         self._addMuonSystematic()
@@ -1952,9 +1952,9 @@ class HaaLimits2D(HaaLimits):
     ###################################
     def save(self,name='mmmt', subdirectory=''):
         processes = {}
-        bgs = self.getComponentFractions(self.workspace.pdf('bg_PP_x'))
+        bgs = self.getComponentFractions(self.workspace.pdf('bg_{}_x'.format(self.REGIONS[0])))
         bgs = [b.rstrip('_x') for b in bgs]
-        bgs = [b.rstrip('_PP') for b in bgs]
+        bgs = [b.rstrip('_'+self.REGIONS[0]) for b in bgs]
         for h in self.HMASSES:
             processes[self.SIGNAME.format(h=h,a='X')] = [self.SPLINENAME.format(h=h)] + bgs
         if subdirectory == '':

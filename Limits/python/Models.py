@@ -41,12 +41,14 @@ class Model(object):
        
         #ws.var('x').setRange('xRange', xFitRange[0], xFitRange[1])
         fr = model.fitTo(hist,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True))#, ROOT.RooFit.Range('xRange'))
+        #fr = model.fitTo(hist,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True),ROOT.RooFit.Minos(True))#, ROOT.RooFit.Range('xRange'))
         pars = fr.floatParsFinal()
         vals = {}
         errs = {}
         for p in range(pars.getSize()):
             vals[pars.at(p).GetName()] = pars.at(p).getValV()
             errs[pars.at(p).GetName()] = pars.at(p).getError()
+            #print pars.at(p).GetName(), pars.at(p).getValV(), pars.at(p).getError(), pars.at(p).GetAsymErrorHi(), pars.at(p).GetAsymErrorLo()
 
         if save:
             if saveDir: python_mkdir(saveDir)
@@ -86,12 +88,15 @@ class Model(object):
         #ws.var('y').setRange('yRange', yFitRange[0], yFitRange[1])
         #print ("X_FIT_RANGE=", xFitRange, "\tY_FIT_RANGE=", yFitRange)
         fr = model.fitTo(hist,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True))#, ROOT.RooFit.Range('yRange'), ROOT.RooFit.Range('xRange') )
+        #fr = model.fitTo(hist,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True),ROOT.RooFit.Minos(True))#, ROOT.RooFit.Range('yRange'), ROOT.RooFit.Range('xRange') )
         pars = fr.floatParsFinal()
         vals = {}
         errs = {}
         for p in range(pars.getSize()):
             vals[pars.at(p).GetName()] = pars.at(p).getValV()
             errs[pars.at(p).GetName()] = pars.at(p).getError()
+            #errs[pars.at(p).GetName()] = (pars.at(p).getAsymErrorHi(), pars.at(p).getAsymErrorLo())
+            #print pars.at(p).GetName(), pars.at(p).getValV(), pars.at(p).getError(), pars.at(p).getVal(), pars.at(p).getAsymErrorHi(), pars.at(p).getAsymErrorLo()
 
         if save:
             if saveDir: python_mkdir(saveDir)
