@@ -25,7 +25,7 @@ class PlotterBase(object):
         # plot directory
         self.analysis = analysis
         self.outputDirectory = kwargs.pop('outputDirectory','plots/{0}'.format(self.analysis))
-        self.outputDirectoryCSV = kwargs.pop('outputDirectoryCSV','csv/{0}'.format(self.analysis))
+        self.outputDirectoryCSV = kwargs.pop('outputDirectoryCSV','csvFiles/{0}'.format(self.analysis))
         self.intLumi = kwargs.get('intLumi',float(getLumi()))
         # initialize stuff
 

@@ -18,19 +18,29 @@ import CombineLimits.Limits.Models as Models
 from CombineLimits.Limits.Limits import Limits
 from CombineLimits.Limits.utilities import *
 
+import CombineLimits.Plotter.CMS_lumi as CMS_lumi
+import CombineLimits.Plotter.tdrstyle as tdrstyle
+
+tdrstyle.setTDRStyle()
+
 class HaaLimits(Limits):
     '''
     Create the Haa Limits workspace
     '''
 
     # permanent parameters
-    HMASSES = [125,300,750]
+    HMASSES = [125,200,250,300,400,500,750,1000]
     AMASSES = ['3p6',4,5,6,7,9,11,13,15,17,19,21]
 
+    HBINNING = 25 # GeV
+    ABINNING = 0.1 # GeV
+
     SIGNAME = 'HToAAH{h}A{a}'
-    SPLINENAME = 'sig{h}'
-    SPLINELABEL = 'm_{a}'
-    SPLINERANGE = [3.6,21]
+    SPLINENAME = 'sig'
+    ALABEL = 'm_{a}'
+    ARANGE = [0,25]
+    HLABEL = 'm_{a}'
+    HRANGE = [0,1000]
 
     XRANGE = [4,25]
     XBINNING = 210
@@ -93,7 +103,8 @@ class HaaLimits(Limits):
         logging.debug('initializeWorkspace')
         logging.debug(str(kwargs))
         self.addX(*self.XRANGE,unit='GeV',label=self.XLABEL,**kwargs)
-        self.addMH(*self.SPLINERANGE,unit='GeV',label=self.SPLINELABEL,**kwargs)
+        self.addMH(*self.HRANGE,unit='GeV',label=self.HLABEL,**kwargs)
+        self.addMA(*self.ARANGE,unit='GeV',label=self.ALABEL,**kwargs)
 
     def buildModel(self, region, **kwargs):
         logging.debug('buildModel')
@@ -284,9 +295,9 @@ class HaaLimits(Limits):
         name = 'bg_{}'.format(region)
         bg.build(workspace,name)
 
-    def loadSignalFits(self, h, tag, region, shift=''):
+    def loadSignalFits(self, tag, region, shift=''):
         savedir = '{}/{}'.format(self.fitsDir,shift if shift else 'central')
-        savename = '{}/h{}_{}.json'.format(savedir,h,tag)
+        savename = '{}/{}.json'.format(savedir,tag)
         results = self.load(savename)
         vals = results['vals']
         errs = results['errs']
@@ -332,7 +343,7 @@ class HaaLimits(Limits):
         return results, errors, integral
         
 
-    def fitSignals(self,h,region,shift='',**kwargs):
+    def fitSignals(self,region,shift='',**kwargs):
         '''
         Fit the signal model for a given Higgs mass.
         Required arguments:
@@ -342,97 +353,135 @@ class HaaLimits(Limits):
         fit = kwargs.get('fit',False)      # will fit the spline parameters rather than a simple spline
         load = kwargs.get('load',False)
         skipFit = kwargs.get('skipFit',False)
-        amasses = self.AMASSES
-        if h>125: amasses = [a for a in amasses if a not in ['3p6',4,6]]
-        avals = [float(str(x).replace('p','.')) for x in amasses]
-        histMap = self.histMap[region][shift]
         tag = kwargs.get('tag','{}{}'.format(region,'_'+shift if shift else ''))
+
+        histMap = self.histMap[region][shift]
 
         # initial fit
         if load:
             # load the previous fit
-            results, errors, integrals = self.loadSignalFits(h,tag,region,shift)
+            results, errors, integrals = self.loadSignalFits(tag,region,shift)
         elif shift and not skipFit:
             # load the central fits
-            results, errors, integrals = self.loadSignalFits(h,region,region)
-        else:
+            cresults, cerrors, cintegrals = self.loadSignalFits(region,region)
+        if not skipFit:
             results = {}
             errors = {}
             integrals = {}
-            results[h] = {}
-            errors[h] = {}
-            integrals[h] = {}
-        for a in amasses:
-            if load or (shift and not skipFit):
-                results[h][a], errors[h][a], integrals[h][a] = self.fitSignal(h,a,region,shift,results=results[h][a],**kwargs)
-            elif not skipFit:
-                results[h][a], errors[h][a], integrals[h][a] = self.fitSignal(h,a,region,shift,**kwargs)
+
+            for h in self.HMASSES:
+                results[h] = {}
+                errors[h] = {}
+                integrals[h] = {}
+
+                amasses = self.AMASSES
+                if h>125: amasses = [a for a in amasses if a not in ['3p6',4,6]]
+                if h in [200,250,400,500,1000]: amasses = [5, 9, 15]
+                avals = [float(str(x).replace('p','.')) for x in amasses]
+
+                for a in amasses:
+                    if load or (shift and not skipFit):
+                        results[h][a], errors[h][a], integrals[h][a] = self.fitSignal(h,a,region,shift,results=cresults[h][a],**kwargs)
+                    elif not skipFit:
+                        results[h][a], errors[h][a], integrals[h][a] = self.fitSignal(h,a,region,shift,**kwargs)
     
         savedir = '{}/{}'.format(self.fitsDir,shift if shift else 'central')
         python_mkdir(savedir)
-        savename = '{}/h{}_{}.json'.format(savedir,h,tag)
+        savename = '{}/{}.json'.format(savedir,tag)
         jsonData = {'vals': results, 'errs': errors, 'integrals': integrals}
         self.dump(savename,jsonData)
 
+        fitFuncs = self.fitSignalParams(results,errors,integrals,region,shift)
+
+        return results, errors, integrals, fitFuncs
+
+    def fitSignalParams(self,results,errors,integrals,region,shift='',**kwargs):
+        tag = kwargs.get('tag','{}{}'.format(region,'_'+shift if shift else ''))
         # Fit using ROOT rather than RooFit for the splines
         fitFuncs = {
-            'mean' : 'pol1',
-            'width': 'pol2',
-            'sigma': 'pol2',
+            'mean' :    ROOT.TF2('mean_{}'.format(tag),     '[0]+[1]*y',                                 *self.HRANGE+self.ARANGE), 
+            'width':    ROOT.TF2('width_{}'.format(tag),    '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE), 
+            'sigma':    ROOT.TF2('sigma_{}'.format(tag),    '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE), 
+            'integral': ROOT.TF2('integral_{}'.format(tag), 'exp([0]+[1]*x)*([2]+[3]*y+[4]*y*y+[5]*x*y)',*self.HRANGE+self.ARANGE),
         }
 
-        xs = []
-        x = self.XRANGE[0]
-        while x<=self.XRANGE[1]:
-            xs += [x]
-            x += float(self.XRANGE[1]-self.XRANGE[0])/100
-        fittedParams = {}
-        for param in ['mean','width','sigma']:
-            name = '{}_{}{}'.format(param,h,tag)
-            xerrs = [0]*len(amasses)
-            vals = [results[h][a]['{}_h{}_a{}_{}'.format(param,h,a,tag)] for a in amasses]
-            errs = [errors[h][a]['{}_h{}_a{}_{}'.format(param,h,a,tag)] for a in amasses]
-            graph = ROOT.TGraphErrors(len(avals),array('d',avals),array('d',vals),array('d',xerrs),array('d',errs))
-            #graph = ROOT.TGraph(len(avals),array('d',avals),array('d',vals))
+        colors = {
+            125 : ROOT.kBlack,
+            200 : ROOT.kMagenta,
+            250 : ROOT.kCyan+1,
+            300 : ROOT.kBlue,
+            400 : ROOT.kRed,
+            500 : ROOT.kOrange-3,
+            750 : ROOT.kGreen+2,
+            1000: ROOT.kViolet-1,
+        }
+        
+        for param in ['mean','width','sigma','integral']:
+            xvals = [h for h in sorted(results) for a in sorted(results[h])]
+            xerrs = [0] * len(xvals)
+            yvals = [float(str(a).replace('p','.')) for h in sorted(results) for a in sorted(results[h])]
+            yerrs = [0] * len(yvals)
+            if param=='integral':
+                zvals = [integrals[h][a] for h in sorted(results) for a in sorted(results[h])]
+            else:
+                zvals = [results[h][a]['{}_h{}_a{}_{}'.format(param,h,a,tag)] for h in sorted(results) for a in sorted(results[h])]
+                zerrs = [errors[h][a]['{}_h{}_a{}_{}'.format(param,h,a,tag)] for h in sorted(results) for a in sorted(results[h])]
+            #graph = ROOT.TGraph2DErrors(len(xvals), array('d',xvals), array('d',yvals), array('d',zvals), array('d',xerrs), array('d',yerrs), array('
+            graph = ROOT.TGraph2D(len(xvals), array('d',xvals), array('d',yvals), array('d',zvals))
+            graph.Fit(fitFuncs[param])
+
+            name = '{}_{}'.format(param,tag)
             savedir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
             python_mkdir(savedir)
             savename = '{}/{}_Fit'.format(savedir,name)
+
             canvas = ROOT.TCanvas(savename,savename,800,800)
-            graph.Draw()
-            graph.SetTitle('')
-            graph.GetHistogram().GetXaxis().SetTitle(self.SPLINELABEL)
-            graph.GetHistogram().GetYaxis().SetTitle(param)
-            if fit:
-                fitResult = graph.Fit(fitFuncs[param])
-                func = graph.GetFunction(fitFuncs[param])
-                fittedParams[param] = [func.Eval(x) for x in xs]
+            canvas.SetTopMargin(0.1)
+
+            mg = ROOT.TMultiGraph()
+            fmg = ROOT.TMultiGraph()
+
+            legend = ROOT.TLegend(0.1,0.9,0.9,1.0,'','NDC')
+            legend.SetTextFont(42)
+            legend.SetBorderSize(0)
+            legend.SetFillColor(0)
+            legend.SetNColumns(len(self.HMASSES))
+
+            for h in self.HMASSES:
+                xs = [yvals[i] for i in range(len(xvals)) if xvals[i]==h]
+                ys = [zvals[i] for i in range(len(xvals)) if xvals[i]==h]
+
+                g = ROOT.TGraph(len(xs),array('d',xs),array('d',ys))
+                g.SetLineColor(colors[h])
+                g.SetMarkerColor(colors[h])
+                g.SetTitle('H({h})'.format(h=h))
+
+                legend.AddEntry(g,g.GetTitle(),'lp')
+                mg.Add(g)
+
+                fxs = []
+                fys = []
+                for a in range(self.ARANGE[0]*10,self.ARANGE[1]*10+1,1):
+                    y = fitFuncs[param].Eval(h,a*0.1)
+                    fxs += [a*0.1]
+                    fys += [y]
+                fg = ROOT.TGraph(len(fxs),array('d',fxs),array('d',fys))
+                fg.SetLineColor(colors[h])
+                fg.SetLineWidth(3)
+                fg.SetMarkerColor(colors[h])
+                fmg.Add(fg)
+
+            canvas.DrawFrame(self.ARANGE[0],min(zvals)*0.9,self.ARANGE[1],max(zvals)*1.1)
+            mg.Draw('p0')
+            mg.GetXaxis().SetTitle(self.ALABEL)
+            mg.GetYaxis().SetTitle(param)
+            fmg.Draw('L')
+            legend.Draw()
             canvas.Print('{}.png'.format(savename))
 
-        param = 'integral'
-        funcname = 'pol2'
-        name = '{}_{}{}'.format(param,h,tag)
-        vals = [integrals[h][a] for a in amasses]
-        graph = ROOT.TGraph(len(avals),array('d',avals),array('d',vals))
-        savedir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
-        python_mkdir(savedir)
-        savename = '{}/{}_Fit'.format(savedir,name)
-        canvas = ROOT.TCanvas(savename,savename,800,800)
-        graph.Draw()
-        graph.SetTitle('')
-        graph.GetHistogram().GetXaxis().SetTitle(self.SPLINELABEL)
-        graph.GetHistogram().GetYaxis().SetTitle('integral')
-        if fit:
-            fitResult = graph.Fit(funcname)
-            func = graph.GetFunction(funcname)
-            newintegrals = [func.Eval(x) for x in xs]
-            # dont fit integrals
-            #model.setIntegral(xs,newintegrals)
-        canvas.Print('{}.png'.format(savename))
+        return fitFuncs
 
-        return results, errors, integrals
-
-
-    def buildSpline(self,h,vals,errs,integrals,region,shifts=[],**kwargs):
+    def buildSpline(self,vals,errs,integrals,region,shifts=[],**kwargs):
         '''
         Get the signal spline for a given Higgs mass.
         Required arguments:
@@ -460,23 +509,51 @@ class HaaLimits(Limits):
         workspace = kwargs.pop('workspace',self.workspace)
         xVar = kwargs.pop('xVar','x')
         fit = kwargs.get('fit',False)      # will fit the spline parameters rather than a simple spline
-        amasses = self.AMASSES
-        if h>125: amasses = [a for a in amasses if a not in ['3p6',4,6]]
-        avals = [float(str(x).replace('p','.')) for x in amasses]
+        fitFuncs = kwargs.get('fitFuncs',{})
+
+        splines = {}
+        if fit:
+            params = ['mean','width','sigma','integral']
+            for param in params:
+                name = '{param}_{region}'.format(param=param,region=region)
+                spline = Models.Spline(name,
+                    MH = ['MH','MA'],
+                    masses = None,
+                    values = fitFuncs[''][param],
+                    shifts = {shift: {'up': fitFuncs[shift+'Up'][param], 'down': fitFuncs[shift+'Down'][param],} for shift in shifts},
+                )
+                spline.build(workspace, name)
+                splines[name] = spline
+
+            # create model
+            model = Models.Voigtian(self.SPLINENAME,
+                x = xVar,
+                **{param: '{param}_{region}'.format(param=param, region=region) for param in params}
+            )
+            model.build(workspace,'{}_{}'.format(self.SPLINENAME,region))
+
+            return model
+
+
 
         # create parameter splines
         params = ['mean','width','sigma']
-        splines = {}
         for param in params:
-            name = '{param}_h{h}_{region}'.format(param=param,h=h,region=region)
-            paramMasses = avals
-            paramValues = [vals[''][h][a]['{param}_h{h}_a{a}_{region}'.format(param=param,h=h,a=a,region=region)] for a in amasses]
+            name = '{param}_{region}'.format(param=param,region=region)
+            paramMasses = [[],[]]
+            paramValues = []
             paramShifts = {}
-            for shift in shifts:
-                shiftValuesUp   = [vals[shift+'Up'  ][h][a]['{param}_h{h}_a{a}_{region}_{shift}Up'.format(  param=param,h=h,a=a,region=region,shift=shift)] for a in amasses]
-                shiftValuesDown = [vals[shift+'Down'][h][a]['{param}_h{h}_a{a}_{region}_{shift}Down'.format(param=param,h=h,a=a,region=region,shift=shift)] for a in amasses]
-                paramShifts[shift] = {'up': shiftValuesUp, 'down': shiftValuesDown}
+            for h in vals['']:
+                for a in vals[''][h]:
+                    paramMasses[0] += [h]
+                    paramMasses[1] += [float(str(a).replace('p','.'))]
+                    paramValues += [vals[''][h][a]['{param}_h{h}_a{a}_{region}'.format(param=param,h=h,a=a,region=region)]]
+                    for shift in shifts:
+                        if shift not in paramShifts: paramShifts[shift] = {'up': [], 'down': []}
+                        paramShifts[shift]['up']   += [vals[shift+'Up'  ][h][a]['{param}_h{h}_a{a}_{region}_{shift}Up'.format(  param=param,h=h,a=a,region=region,shift=shift)]]
+                        paramShifts[shift]['down'] += [vals[shift+'Down'][h][a]['{param}_h{h}_a{a}_{region}_{shift}Down'.format(param=param,h=h,a=a,region=region,shift=shift)]]
             spline = Models.Spline(name,
+                MH = ['MH','MA'],
                 masses = paramMasses,
                 values = paramValues,
                 shifts = paramShifts,
@@ -485,32 +562,34 @@ class HaaLimits(Limits):
             splines[name] = spline
 
         # integral spline
-        name = 'integral_{}_{}'.format(self.SPLINENAME.format(h=h),region)
-        paramMasses = avals
-        paramValues = [integrals[''][h][a] for a in amasses]
+        name = 'integral_{}_{}'.format(self.SPLINENAME,region)
+        paramMasses = [[],[]]
+        paramValues = []
         paramShifts = {}
-        for shift in shifts:
-            shiftValuesUp   = [integrals[shift+'Up'  ][h][a] for a in amasses]
-            shiftValuesDown = [integrals[shift+'Down'][h][a] for a in amasses]
-            paramShifts[shift] = {'up': shiftValuesUp, 'down': shiftValuesDown}
+        for h in vals['']:
+            for a in vals[''][h]:
+                paramMasses[0] += [h]
+                paramMasses[1] += [float(str(a).replace('p','.'))]
+                paramValues += [integrals[''][h][a]]
+                for shift in shifts:
+                    if shift not in paramShifts: paramShifts[shift] = {'up': [], 'down': []}
+                    paramShifts[shift]['up']   += [integrals[shift+'Up'  ][h][a]]
+                    paramShifts[shift]['down'] += [integrals[shift+'Down'][h][a]]
         spline = Models.Spline(name,
+            MH = ['MH','MA'],
             masses = paramMasses,
             values = paramValues,
             shifts = paramShifts,
         )
         spline.build(workspace, name)
         splines[name] = spline
-    
+
         # create model
-        if fit:
-            print 'Need to reimplement fitting'
-            raise
-        else:
-            model = Models.Voigtian(self.SPLINENAME.format(h=h),
-                x = xVar,
-                **{param: '{param}_h{h}_{region}'.format(param=param, h=h, region=region) for param in params}
-            )
-        model.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region))
+        model = Models.Voigtian(self.SPLINENAME,
+            x = xVar,
+            **{param: '{param}_{region}'.format(param=param, region=region) for param in params}
+        )
+        model.build(workspace,'{}_{}'.format(self.SPLINENAME,region))
 
         return model
 
@@ -682,8 +761,8 @@ class HaaLimits(Limits):
                     data_obs = model.generate(ROOT.RooArgSet(self.workspace.var(xVar)),int(integral))
                 if addSignal:
                     self.workspace.var('MH').setVal(ma)
-                    model = self.workspace.pdf('{}_{}'.format(self.SPLINENAME.format(h=mh),region))
-                    integral = self.workspace.function('integral_{}_{}'.format(self.SPLINENAME.format(h=mh),region)).getVal()
+                    model = self.workspace.pdf('{}_{}'.format(self.SPLINENAME,region))
+                    integral = self.workspace.function('integral_{}_{}'.format(self.SPLINENAME,region)).getVal()
                     if asimov:
                         sig_obs = model.generate(ROOT.RooArgSet(self.workspace.var(xVar)),integral,1)
                         data_obs.add(sig_obs)
@@ -998,61 +1077,81 @@ class HaaLimits(Limits):
         values = {}
         errors = {}
         integrals = {}
+        fitFuncs = {}
         for region in self.REGIONS:
             models[region] = {}
             values[region] = {}
             errors[region] = {}
             integrals[region] = {}
-            for h in self.HMASSES:
-                values[region][h] = {}
-                errors[region][h] = {}
-                integrals[region][h] = {}
-                for shift in ['']+self.SIGNALSHIFTS+self.QCDSHIFTS:
-                    if shift == '':
-                        vals, errs, ints = self.fitSignals(h,region=region,shift=shift,**kwargs)
-                        values[region][h][shift] = vals
-                        errors[region][h][shift] = errs
-                        integrals[region][h][shift] = ints
-                    elif shift in self.QCDSHIFTS:
-                        vals, errs, ints = self.fitSignals(h,region=region,shift=shift,**kwargs)
-                        values[region][h][shift] = vals
-                        errors[region][h][shift] = errs
-                        integrals[region][h][shift] = ints
-                    else:
-                        valsUp, errsUp, intsUp = self.fitSignals(h,region=region,shift=shift+'Up',**kwargs)
-                        valsDown, errsDown, intsDown = self.fitSignals(h,region=region,shift=shift+'Down',**kwargs)
-                        values[region][h][shift+'Up'] = valsUp
-                        errors[region][h][shift+'Up'] = errsUp
-                        integrals[region][h][shift+'Up'] = intsUp
-                        values[region][h][shift+'Down'] = valsDown
-                        errors[region][h][shift+'Down'] = errsDown
-                        integrals[region][h][shift+'Down'] = intsDown
+            fitFuncs[region] = {}
+            for shift in ['']+self.SIGNALSHIFTS+self.QCDSHIFTS:
+                values[region][shift] = {}
+                errors[region][shift] = {}
+                integrals[region][shift] = {}
+                fitFuncs[region][shift] = {}
+                if shift == '':
+                    vals, errs, ints, fits = self.fitSignals(region=region,shift=shift,**kwargs)
+                    values[region][shift] = vals
+                    errors[region][shift] = errs
+                    integrals[region][shift] = ints
+                    fitFuncs[region][shift] = fits
+                elif shift in self.QCDSHIFTS:
+                    vals, errs, ints, fits = self.fitSignals(region=region,shift=shift,**kwargs)
+                    values[region][shift] = vals
+                    errors[region][shift] = errs
+                    integrals[region][shift] = ints
+                    fitFuncs[region][shift] = fits
+                else:
+                    valsUp, errsUp, intsUp, fitsUp = self.fitSignals(region=region,shift=shift+'Up',**kwargs)
+                    valsDown, errsDown, intsDown, fitsDown = self.fitSignals(region=region,shift=shift+'Down',**kwargs)
+                    values[region][shift+'Up'] = valsUp
+                    errors[region][shift+'Up'] = errsUp
+                    integrals[region][shift+'Up'] = intsUp
+                    fitFuncs[region][shift+'Up'] = fitsUp
+                    values[region][shift+'Down'] = valsDown
+                    errors[region][shift+'Down'] = errsDown
+                    integrals[region][shift+'Down'] = intsDown
+                    fitFuncs[region][shift+'Down'] = fitsDown
                 # special handling for QCD scale uncertainties
                 if self.QCDSHIFTS:
-                    values[region][h]['qcdUp']      = {h:{a:{} for a in self.AMASSES}}
-                    values[region][h]['qcdDown']    = {h:{a:{} for a in self.AMASSES}}
-                    errors[region][h]['qcdUp']      = {h:{a:{} for a in self.AMASSES}}
-                    errors[region][h]['qcdDown']    = {h:{a:{} for a in self.AMASSES}}
-                    integrals[region][h]['qcdUp']   = {h:{a:0  for a in self.AMASSES}}
-                    integrals[region][h]['qcdDown'] = {h:{a:0  for a in self.AMASSES}}
-                    for a in values[region][h][''][h]:
-                        for val in values[region][h][''][h][a]:
-                            values[region][h]['qcdUp'  ][h][a][val+'_qcdUp'  ] = max([values[region][h][shift][h][a][val+'_'+shift] for shift in self.QCDSHIFTS])
-                            values[region][h]['qcdDown'][h][a][val+'_qcdDown'] = min([values[region][h][shift][h][a][val+'_'+shift] for shift in self.QCDSHIFTS])
-                            errors[region][h]['qcdUp'  ][h][a][val+'_qcdUp'  ] = max([errors[region][h][shift][h][a][val+'_'+shift] for shift in self.QCDSHIFTS])
-                            errors[region][h]['qcdDown'][h][a][val+'_qcdDown'] = min([errors[region][h][shift][h][a][val+'_'+shift] for shift in self.QCDSHIFTS])
-                        integrals[region][h]['qcdUp'  ][h][a] = max([integrals[region][h][shift][h][a] for shift in self.QCDSHIFTS])
-                        integrals[region][h]['qcdDown'][h][a] = min([integrals[region][h][shift][h][a] for shift in self.QCDSHIFTS])
+                    values[region]['qcdUp']      = {}
+                    values[region]['qcdDown']    = {}
+                    errors[region]['qcdUp']      = {}
+                    errors[region]['qcdDown']    = {}
+                    integrals[region]['qcdUp']   = {}
+                    integrals[region]['qcdDown'] = {}
+                    for h in values[region]['']:
+                        values[region]['qcdUp'][h]      = {}
+                        values[region]['qcdDown'][h]    = {}
+                        errors[region]['qcdUp'][h]      = {}
+                        errors[region]['qcdDown'][h]    = {}
+                        integrals[region]['qcdUp'][h]   = {}
+                        integrals[region]['qcdDown'][h] = {}
+                        for a in values[region][''][h]:
+                            values[region]['qcdUp'][h][a]      = {}
+                            values[region]['qcdDown'][h][a]    = {}
+                            errors[region]['qcdUp'][h][a]      = {}
+                            errors[region]['qcdDown'][h][a]    = {}
+                            integrals[region]['qcdUp'  ][h][a] = max([integrals[region][shift][h][a] for shift in self.QCDSHIFTS])
+                            integrals[region]['qcdDown'][h][a] = min([integrals[region][shift][h][a] for shift in self.QCDSHIFTS])
+                            for val in values[region][''][h][a]:
+                                values[region]['qcdUp'  ][h][a][val+'_qcdUp'  ] = max([values[region][shift][h][a][val+'_'+shift] for shift in self.QCDSHIFTS])
+                                values[region]['qcdDown'][h][a][val+'_qcdDown'] = min([values[region][shift][h][a][val+'_'+shift] for shift in self.QCDSHIFTS])
+                                errors[region]['qcdUp'  ][h][a][val+'_qcdUp'  ] = max([errors[region][shift][h][a][val+'_'+shift] for shift in self.QCDSHIFTS])
+                                errors[region]['qcdDown'][h][a][val+'_qcdDown'] = min([errors[region][shift][h][a][val+'_'+shift] for shift in self.QCDSHIFTS])
                     for shift in ['qcdUp','qcdDown']:
                         savedir = '{}/{}'.format(self.fitsDir,shift)
                         python_mkdir(savedir)
-                        savename = '{}/h{}_{}_{}.json'.format(savedir,h,region,shift)
-                        jsonData = {'vals': values[region][h][shift], 'errs': errors[region][h][shift], 'integrals': integrals[region][h][shift]}
+                        savename = '{}/{}_{}.json'.format(savedir,region,shift)
+                        jsonData = {'vals': values[region][shift], 'errs': errors[region][shift], 'integrals': integrals[region][shift]}
                         self.dump(savename,jsonData)
+                    fitFuncs[region]['qcdUp']   = self.fitSignalParams(values[region]['qcdUp'],  errors[region]['qcdUp'],  integrals[region]['qcdUp'],  region,'qcdUp')
+                    fitFuncs[region]['qcdDown'] = self.fitSignalParams(values[region]['qcdDown'],errors[region]['qcdDown'],integrals[region]['qcdDown'],region,'qcdDown')
 
-                    models[region][h] = self.buildSpline(h,values[region][h],errors[region][h],integrals[region][h],region,self.SIGNALSHIFTS+['qcd'],**kwargs)
-                else:
-                    models[region][h] = self.buildSpline(h,values[region][h],errors[region][h],integrals[region][h],region,self.SIGNALSHIFTS,**kwargs)
+            if self.QCDSHIFTS:
+                models[region] = self.buildSpline(values[region],errors[region],integrals[region],region,self.SIGNALSHIFTS+['qcd'],fitFuncs=fitFuncs[region],**kwargs)
+            else:
+                models[region] = self.buildSpline(values[region],errors[region],integrals[region],region,self.SIGNALSHIFTS,fitFuncs=fitFuncs[region],**kwargs)
         self.fitted_models = models
 
     ######################
@@ -1062,7 +1161,7 @@ class HaaLimits(Limits):
         bgs = self.getComponentFractions(self.workspace.pdf('bg_'+self.REGIONS[0]))
 
         bgs = [b.rstrip('_'+self.REGIONS[0]) for b in bgs]
-        sigs = [self.SPLINENAME.format(h=h) for h in self.HMASSES]
+        sigs = [self.SPLINENAME]
 
         # setup bins
         for region in self.REGIONS:
@@ -1121,7 +1220,7 @@ class HaaLimits(Limits):
     ###################
     def addSystematics(self,doBinned=False,addControl=False):
         logging.debug('addSystematics')
-        self.sigProcesses = tuple([self.SPLINENAME.format(h=h) for h in self.HMASSES])
+        self.sigProcesses = tuple([self.SPLINENAME])
         bgs = self.getComponentFractions(self.workspace.pdf('bg_'+self.REGIONS[0]))
         bgs = [b.rstrip('_'+self.REGIONS[0]) for b in bgs]
         self.bgProcesses = tuple(bgs)
@@ -1173,6 +1272,8 @@ class HaaLimits(Limits):
             self.addSystematic(param, 'param', systematics=[v,e])
 
     def _addHiggsSystematic(self):
+        #TODO switch to spline
+        return
         # theory
         syst = {}
         if 125 in self.HMASSES: syst[((self.SPLINENAME.format(h=125),), tuple(self.REGIONS))] = (1+(0.046*48.52+0.004*3.779)/(48.52+3.779)    , 1+(-0.067*48.52-0.003*3.779)/(48.52+3.779))
@@ -1259,8 +1360,7 @@ class HaaLimits(Limits):
         processes = {}
         bgs = self.getComponentFractions(self.workspace.pdf('bg_'+self.REGIONS[0]))
         bgs = [b.rstrip('_'+self.REGIONS[0]) for b in bgs]
-        for h in self.HMASSES:
-            processes[self.SIGNAME.format(h=h,a='X')] = [self.SPLINENAME.format(h=h)] + bgs
+        processes = [self.SPLINENAME] + bgs
         if subdirectory == '':
             self.printCard('datacards_shape/MuMuTauTau/{}'.format(name),processes=processes,blind=False,saveWorkspace=True)
         else:

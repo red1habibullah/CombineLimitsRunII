@@ -19,6 +19,11 @@ from DevTools.Plotter.xsec import getXsec
 from CombineLimits.HaaLimits.HaaLimitsNew import HaaLimits
 from CombineLimits.HaaLimits.HaaLimits2DNew import HaaLimits2D
 
+import CombineLimits.Plotter.CMS_lumi as CMS_lumi
+import CombineLimits.Plotter.tdrstyle as tdrstyle
+
+tdrstyle.setTDRStyle()
+
 logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
 
@@ -34,11 +39,11 @@ xRange = [2.5,25] # with jpsi
 yRange = [0,1200] # h, hkf
 
 hmasses = [125,300,750]
-if testing: hmasses = [125]
+#if testing: hmasses = [125]
 #if testing: hmasses = [300]
 #if testing: hmasses = [750]
 amasses = ['3p6',4,5,6,7,9,11,13,15,17,19,21]
-#amasses = ['3p6',5,9,13,17,21]
+if testing: amasses = ['3p6',5,9,13,17,21]
     
 signame = 'HToAAH{h}A{a}'
 ggsigname = 'ggHToAAH{h}A{a}'
@@ -106,9 +111,15 @@ def getDataset(wrapper,plotname):
     sample = wrapper.sample
     if 'SUSY' in sample:
         if yRange[1]>100:
-            if '300' in sample:   thisyrange = [40,360]
-            elif '750' in sample: thisyrange = [140,900]
-            else:                 thisyrange = [20,150]
+            if '200' in sample:    h = 200 #thisyrange = [20,260]
+            elif '250' in sample:  h = 250 #thisyrange = [30,300]
+            elif '300' in sample:  h = 300 #thisyrange = [40,360]
+            elif '400' in sample:  h = 400 #thisyrange = [60,500]
+            elif '500' in sample:  h = 500 #thisyrange = [80,700]
+            elif '750' in sample:  h = 750 #thisyrange = [140,900]
+            elif '1000' in sample: h = 1000 #thisyrange = [180,1200]
+            else:                  h = 125 #thisyrange = [20,150]
+            thisyrange = [0.15*h, 1.2*h]
     selDatasets = {
         'x' : 'x>{} && x<{}'.format(*thisxrange),
         'y' : 'y>{} && y<{}'.format(*thisyrange),
@@ -511,14 +522,14 @@ def create_datacard(args):
     if not skipSignal:
         haaLimits.XRANGE = [0,30] # override for signal splines
         if project:
-            haaLimits.addSignalModels(fit=False,scaleLumi=scaleLumi)
+            haaLimits.addSignalModels(fit=True,scaleLumi=scaleLumi)
         elif 'tt' in var:
-            haaLimits.addSignalModels(fit=False,yFitFuncFP='V',yFitFuncPP='L',scaleLumi=scaleLumi)#,cutOffFP=0.75,cutOffPP=0.75)
+            haaLimits.addSignalModels(fit=True,yFitFuncFP='V',yFitFuncPP='L',scaleLumi=scaleLumi)#,cutOffFP=0.75,cutOffPP=0.75)
         elif 'h' in var or 'hkf' in var:
-            #haaLimits.addSignalModels(fit=False,yFitFuncFP='DG',yFitFuncPP='DG',scaleLumi=scaleLumi)#,cutOffFP=0.0,cutOffPP=0.0)
-            haaLimits.addSignalModels(fit=False,yFitFuncFP=args.yFitFunc,yFitFuncPP=args.yFitFunc,scaleLumi=scaleLumi)#,cutOffFP=0.0,cutOffPP=0.0)
+            #haaLimits.addSignalModels(fit=True,yFitFuncFP='DG',yFitFuncPP='DG',scaleLumi=scaleLumi)#,cutOffFP=0.0,cutOffPP=0.0)
+            haaLimits.addSignalModels(fit=True,yFitFuncFP=args.yFitFunc,yFitFuncPP=args.yFitFunc,scaleLumi=scaleLumi)#,cutOffFP=0.0,cutOffPP=0.0)
         else:
-            haaLimits.addSignalModels(fit=False)
+            haaLimits.addSignalModels(fit=True)
         haaLimits.XRANGE = xRange
     if args.addControl: haaLimits.addControlData()
     haaLimits.addData(blind=blind,asimov=args.asimov,addSignal=args.addSignal,doBinned=not doUnbinned,scaleLumi=scaleLumi,**signalParams) # this will generate a dataset based on the fitted model

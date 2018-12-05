@@ -30,7 +30,7 @@ skipSignal = False
 scaleLumi = 3.7
 
 channelAcceptances = {
-    'em' : 0.54,
+    'em' : 0.47,
     'et' : 0.50,
     'mt' : 0.50,
     'tt' : 0.61,

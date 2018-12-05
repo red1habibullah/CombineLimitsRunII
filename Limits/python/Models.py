@@ -166,22 +166,35 @@ class Model(object):
         return []
 
 def buildSpline(ws,label,MH,masses,values):
-    if isinstance(MH, list):
-        args = ROOT.RooArgList(*[ws.var(mh) for mh in MH])
-        tree = ROOT.TTree('tree','tree')
-        val = array('d',[0])
-        mhs = [array('d',[0]) for mh in MH]
-        tree.Branch('f', val, 'f/Double_t')
-        for m in range(len(MH)):
-            tree.Branch(MH[m], mhs[m], '{}/Double_t'.format(MH[m]))
-        for i in range(len(values)):
-            val[0] = values[i]
+    if isinstance(values, list):
+        if isinstance(MH, list):
+            args = ROOT.RooArgList(*[ws.var(mh) for mh in MH])
+            tree = ROOT.TTree('tree','tree')
+            val = array('d',[0])
+            mhs = [array('d',[0]) for mh in MH]
+            tree.Branch('f', val, 'f/Float_t')
             for m in range(len(MH)):
-                mhs[m][0] = masses[m][i]
-            tree.Fill()
-        spline = ROOT.RooSplineND(label, label, args, tree, 'f')
-    else:
-        spline  = ROOT.RooSpline1D(label,  label,  ws.var(MH), len(masses), array('d',masses), array('d',values))
+                tree.Branch(MH[m], mhs[m], '{}/Float_t'.format(MH[m]))
+            for i in range(len(values)):
+                val[0] = values[i]
+                for m in range(len(MH)):
+                    mhs[m][0] = masses[m][i]
+                tree.Fill()
+            spline = ROOT.RooSplineND(label, label, args, tree, 'f', 1, True)
+        else:
+            spline  = ROOT.RooSpline1D(label,  label,  ws.var(MH), len(masses), array('d',masses), array('d',values))
+    else: # TFn case
+        if not isinstance(MH, list): MH = [MH]
+        args = ROOT.RooArgList(*[ws.var(mh) for mh in MH])
+        params = []
+        for p in range(values.GetNpar()):
+            name = '{}_p{}'.format(label,p)
+            ws.factory('{}[{}]'.format(name,values.GetParameter(p)))
+            params += [ws.var(name)]
+        pargs = ROOT.RooArgList(*params)
+        values.SetName(label)
+        values.SetTitle(label)
+        spline = ROOT.RooTFnBinding(label,label,values,args,pargs)
     return spline
 
 class ModelSpline(Model):
@@ -249,19 +262,31 @@ class Spline(object):
             splineCentral = buildSpline(ws,centralName,self.mh,masses,values)
             shiftFormula = '@0'
             args.Add(splineCentral)
-            # TODO: fix spline for 2D
             for shift in shifts:
-                up = [u-c for u,c in zip(shifts[shift]['up'],values)]
-                down = [c-d for d,c in zip(shifts[shift]['down'],values)]
-                upName = '{0}_{1}Up'.format(splineName,shift)
-                downName = '{0}_{1}Down'.format(splineName,shift)
-                if any([ v == 0 for v in values]):
-                    logging.warning('Zero value for {}: {}'.format(splineName, ' '.join(['{}'.format(v) for v in values])))
-                if any([abs(u/v)>uncertainty if v else u for u,v in zip(up,values)]) or any([abs(d/v)>uncertainty if v else d for d,v in zip(down,values)]):
+                if isinstance(values,list):
+                    up = [u-c for u,c in zip(shifts[shift]['up'],values)]
+                    down = [c-d for d,c in zip(shifts[shift]['down'],values)]
+                    upName = '{0}_{1}Up'.format(splineName,shift)
+                    downName = '{0}_{1}Down'.format(splineName,shift)
+                    if any([ v == 0 for v in values]):
+                        logging.warning('Zero value for {}: {}'.format(splineName, ' '.join(['{}'.format(v) for v in values])))
+                    if any([abs(u/v)>uncertainty if v else u for u,v in zip(up,values)]) or any([abs(d/v)>uncertainty if v else d for d,v in zip(down,values)]):
+                        ws.factory('{}[0,-10,10]'.format(shift))
+                        splineUp   = buildSpline(ws,upName,  self.mh,masses,up)
+                        splineDown = buildSpline(ws,downName,self.mh,masses,down)
+                        shiftFormula += ' + TMath::Max(0,@{shift})*@{up} + TMath::Min(0,@{shift})*@{down}'.format(shift=len(args),up=len(args)+1,down=len(args)+2)
+                        args.Add(ws.var(shift))
+                        args.Add(splineUp)
+                        args.Add(splineDown)
+                else:
+                    up = shifts[shift]['up']
+                    down = shifts[shift]['down']
+                    upName = '{0}_{1}Up'.format(splineName,shift)
+                    downName = '{0}_{1}Down'.format(splineName,shift)
                     ws.factory('{}[0,-10,10]'.format(shift))
-                    splineUp   = ROOT.RooSpline1D(upName,  upName,  ws.var(self.mh), len(masses), array('d',masses), array('d',up))
-                    splineDown = ROOT.RooSpline1D(downName,downName,ws.var(self.mh), len(masses), array('d',masses), array('d',down))
-                    shiftFormula += ' + TMath::Max(0,@{shift})*@{up} + TMath::Min(0,@{shift})*@{down}'.format(shift=len(args),up=len(args)+1,down=len(args)+2)
+                    splineUp   = buildSpline(ws,upName,  self.mh,masses,up)
+                    splineDown = buildSpline(ws,downName,self.mh,masses,down)
+                    shiftFormula += ' + TMath::Max(0,@{shift})*(@{up}-@0) + TMath::Min(0,@{shift})*(@0-@{down})'.format(shift=len(args),up=len(args)+1,down=len(args)+2)
                     args.Add(ws.var(shift))
                     args.Add(splineUp)
                     args.Add(splineDown)

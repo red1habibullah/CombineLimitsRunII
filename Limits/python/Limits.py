@@ -68,6 +68,9 @@ class Limits(object):
     def addMH(self, mhMin, mhMax, unit='', label='', **kwargs):
         self.addVar('MH',mhMin,mhMax,unit,label,**kwargs)
 
+    def addMA(self, maMin, maMax, unit='', label='', **kwargs):
+        self.addVar('MA',maMin,maMax,unit,label,**kwargs)
+
     def addX(self, xMin, xMax, unit='', label='',**kwargs):
         self.addVar('x',xMin,xMax,unit,label,**kwargs)
 

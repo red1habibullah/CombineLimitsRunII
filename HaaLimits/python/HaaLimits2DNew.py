@@ -18,6 +18,11 @@ from CombineLimits.Limits.Limits import Limits
 from CombineLimits.HaaLimits.HaaLimitsNew import HaaLimits
 from CombineLimits.Limits.utilities import *
 
+import CombineLimits.Plotter.CMS_lumi as CMS_lumi
+import CombineLimits.Plotter.tdrstyle as tdrstyle
+
+tdrstyle.setTDRStyle()
+
 class HaaLimits2D(HaaLimits):
     '''
     Create the Haa Limits workspace
@@ -365,9 +370,15 @@ class HaaLimits2D(HaaLimits):
         thisxrange = [0.8*aval, 1.2*aval]
         thisyrange = [0.15*h, 1.2*h] if self.YRANGE[1]>100 else [self.YRANGE[0], 1.2*aval]
         if self.YRANGE[1]>100:
-            if  h == 125:  thisyrange = [20, 150]
-            elif h == 300: thisyrange = [40,360]
-            elif h == 750: thisyrange = [140,900]
+            thisyrange = [0.15*h, 1.2*h]
+            #if  h == 125:  thisyrange = [20, 150]
+            #elif h == 200: thisyrange = [20,260]
+            #elif h == 250: thisyrange = [30,300]
+            #elif h == 300: thisyrange = [40,360]
+            #elif h == 400: thisyrange = [60,500]
+            #elif h == 500: thisyrange = [80,700]
+            #elif h == 750: thisyrange = [140,900]
+            #elif h == 1000: thisyrange = [180,1200]
         ws = ROOT.RooWorkspace('sig')
         ws.factory('x[{0}, {1}]'.format(*thisxrange)) 
         #ws.factory('x[{0}, {1}]'.format(*self.XRANGE))
@@ -703,6 +714,7 @@ class HaaLimits2D(HaaLimits):
         dobgsig = kwargs.get('doBackgroundSignal',False)
         amasses = self.AMASSES
         if h>125:      amasses = [a for a in amasses if a not in ['3p6',4,6]]
+        if h in [200,250,400,500,1000]: amasses = [5, 9, 15]
         avals = [float(str(x).replace('p','.')) for x in amasses]
         histMap = self.histMap[region][shift]
         tag = kwargs.get('tag','{}{}'.format(region,'_'+shift if shift else ''))
@@ -967,6 +979,7 @@ class HaaLimits2D(HaaLimits):
         dobgsig = kwargs.get('doBackgroundSignal',False)
         amasses = self.AMASSES
         if h>125: amasses = [a for a in amasses if a not in ['3p6',4,6]]
+        if h in [200,250,400,500,1000]: amasses = [5, 9, 15]
         avals = [float(str(x).replace('p','.')) for x in amasses]
 
         # create parameter splines
@@ -1874,6 +1887,12 @@ class HaaLimits2D(HaaLimits):
                 "h125a17" : { "mean": 91.1, "sigma1": 15.2, "sigma2": 12.2},
                 "h125a19" : { "mean": 90.7, "sigma1": 15.4, "sigma2": 12.4},
                 "h125a21" : { "mean": 91.3, "sigma1": 14.5, "sigma2": 12.3},
+                "h200a5"  : { "mean": 140, "sigma1": 27.0, "sigma2": 20.0},
+                "h200a9"  : { "mean": 140, "sigma1": 26.2, "sigma2": 22.1},
+                "h200a15" : { "mean": 140, "sigma1": 25.5, "sigma2": 22.9},
+                "h250a5"  : { "mean": 140, "sigma1": 27.0, "sigma2": 20.0},
+                "h250a9"  : { "mean": 140, "sigma1": 26.2, "sigma2": 22.1},
+                "h250a15" : { "mean": 140, "sigma1": 25.5, "sigma2": 22.9},
                 "h300a5"  : { "mean": 215, "sigma1": 44.4, "sigma2": 26.4},
                 "h300a7"  : { "mean": 211, "sigma1": 44.7, "sigma2": 29.6},
                 "h300a9"  : { "mean": 209, "sigma1": 49.0, "sigma2": 39.5},
@@ -1883,6 +1902,12 @@ class HaaLimits2D(HaaLimits):
                 "h300a17" : { "mean": 206, "sigma1": 47.0, "sigma2": 33.0},
                 "h300a19" : { "mean": 206, "sigma1": 49.4, "sigma2": 31.9},
                 "h300a21" : { "mean": 206, "sigma1": 50.3, "sigma2": 30.4},
+                "h400a5"  : { "mean": 240, "sigma1": 67.0, "sigma2": 40.0},
+                "h400a9"  : { "mean": 240, "sigma1": 66.2, "sigma2": 42.1},
+                "h400a15" : { "mean": 240, "sigma1": 65.5, "sigma2": 42.9},
+                "h500a5"  : { "mean": 340, "sigma1": 87.0, "sigma2": 50.0},
+                "h500a9"  : { "mean": 340, "sigma1": 86.2, "sigma2": 52.1},
+                "h500a15" : { "mean": 340, "sigma1": 85.5, "sigma2": 52.9},
                 "h750a5"  : { "mean": 522, "sigma1": 121, "sigma2": 68},
                 "h750a7"  : { "mean": 510, "sigma1": 130, "sigma2": 75},
                 "h750a9"  : { "mean": 508, "sigma1": 133, "sigma2": 80},
@@ -1891,7 +1916,10 @@ class HaaLimits2D(HaaLimits):
                 "h750a15" : { "mean": 501, "sigma1": 145, "sigma2": 80},
                 "h750a17" : { "mean": 500, "sigma1": 149, "sigma2": 76},
                 "h750a19" : { "mean": 500, "sigma1": 154, "sigma2": 73},
-                "h750a21" : { "mean": 499, "sigma1": 153, "sigma2": 75}
+                "h750a21" : { "mean": 499, "sigma1": 153, "sigma2": 75},
+                "h1000a5" : { "mean": 640, "sigma1": 157.0, "sigma2": 80.0},
+                "h1000a9" : { "mean": 640, "sigma1": 156.2, "sigma2": 82.1},
+                "h1000a15": { "mean": 640, "sigma1": 155.5, "sigma2": 82.9},
             }
         elif region == "FP": 
             initialValues = {
@@ -1907,6 +1935,12 @@ class HaaLimits2D(HaaLimits):
                 "h125a17" : { "mean": 93.5, "sigma1": 15.6, "sigma2": 13.9},
                 "h125a19" : { "mean": 91.0, "sigma1": 13.9, "sigma2": 15.5},
                 "h125a21" : { "mean": 93.2, "sigma1": 14.5, "sigma2": 15.8},
+                "h200a5"  : { "mean": 140, "sigma1": 27.0, "sigma2": 20.0},
+                "h200a9"  : { "mean": 140, "sigma1": 26.2, "sigma2": 22.1},
+                "h200a15" : { "mean": 140, "sigma1": 25.5, "sigma2": 22.9},
+                "h250a5"  : { "mean": 140, "sigma1": 27.0, "sigma2": 20.0},
+                "h250a9"  : { "mean": 140, "sigma1": 26.2, "sigma2": 22.1},
+                "h250a15" : { "mean": 140, "sigma1": 25.5, "sigma2": 22.9},
                 "h300a5"  : { "mean": 215, "sigma1": 47.0, "sigma2": 27.7},
                 "h300a7"  : { "mean": 211, "sigma1": 51.0, "sigma2": 27.0},
                 "h300a9"  : { "mean": 210, "sigma1": 49.0, "sigma2": 29.0},
@@ -1916,6 +1950,12 @@ class HaaLimits2D(HaaLimits):
                 "h300a17" : { "mean": 210, "sigma1": 52.0, "sigma2": 30.0},
                 "h300a19" : { "mean": 209, "sigma1": 53.0, "sigma2": 29.0},
                 "h300a21" : { "mean": 207, "sigma1": 50.0, "sigma2": 32.0},
+                "h400a5"  : { "mean": 240, "sigma1": 67.0, "sigma2": 40.0},
+                "h400a9"  : { "mean": 240, "sigma1": 66.2, "sigma2": 42.1},
+                "h400a15" : { "mean": 240, "sigma1": 65.5, "sigma2": 42.9},
+                "h500a5"  : { "mean": 340, "sigma1": 87.0, "sigma2": 50.0},
+                "h500a9"  : { "mean": 340, "sigma1": 86.2, "sigma2": 52.1},
+                "h500a15" : { "mean": 340, "sigma1": 85.5, "sigma2": 52.9},
                 "h750a5"  : { "mean": 511, "sigma1": 148, "sigma2": 65},
                 "h750a7"  : { "mean": 507, "sigma1": 150, "sigma2": 69},
                 "h750a9"  : { "mean": 504, "sigma1": 148, "sigma2": 73},
@@ -1924,7 +1964,10 @@ class HaaLimits2D(HaaLimits):
                 "h750a15" : { "mean": 502, "sigma1": 154, "sigma2": 72},
                 "h750a17" : { "mean": 500, "sigma1": 156, "sigma2": 74},
                 "h750a19" : { "mean": 502, "sigma1": 150, "sigma2": 75},
-                "h750a21" : { "mean": 500, "sigma1": 158, "sigma2": 74}
+                "h750a21" : { "mean": 500, "sigma1": 158, "sigma2": 74},
+                "h1000a5" : { "mean": 640, "sigma1": 157.0, "sigma2": 80.0},
+                "h1000a9" : { "mean": 640, "sigma1": 156.2, "sigma2": 82.1},
+                "h1000a15": { "mean": 640, "sigma1": 155.5, "sigma2": 82.9},
             }
 
         return initialValues
