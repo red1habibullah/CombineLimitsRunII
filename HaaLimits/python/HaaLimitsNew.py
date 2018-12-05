@@ -512,10 +512,10 @@ class HaaLimits(Limits):
         fitFuncs = kwargs.get('fitFuncs',{})
 
         splines = {}
+        params = ['mean','width','sigma']
         if fit:
-            params = ['mean','width','sigma','integral']
-            for param in params:
-                name = '{param}_{region}'.format(param=param,region=region)
+            for param in params+['integral']:
+                name = '{param}_{splinename}_{region}'.format(param=param,region=region,splinename=self.SPLINENAME)
                 spline = Models.Spline(name,
                     MH = ['MH','MA'],
                     masses = None,
@@ -528,7 +528,7 @@ class HaaLimits(Limits):
             # create model
             model = Models.Voigtian(self.SPLINENAME,
                 x = xVar,
-                **{param: '{param}_{region}'.format(param=param, region=region) for param in params}
+                **{param: '{param}_{splinename}_{region}'.format(param=param, splinename=self.SPLINENAME, region=region) for param in params}
             )
             model.build(workspace,'{}_{}'.format(self.SPLINENAME,region))
 
