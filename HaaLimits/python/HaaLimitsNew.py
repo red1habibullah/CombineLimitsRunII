@@ -31,16 +31,26 @@ class HaaLimits(Limits):
     # permanent parameters
     HMASSES = [125,200,250,300,400,500,750,1000]
     AMASSES = ['3p6',4,5,6,7,9,11,13,15,17,19,21]
+    HAMAP = {
+        125 : ['3p6',4,5,6,7,9,11,13,15,17,19,21],
+        200 : [5,9,15],
+        250 : [5,9,15],
+        300 : [5,7,9,11,13,15,17,19,21],
+        400 : [5,9,15],
+        500 : [5,9,15],
+        750 : [5,7,9,11,13,15,17,19,21],
+        1000: [5,9,15],
+    }
 
     HBINNING = 25 # GeV
     ABINNING = 0.1 # GeV
 
     SIGNAME = 'HToAAH{h}A{a}'
-    SPLINENAME = 'sig'
+    SPLINENAME = 'sig{h}'
     ALABEL = 'm_{a}'
     ARANGE = [0,25]
-    HLABEL = 'm_{a}'
-    HRANGE = [0,1000]
+    HLABEL = 'm_{H}'
+    HRANGE = [0,1200]
 
     XRANGE = [4,25]
     XBINNING = 210
@@ -55,7 +65,7 @@ class HaaLimits(Limits):
     QCDSHIFTS = [] # note, max/min of all (excluding 0.5/2)
 
 
-    def __init__(self,histMap,tag=''):
+    def __init__(self,histMap,tag='',do2DInterpolation=False,doParamFit=False):
         '''
         Required arguments:
             histMap = histogram map. the structure should be:
@@ -85,6 +95,11 @@ class HaaLimits(Limits):
         self.plotDir = 'figures/HaaLimits{}'.format('_'+tag if tag else '')
         self.fitsDir = 'fitParams/HaaLimits{}'.format('_'+tag if tag else '')
 
+        self.do2D = do2DInterpolation
+        if self.do2D:
+            self.SPLINENAME = 'sig'
+        self.doParamFit = doParamFit
+
     def dump(self,name,results):
         with open(name,'w') as f:
             f.write(json.dumps(results, indent=4, sort_keys=True))
@@ -95,6 +110,12 @@ class HaaLimits(Limits):
         with open(name.replace('.json','.pkl'),'rb') as f:
             results = pickle.load(f)
         return results
+
+    def aToFloat(self,a):
+        return float(str(a).replace('p','.'))
+
+    def aToStr(self,a):
+        return str(a).replace('.','p') if '.' in str(a) and not str(a).endswith('0') else int(a)
 
     ###########################
     ### Workspace utilities ###
@@ -305,12 +326,13 @@ class HaaLimits(Limits):
         return vals, errs, ints
 
     def fitSignal(self,h,a,region,shift='',**kwargs):
-        scaleLumi = kwargs.get('scaleLumi',1)
+        scale = kwargs.get('scale',1)
+        if isinstance(scale,dict): scale = scale.get(self.SIGNAME.format(h=h,a=a),1)
         results = kwargs.get('results',{})
         histMap = self.histMap[region][shift]
         tag = kwargs.get('tag','{}{}'.format(region,'_'+shift if shift else ''))
 
-        aval = float(str(a).replace('p','.'))
+        aval = self.aToFloat(a)
         ws = ROOT.RooWorkspace('sig')
         ws.factory('x[{0}, {1}]'.format(*self.XRANGE))
         ws.var('x').setUnit('GeV')
@@ -330,9 +352,9 @@ class HaaLimits(Limits):
         saveDir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
         results, errors = model.fit(ws, hist, name, saveDir=saveDir, save=True, doErrors=True)
         if self.binned:
-            integral = histMap[self.SIGNAME.format(h=h,a=a)].Integral() * scaleLumi
+            integral = histMap[self.SIGNAME.format(h=h,a=a)].Integral() * scale
         else:
-            integral = histMap[self.SIGNAME.format(h=h,a=a)].sumEntries('x>{} && x<{}'.format(*self.XRANGE)) * scaleLumi
+            integral = histMap[self.SIGNAME.format(h=h,a=a)].sumEntries('x>{} && x<{}'.format(*self.XRANGE)) * scale
 
         savedir = '{}/{}'.format(self.fitsDir,shift if shift else 'central')
         python_mkdir(savedir)
@@ -349,8 +371,6 @@ class HaaLimits(Limits):
         Required arguments:
             h = higgs mass
         '''
-        scaleLumi = kwargs.get('scaleLumi',1)
-        fit = kwargs.get('fit',False)      # will fit the spline parameters rather than a simple spline
         load = kwargs.get('load',False)
         skipFit = kwargs.get('skipFit',False)
         tag = kwargs.get('tag','{}{}'.format(region,'_'+shift if shift else ''))
@@ -374,10 +394,8 @@ class HaaLimits(Limits):
                 errors[h] = {}
                 integrals[h] = {}
 
-                amasses = self.AMASSES
-                if h>125: amasses = [a for a in amasses if a not in ['3p6',4,6]]
-                if h in [200,250,400,500,1000]: amasses = [5, 9, 15]
-                avals = [float(str(x).replace('p','.')) for x in amasses]
+                amasses = self.HAMAP[h]
+                avals = [self.aToFloat(x) for x in amasses]
 
                 for a in amasses:
                     if load or (shift and not skipFit):
@@ -398,12 +416,35 @@ class HaaLimits(Limits):
     def fitSignalParams(self,results,errors,integrals,region,shift='',**kwargs):
         tag = kwargs.get('tag','{}{}'.format(region,'_'+shift if shift else ''))
         # Fit using ROOT rather than RooFit for the splines
-        fitFuncs = {
-            'mean' :    ROOT.TF2('mean_{}'.format(tag),     '[0]+[1]*y',                                 *self.HRANGE+self.ARANGE), 
-            'width':    ROOT.TF2('width_{}'.format(tag),    '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE), 
-            'sigma':    ROOT.TF2('sigma_{}'.format(tag),    '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE), 
-            'integral': ROOT.TF2('integral_{}'.format(tag), 'exp([0]+[1]*x)*([2]+[3]*y+[4]*y*y+[5]*x*y)',*self.HRANGE+self.ARANGE),
-        }
+        if self.do2D:
+            fitFuncs = {
+                'mean' :    ROOT.TF2('mean_{}'.format(tag),     '[0]+[1]*y',                                 *self.HRANGE+self.ARANGE), 
+                #'width':    ROOT.TF2('width_{}'.format(tag),    '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE), 
+                'width':    ROOT.TF2('width_{}'.format(tag),    '[0]+[1]*x+[2]*y+[3]*x*y+[4]*y*y',           *self.HRANGE+self.ARANGE), 
+                'sigma':    ROOT.TF2('sigma_{}'.format(tag),    '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE), 
+                #'integral': ROOT.TF2('integral_{}'.format(tag), 'exp([0]+[1]*x)*([2]+[3]*y+[4]*y*y+[5]*x*y+[6]*y*y*y+[7]*y*y*y*y)',*self.HRANGE+self.ARANGE),
+                #'integral': ROOT.TF2('integral_{}'.format(tag), '[0]+[1]*x+[2]*y+[3]*x*x+[4]*y*y+[5]*x*y+[6]*y*y*y+[7]*y*y*y*y',*self.HRANGE+self.ARANGE),
+                'integral': ROOT.TF2('integral_{}'.format(tag), '[0]+[1]*x+TMath::Erf([2]+[3]*y)*TMath::Erfc([4]+[5]*y)',*self.HRANGE+self.ARANGE),
+            }
+            fitFuncs['integral'].SetParameter(2,-0.005)
+            fitFuncs['integral'].SetParameter(3,0.02)
+            fitFuncs['integral'].SetParameter(4,-0.5)
+            fitFuncs['integral'].SetParameter(5,0.08)
+        else:
+            fitFuncs = {}
+            for h in self.HMASSES:
+                fitFuncs[h] = {
+                    'mean' :    ROOT.TF1('mean_h{}_{}'.format(h,tag),     '[0]+[1]*x',         *self.ARANGE), 
+                    'width':    ROOT.TF1('width_h{}_{}'.format(h,tag),    '[0]+[1]*x+[2]*x*x', *self.ARANGE), 
+                    'sigma':    ROOT.TF1('sigma_h{}_{}'.format(h,tag),    '[0]+[1]*x+[2]*x*x', *self.ARANGE), 
+                    #'integral': ROOT.TF1('integral_h{}_{}'.format(h,tag), '[0]+[1]*x+[2]*x*x+[3]*x*x*x+[4]*x*x*x*x', *self.ARANGE),
+                    'integral': ROOT.TF1('integral_h{}_{}'.format(h,tag), '[0]+TMath::Erf([1]+[2]*x)*TMath::Erfc([3]+[4]*x)', *self.ARANGE),
+                }
+                # set initial values
+                fitFuncs[h]['integral'].SetParameter(1,-0.005)
+                fitFuncs[h]['integral'].SetParameter(2,0.02)
+                fitFuncs[h]['integral'].SetParameter(3,-0.5)
+                fitFuncs[h]['integral'].SetParameter(4,0.08)
 
         colors = {
             125 : ROOT.kBlack,
@@ -414,21 +455,27 @@ class HaaLimits(Limits):
             500 : ROOT.kOrange-3,
             750 : ROOT.kGreen+2,
             1000: ROOT.kViolet-1,
+            5   : ROOT.kBlack,
+            9   : ROOT.kBlue,
+            15  : ROOT.kGreen+2,
         }
         
         for param in ['mean','width','sigma','integral']:
-            xvals = [h for h in sorted(results) for a in sorted(results[h])]
+            Hs = sorted(results)
+            As = {h: [self.aToStr(a) for a in sorted([self.aToFloat(x) for x in results[h]])] for h in Hs}
+            xvals = [h for h in Hs for a in As[h]]
             xerrs = [0] * len(xvals)
-            yvals = [float(str(a).replace('p','.')) for h in sorted(results) for a in sorted(results[h])]
+            yvals = [self.aToFloat(a) for h in Hs for a in As[h]]
             yerrs = [0] * len(yvals)
             if param=='integral':
-                zvals = [integrals[h][a] for h in sorted(results) for a in sorted(results[h])]
+                zvals = [integrals[h][a] for h in Hs for a in As[h]]
             else:
-                zvals = [results[h][a]['{}_h{}_a{}_{}'.format(param,h,a,tag)] for h in sorted(results) for a in sorted(results[h])]
-                zerrs = [errors[h][a]['{}_h{}_a{}_{}'.format(param,h,a,tag)] for h in sorted(results) for a in sorted(results[h])]
-            #graph = ROOT.TGraph2DErrors(len(xvals), array('d',xvals), array('d',yvals), array('d',zvals), array('d',xerrs), array('d',yerrs), array('
-            graph = ROOT.TGraph2D(len(xvals), array('d',xvals), array('d',yvals), array('d',zvals))
-            graph.Fit(fitFuncs[param])
+                zvals = [results[h][a]['{}_h{}_a{}_{}'.format(param,h,a,tag)] for h in Hs for a in As[h]]
+                zerrs = [errors[h][a]['{}_h{}_a{}_{}'.format(param,h,a,tag)] for h in Hs for a in As[h]]
+            if self.do2D:
+                #graph = ROOT.TGraph2DErrors(len(xvals), array('d',xvals), array('d',yvals), array('d',zvals), array('d',xerrs), array('d',yerrs), array('
+                graph = ROOT.TGraph2D(len(xvals), array('d',xvals), array('d',yvals), array('d',zvals))
+                graph.Fit(fitFuncs[param])
 
             name = '{}_{}'.format(param,tag)
             savedir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
@@ -447,11 +494,14 @@ class HaaLimits(Limits):
             legend.SetFillColor(0)
             legend.SetNColumns(len(self.HMASSES))
 
-            for h in self.HMASSES:
+            for h in [125,300,750]:
                 xs = [yvals[i] for i in range(len(xvals)) if xvals[i]==h]
                 ys = [zvals[i] for i in range(len(xvals)) if xvals[i]==h]
 
                 g = ROOT.TGraph(len(xs),array('d',xs),array('d',ys))
+                if not self.do2D:
+                    g.Fit(fitFuncs[h][param])
+                    g = ROOT.TGraph(len(xs),array('d',xs),array('d',ys)) # override so we dont plot the fits here
                 g.SetLineColor(colors[h])
                 g.SetMarkerColor(colors[h])
                 g.SetTitle('H({h})'.format(h=h))
@@ -462,7 +512,10 @@ class HaaLimits(Limits):
                 fxs = []
                 fys = []
                 for a in range(self.ARANGE[0]*10,self.ARANGE[1]*10+1,1):
-                    y = fitFuncs[param].Eval(h,a*0.1)
+                    if self.do2D:
+                        y = fitFuncs[param].Eval(h,a*0.1)
+                    else:
+                        y = fitFuncs[h][param].Eval(a*0.1)
                     fxs += [a*0.1]
                     fys += [y]
                 fg = ROOT.TGraph(len(fxs),array('d',fxs),array('d',fys))
@@ -472,12 +525,66 @@ class HaaLimits(Limits):
                 fmg.Add(fg)
 
             canvas.DrawFrame(self.ARANGE[0],min(zvals)*0.9,self.ARANGE[1],max(zvals)*1.1)
-            mg.Draw('p0')
+            if self.doParamFit:
+                mg.Draw('p0')
+            else:
+                mg.Draw('L p0')
             mg.GetXaxis().SetTitle(self.ALABEL)
             mg.GetYaxis().SetTitle(param)
-            fmg.Draw('L')
+            if self.doParamFit: fmg.Draw('L')
             legend.Draw()
             canvas.Print('{}.png'.format(savename))
+
+            if self.do2D:
+                savename = '{}/{}_Fit_vsH'.format(savedir,name)
+
+                canvas = ROOT.TCanvas(savename,savename,800,800)
+                canvas.SetTopMargin(0.1)
+
+                mg = ROOT.TMultiGraph()
+                fmg = ROOT.TMultiGraph()
+
+                legend = ROOT.TLegend(0.1,0.9,0.9,1.0,'','NDC')
+                legend.SetTextFont(42)
+                legend.SetBorderSize(0)
+                legend.SetFillColor(0)
+                legend.SetNColumns(len(self.HMASSES))
+
+                for a in [5,9,15]:
+                    xs = [xvals[i] for i in range(len(xvals)) if yvals[i]==a]
+                    ys = [zvals[i] for i in range(len(xvals)) if yvals[i]==a]
+
+                    g = ROOT.TGraph(len(xs),array('d',xs),array('d',ys))
+                    g.SetLineColor(colors[a])
+                    g.SetMarkerColor(colors[a])
+                    g.SetTitle('a({a})'.format(a=a))
+
+                    legend.AddEntry(g,g.GetTitle(),'lp')
+                    mg.Add(g)
+
+                    fxs = []
+                    fys = []
+                    for h in range(self.HRANGE[0]*10,self.HRANGE[1]*10+1,1):
+                        y = fitFuncs[param].Eval(h*0.1,a)
+                        fxs += [h*0.1]
+                        fys += [y]
+                    fg = ROOT.TGraph(len(fxs),array('d',fxs),array('d',fys))
+                    fg.SetLineColor(colors[a])
+                    fg.SetLineWidth(3)
+                    fg.SetMarkerColor(colors[a])
+                    fmg.Add(fg)
+
+                canvas.DrawFrame(self.HRANGE[0],min(zvals)*0.9,self.HRANGE[1],max(zvals)*1.1)
+                if self.doParamFit:
+                    mg.Draw('p0')
+                else:
+                    mg.Draw('L p0')
+                mg.GetXaxis().SetTitle(self.HLABEL)
+                mg.GetYaxis().SetTitle(param)
+                if self.doParamFit: fmg.Draw('L')
+                legend.Draw()
+                canvas.Print('{}.png'.format(savename))
+
 
         return fitFuncs
 
@@ -508,50 +615,118 @@ class HaaLimits(Limits):
         '''
         workspace = kwargs.pop('workspace',self.workspace)
         xVar = kwargs.pop('xVar','x')
-        fit = kwargs.get('fit',False)      # will fit the spline parameters rather than a simple spline
         fitFuncs = kwargs.get('fitFuncs',{})
 
         splines = {}
         params = ['mean','width','sigma']
-        if fit:
+        if self.doParamFit:
             for param in params+['integral']:
-                name = '{param}_{splinename}_{region}'.format(param=param,region=region,splinename=self.SPLINENAME)
-                spline = Models.Spline(name,
-                    MH = ['MH','MA'],
-                    masses = None,
-                    values = fitFuncs[''][param],
-                    shifts = {shift: {'up': fitFuncs[shift+'Up'][param], 'down': fitFuncs[shift+'Down'][param],} for shift in shifts},
-                )
-                spline.build(workspace, name)
-                splines[name] = spline
+                if self.do2D:
+                    name = '{param}_{splinename}_{region}'.format(param=param,region=region,splinename=self.SPLINENAME)
+                    spline = Models.Spline(name,
+                        MH = ['MH','MA'],
+                        masses = None,
+                        values = fitFuncs[''][param],
+                        shifts = {shift: {'up': fitFuncs[shift+'Up'][param], 'down': fitFuncs[shift+'Down'][param],} for shift in shifts},
+                    )
+                    spline.build(workspace, name)
+                    splines[name] = spline
+                else:
+                    for h in self.HMASSES:
+                        name = '{param}_{splinename}_{region}'.format(param=param,region=region,splinename=self.SPLINENAME.format(h=h))
+                        spline = Models.Spline(name,
+                            MH = 'MA',
+                            masses = None,
+                            values = fitFuncs[''][h][param],
+                            shifts = {shift: {'up': fitFuncs[shift+'Up'][h][param], 'down': fitFuncs[shift+'Down'][h][param],} for shift in shifts},
+                        )
+                        spline.build(workspace, name)
+                        splines[name] = spline
 
             # create model
-            model = Models.Voigtian(self.SPLINENAME,
-                x = xVar,
-                **{param: '{param}_{splinename}_{region}'.format(param=param, splinename=self.SPLINENAME, region=region) for param in params}
-            )
-            model.build(workspace,'{}_{}'.format(self.SPLINENAME,region))
+            if self.do2D:
+                model = Models.Voigtian(self.SPLINENAME,
+                    x = xVar,
+                    **{param: '{param}_{splinename}_{region}'.format(param=param, splinename=self.SPLINENAME, region=region) for param in params}
+                )
+                model.build(workspace,'{}_{}'.format(self.SPLINENAME,region))
 
-            return model
+                return model
+            else:
+                models = {}
+                for h in self.HMASSES:
+                    model = Models.Voigtian(self.SPLINENAME.format(h=h),
+                        x = xVar,
+                        **{param: '{param}_{splinename}_{region}'.format(param=param, splinename=self.SPLINENAME.format(h=h), region=region) for param in params}
+                    )
+                    model.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region))
+                    models[h] = model
+
+                return models
 
 
 
         # create parameter splines
-        params = ['mean','width','sigma']
         for param in params:
-            name = '{param}_{region}'.format(param=param,region=region)
+            if self.do2D:
+                name = '{param}_{region}'.format(param=param,region=region)
+                paramMasses = [[],[]]
+                paramValues = []
+                paramShifts = {}
+                for h in vals['']:
+                    for a in vals[''][h]:
+                        paramMasses[0] += [h]
+                        paramMasses[1] += [self.aToFloat(a)]
+                        paramValues += [vals[''][h][a]['{param}_h{h}_a{a}_{region}'.format(param=param,h=h,a=a,region=region)]]
+                        for shift in shifts:
+                            if shift not in paramShifts: paramShifts[shift] = {'up': [], 'down': []}
+                            paramShifts[shift]['up']   += [vals[shift+'Up'  ][h][a]['{param}_h{h}_a{a}_{region}_{shift}Up'.format(  param=param,h=h,a=a,region=region,shift=shift)]]
+                            paramShifts[shift]['down'] += [vals[shift+'Down'][h][a]['{param}_h{h}_a{a}_{region}_{shift}Down'.format(param=param,h=h,a=a,region=region,shift=shift)]]
+                spline = Models.Spline(name,
+                    MH = ['MH','MA'],
+                    masses = paramMasses,
+                    values = paramValues,
+                    shifts = paramShifts,
+                )
+                spline.build(workspace, name)
+                splines[name] = spline
+            else:
+                for h in self.HMASSES:
+                    name = '{param}_h{h}_{region}'.format(param=param,region=region,h=h)
+                    paramMasses = []
+                    paramValues = []
+                    paramShifts = {}
+                    for a in vals[''][h]:
+                        paramMasses += [self.aToFloat(a)]
+                        paramValues += [vals[''][h][a]['{param}_h{h}_a{a}_{region}'.format(param=param,h=h,a=a,region=region)]]
+                        for shift in shifts:
+                            if shift not in paramShifts: paramShifts[shift] = {'up': [], 'down': []}
+                            paramShifts[shift]['up']   += [vals[shift+'Up'  ][h][a]['{param}_h{h}_a{a}_{region}_{shift}Up'.format(  param=param,h=h,a=a,region=region,shift=shift)]]
+                            paramShifts[shift]['down'] += [vals[shift+'Down'][h][a]['{param}_h{h}_a{a}_{region}_{shift}Down'.format(param=param,h=h,a=a,region=region,shift=shift)]]
+                    spline = Models.Spline(name,
+                        MH = 'MA',
+                        masses = paramMasses,
+                        values = paramValues,
+                        shifts = paramShifts,
+                    )
+                    spline.build(workspace, name)
+                    splines[name] = spline
+
+        # integral spline
+        if self.do2D:
+            name = 'integral_{}_{}'.format(self.SPLINENAME,region)
             paramMasses = [[],[]]
             paramValues = []
             paramShifts = {}
             for h in vals['']:
                 for a in vals[''][h]:
                     paramMasses[0] += [h]
-                    paramMasses[1] += [float(str(a).replace('p','.'))]
-                    paramValues += [vals[''][h][a]['{param}_h{h}_a{a}_{region}'.format(param=param,h=h,a=a,region=region)]]
+                    paramMasses[1] += [self.aToFloat(a)]
+                    paramValues += [integrals[''][h][a]]
                     for shift in shifts:
                         if shift not in paramShifts: paramShifts[shift] = {'up': [], 'down': []}
-                        paramShifts[shift]['up']   += [vals[shift+'Up'  ][h][a]['{param}_h{h}_a{a}_{region}_{shift}Up'.format(  param=param,h=h,a=a,region=region,shift=shift)]]
-                        paramShifts[shift]['down'] += [vals[shift+'Down'][h][a]['{param}_h{h}_a{a}_{region}_{shift}Down'.format(param=param,h=h,a=a,region=region,shift=shift)]]
+                        paramShifts[shift]['up']   += [integrals[shift+'Up'  ][h][a]]
+                        paramShifts[shift]['down'] += [integrals[shift+'Down'][h][a]]
             spline = Models.Spline(name,
                 MH = ['MH','MA'],
                 masses = paramMasses,
@@ -560,75 +735,85 @@ class HaaLimits(Limits):
             )
             spline.build(workspace, name)
             splines[name] = spline
-
-        # integral spline
-        name = 'integral_{}_{}'.format(self.SPLINENAME,region)
-        paramMasses = [[],[]]
-        paramValues = []
-        paramShifts = {}
-        for h in vals['']:
-            for a in vals[''][h]:
-                paramMasses[0] += [h]
-                paramMasses[1] += [float(str(a).replace('p','.'))]
-                paramValues += [integrals[''][h][a]]
-                for shift in shifts:
-                    if shift not in paramShifts: paramShifts[shift] = {'up': [], 'down': []}
-                    paramShifts[shift]['up']   += [integrals[shift+'Up'  ][h][a]]
-                    paramShifts[shift]['down'] += [integrals[shift+'Down'][h][a]]
-        spline = Models.Spline(name,
-            MH = ['MH','MA'],
-            masses = paramMasses,
-            values = paramValues,
-            shifts = paramShifts,
-        )
-        spline.build(workspace, name)
-        splines[name] = spline
+        else:
+            for h in self.HMASSES:
+                name = 'integral_{}_{}'.format(self.SPLINENAME.format(h=h),region)
+                paramMasses = []
+                paramValues = []
+                paramShifts = {}
+                for a in vals[''][h]:
+                    paramMasses += [self.aToFloat(a)]
+                    paramValues += [integrals[''][h][a]]
+                    for shift in shifts:
+                        if shift not in paramShifts: paramShifts[shift] = {'up': [], 'down': []}
+                        paramShifts[shift]['up']   += [integrals[shift+'Up'  ][h][a]]
+                        paramShifts[shift]['down'] += [integrals[shift+'Down'][h][a]]
+                spline = Models.Spline(name,
+                    MH = 'MA',
+                    masses = paramMasses,
+                    values = paramValues,
+                    shifts = paramShifts,
+                )
+                spline.build(workspace, name)
+                splines[name] = spline
 
         # create model
-        model = Models.Voigtian(self.SPLINENAME,
-            x = xVar,
-            **{param: '{param}_{region}'.format(param=param, region=region) for param in params}
-        )
-        model.build(workspace,'{}_{}'.format(self.SPLINENAME,region))
+        if self.do2D:
+            model = Models.Voigtian(self.SPLINENAME,
+                x = xVar,
+                **{param: '{param}_{region}'.format(param=param, region=region) for param in params}
+            )
+            model.build(workspace,'{}_{}'.format(self.SPLINENAME,region))
 
-        return model
+            return model
+        else:
+            models = {}
+            for h in self.HMASSES:
+                model = Models.Voigtian(self.SPLINENAME.format(h=h),
+                    x = xVar,
+                    **{param: '{param}_h{h}_{region}'.format(param=param, region=region, h=h) for param in params}
+                )
+                model.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region))
+                models[h] = model
+
+            return models
 
 
     def fitBackground(self,region,shift='', **kwargs):
-        scaleLumi = kwargs.pop('scaleLumi',1)
+        scale = kwargs.pop('scale',1)
         workspace = kwargs.pop('workspace',self.workspace)
         xVar = kwargs.pop('xVar','x')
         model = workspace.pdf('bg_{}'.format(region))
         name = 'data_prefit_{}{}'.format(region,'_'+shift if shift else '')
         hist = self.histMap[region][shift]['dataNoSig']
         if hist.InheritsFrom('TH1'):
-            integral = hist.Integral(hist.FindBin(self.XRANGE[0]),hist.FindBin(self.XRANGE[1])) * scaleLumi
+            integral = hist.Integral(hist.FindBin(self.XRANGE[0]),hist.FindBin(self.XRANGE[1])) * scale
             data = ROOT.RooDataHist(name,name,ROOT.RooArgList(workspace.var(xVar)),hist)
         else:
-            integral = hist.sumEntries('x>{} && x<{}'.format(*self.XRANGE)) * scaleLumi
+            integral = hist.sumEntries('x>{} && x<{}'.format(*self.XRANGE)) * scale
             # TODO add support for xVar
             data = hist.Clone(name)
 
-        fr = model.fitTo(data, ROOT.RooFit.Save(), ROOT.RooFit.SumW2Error(True) )
+        fr = model.fitTo(data, ROOT.RooFit.Save(), ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
 
         xFrame = workspace.var(xVar).frame()
         data.plotOn(xFrame)
         model.plotOn(xFrame,ROOT.RooFit.Components('cont1_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
         model.plotOn(xFrame,ROOT.RooFit.Components('cont2_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
-        model.plotOn(xFrame,ROOT.RooFit.Components('cont1'),ROOT.RooFit.LineStyle(ROOT.kDashed))
-        model.plotOn(xFrame,ROOT.RooFit.Components('cont2'),ROOT.RooFit.LineStyle(ROOT.kDashed))
+        #model.plotOn(xFrame,ROOT.RooFit.Components('cont1'),ROOT.RooFit.LineStyle(ROOT.kDashed))
+        #model.plotOn(xFrame,ROOT.RooFit.Components('cont2'),ROOT.RooFit.LineStyle(ROOT.kDashed))
         if self.XRANGE[0]<4:
             # jpsi
             model.plotOn(xFrame,ROOT.RooFit.Components('jpsi1S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
             model.plotOn(xFrame,ROOT.RooFit.Components('jpsi2S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
-            model.plotOn(xFrame,ROOT.RooFit.Components('jpsi1S'),ROOT.RooFit.LineColor(ROOT.kRed))
-            model.plotOn(xFrame,ROOT.RooFit.Components('jpsi2S'),ROOT.RooFit.LineColor(ROOT.kRed))
+            #model.plotOn(xFrame,ROOT.RooFit.Components('jpsi1S'),ROOT.RooFit.LineColor(ROOT.kRed))
+            #model.plotOn(xFrame,ROOT.RooFit.Components('jpsi2S'),ROOT.RooFit.LineColor(ROOT.kRed))
         model.plotOn(xFrame,ROOT.RooFit.Components('upsilon1S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
         model.plotOn(xFrame,ROOT.RooFit.Components('upsilon2S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
         model.plotOn(xFrame,ROOT.RooFit.Components('upsilon3S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
-        model.plotOn(xFrame,ROOT.RooFit.Components('upsilon1S'),ROOT.RooFit.LineColor(ROOT.kRed))
-        model.plotOn(xFrame,ROOT.RooFit.Components('upsilon2S'),ROOT.RooFit.LineColor(ROOT.kRed))
-        model.plotOn(xFrame,ROOT.RooFit.Components('upsilon3S'),ROOT.RooFit.LineColor(ROOT.kRed))
+        #model.plotOn(xFrame,ROOT.RooFit.Components('upsilon1S'),ROOT.RooFit.LineColor(ROOT.kRed))
+        #model.plotOn(xFrame,ROOT.RooFit.Components('upsilon2S'),ROOT.RooFit.LineColor(ROOT.kRed))
+        #model.plotOn(xFrame,ROOT.RooFit.Components('upsilon3S'),ROOT.RooFit.LineColor(ROOT.kRed))
         # combined model
         model.plotOn(xFrame)
         model.paramOn(xFrame,ROOT.RooFit.Layout(0.72,0.98,0.90))
@@ -692,7 +877,7 @@ class HaaLimits(Limits):
         logging.debug(str(kwargs))
         mh = kwargs.pop('h',125)
         ma = kwargs.pop('a',15)
-        scaleLumi = kwargs.pop('scaleLumi',1)
+        scale = kwargs.pop('scale',1)
 
         workspace = self.workspace
 
@@ -752,9 +937,9 @@ class HaaLimits(Limits):
                 model = workspace.pdf('bg_{}'.format(region))
                 h = self.histMap[region]['']['dataNoSig']
                 if h.InheritsFrom('TH1'):
-                    integral = h.Integral(h.FindBin(self.XRANGE[0]),h.FindBin(self.XRANGE[1])) * scaleLumi
+                    integral = h.Integral(h.FindBin(self.XRANGE[0]),h.FindBin(self.XRANGE[1])) * scale
                 else:
-                    integral = h.sumEntries('x>{} && x<{}'.format(*self.XRANGE)) * scaleLumi
+                    integral = h.sumEntries('x>{} && x<{}'.format(*self.XRANGE)) * scale
                 if asimov:
                     data_obs = model.generateBinned(ROOT.RooArgSet(self.workspace.var(xVar)),integral,1)
                 else:
@@ -845,7 +1030,7 @@ class HaaLimits(Limits):
             )
             paramModel.build(workspace, param)
             params[param] = paramModel
-            workspace.Print()
+            #workspace.Print()
         return params
 
 
@@ -1161,7 +1346,7 @@ class HaaLimits(Limits):
         bgs = self.getComponentFractions(self.workspace.pdf('bg_'+self.REGIONS[0]))
 
         bgs = [b.rstrip('_'+self.REGIONS[0]) for b in bgs]
-        sigs = [self.SPLINENAME]
+        sigs = [self.SPLINENAME] if self.do2D else [self.SPLINENAME.format(h=h) for h in self.HMASSES]
 
         # setup bins
         for region in self.REGIONS:
@@ -1200,6 +1385,24 @@ class HaaLimits(Limits):
 
             self.setObserved(region,-1) # reads from histogram
 
+        # add higgs cross section
+        tfile = ROOT.TFile.Open('CombineLimits/Limits/data/Higgs_YR4_BSM_13TeV.root')
+        ws = tfile.Get('YR4_BSM_13TeV')
+        name = 'xsec_ggF_VBF'
+        ggFName = 'xsec_ggF_N3LO'
+        vbfName = 'xsec_VBF'
+        ggF = ws.function(ggFName)
+        vbf = ws.function(vbfName)
+        formula = '@0+@1'
+        args = ROOT.RooArgList()
+        args.add(ggF)
+        args.add(vbf)
+        spline = ROOT.RooFormulaVar(name,name,formula,args)
+        getattr(self.workspace,'import')(spline, ROOT.RooFit.RecycleConflictNodes())
+        for region in self.REGIONS:
+            for proc in sigs:
+                self.addRateParam(name,region,proc)
+
         if addControl:
             region = 'control'
 
@@ -1220,7 +1423,7 @@ class HaaLimits(Limits):
     ###################
     def addSystematics(self,doBinned=False,addControl=False):
         logging.debug('addSystematics')
-        self.sigProcesses = tuple([self.SPLINENAME])
+        self.sigProcesses = tuple([self.SPLINENAME]) if self.do2D else tuple([self.SPLINENAME.format(h=h) for h in self.HMASSES])
         bgs = self.getComponentFractions(self.workspace.pdf('bg_'+self.REGIONS[0]))
         bgs = [b.rstrip('_'+self.REGIONS[0]) for b in bgs]
         self.bgProcesses = tuple(bgs)
@@ -1273,7 +1476,7 @@ class HaaLimits(Limits):
 
     def _addHiggsSystematic(self):
         #TODO switch to spline
-        return
+        if self.do2D: return
         # theory
         syst = {}
         if 125 in self.HMASSES: syst[((self.SPLINENAME.format(h=125),), tuple(self.REGIONS))] = (1+(0.046*48.52+0.004*3.779)/(48.52+3.779)    , 1+(-0.067*48.52-0.003*3.779)/(48.52+3.779))
@@ -1360,7 +1563,11 @@ class HaaLimits(Limits):
         processes = {}
         bgs = self.getComponentFractions(self.workspace.pdf('bg_'+self.REGIONS[0]))
         bgs = [b.rstrip('_'+self.REGIONS[0]) for b in bgs]
-        processes = [self.SPLINENAME] + bgs
+        if self.do2D:
+            processes = [self.SPLINENAME] + bgs
+        else:
+            for h in self.HMASSES:
+                processes[self.SIGNAME.format(h=h,a='X')] = [self.SPLINENAME.format(h=h)] + bgs
         if subdirectory == '':
             self.printCard('datacards_shape/MuMuTauTau/{}'.format(name),processes=processes,blind=False,saveWorkspace=True)
         else:

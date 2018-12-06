@@ -1210,7 +1210,7 @@ class HaaLimits2D(HaaLimits):
             data = hist.Clone(name)
             integral = hist.sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE)) * scaleLumi
 
-        fr = model.fitTo(data,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True))
+        fr = model.fitTo(data,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrinLevel(-1))
 
         xFrame = workspace.var(xVar).frame()
         data.plotOn(xFrame)

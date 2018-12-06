@@ -13,7 +13,7 @@ ROOT.gROOT.SetBatch()
 from DevTools.Plotter.NtupleWrapper import NtupleWrapper
 from DevTools.Utilities.utilities import *
 from DevTools.Plotter.haaUtils import *
-from DevTools.Plotter.xsec import getXsec
+#from DevTools.Plotter.xsec import getXsec
 #from CombineLimits.HaaLimits.HaaLimits import HaaLimits
 #from CombineLimits.HaaLimits.HaaLimits2D import HaaLimits2D
 from CombineLimits.HaaLimits.HaaLimitsNew import HaaLimits
@@ -24,26 +24,38 @@ import CombineLimits.Plotter.tdrstyle as tdrstyle
 
 tdrstyle.setTDRStyle()
 
-logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+logging.basicConfig(level=logging.INFO, stream=sys.stderr, format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+ROOT.RooMsgService.instance().setGlobalKillBelow(ROOT.RooFit.WARNING)
 
 
 testing = True
-detailed = True
+detailed = False
 skipSignal = False
 
-scaleLumi = 1
-#scaleLumi = 3.75
 
 xRange = [2.5,25] # with jpsi
 
 yRange = [0,1200] # h, hkf
 
-hmasses = [125,300,750]
+#hmasses = [125,300,750]
+hmasses = [125,200,250,300,400,500,750,1000]
 #if testing: hmasses = [125]
 #if testing: hmasses = [300]
 #if testing: hmasses = [750]
 amasses = ['3p6',4,5,6,7,9,11,13,15,17,19,21]
-if testing: amasses = ['3p6',5,9,13,17,21]
+#if testing: amasses = ['3p6',5,9,13,17,21]
+vbfhmasses = [125,300,750]
+vbfamasses = [5,9,15,21]
+hamap = {
+    125 : ['3p6',4,5,6,7,9,11,13,15,17,19,21],
+    200 : [5,9,15],
+    250 : [5,9,15],
+    300 : [5,7,9,11,13,15,17,19,21],
+    400 : [5,9,15],
+    500 : [5,9,15],
+    750 : [5,7,9,11,13,15,17,19,21],
+    1000: [5,9,15],
+}
     
 signame = 'HToAAH{h}A{a}'
 ggsigname = 'ggHToAAH{h}A{a}'
@@ -95,6 +107,26 @@ rebinning = {
 
 project = False
 hCut = '1'
+
+# xsec splines
+smtfile  = ROOT.TFile.Open('CombineLimits/Limits/data/Higgs_YR4_SM_13TeV.root')
+bsmtfile = ROOT.TFile.Open('CombineLimits/Limits/data/Higgs_YR4_BSM_13TeV.root')
+smws = smtfile.Get('YR4_SM_13TeV')
+bsmws = bsmtfile.Get('YR4_BSM_13TeV')
+
+def getXsec(proc,mode):
+    h = int(proc.split('H')[-1].split('A')[0])
+    a = float(proc.split('A')[-1].replace('p','.'))
+    ws = smws if h==125 else bsmws
+    names = {
+        'gg' : 'xsec_ggF_N3LO',
+        'vbf': 'xsec_VBF',
+    }
+    spline = ws.function(names[mode])
+    ws.var('MH').setVal(h)
+    return spline.getVal()
+    
+
 
 #################
 ### Utilities ###
@@ -349,6 +381,10 @@ def create_datacard(args):
         xBinWidth = 0.2
         yBinWidth = 2 if var[1]=='tt' else 20
 
+    global hmasses
+    if not args.do2DInterpolation:
+        hmasses = [h for h in hmasses if h in [125, 300, 750]]
+
     #############
     ### Setup ###
     #############
@@ -357,9 +393,9 @@ def create_datacard(args):
     backgrounds = ['datadriven']
     data = ['data']
     
-    signals = [signame.format(h=h,a=a) for h in hmasses for a in amasses if not (h>125 and a in ['3p6',4,6])]
-    ggsignals = [ggsigname.format(h=h,a=a) for h in hmasses for a in amasses if not (h>125 and a in ['3p6',4,6])]
-    vbfsignals = [vbfsigname.format(h=h,a=a) for h in hmasses for a in amasses if not (h>125 and a in ['3p6',4,6])]
+    signals = [signame.format(h=h,a=a) for h in hmasses for a in amasses if a in hamap[h]]
+    ggsignals = [ggsigname.format(h=h,a=a) for h in hmasses for a in amasses if a in hamap[h]]
+    vbfsignals = [vbfsigname.format(h=h,a=a) for h in vbfhmasses for a in vbfamasses]
     signalToAdd = signame.format(**signalParams)
 
     
@@ -411,28 +447,18 @@ def create_datacard(args):
                 else:
                     if proc in signals:
                         newproc = 'gg'+proc
-                        # scale gg to gg+vbf
-                        # apply acceptance correction
-                        scale = sum([getXsec(sample) for sample in sampleMap['gg'+proc]+sampleMap['vbf'+proc]])/sum([getXsec(sample) for sample in sampleMap['gg'+proc]])
-                        # TODO update
-                        if '125' in proc:
-                            scale *= 1.01
-                        elif '300' in proc:
-                            scale *= 1.005
-                        elif '750' in proc:
-                            scale *= 1.025
                     else:
                         newproc = proc
-                        scale = 1
                     # override xRange for signal only
+                    oldXRange = xRange
                     xRange = [0,30]
                     if doMatrix:
-                        #histMap[mode][shift][proc] = getMatrixHist(newproc,scale=scale,doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
-                        histMap[mode][shift][proc] = getMatrixHist(newproc,scale=scale,doUnbinned=True,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
+                        #histMap[mode][shift][proc] = getMatrixHist(newproc,doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
+                        histMap[mode][shift][proc] = getMatrixHist(newproc,doUnbinned=True,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
                     else:
-                        #histMap[mode][shift][proc] = getHist(newproc,scale=scale,doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
-                        histMap[mode][shift][proc] = getHist(newproc,scale=scale,doUnbinned=True,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
-                    xRange = args.xRange
+                        #histMap[mode][shift][proc] = getHist(newproc,doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
+                        histMap[mode][shift][proc] = getHist(newproc,doUnbinned=True,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
+                    xRange = oldXRange
                 #if do2D or doUnbinned:
                 #    pass # TODO, figure out how to rebin 2D
                 #else:
@@ -486,6 +512,27 @@ def create_datacard(args):
             histMap[mode][shift]['data'] = hist.Clone()
             histMap[mode][shift]['dataNoSig'] = hist.Clone()
 
+    # rescale signal
+    scales = {}
+    for proc in signals:
+        newproc = 'gg'+proc
+        gg = getXsec(proc,'gg')
+        vbf = getXsec(proc,'vbf')
+        # scale gg to gg+vbf
+        # apply acceptance correction
+        scale = sum([gg,vbf])/gg
+        # TODO update
+        #if '125' in proc:
+        #    scale *= 1.01
+        #elif '300' in proc:
+        #    scale *= 1.005
+        #elif '750' in proc:
+        #    scale *= 1.025
+        # divide out H cross section
+        scale *= 1./gg
+        scales[proc] = scale
+        #print proc, gg, vbf, scale
+
     name = []
     if args.unbinned: name += ['unbinned']
     if do2D: name += [var[1]]
@@ -495,11 +542,11 @@ def create_datacard(args):
     if args.addSignal: name += ['wSig']
     name = n+'/'+'_'.join(name) if n else '_'.join(name)
     if var == ['mm']:
-        haaLimits = HaaLimits(histMap,name)
+        haaLimits = HaaLimits(histMap,name,do2DInterpolation=args.do2DInterpolation,doParamFit=args.fitParams)
     elif do2D and project:
-        haaLimits = HaaLimits(histMap,name)
+        haaLimits = HaaLimits(histMap,name,do2DInterpolation=args.do2DInterpolation,doParamFit=args.fitParams)
     elif do2D:
-        haaLimits = HaaLimits2D(histMap,name)
+        haaLimits = HaaLimits2D(histMap,name,do2DInterpolation=args.do2DInterpolation,doParamFit=args.fitParams)
     else:
         logging.error('Unsupported fit vars: ',var)
         raise
@@ -509,6 +556,7 @@ def create_datacard(args):
     haaLimits.QCDSHIFTS = qcdShifts
     haaLimits.AMASSES = amasses
     haaLimits.HMASSES = [chi2Mass] if chi2Mass else hmasses
+    haaLimits.HAMAP = hamap
     haaLimits.XRANGE = xRange
     haaLimits.XBINNING = int((xRange[1]-xRange[0])/xBinWidth)
     if do2D: 
@@ -518,21 +566,21 @@ def create_datacard(args):
     if 'h' in var or 'hkf' in var: haaLimits.YLABEL = 'm_{#mu#mu#tau_{#mu}#tau_{h}}'
     haaLimits.initializeWorkspace()
     haaLimits.addControlModels()
-    haaLimits.addBackgroundModels(fixAfterControl=True,scaleLumi=scaleLumi)
+    haaLimits.addBackgroundModels(fixAfterControl=True)
     if not skipSignal:
         haaLimits.XRANGE = [0,30] # override for signal splines
         if project:
-            haaLimits.addSignalModels(fit=True,scaleLumi=scaleLumi)
+            haaLimits.addSignalModels(scale=scales)
         elif 'tt' in var:
-            haaLimits.addSignalModels(fit=True,yFitFuncFP='V',yFitFuncPP='L',scaleLumi=scaleLumi)#,cutOffFP=0.75,cutOffPP=0.75)
+            haaLimits.addSignalModels(scale=scales,yFitFuncFP='V',yFitFuncPP='L')#,cutOffFP=0.75,cutOffPP=0.75)
         elif 'h' in var or 'hkf' in var:
-            #haaLimits.addSignalModels(fit=True,yFitFuncFP='DG',yFitFuncPP='DG',scaleLumi=scaleLumi)#,cutOffFP=0.0,cutOffPP=0.0)
-            haaLimits.addSignalModels(fit=True,yFitFuncFP=args.yFitFunc,yFitFuncPP=args.yFitFunc,scaleLumi=scaleLumi)#,cutOffFP=0.0,cutOffPP=0.0)
+            #haaLimits.addSignalModels(scale=scales,yFitFuncFP='DG',yFitFuncPP='DG')#,cutOffFP=0.0,cutOffPP=0.0)
+            haaLimits.addSignalModels(scale=scales,yFitFuncFP=args.yFitFunc,yFitFuncPP=args.yFitFunc)#,cutOffFP=0.0,cutOffPP=0.0)
         else:
-            haaLimits.addSignalModels(fit=True)
+            haaLimits.addSignalModels(scale=scales)
         haaLimits.XRANGE = xRange
     if args.addControl: haaLimits.addControlData()
-    haaLimits.addData(blind=blind,asimov=args.asimov,addSignal=args.addSignal,doBinned=not doUnbinned,scaleLumi=scaleLumi,**signalParams) # this will generate a dataset based on the fitted model
+    haaLimits.addData(blind=blind,asimov=args.asimov,addSignal=args.addSignal,doBinned=not doUnbinned,**signalParams) # this will generate a dataset based on the fitted model
     haaLimits.setupDatacard(addControl=args.addControl,doBinned=not doUnbinned)
     haaLimits.addSystematics(addControl=args.addControl,doBinned=not doUnbinned)
     name = 'mmmt_{}_parametric'.format('_'.join(var))
@@ -553,6 +601,8 @@ def parse_command_line(argv):
     parser.add_argument('--addControl', action='store_true', help='Add control channel')
     parser.add_argument('--asimov', action='store_true', help='Use asimov dataset (if blind)')
     parser.add_argument('--project', action='store_true', help='Project to 1D')
+    parser.add_argument('--do2DInterpolation', action='store_true', help='interpolate v MH and MA')
+    parser.add_argument('--fitParams', action='store_true', help='fit parameters')
     parser.add_argument('--higgs', type=int, default=125, choices=[125,300,750])
     parser.add_argument('--pseudoscalar', type=int, default=7, choices=[5,7,9,11,13,15,17,19,21])
     parser.add_argument('--yFitFunc', type=str, default='DG', choices=['G','V','CB','DCB','DG','DV','B','G2','G3','errG','L'])

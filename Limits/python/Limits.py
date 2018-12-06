@@ -27,7 +27,7 @@ class Limits(object):
         self.expected = {}    # expected yield, one per process/era/analysis/chanel combination
         self.systematics = {} # systematic uncertainties
         self.param_systematics = {}
-        self.rates = {}
+        self.rates = []
         self.shapes = {}
         self.name = name
         self.workspace = self.buildWorkspace(self.name)
@@ -168,12 +168,15 @@ class Limits(object):
         logging.debug('Adding group {}'.format(groupname))
         self.groups[groupname] = systnames
 
-    def addRateParam(self,ratename,bin,process):
+    def addRateParam(self,ratename,bin,process,filename=None,workspace=None):
         logging.debug('Adding rate param {}'.format(ratename))
-        self.rates[ratename] = {
+        self.rates += [{
+            'name': ratename,
             'bin': bin,
             'process': process,
-        }
+        }]
+        if filename: self.rates[-1]['filename'] = filename
+        if workspace: self.rates[-1]['workspace'] = workspace
         
     def addShape(self,bin,process,shape):
         '''
@@ -432,11 +435,14 @@ class Limits(object):
                 colpos += 1
 
         # other rateParams
-        for ratename in self.rates:
-            b = self.rates[ratename]['bin']
-            p = self.rates[ratename]['process']
+        for rate in self.rates:
+            n = rate['name']
+            b = rate['bin']
+            p = rate['process']
+            f = rate.get('filename',filename+'.root')
+            w = rate.get('workspace',self.name)
             if b in bins and p in processes:
-                norms += [[ratename,'rateParam',b,p,'{}.root:{}'.format(filename,self.name)]]
+                norms += [[n,'rateParam',b,p,'{}:{}'.format(f,w)]]
 
         # setup nuissances
         logging.debug('Systs available: {0}'.format([str(x) for x in sorted(self.systematics.keys())]))

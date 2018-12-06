@@ -6,6 +6,8 @@ import ROOT
 ROOT.gROOT.SetBatch(True)
 
 def dumpSpline(worksheet):
+
+    isBSM = 'BSM' in worksheet
     
     #xlsxname = 'HiggsAnalysis/CombinedLimit/data/lhc-hxswg/Higgs_XSBR_YR4_update.xlsx'
     xlsxname = 'Higgs_XSBR_YR4_update.xlsx'
@@ -22,7 +24,10 @@ def dumpSpline(worksheet):
         groups = groups[1:]
         df = df.iloc[:,:78]
     else:
-        df = df.iloc[:,:85]
+        if isBSM:
+            df = df.iloc[:,:85]
+        else:
+            df = df.iloc[:,:79]
     
     col = 0
     labels = []
@@ -39,6 +44,9 @@ def dumpSpline(worksheet):
             labels += ['theory_down_{}'.format(group)]
             labels += ['theory_err_{}'.format(group)]
             labels += ['pdfalpha_err_{}'.format(group)]
+            if not isBSM:
+                labels += ['pdf_err_{}'.format(group)]
+                labels += ['alpha_err_{}'.format(group)]
         else:
             labels += ['mh_{}'.format(group)]
             labels += ['xsec_{}'.format(group)]
@@ -47,7 +55,7 @@ def dumpSpline(worksheet):
             labels += ['pdfalpha_err_{}'.format(group)]
             labels += ['pdf_err_{}'.format(group)]
             labels += ['alpha_err_{}'.format(group)]
-            labels += ['deltaEW_{}'.format(group)]
+            if isBSM: labels += ['deltaEW_{}'.format(group)]
         if group=='WH':
             labels += ['xsec_Wplus_{}'.format(group)]
             labels += ['xsec_Wminus_{}'.format(group)]
@@ -63,6 +71,11 @@ def dumpSpline(worksheet):
     
     
     ws = ROOT.RooWorkspace(worksheet.replace(' ','_'))
+    if isBSM:
+        ws.factory('MH[10,3000]')
+    else:
+        ws.factory('MH[120,130]')
+    ws.var('MH').setUnit('GeV')
     splines = []
     mhlabel = ''
     for label in labels:
@@ -71,19 +84,16 @@ def dumpSpline(worksheet):
             mhlabel = label
             continue
     
-        print label
+        print 'Creating', label, 'spline'
     
         mhs = df[pd.notnull(df[label])][mhlabel]
         vals = df[pd.notnull(df[label])][label]
-    
-        print vals.dtype
+
         if vals.dtype!='float64':
             continue
             vals = pd.to_numeric(vals.astype(basestring).str.replace('?',''))
     
-        if len(vals.index):
-            ws.factory('MH[{},{}]'.format(min(mhs),max(mhs)))
-            ws.var('MH').setUnit('GeV')
+        if len(vals.index)>1:
             spline = ROOT.RooSpline1D(label,label,ws.var('MH'), len(mhs.index), array('d',mhs), array('d',vals))
             getattr(ws,'import')(spline)
     
