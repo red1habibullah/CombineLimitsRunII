@@ -32,7 +32,7 @@ class HaaLimits2D(HaaLimits):
     YBINNING = 19
     YLABEL = 'm_{#mu#mu#tau_{#mu}#tau_{h}}'
 
-    def __init__(self,histMap,tag=''):
+    def __init__(self,histMap,tag='',do2DInterpolation=False,doParamFit=False):
         '''
         Required arguments:
             histMap = histogram map. the structure should be:
@@ -49,7 +49,7 @@ class HaaLimits2D(HaaLimits):
                         data = 'data'
                         background = 'datadriven'
         '''
-        super(HaaLimits2D,self).__init__(histMap,tag=tag)
+        super(HaaLimits2D,self).__init__(histMap,tag=tag,do2DInterpolation=do2DInterpolation,doParamFit=doParamFit)
 
         self.plotDir = 'figures/HaaLimits2D{}'.format('_'+tag if tag else '')
         self.fitsDir = 'fitParams/HaaLimits2D{}'.format('_'+tag if tag else '')
@@ -59,9 +59,12 @@ class HaaLimits2D(HaaLimits):
     ### Workspace utilities ###
     ###########################
     def initializeWorkspace(self,**kwargs):
+        logging.debug('initializeWorkspace')
+        logging.debug(str(kwargs))
         self.addX(*self.XRANGE,unit='GeV',label=self.XLABEL,**kwargs)
         self.addY(*self.YRANGE,unit='GeV',label=self.YLABEL,**kwargs)
-        self.addMH(*self.SPLINERANGE,unit='GeV',label=self.SPLINELABEL,**kwargs)
+        self.addMH(*self.HRANGE,unit='GeV',label=self.HLABEL,**kwargs)
+        self.addMA(*self.ARANGE,unit='GeV',label=self.ALABEL,**kwargs)
 
     def _buildYModel(self,region,**kwargs):
         workspace = kwargs.pop('workspace',self.workspace)
@@ -350,7 +353,8 @@ class HaaLimits2D(HaaLimits):
         bg.build(workspace,name)
 
     def fitSignal(self,h,a,region,shift='',**kwargs):
-        scaleLumi = kwargs.get('scaleLumi',1)
+        scale = kwargs.get('scale',1)
+        if isinstance(scale,dict): scale = scale.get(self.SIGNAME.format(h=h,a=a),1)
         ygausOnly = kwargs.get('ygausOnly',False)
         isKinFit = kwargs.get('isKinFit',False)
         yFitFunc = kwargs.get('yFitFunc','G')
@@ -366,19 +370,11 @@ class HaaLimits2D(HaaLimits):
         elif yFitFunc == "L": initialValuesL = self.GetInitialValuesDitau(isLandau=True)
         elif yFitFunc == "V": initialValuesV = self.GetInitialValuesDitau(isLandau=False)
 
-        aval = float(str(a).replace('p','.'))
+        aval = self.aToFloat(a)
         thisxrange = [0.8*aval, 1.2*aval]
         thisyrange = [0.15*h, 1.2*h] if self.YRANGE[1]>100 else [self.YRANGE[0], 1.2*aval]
         if self.YRANGE[1]>100:
             thisyrange = [0.15*h, 1.2*h]
-            #if  h == 125:  thisyrange = [20, 150]
-            #elif h == 200: thisyrange = [20,260]
-            #elif h == 250: thisyrange = [30,300]
-            #elif h == 300: thisyrange = [40,360]
-            #elif h == 400: thisyrange = [60,500]
-            #elif h == 500: thisyrange = [80,700]
-            #elif h == 750: thisyrange = [140,900]
-            #elif h == 1000: thisyrange = [180,1200]
         ws = ROOT.RooWorkspace('sig')
         ws.factory('x[{0}, {1}]'.format(*thisxrange)) 
         #ws.factory('x[{0}, {1}]'.format(*self.XRANGE))
@@ -682,9 +678,9 @@ class HaaLimits2D(HaaLimits):
         saveDir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
         results, errors = model.fit2D(ws, hist, name, saveDir=saveDir, save=True, doErrors=True)
         if self.binned:
-            integral = histMap[self.SIGNAME.format(h=h,a=a)].Integral() * scaleLumi
+            integral = histMap[self.SIGNAME.format(h=h,a=a)].Integral() * scale
         else:
-            integral = histMap[self.SIGNAME.format(h=h,a=a)].sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE)) * scaleLumi
+            integral = histMap[self.SIGNAME.format(h=h,a=a)].sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE)) * scale
             if integral!=integral:
                 logging.error('Integral for spline is invalid: h{h} a{a} {region} {shift}'.format(h=h,a=a,region=region,shift=shift))
                 raise
@@ -698,254 +694,280 @@ class HaaLimits2D(HaaLimits):
         return results, errors, integral
 
 
-    def fitSignals(self,h,region,shift='',**kwargs):
+    def fitSignals(self,region,shift='',**kwargs):
         '''
         Fit the signal model for a given Higgs mass.
         Required arguments:
             h = higgs mass
         '''
-        scaleLumi = kwargs.get('scaleLumi',1)
         ygausOnly = kwargs.get('ygausOnly',False)
         isKinFit = kwargs.get('isKinFit',False)
         yFitFunc = kwargs.get('yFitFunc','G')
-        fit = kwargs.get('fit',False)
         load = kwargs.get('load',False)
         skipFit = kwargs.get('skipFit',False)
         dobgsig = kwargs.get('doBackgroundSignal',False)
-        amasses = self.AMASSES
-        if h>125:      amasses = [a for a in amasses if a not in ['3p6',4,6]]
-        if h in [200,250,400,500,1000]: amasses = [5, 9, 15]
-        avals = [float(str(x).replace('p','.')) for x in amasses]
-        histMap = self.histMap[region][shift]
         tag = kwargs.get('tag','{}{}'.format(region,'_'+shift if shift else ''))
+
+        histMap = self.histMap[region][shift]
 
         # initial fit
         if load:
             # load the previous fit
-            results, errors, integrals = self.loadSignalFits(h,tag,region,shift)
+            results, errors, integrals = self.loadSignalFits(tag,region,shift)
         elif shift and not skipFit:
             # load the central fits
-            results, errors, integrals = self.loadSignalFits(h,region,region)
-        else:
+            cresults, cerrors, cintegrals = self.loadSignalFits(region,region)
+        if not skipFit:
             results = {}
             errors = {}
             integrals = {}
-            results[h] = {}
-            errors[h] = {}
-            integrals[h] = {}
-        for a in amasses:
-            if load or (shift and not skipFit):
-                results[h][a], errors[h][a], integrals[h][a] = self.fitSignal(h,a,region,shift,results=results[h][a],**kwargs)
-            elif not skipFit:
-                results[h][a], errors[h][a], integrals[h][a] = self.fitSignal(h,a,region,shift,**kwargs)
+
+            for h in self.HMASSES:
+                results[h] = {}
+                errors[h] = {}
+                integrals[h] = {}
+
+                amasses = self.HAMAP[h]
+                avals = [self.aToFloat(x) for x in amasses]
+
+                for a in amasses:
+                    if load or (shift and not skipFit):
+                        results[h][a], errors[h][a], integrals[h][a] = self.fitSignal(h,a,region,shift,results=cresults[h][a],**kwargs)
+                    elif not skipFit:
+                        results[h][a], errors[h][a], integrals[h][a] = self.fitSignal(h,a,region,shift,**kwargs)
 
     
         savedir = '{}/{}'.format(self.fitsDir,shift if shift else 'central')
         python_mkdir(savedir)
-        savename = '{}/h{}_{}.json'.format(savedir,h,tag)
+        savename = '{}/{}.json'.format(savedir,tag)
         jsonData = {'vals': results, 'errs': errors, 'integrals': integrals}
         self.dump(savename,jsonData)
 
-        # Fit using ROOT rather than RooFit for the splines
-        if yFitFunc == "V":
-            fitFuncs = {
-                'xmean' : 'pol1',  
-                'xwidth': 'pol2',
-                'xsigma': 'pol2',
-                'ymean' : 'pol1',
-                'ywidth': 'pol2',
-                'ysigma': 'pol2',
-            }
-        elif yFitFunc == "G":
-            fitFuncs = {
-                'xmean' : 'pol1',  
-                'xwidth': 'pol2',
-                'xsigma': 'pol2',
-                'ymean' : 'pol1',
-                'ysigma': 'pol2',
-            }
-        elif yFitFunc == "CB":
-            fitFuncs = {
-                'xmean' : 'pol1',  
-                'xwidth': 'pol2',
-                'xsigma': 'pol2',
-                'ymean' : 'pol1',
-                'ysigma': 'pol2',
-                'ya': 'pol2',
-                'yn': 'pol2',
-            }
-        elif yFitFunc == "DCB":
-            fitFuncs = {
-                'xmean' : 'pol1',  
-                'xsigma': 'pol2',
-                'ymean' : 'pol1',
-                'ysigma': 'pol2',
-                'ya1': 'pol2',
-                'yn1': 'pol2',
-                'ya2': 'pol2',
-                'yn2': 'pol2',
-            }
-        elif yFitFunc == "DG":
-            fitFuncs = {
-                'xmean' : 'pol1',  
-                'xwidth': 'pol2',
-                'xsigma': 'pol2',
-                'ymean' : 'pol1',
-                'ysigma1': 'pol2',
-                'ysigma2': 'pol2',
-            }
-        elif yFitFunc == "DV":
-            fitFuncs = {
-                'xmean' : 'pol1',  
-                'xwidth': 'pol2',
-                'xsigma': 'pol2',
-                'ymean' : 'pol1',
-                'ysigma1': 'pol2',
-                'ysigma2': 'pol2',
-                'ywidth1': 'pol2',
-                'ywidth2': 'pol2',
-            }
-        elif yFitFunc == "B":
-            fitFuncs = {
-                'xmean' : 'pol1',  
-                'xwidth': 'pol2',
-                'xsigma': 'pol2',
-                'ybetaScale': 'pol2',
-                'ybetaA': 'pol2',
-                'ybetaB': 'pol2',
-            }
-        elif yFitFunc == "errG":
-            fitFuncs = {
-                'xmean' : 'pol1',  
-                'xwidth': 'pol2',
-                'xsigma': 'pol2',
-                'ymean' : 'pol1',
-                'ysigma': 'pol2',
-                'yerfScale': 'pol2',
-                'yerfShift': 'pol2',
-            }
-        elif yFitFunc == "L":
-            fitFuncs = {
-                'xmean' : 'pol1',
-                'xwidth': 'pol2',
-                'xsigma': 'pol2',
-                'ymean' : 'pol1',
-                'ysigma': 'pol2',
-                'mu'    : 'pol2',
-                'sigma' : 'pol2',
-            }
-        elif yFitFunc == "G2":
-            fitFuncs = {
-                'xmean' : 'pol1',
-                'xwidth': 'pol2',
-                'xsigma': 'pol2',
-                'ymean' : 'pol1',
-                'ysigma': 'pol2',
-            }
-        elif yFitFunc == "G3":
-            fitFuncs = {
-                'xmean' : 'pol1',
-                'xwidth': 'pol2',
-                'xsigma': 'pol2',
-                'ymean' : 'pol1',
-                'ysigma': 'pol2',
-            }
-        else:
-            raise
+        fitFuncs = self.fitSignalParams(results,errors,integrals,region,shift,yFitFunc=yFitFunc)
 
-        xs = []
-        x = self.XRANGE[0]
-        while x<=self.XRANGE[1]:
-            xs += [x]
-            x += float(self.XRANGE[1]-self.XRANGE[0])/100
-        ys = []
-        y = self.YRANGE[0]
-        while y<=self.YRANGE[1]:
-            ys += [y]
-            y += float(self.YRANGE[1]-self.YRANGE[0])/100
-        fittedParams = {}
-        if   yFitFunc == "V"   : yparameters = ['mean','width','sigma']
-        elif yFitFunc == "G"   : yparameters = ['mean', 'sigma']
-        elif yFitFunc == "CB"  : yparameters = ['mean', 'sigma', 'a', 'n']
-        elif yFitFunc == "DCB" : yparameters = ['mean', 'sigma', 'a1', 'n1', 'a2', 'n2']
-        elif yFitFunc == "DG"  : yparameters = ['mean', 'sigma1', 'sigma2']
-        elif yFitFunc == "DV"  : yparameters = ['mean', 'sigma1', 'sigma2','width1','width2']
-        elif yFitFunc == "B"   : yparameters = ['betaScale','betaA','betaB']
-        elif yFitFunc == "errG": yparameters = ['mean_ttgaus', 'sigma_ttgaus','erfShift_tterf','erfScale_tterf']
-        elif yFitFunc == "L"   : yparameters = ['mean_ttgaus', 'sigma_ttgaus','mu_ttland','sigma_ttland']
-        elif yFitFunc == "G2"  : yparameters = ['mean_g1', 'sigma_g1','mean_g2','sigma_g2','g1_frac']
-        elif yFitFunc == "G3"  : yparameters = ['mean_g1', 'sigma_g1','mean_g2','sigma_g2','mean_g3','sigma_g3','g1_frac','g2_frac']
+        return results, errors, integrals, fitFuncs
+
+    def getParams(self,yFitFunc):
+        xparams = ['mean_sigx','width_sigx','sigma_sigx']
+        if   yFitFunc == "V"   : yparams = ['mean_sigy','width_sigy','sigma_sigy']
+        elif yFitFunc == "G"   : yparams = ['mean_sigy', 'sigma_sigy']
+        elif yFitFunc == "CB"  : yparams = ['mean_sigy', 'sigma_sigy', 'a_sigy', 'n_sigy']
+        elif yFitFunc == "DCB" : yparams = ['mean_sigy', 'sigma_sigy', 'a1_sigy', 'n1_sigy', 'a2_sigy', 'n2_sigy']
+        elif yFitFunc == "DG"  : yparams = ['mean_sigy', 'sigma1_sigy', 'sigma2_sigy']
+        elif yFitFunc == "DV"  : yparams = ['mean_sigy', 'sigma1_sigy', 'sigma2_sigy','width1_sigy','width2_sigy']
+        elif yFitFunc == "B"   : yparams = ['betaScale_sigy','betaA_sigy','betaB_sigy']
+        elif yFitFunc == "errG": yparams = ['mean_ttgaus', 'sigma_ttgaus','erfShift_tterf','erfScale_tterf']
+        elif yFitFunc == "L"   : yparams = ['mean_ttgaus', 'sigma_ttgaus','mu_ttland','sigma_ttland']
+        elif yFitFunc == "G2"  : yparams = ['mean_g1', 'sigma_g1','mean_g2','sigma_g2','g1_frac']
+        elif yFitFunc == "G3"  : yparams = ['mean_g1', 'sigma_g1','mean_g2','sigma_g2','mean_g3','sigma_g3','g1_frac','g2_frac']
         else: raise
-        for param in ['mean','width','sigma']:
-            name = '{}_{}{}'.format('x'+param,h,tag)
-            xerrs = [0]*len(amasses)
-            vals = [results[h][a]['{}_sigx'.format(param)] for a in amasses]
-            errs = [errors[h][a]['{}_sigx'.format(param)] for a in amasses]
-            graph = ROOT.TGraphErrors(len(avals),array('d',avals),array('d',vals),array('d',xerrs),array('d',errs))
-            #graph = ROOT.TGraph(len(avals),array('d',avals),array('d',vals))
-            savedir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
-            python_mkdir(savedir)
-            savename = '{}/{}_Fit'.format(savedir,name)
-            canvas = ROOT.TCanvas(savename,savename,800,800)
-            graph.Draw()
-            graph.SetTitle('')
-            graph.GetHistogram().GetXaxis().SetTitle(self.SPLINELABEL)
-            graph.GetHistogram().GetYaxis().SetTitle(param)
-            if fit:
-                fitResult = graph.Fit(fitFuncs['x'+param])
-                func = graph.GetFunction(fitFuncs['x'+param])
-                fittedParams['x'+param] = [func.Eval(x) for x in xs]
-            canvas.Print('{}.png'.format(savename))
+        return xparams, yparams
 
-        for param in yparameters:
-            name = '{}_{}{}'.format('y'+param,h,tag)
-            xerrs = [0]*len(amasses)
-            if yFitFunc == "errG" or yFitFunc == "L" or yFitFunc == "G3" or yFitFunc == "G2": 
-                vals = [results[h][a][param] for a in amasses]
-                errs = [errors[h][a][param] for a in amasses]
+    def fitSignalParams(self,results,errors,integrals,region,shift='',**kwargs):
+        tag = kwargs.get('tag','{}{}'.format(region,'_'+shift if shift else ''))
+        yFitFunc = kwargs.get('yFitFunc','G')
+
+        if self.do2D:
+            fitFuncs = {
+                'mean_sigx'      : ROOT.TF2('xmean_{}'.format(tag),     '[0]+[1]*y',                                 *self.HRANGE+self.ARANGE),
+                'width_sigx'     : ROOT.TF2('xwidth_{}'.format(tag),    '[0]+[1]*x+[2]*y+[3]*x*y+[4]*y*y',           *self.HRANGE+self.ARANGE),
+                'sigma_sigx'     : ROOT.TF2('xsigma_{}'.format(tag),    '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
+                'mean_sigy'      : ROOT.TF2('ymean_{}'.format(tag),     '[0]+[1]*x',                                 *self.HRANGE+self.ARANGE),
+                'width_sigy'     : ROOT.TF2('ywidth_{}'.format(tag),    '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
+                'width1_sigy'    : ROOT.TF2('ywidth1_{}'.format(tag),   '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
+                'width2_sigy'    : ROOT.TF2('ywidth2_{}'.format(tag),   '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
+                'sigma_sigy'     : ROOT.TF2('ysigma_{}'.format(tag),    '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
+                'sigma1_sigy'    : ROOT.TF2('ysigma1_{}'.format(tag),   '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
+                'sigma2_sigy'    : ROOT.TF2('ysigma2_{}'.format(tag),   '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
+                'a_sigy'         : ROOT.TF2('ya_{}'.format(tag),        '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
+                'a1_sigy'        : ROOT.TF2('ya1_{}'.format(tag),       '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
+                'a2_sigy'        : ROOT.TF2('ya2_{}'.format(tag),       '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
+                'n_sigy'         : ROOT.TF2('yn_{}'.format(tag),        '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
+                'n1_sigy'        : ROOT.TF2('yn1_{}'.format(tag),       '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
+                'n2_sigy'        : ROOT.TF2('yn2_{}'.format(tag),       '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
+                'betaScale_sigy' : ROOT.TF2('ybetaScale_{}'.format(tag),'[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
+                'betaA_sigy'     : ROOT.TF2('ybetaA_{}'.format(tag),    '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
+                'betaB_sigy'     : ROOT.TF2('ybetaB_{}'.format(tag),    '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
+                'erfScale_sigy'  : ROOT.TF2('yerfScale_{}'.format(tag), '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
+                'erfShift_sigy'  : ROOT.TF2('yerfShift_{}'.format(tag), '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
+                'mu_sigy'        : ROOT.TF2('mu_{}'.format(tag),        '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
+                'sigma_sigy'     : ROOT.TF2('sigma_{}'.format(tag),     '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
+                'integral'       : ROOT.TF2('integral_{}'.format(tag), '[0]+[1]*x+TMath::Erf([2]+[3]*y+[4]*x)*TMath::Erfc([5]+[6]*y+[7]*x)',*self.HRANGE+self.ARANGE),
+            }
+            #fitFuncs['integral'].SetParameter(2,-0.005)
+            #fitFuncs['integral'].SetParameter(3,0.02)
+            #fitFuncs['integral'].SetParameter(5,-0.5)
+            #fitFuncs['integral'].SetParameter(6,0.08)
+            pp = [-0.426558,0.00260027,0.337455,0.149909,-0.00133535,1.00036,0.0130436,-0.00668657]
+            fp = [-1.56521,0.000395383,1.06745,0.0843899,-0.000684469,-0.503411,0.0102577,-0.00216701]
+            for i in range(8): fitFuncs['integral'].SetParameter(i,fp[i])
+        else:
+            fitFuncs = {}
+            for h in self.HMASSES:
+                fitFuncs[h] = {
+                    'mean_sigx'     : ROOT.TF1('xmean_h{}_{}'.format(h,tag),     '[0]+[1]*x',         *self.ARANGE),
+                    'width_sigx'    : ROOT.TF1('xwidth_h{}_{}'.format(h,tag),    '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'sigma_sigx'    : ROOT.TF1('xsigma_h{}_{}'.format(h,tag),    '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'mean_sigy'     : ROOT.TF1('ymean_h{}_{}'.format(h,tag),     '[0]+[1]*x',         *self.ARANGE),
+                    'width_sigy'    : ROOT.TF1('ywidth_h{}_{}'.format(h,tag),    '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'width1_sigy'   : ROOT.TF1('ywidth1_h{}_{}'.format(h,tag),   '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'width2_sigy'   : ROOT.TF1('ywidth2_h{}_{}'.format(h,tag),   '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'sigma_sigy'    : ROOT.TF1('ysigma_h{}_{}'.format(h,tag),    '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'sigma1_sigy'   : ROOT.TF1('ysigma1_h{}_{}'.format(h,tag),   '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'sigma2_sigy'   : ROOT.TF1('ysigma2_h{}_{}'.format(h,tag),   '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'a_sigy'        : ROOT.TF1('ya_h{}_{}'.format(h,tag),        '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'a1_sigy'       : ROOT.TF1('ya1_h{}_{}'.format(h,tag),       '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'a2_sigy'       : ROOT.TF1('ya2_h{}_{}'.format(h,tag),       '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'n_sigy'        : ROOT.TF1('yn_h{}_{}'.format(h,tag),        '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'n1_sigy'       : ROOT.TF1('yn1_h{}_{}'.format(h,tag),       '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'n2_sigy'       : ROOT.TF1('yn2_h{}_{}'.format(h,tag),       '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'betaScale_sigy': ROOT.TF1('ybetaScale_h{}_{}'.format(h,tag),'[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'betaA_sigy'    : ROOT.TF1('ybetaA_h{}_{}'.format(h,tag),    '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'betaB_sigy'    : ROOT.TF1('ybetaB_h{}_{}'.format(h,tag),    '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'erfScale_sigy' : ROOT.TF1('yerfScale_h{}_{}'.format(h,tag), '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'erfShift_sigy' : ROOT.TF1('yerfShift_h{}_{}'.format(h,tag), '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'mu_sigy'       : ROOT.TF1('mu_h{}_{}'.format(h,tag),        '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'sigma_sigy'    : ROOT.TF1('sigma_h{}_{}'.format(h,tag),     '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'integral'      : ROOT.TF1('integral_h{}_{}'.format(h,tag),  '[0]+TMath::Erf([1]+[2]*x)*TMath::Erfc([3]+[4]*x)', *self.ARANGE),
+                }
+                # set initial values
+                fitFuncs[h]['integral'].SetParameter(1,-0.005)
+                fitFuncs[h]['integral'].SetParameter(2,0.02)
+                fitFuncs[h]['integral'].SetParameter(3,-0.5)
+                fitFuncs[h]['integral'].SetParameter(4,0.08)
+
+        xparams, yparams = self.getParams(yFitFunc)
+
+        for param in xparams+yparams+['integral']:
+            Hs = sorted(results)
+            As = {h: [self.aToStr(a) for a in sorted([self.aToFloat(x) for x in results[h]])] for h in Hs}
+            xvals = [h for h in Hs for a in As[h]]
+            xerrs = [0] * len(xvals)
+            yvals = [self.aToFloat(a) for h in Hs for a in As[h]]
+            yerrs = [0] * len(yvals)
+            if param=='integral':
+                zvals = [integrals[h][a] for h in Hs for a in As[h]]
             else:
-                vals = [results[h][a]['{}_sigy'.format(param)] for a in amasses]
-                errs = [errors[h][a]['{}_sigy'.format(param)] for a in amasses]
-            graph = ROOT.TGraphErrors(len(avals),array('d',avals),array('d',vals),array('d',xerrs),array('d',errs))
-            #graph = ROOT.TGraph(len(avals),array('d',avals),array('d',vals))
+                zvals = [results[h][a][param] for h in Hs for a in As[h]]
+                zerrs = [errors[h][a][param] for h in Hs for a in As[h]]
+            if self.do2D:
+                #graph = ROOT.TGraph2DErrors(len(xvals), array('d',xvals), array('d',yvals), array('d',zvals), array('d'
+                graph = ROOT.TGraph2D(len(xvals), array('d',xvals), array('d',yvals), array('d',zvals))
+                graph.Fit(fitFuncs[param])
+
+            name = '{}_{}'.format(param,tag)
             savedir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
             python_mkdir(savedir)
             savename = '{}/{}_Fit'.format(savedir,name)
+
             canvas = ROOT.TCanvas(savename,savename,800,800)
-            graph.Draw()
-            graph.SetTitle('')
-            graph.GetHistogram().GetXaxis().SetTitle(self.SPLINELABEL)
-            graph.GetHistogram().GetYaxis().SetTitle(param)
-            if fit:
-                fitResult = graph.Fit(fitFuncs['y'+param])
-                func = graph.GetFunction(fitFuncs['y'+param])
-                fittedParams['y'+param] = [func.Eval(y) for y in ys]
+            canvas.SetTopMargin(0.1)
+
+            mg = ROOT.TMultiGraph()
+            fmg = ROOT.TMultiGraph()
+
+            legend = ROOT.TLegend(0.1,0.9,0.9,1.0,'','NDC')
+            legend.SetTextFont(42)
+            legend.SetBorderSize(0)
+            legend.SetFillColor(0)
+            legend.SetNColumns(len(self.HMASSES))
+
+            for h in [125,300,750]:
+                xs = [yvals[i] for i in range(len(xvals)) if xvals[i]==h]
+                ys = [zvals[i] for i in range(len(xvals)) if xvals[i]==h]
+
+                g = ROOT.TGraph(len(xs),array('d',xs),array('d',ys))
+                if not self.do2D:
+                    g.Fit(fitFuncs[h][param])
+                    g = ROOT.TGraph(len(xs),array('d',xs),array('d',ys)) # override so we dont plot the fits here
+                g.SetLineColor(self.COLORS[h])
+                g.SetMarkerColor(self.COLORS[h])
+                g.SetTitle('H({h})'.format(h=h))
+
+                legend.AddEntry(g,g.GetTitle(),'lp')
+                mg.Add(g)
+
+                fxs = []
+                fys = []
+                for a in range(self.ARANGE[0]*10,self.ARANGE[1]*10+1,1):
+                    if self.do2D:
+                        y = fitFuncs[param].Eval(h,a*0.1)
+                    else:
+                        y = fitFuncs[h][param].Eval(a*0.1)
+                    fxs += [a*0.1]
+                    fys += [y]
+                fg = ROOT.TGraph(len(fxs),array('d',fxs),array('d',fys))
+                fg.SetLineColor(self.COLORS[h])
+                fg.SetLineWidth(3)
+                fg.SetMarkerColor(self.COLORS[h])
+                fmg.Add(fg)
+
+            canvas.DrawFrame(self.ARANGE[0],min(zvals)*0.9,self.ARANGE[1],max(zvals)*1.1)
+            if self.doParamFit:
+                mg.Draw('p0')
+            else:
+                mg.Draw('L p0')
+            mg.GetXaxis().SetTitle(self.ALABEL)
+            mg.GetYaxis().SetTitle(param)
+            if self.doParamFit: fmg.Draw('L')
+            legend.Draw()
             canvas.Print('{}.png'.format(savename))
 
-        param = 'integral'
-        funcname = 'pol2'
-        name = '{}_{}{}'.format(param,h,tag)
-        vals = [integrals[h][a] for a in amasses]
-        graph = ROOT.TGraph(len(avals),array('d',avals),array('d',vals))
-        savedir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
-        python_mkdir(savedir)
-        savename = '{}/{}_Fit'.format(savedir,name)
-        canvas = ROOT.TCanvas(savename,savename,800,800)
-        graph.Draw()
-        graph.SetTitle('')
-        graph.GetHistogram().GetXaxis().SetTitle(self.SPLINELABEL)
-        graph.GetHistogram().GetYaxis().SetTitle('integral')
-        if fit:
-            fitResult = graph.Fit(funcname)
-            func = graph.GetFunction(funcname)
-            newintegrals = [func.Eval(x) for x in xs]
-            # dont fit integrals
-            #model.setIntegral(xs,newintegrals)
-        canvas.Print('{}.png'.format(savename))
+            if self.do2D:
+                savename = '{}/{}_Fit_vsH'.format(savedir,name)
 
-        return results, errors, integrals
+                canvas = ROOT.TCanvas(savename,savename,800,800)
+                canvas.SetTopMargin(0.1)
 
-    def buildSpline(self,h,vals,errs,integrals,region,shifts=[],isKinFit=False,**kwargs):
+                mg = ROOT.TMultiGraph()
+                fmg = ROOT.TMultiGraph()
+
+                legend = ROOT.TLegend(0.1,0.9,0.9,1.0,'','NDC')
+                legend.SetTextFont(42)
+                legend.SetBorderSize(0)
+                legend.SetFillColor(0)
+                legend.SetNColumns(len(self.HMASSES))
+
+                for a in [5,9,15]:
+                    xs = [xvals[i] for i in range(len(xvals)) if yvals[i]==a]
+                    ys = [zvals[i] for i in range(len(xvals)) if yvals[i]==a]
+
+                    g = ROOT.TGraph(len(xs),array('d',xs),array('d',ys))
+                    g.SetLineColor(self.COLORS[a])
+                    g.SetMarkerColor(self.COLORS[a])
+                    g.SetTitle('a({a})'.format(a=a))
+
+                    legend.AddEntry(g,g.GetTitle(),'lp')
+                    mg.Add(g)
+
+                    fxs = []
+                    fys = []
+                    for h in range(self.HRANGE[0]*10,self.HRANGE[1]*10+1,1):
+                        y = fitFuncs[param].Eval(h*0.1,a)
+                        fxs += [h*0.1]
+                        fys += [y]
+                    fg = ROOT.TGraph(len(fxs),array('d',fxs),array('d',fys))
+                    fg.SetLineColor(self.COLORS[a])
+                    fg.SetLineWidth(3)
+                    fg.SetMarkerColor(self.COLORS[a])
+                    fmg.Add(fg)
+
+                canvas.DrawFrame(self.HRANGE[0],min(zvals)*0.9,self.HRANGE[1],max(zvals)*1.1)
+                if self.doParamFit:
+                    mg.Draw('p0')
+                else:
+                    mg.Draw('L p0')
+                mg.GetXaxis().SetTitle(self.HLABEL)
+                mg.GetYaxis().SetTitle(param)
+                if self.doParamFit: fmg.Draw('L')
+                legend.Draw()
+                canvas.Print('{}.png'.format(savename))
+
+
+        return fitFuncs
+
+
+    def buildSpline(self,vals,errs,integrals,region,shifts=[],isKinFit=False,**kwargs):
         '''
         Get the signal spline for a given Higgs mass.
         Required arguments:
@@ -975,99 +997,11 @@ class HaaLimits2D(HaaLimits):
         yVar = kwargs.pop('yVar','y')
         yFitFunc = kwargs.pop('yFitFunc','G')
         ygausOnly = kwargs.get('ygausOnly',False)
-        fit = kwargs.get('fit',False)
         dobgsig = kwargs.get('doBackgroundSignal',False)
-        amasses = self.AMASSES
-        if h>125: amasses = [a for a in amasses if a not in ['3p6',4,6]]
-        if h in [200,250,400,500,1000]: amasses = [5, 9, 15]
-        avals = [float(str(x).replace('p','.')) for x in amasses]
 
         # create parameter splines
-        params = ['mean','width','sigma']
         splines = {}
-        for param in params:
-            name = 'x{param}_h{h}_{region}_sigx'.format(param=param,h=h,region=region)
-            paramMasses = avals
-            paramValues = [vals[''][h][a]['{param}_sigx'.format(param=param,h=h,a=a,region=region)] for a in amasses]
-            paramShifts = {}
-            for shift in shifts:
-                shiftValuesUp   = [vals[shift+'Up'  ][h][a]['{param}_sigx'.format(  param=param,h=h,a=a,region=region,shift=shift)] for a in amasses]
-                shiftValuesDown = [vals[shift+'Down'][h][a]['{param}_sigx'.format(param=param,h=h,a=a,region=region,shift=shift)] for a in amasses]
-                paramShifts[shift] = {'up': shiftValuesUp, 'down': shiftValuesDown}
-            spline = Models.Spline(name,
-                masses = paramMasses,
-                values = paramValues,
-                shifts = paramShifts,
-            )
-            spline.build(workspace, name)
-            splines[name] = spline
-
-        if   yFitFunc == "V"   : yparameters = ['mean','width','sigma']
-        elif yFitFunc == "G"   : yparameters = ['mean', 'sigma']
-        elif yFitFunc == "CB"  : yparameters = ['mean', 'sigma', 'a', 'n']
-        elif yFitFunc == "DCB" : yparameters = ['mean', 'sigma', 'a1', 'n1', 'a2', 'n2']
-        elif yFitFunc == "DG"  : yparameters = ['mean', 'sigma1', 'sigma2']
-        elif yFitFunc == "DV"  : yparameters = ['mean', 'sigma1', 'sigma2','width1','width2']
-        elif yFitFunc == "B"   : yparameters = ['betaScale','betaA','betaB']
-        elif yFitFunc == "errG": yparameters = ['mean_ttgaus', 'sigma_ttgaus','erfShift_tterf','erfScale_tterf']
-        #elif yFitFunc == "L"   : yparameters = ['mu', 'sigma']
-        elif yFitFunc == "L"   : yparameters = ['mean_ttgaus', 'sigma_ttgaus','mu_ttland','sigma_ttland']
-        elif yFitFunc == "G2"  : yparameters = ['mean_g1', 'sigma_g1','mean_g2','sigma_g2','g1_frac']
-        elif yFitFunc == "G3"  : yparameters = ['mean_g1', 'sigma_g1','mean_g2','sigma_g2','mean_g3','sigma_g3','g1_frac','g2_frac']
-        else: raise
-
-        for param in yparameters:
-            name = 'y{param}_h{h}_{region}_sigy'.format(param=param,h=h,region=region)
-            paramMasses = avals
-            if yFitFunc == "errG" or yFitFunc == "L" or yFitFunc == "G3" or yFitFunc == "G2": 
-                paramValues = [vals[''][h][a]['{param}'.format(param=param)] for a in amasses]
-            else: 
-                paramValues = [vals[''][h][a]['{param}_sigy'.format(param=param)] for a in amasses]
-            paramShifts = {}
-            for shift in shifts:
-                if yFitFunc == "errG" or yFitFunc == "L" or yFitFunc == "G3" or yFitFunc == "G2":
-                    shiftValuesUp   = [vals[shift+'Up'  ][h][a]['{param}'.format(param=param)] for a in amasses]
-                    shiftValuesDown = [vals[shift+'Down'][h][a]['{param}'.format(param=param)] for a in amasses]
-                else:
-                    shiftValuesUp   = [vals[shift+'Up'  ][h][a]['{param}_sigy'.format(param=param)] for a in amasses]
-                    shiftValuesDown = [vals[shift+'Down'][h][a]['{param}_sigy'.format(param=param)] for a in amasses]
-                paramShifts[shift] = {'up': shiftValuesUp, 'down': shiftValuesDown}
-            spline = Models.Spline(name,
-                masses = paramMasses,
-                values = paramValues,
-                shifts = paramShifts,
-            )
-            spline.build(workspace, name)
-            splines[name] = spline
-
-        # integral spline
-        name = 'integral_{}_{}'.format(self.SPLINENAME.format(h=h),region)
-        paramMasses = avals
-        paramValues = [integrals[''][h][a] for a in amasses]
-        paramShifts = {}
-        for shift in shifts:
-            shiftValuesUp   = [integrals[shift+'Up'  ][h][a] for a in amasses]
-            shiftValuesDown = [integrals[shift+'Down'][h][a] for a in amasses]
-            paramShifts[shift] = {'up': shiftValuesUp, 'down': shiftValuesDown}
-        spline = Models.Spline(name,
-            masses = paramMasses,
-            values = paramValues,
-            shifts = paramShifts,
-        )
-        spline.build(workspace, name)
-        splines[name] = spline
-
-    
-        # create model
-        if fit:
-            print 'Need to reimplement fitting'
-            raise
-        else:
-            modelx = Models.Voigtian(self.SPLINENAME.format(h=h)+'_x',
-                x = xVar,
-                **{param: 'x{param}_h{h}_{region}_sigx'.format(param=param, h=h, region=region) for param in params}
-            )
-        modelx.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_x'))
+        xparams, yparams = self.getParams(yFitFunc)
 
         if   yFitFunc == "V"   : ym = Models.Voigtian
         elif yFitFunc == "G"   : ym = Models.Gaussian
@@ -1078,96 +1012,222 @@ class HaaLimits2D(HaaLimits):
         elif yFitFunc == "B"   : ym = Models.Beta
         elif yFitFunc != "L" and yFitFunc != "errG" and yFitFunc != "G3" and yFitFunc != "G2": raise
 
-        if fit:
-            print 'Need to reimplement fitting'
-            raise
-        else:
-            if yFitFunc == 'errG':
-                modely_gaus = Models.Gaussian("model_gaus",
+
+        if self.doParamFit:
+            for param in xparams+yparams+['integral']:
+                if self.do2D:
+                    name = '{param}_{splinename}_{region}'.format(param=param,splinename=self.SPLINENAME,region=region)
+                    spline = Models.Spline(name,
+                        MH = ['MH','MA'],
+                        masses = None,
+                        values = fitFuncs[''][param],
+                        shifts = {shift: {'up': fitFuncs[shift+'Up'][param], 'down': fitFuncs[shift+'Down'][param],} for shift in shifts},
+                    )
+                    spline.build(workspace, name)
+                    splines[name] = spline
+                else:
+                    for h in self.HMASSES:
+                        name = '{param}_{splinename}_{region}'.format(param=param,splinename=self.SPLINENAME.format(h=h),region=region)
+                        spline = Models.Spline(name,
+                            MH = 'MA',
+                            masses = None,
+                            values = fitFuncs[''][h][param],
+                            shifts = {shift: {'up': fitFuncs[shift+'Up'][h][param], 'down': fitFuncs[shift+'Down'][h][param],} for shift in shifts},
+                        )
+                        spline.build(workspace, name)
+                        splines[name] = spline
+
+            # create model
+            if self.do2D:
+                modelx = Models.Voigtian(self.SPLINENAME+'_x',
+                    x = xVar,
+                    **{param[1:]: '{param}_{splinename}_{region}'.format(param=param, splinename=self.SPLINENAME, region=region) for param in xparams}
+                )
+                modelx.build(workspace,'{}_{}'.format(self.SPLINENAME,region+'_x'))
+
+                modely = ym(self.SPLINENAME+'_y',
                     x = yVar,
-                     **{param: 'y{param}_ttgaus_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['mean','sigma']}
+                    yMax = self.YRANGE[1],
+                    **{param: '{param}_{splinename}_{region}'.format(param=param, splinename=self.SPLINENAME, region=region) for param in yparams}
                 )
-                modely_gaus.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_gaus_y'))
-                modely_erf = Models.Erf("model_erf",
-                    x = yVar,
-                     **{param: 'y{param}_tterf_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['ergScales','erfShifts']}
+                modely.build(workspace,'{}_{}'.format(self.SPLINENAME,region+'_y'))
+                        
+                model = Models.Prod(self.SPLINENAME,
+                    '{}_{}'.format(self.SPLINENAME,region+'_x'),
+                    '{}_{}'.format(self.SPLINENAME,region+'_y'),
                 )
-                modely_erf.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_erf_y'))
-                modely = Models.Prod(self.SPLINENAME.format(h=h)+'_y',
-                    '{}_{}'.format(self.SPLINENAME.format(h=h),region+'_gaus_y'),
-                    '{}_{}'.format(self.SPLINENAME.format(h=h),region+'_erf_y'),
-                )
-            elif yFitFunc == 'L':
-                modely_gaus = Models.Gaussian("model_gaus",
-                    x = yVar,
-                     **{param: 'y{param}_ttgaus_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['mean','sigma']}
-                )
-                modely_gaus.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_gaus_y'))
-                modely_land = Models.Landau("model_land",
-                    x = yVar,
-                     **{param: 'y{param}_ttland_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['mu','sigma']}
-                )
-                modely_land.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_land_y'))
-                modely = Models.Prod(self.SPLINENAME.format(h=h)+'_y',
-                    '{}_{}'.format(self.SPLINENAME.format(h=h),region+'_gaus_y'),
-                    '{}_{}'.format(self.SPLINENAME.format(h=h),region+'_land_y'),
-                )
-            elif yFitFunc == 'G2':
-                modely_g1 = Models.Gaussian("model_g1",
-                    x = yVar,
-                     **{param: 'y{param}_g1_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['mean','sigma']}
-                )
-                modely_g1.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_g1_y'))
-                modely_g2 = Models.Gaussian("model_g2",
-                    x = yVar,
-                     **{param: 'y{param}_g2_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['mean','sigma']}
-                )
-                modely_g2.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_g2_y'))
-                gs = {}
-                for i in range(2):
-                    gs['{}_{}'.format(self.SPLINENAME.format(h=h),region+'_g{}_y'.format(i+1))] = 'yg{i}_frac_h{h}_{region}_sigy'.format(i=i+1, h=h, region=region)
-                modely = Models.Sum(self.SPLINENAME.format(h=h)+'_y',
-                    recursive = True,
-                    **gs
-                )
-            elif yFitFunc == 'G3':
-                modely_g1 = Models.Gaussian("model_g1",
-                    x = yVar,
-                     **{param: 'y{param}_g1_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['mean','sigma']}
-                )
-                modely_g1.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_g1_y'))
-                modely_g2 = Models.Gaussian("model_g2",
-                    x = yVar,
-                     **{param: 'y{param}_g2_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['mean','sigma']}
-                )
-                modely_g2.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_g2_y'))
-                modely_g3 = Models.Gaussian("model_g3",
-                    x = yVar,
-                     **{param: 'y{param}_g3_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in ['mean','sigma']}
-                )
-                modely_g3.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_g3_y'))
-                gs = {}
-                for i in range(3):
-                    gs['{}_{}'.format(self.SPLINENAME.format(h=h),region+'_g{}_y'.format(i+1))] = 'yg{i}_frac_h{h}_{region}_sigy'.format(i=i+1, h=h, region=region)
-                modely = Models.Sum(self.SPLINENAME.format(h=h)+'_y',
-                    recursive = True,
-                    **gs
-                )
+                model.build(workspace,'{}_{}'.format(self.SPLINENAME,region))
+
+
+                return model
             else:
+                models = {}
+                for h in self.HMASSES:
+                    modelx = Models.Voigtian(self.SPLINENAME.format(h=h)+'_x',
+                        x = xVar,
+                        **{param[1:]: '{param}_{splinename}_{region}'.format(param=param, splinename=self.SPLINENAME.format(h=h), region=region) for param in xparams}
+                    )
+                    modelx.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_x'))
+
+                    modely = ym(self.SPLINENAME.format(h=h)+'_y',
+                        x = yVar,
+                        yMax = self.YRANGE[1],
+                        **{param: '{param}_{splinename}_{region}'.format(param=param, splinename=self.SPLINENAME.format(h=h), region=region) for param in yparams}
+                    )
+                    modely.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_y'))
+                            
+                    model = Models.Prod(self.SPLINENAME.format(h=h),
+                        '{}_{}'.format(self.SPLINENAME.format(h=h),region+'_x'),
+                        '{}_{}'.format(self.SPLINENAME.format(h=h),region+'_y'),
+                    )
+                    model.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region))
+
+
+                    models[h] = model
+
+                return models
+
+        # create parameter splines
+        for param in xparams+yparams:
+            if self.do2D:
+                name = '{param}_{region}'.format(param=param,region=region)
+                paramMasses = [[],[]]
+                paramValues = []
+                paramShifts = {}
+                for h in sorted(vals['']):
+                    for a in self.aSorted(vals[''][h]):
+                        paramMasses[0] += [h]
+                        paramMasses[1] += [self.aToFloat(a)]
+                        paramValues += [vals[''][h][a]['{param}_h{h}_a{a}_{region}'.format(param=param,h=h,a=a,region=region)]]
+                        for shift in shifts:
+                            if shift not in paramShifts: paramShifts[shift] = {'up': [], 'down': []}
+                            paramShifts[shift]['up']   += [vals[shift+'Up'  ][h][a][param]]
+                            paramShifts[shift]['down'] += [vals[shift+'Down'][h][a][param]]
+                spline = Models.Spline(name,
+                    MH = ['MH','MA'],
+                    masses = paramMasses,
+                    values = paramValues,
+                    shifts = paramShifts,
+                )
+                spline.build(workspace, name)
+                splines[name] = spline
+            else:
+                for h in self.HMASSES:
+                    name = '{param}_h{h}_{region}'.format(param=param,region=region,h=h)
+                    paramMasses = []
+                    paramValues = []
+                    paramShifts = {}
+                    for a in self.aSorted(vals[''][h]):
+                        paramMasses += [self.aToFloat(a)]
+                        paramValues += [vals[''][h][a][param]]
+                        for shift in shifts:
+                            if shift not in paramShifts: paramShifts[shift] = {'up': [], 'down': []}
+                            paramShifts[shift]['up']   += [vals[shift+'Up'  ][h][a][param]]
+                            paramShifts[shift]['down'] += [vals[shift+'Down'][h][a][param]]
+                    spline = Models.Spline(name,
+                        MH = 'MA',
+                        masses = paramMasses,
+                        values = paramValues,
+                        shifts = paramShifts,
+                    )
+                    spline.build(workspace, name)
+                    splines[name] = spline
+    
+        # integral spline
+        if self.do2D:
+            name = 'integral_{}_{}'.format(self.SPLINENAME,region)
+            paramMasses = [[],[]]
+            paramValues = []
+            paramShifts = {}
+            for h in sorted(vals['']):
+                for a in self.aSorted(vals[''][h]):
+                    paramMasses[0] += [h]
+                    paramMasses[1] += [self.aToFloat(a)]
+                    paramValues += [integrals[''][h][a]]
+                    for shift in shifts:
+                        if shift not in paramShifts: paramShifts[shift] = {'up': [], 'down': []}
+                        paramShifts[shift]['up']   += [integrals[shift+'Up'  ][h][a]]
+                        paramShifts[shift]['down'] += [integrals[shift+'Down'][h][a]]
+            spline = Models.Spline(name,
+                MH = ['MH','MA'],
+                masses = paramMasses,
+                values = paramValues,
+                shifts = paramShifts,
+            )
+            spline.build(workspace, name)
+            splines[name] = spline
+        else:
+            for h in self.HMASSES:
+                name = 'integral_{}_{}'.format(self.SPLINENAME.format(h=h),region)
+                paramMasses = []
+                paramValues = []
+                paramShifts = {}
+                for a in self.aSorted(vals[''][h]):
+                    paramMasses += [self.aToFloat(a)]
+                    paramValues += [integrals[''][h][a]]
+                    for shift in shifts:
+                        if shift not in paramShifts: paramShifts[shift] = {'up': [], 'down': []}
+                        paramShifts[shift]['up']   += [integrals[shift+'Up'  ][h][a]]
+                        paramShifts[shift]['down'] += [integrals[shift+'Down'][h][a]]
+                spline = Models.Spline(name,
+                    MH = 'MA',
+                    masses = paramMasses,
+                    values = paramValues,
+                    shifts = paramShifts,
+                )
+                spline.build(workspace, name)
+                splines[name] = spline
+
+        # create model
+        if self.do2D:
+            modelx = Models.Voigtian(self.SPLINENAME+'_x',
+                x = xVar,
+                **{param[1:]: '{param}_{region}'.format(param=param, region=region) for param in xparams}
+            )
+            modelx.build(workspace,'{}_{}'.format(self.SPLINENAME,region+'_x'))
+
+            modely = ym(self.SPLINENAME+'_y',
+                x = yVar,
+                yMax = self.YRANGE[1],
+                **{param: '{param}_{region}'.format(param=param, region=region) for param in yparams}
+            )
+            modely.build(workspace,'{}_{}'.format(self.SPLINENAME,region+'_y'))
+                    
+            model = Models.Prod(self.SPLINENAME,
+                '{}_{}'.format(self.SPLINENAME,region+'_x'),
+                '{}_{}'.format(self.SPLINENAME,region+'_y'),
+            )
+            model.build(workspace,'{}_{}'.format(self.SPLINENAME,region))
+
+
+            return model
+        else:
+            models = {}
+            for h in self.HMASSES:
+                modelx = Models.Voigtian(self.SPLINENAME.format(h=h)+'_x',
+                    x = xVar,
+                    **{param[1:]: '{param}_h{h}_{region}'.format(param=param, h=h, region=region) for param in xparams}
+                )
+                modelx.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_x'))
+
                 modely = ym(self.SPLINENAME.format(h=h)+'_y',
                     x = yVar,
                     yMax = self.YRANGE[1],
-                    **{param: 'y{param}_h{h}_{region}_sigy'.format(param=param, h=h, region=region) for param in yparameters}
+                    **{param: '{param}_h{h}_{region}'.format(param=param, h=h, region=region) for param in yparams}
                 )
-        modely.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_y'))
-                
-        model = Models.Prod(self.SPLINENAME.format(h=h),
-            '{}_{}'.format(self.SPLINENAME.format(h=h),region+'_x'),
-            '{}_{}'.format(self.SPLINENAME.format(h=h),region+'_y'),
-        )
-        model.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region))
+                modely.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_y'))
+                        
+                model = Models.Prod(self.SPLINENAME.format(h=h),
+                    '{}_{}'.format(self.SPLINENAME.format(h=h),region+'_x'),
+                    '{}_{}'.format(self.SPLINENAME.format(h=h),region+'_y'),
+                )
+                model.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region))
 
-        return model
+
+                models[h] = model
+
+            return models
+
 
     def addControlModels(self, load=False, skipFit=False):
         region = 'control'
@@ -1191,7 +1251,7 @@ class HaaLimits2D(HaaLimits):
         self.control_integralValues = allintegrals
 
     def fitBackground(self,region,shift='',**kwargs):
-        scaleLumi = kwargs.pop('scaleLumi',1)
+        scale = kwargs.pop('scale',1)
 
         if region=='control':
             return super(HaaLimits2D, self).fitBackground(region=region, shift=shift, **kwargs)
@@ -1204,13 +1264,13 @@ class HaaLimits2D(HaaLimits):
         name = 'data_prefit_{}{}'.format(region,'_'+shift if shift else '')
         hist = self.histMap[region][shift]['dataNoSig']
         if hist.InheritsFrom('TH1'):
-            integral = hist.Integral() * scaleLumi # 2D restricted integral?
+            integral = hist.Integral() * scale # 2D restricted integral?
             data = ROOT.RooDataHist(name,name,ROOT.RooArgList(workspace.var('x'),workspace.var('y')),hist)
         else:
             data = hist.Clone(name)
-            integral = hist.sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE)) * scaleLumi
+            integral = hist.sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE)) * scale
 
-        fr = model.fitTo(data,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrinLevel(-1))
+        fr = model.fitTo(data,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
 
         xFrame = workspace.var(xVar).frame()
         data.plotOn(xFrame)
@@ -1309,7 +1369,7 @@ class HaaLimits2D(HaaLimits):
     def addData(self,blind=True,asimov=False,addSignal=False,addControl=False,doBinned=False,**kwargs):
         mh = kwargs.pop('h',125)
         ma = kwargs.pop('a',15)
-        scaleLumi = kwargs.pop('scaleLumi',1)
+        scale = kwargs.pop('scale',1)
 
         workspace = self.workspace
 
@@ -1374,9 +1434,9 @@ class HaaLimits2D(HaaLimits):
                 model = workspace.pdf('bg_{}_xy'.format(region))
                 h = self.histMap[region]['']['dataNoSig']
                 if h.InheritsFrom('TH1'):
-                    integral = h.Integral() * scaleLumi # 2D integral?
+                    integral = h.Integral() * scale # 2D integral?
                 else:
-                    integral = h.sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE)) * scaleLumi
+                    integral = h.sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE)) * scale
                 if asimov:
                     data_obs = model.generateBinned(ROOT.RooArgSet(self.workspace.var(xVar),self.workspace.var(yVar)),integral,1)
                 else:
@@ -1505,62 +1565,81 @@ class HaaLimits2D(HaaLimits):
         values = {}
         errors = {}
         integrals = {}
+        fitFuncs = {}
         for region in self.REGIONS:
             models[region] = {}
             values[region] = {}
             errors[region] = {}
             integrals[region] = {}
+            fitFuncs[region] = {}
             if 'PP' in region:  yFitFunc=yFitFuncPP
             else: yFitFunc = yFitFuncFP
-            for h in self.HMASSES:
-                values[region][h] = {}
-                errors[region][h] = {}
-                integrals[region][h] = {}
-                for shift in ['']+self.SIGNALSHIFTS+self.QCDSHIFTS:
-                    if shift == '':
-                        vals, errs, ints = self.fitSignals(h,region=region,shift=shift,yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
-                        values[region][h][shift] = vals
-                        errors[region][h][shift] = errs
-                        integrals[region][h][shift] = ints
-                    elif shift in self.QCDSHIFTS:
-                        vals, errs, ints = self.fitSignals(h,region=region,shift=shift,yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
-                        values[region][h][shift] = vals
-                        errors[region][h][shift] = errs
-                        integrals[region][h][shift] = ints
-                    else:
-                        valsUp, errsUp, intsUp = self.fitSignals(h,region=region,shift=shift+'Up',yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
-                        valsDown, errsDown, intsDown = self.fitSignals(h,region=region,shift=shift+'Down',yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
-                        values[region][h][shift+'Up'] = valsUp
-                        errors[region][h][shift+'Up'] = errsUp
-                        integrals[region][h][shift+'Up'] = intsUp
-                        values[region][h][shift+'Down'] = valsDown
-                        errors[region][h][shift+'Down'] = errsDown
-                        integrals[region][h][shift+'Down'] = intsDown
-                if self.QCDSHIFTS:
-                    values[region][h]['qcdUp']      = {h:{a:{} for a in self.AMASSES}}
-                    values[region][h]['qcdDown']    = {h:{a:{} for a in self.AMASSES}}
-                    errors[region][h]['qcdUp']      = {h:{a:{} for a in self.AMASSES}}
-                    errors[region][h]['qcdDown']    = {h:{a:{} for a in self.AMASSES}}
-                    integrals[region][h]['qcdUp']   = {h:{a:0  for a in self.AMASSES}}
-                    integrals[region][h]['qcdDown'] = {h:{a:0  for a in self.AMASSES}}
-                    for a in values[region][h][''][h]:
-                        for val in values[region][h][''][h][a]:
-                            values[region][h]['qcdUp'  ][h][a][val] = max([values[region][h][shift][h][a][val] for shift in self.QCDSHIFTS])
-                            values[region][h]['qcdDown'][h][a][val] = min([values[region][h][shift][h][a][val] for shift in self.QCDSHIFTS])
-                            errors[region][h]['qcdUp'  ][h][a][val] = max([errors[region][h][shift][h][a][val] for shift in self.QCDSHIFTS])
-                            errors[region][h]['qcdDown'][h][a][val] = min([errors[region][h][shift][h][a][val] for shift in self.QCDSHIFTS])
-                        integrals[region][h]['qcdUp'  ][h][a] = max([integrals[region][h][shift][h][a] for shift in self.QCDSHIFTS])
-                        integrals[region][h]['qcdDown'][h][a] = min([integrals[region][h][shift][h][a] for shift in self.QCDSHIFTS])
-                    for shift in ['qcdUp','qcdDown']:
-                        savedir = '{}/{}'.format(self.fitsDir,shift)
-                        python_mkdir(savedir)
-                        savename = '{}/h{}_{}_{}.json'.format(savedir,h,region,shift)
-                        jsonData = {'vals': values[region][h][shift], 'errs': errors[region][h][shift], 'integrals': integrals[region][h][shift]}
-                        self.dump(savename,jsonData)
-                    models[region][h] = self.buildSpline(h,values[region][h],errors[region][h],integrals[region][h],region,self.SIGNALSHIFTS+['qcd'],yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
+            for shift in ['']+self.SIGNALSHIFTS+self.QCDSHIFTS:
+                if shift == '':
+                    vals, errs, ints, fits = self.fitSignals(region=region,shift=shift,yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
+                    values[region][shift] = vals
+                    errors[region][shift] = errs
+                    integrals[region][shift] = ints
+                    fitFuncs[region][shift] = fits
+                elif shift in self.QCDSHIFTS:
+                    vals, errs, ints, fits = self.fitSignals(region=region,shift=shift,yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
+                    values[region][h][shift] = vals
+                    errors[region][h][shift] = errs
+                    integrals[region][h][shift] = ints
+                    fitFuncs[region][shift] = fits
                 else:
-                    models[region][h] = self.buildSpline(h,values[region][h],errors[region][h],integrals[region][h],region,self.SIGNALSHIFTS,yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
-                #self.workspace.factory('{}_{}_norm[1,0,9999]'.format(self.SPLINENAME.format(h=h),region))
+                    valsUp, errsUp, intsUp, fitsUp = self.fitSignals(region=region,shift=shift+'Up',yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
+                    valsDown, errsDown, intsDown, fitsDown = self.fitSignals(region=region,shift=shift+'Down',yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
+                    values[region][shift+'Up'] = valsUp
+                    errors[region][shift+'Up'] = errsUp
+                    integrals[region][shift+'Up'] = intsUp
+                    fitFuncs[region][shift+'Up'] = fitsUp
+                    values[region][shift+'Down'] = valsDown
+                    errors[region][shift+'Down'] = errsDown
+                    integrals[region][shift+'Down'] = intsDown
+                    fitFuncs[region][shift+'Down'] = fitsDown
+            if self.QCDSHIFTS:
+                values[region]['qcdUp']      = {}
+                values[region]['qcdDown']    = {}
+                errors[region]['qcdUp']      = {}
+                errors[region]['qcdDown']    = {}
+                integrals[region]['qcdUp']   = {}
+                integrals[region]['qcdDown'] = {}
+                fitFuncs[region]['qcdUp']    = {}
+                fitFuncs[region]['qcdDown']  = {}
+                for h in values[region]['']:
+                    values[region]['qcdUp'][h]      = {}
+                    values[region]['qcdDown'][h]    = {}
+                    errors[region]['qcdUp'][h]      = {}
+                    errors[region]['qcdDown'][h]    = {}
+                    integrals[region]['qcdUp'][h]   = {}
+                    integrals[region]['qcdDown'][h] = {}
+                    fitFuncs[region]['qcdUp'][h]    = {}
+                    fitFuncs[region]['qcdDown'][h]  = {}
+                    for a in values[region][''][h]:
+                        values[region]['qcdUp'][h][a]      = {}
+                        values[region]['qcdDown'][h][a]    = {}
+                        errors[region]['qcdUp'][h][a]      = {}
+                        errors[region]['qcdDown'][h][a]    = {}
+                        integrals[region]['qcdUp'  ][h][a] = max([integrals[region][shift][h][a] for shift in self.QCDSHIFTS])
+                        integrals[region]['qcdDown'][h][a] = min([integrals[region][shift][h][a] for shift in self.QCDSHIFTS])
+                        for val in values[region][''][h][a]:
+                            values[region]['qcdUp'  ][h][a][val] = max([values[region][shift][h][a][val] for shift in self.QCDSHIFTS])
+                            values[region]['qcdDown'][h][a][val] = min([values[region][shift][h][a][val] for shift in self.QCDSHIFTS])
+                            errors[region]['qcdUp'  ][h][a][val] = max([errors[region][shift][h][a][val] for shift in self.QCDSHIFTS])
+                            errors[region]['qcdDown'][h][a][val] = min([errors[region][shift][h][a][val] for shift in self.QCDSHIFTS])
+                for shift in ['qcdUp','qcdDown']:
+                    savedir = '{}/{}'.format(self.fitsDir,shift)
+                    python_mkdir(savedir)
+                    savename = '{}/{}_{}.json'.format(savedir,region,shift)
+                    jsonData = {'vals': values[region][shift], 'errs': errors[region][shift], 'integrals': integrals[region][shift]}
+                    self.dump(savename,jsonData)
+                fitFuncs[region]['qcdUp']   = self.fitSignalParams(values[region]['qcdUp'],  errors[region]['qcdUp'],  integrals[region]['qcdUp'],  region,'qcdUp',yFitFun=yFitFunc)
+                fitFuncs[region]['qcdDown'] = self.fitSignalParams(values[region]['qcdDown'],errors[region]['qcdDown'],integrals[region]['qcdDown'],region,'qcdDown',yFitFunc=yFitFunc)
+            if self.QCDSHIFTS:
+                models[region] = self.buildSpline(values[region],errors[region],integrals[region],region,self.SIGNALSHIFTS+['qcd'],yFitFunc=yFitFunc,isKinFit=isKinFit,fitFuncs=fitFuncs[region],**kwargs)
+            else:
+                models[region] = self.buildSpline(values[region],errors[region],integrals[region],region,self.SIGNALSHIFTS,yFitFunc=yFitFunc,isKinFit=isKinFit,fitFuncs=fitFuncs[region],**kwargs)
         self.fitted_models = models
 
     ######################
@@ -1607,6 +1686,24 @@ class HaaLimits2D(HaaLimits):
                     self.addShape(region,proc,'{}_{}_xy'.format(proc,region))
                 
             self.setObserved(region,-1) # reads from histogram
+
+        # add higgs cross section
+        tfile = ROOT.TFile.Open('CombineLimits/Limits/data/Higgs_YR4_BSM_13TeV.root')
+        ws = tfile.Get('YR4_BSM_13TeV')
+        name = 'xsec_ggF_VBF'
+        ggFName = 'xsec_ggF_N3LO'
+        vbfName = 'xsec_VBF'
+        ggF = ws.function(ggFName)
+        vbf = ws.function(vbfName)
+        formula = '@0+@1'
+        args = ROOT.RooArgList()
+        args.add(ggF)
+        args.add(vbf)
+        spline = ROOT.RooFormulaVar(name,name,formula,args)
+        getattr(self.workspace,'import')(spline, ROOT.RooFit.RecycleConflictNodes())
+        for region in self.REGIONS:
+            for proc in sigs:
+                self.addRateParam(name,region,proc)
 
         if addControl:
             region = 'control'
@@ -1998,8 +2095,11 @@ class HaaLimits2D(HaaLimits):
         bgs = self.getComponentFractions(self.workspace.pdf('bg_{}_x'.format(self.REGIONS[0])))
         bgs = [b.rstrip('_x') for b in bgs]
         bgs = [b.rstrip('_'+self.REGIONS[0]) for b in bgs]
-        for h in self.HMASSES:
-            processes[self.SIGNAME.format(h=h,a='X')] = [self.SPLINENAME.format(h=h)] + bgs
+        if self.do2D:
+            processes = [self.SPLINENAME] + bgs
+        else:
+            for h in self.HMASSES:
+                processes[self.SIGNAME.format(h=h,a='X')] = [self.SPLINENAME.format(h=h)] + bgs
         if subdirectory == '':
             self.printCard('datacards_shape/MuMuTauTau/{}'.format(name),processes=processes,blind=False,saveWorkspace=True)
         else:

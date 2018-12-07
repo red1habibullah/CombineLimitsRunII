@@ -64,6 +64,20 @@ class HaaLimits(Limits):
     SIGNALSHIFTS = []
     QCDSHIFTS = [] # note, max/min of all (excluding 0.5/2)
 
+    COLORS = {
+        125 : ROOT.kBlack,
+        200 : ROOT.kMagenta,
+        250 : ROOT.kCyan+1,
+        300 : ROOT.kBlue,
+        400 : ROOT.kRed,
+        500 : ROOT.kOrange-3,
+        750 : ROOT.kGreen+2,
+        1000: ROOT.kViolet-1,
+        5   : ROOT.kBlack,
+        9   : ROOT.kBlue,
+        15  : ROOT.kGreen+2,
+    }
+        
 
     def __init__(self,histMap,tag='',do2DInterpolation=False,doParamFit=False):
         '''
@@ -116,6 +130,10 @@ class HaaLimits(Limits):
 
     def aToStr(self,a):
         return str(a).replace('.','p') if '.' in str(a) and not str(a).endswith('0') else int(a)
+
+    def aSorted(self,As):
+        avals = sorted([self.aToFloat(a) for a in As])
+        return [self.aToStr(a) for a in avals]
 
     ###########################
     ### Workspace utilities ###
@@ -424,12 +442,15 @@ class HaaLimits(Limits):
                 'sigma':    ROOT.TF2('sigma_{}'.format(tag),    '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE), 
                 #'integral': ROOT.TF2('integral_{}'.format(tag), 'exp([0]+[1]*x)*([2]+[3]*y+[4]*y*y+[5]*x*y+[6]*y*y*y+[7]*y*y*y*y)',*self.HRANGE+self.ARANGE),
                 #'integral': ROOT.TF2('integral_{}'.format(tag), '[0]+[1]*x+[2]*y+[3]*x*x+[4]*y*y+[5]*x*y+[6]*y*y*y+[7]*y*y*y*y',*self.HRANGE+self.ARANGE),
-                'integral': ROOT.TF2('integral_{}'.format(tag), '[0]+[1]*x+TMath::Erf([2]+[3]*y)*TMath::Erfc([4]+[5]*y)',*self.HRANGE+self.ARANGE),
+                'integral': ROOT.TF2('integral_{}'.format(tag), '[0]+[1]*x+TMath::Erf([2]+[3]*y+[4]*x)*TMath::Erfc([5]+[6]*y+[7]*x)',*self.HRANGE+self.ARANGE),
             }
-            fitFuncs['integral'].SetParameter(2,-0.005)
-            fitFuncs['integral'].SetParameter(3,0.02)
-            fitFuncs['integral'].SetParameter(4,-0.5)
-            fitFuncs['integral'].SetParameter(5,0.08)
+            #fitFuncs['integral'].SetParameter(2,-0.005)
+            #fitFuncs['integral'].SetParameter(3,0.02)
+            #fitFuncs['integral'].SetParameter(5,-0.5)
+            #fitFuncs['integral'].SetParameter(6,0.08)
+            pp = [-0.426558,0.00260027,0.337455,0.149909,-0.00133535,1.00036,0.0130436,-0.00668657]
+            fp = [-1.56521,0.000395383,1.06745,0.0843899,-0.000684469,-0.503411,0.0102577,-0.00216701]
+            for i in range(8): fitFuncs['integral'].SetParameter(i,fp[i])
         else:
             fitFuncs = {}
             for h in self.HMASSES:
@@ -446,20 +467,6 @@ class HaaLimits(Limits):
                 fitFuncs[h]['integral'].SetParameter(3,-0.5)
                 fitFuncs[h]['integral'].SetParameter(4,0.08)
 
-        colors = {
-            125 : ROOT.kBlack,
-            200 : ROOT.kMagenta,
-            250 : ROOT.kCyan+1,
-            300 : ROOT.kBlue,
-            400 : ROOT.kRed,
-            500 : ROOT.kOrange-3,
-            750 : ROOT.kGreen+2,
-            1000: ROOT.kViolet-1,
-            5   : ROOT.kBlack,
-            9   : ROOT.kBlue,
-            15  : ROOT.kGreen+2,
-        }
-        
         for param in ['mean','width','sigma','integral']:
             Hs = sorted(results)
             As = {h: [self.aToStr(a) for a in sorted([self.aToFloat(x) for x in results[h]])] for h in Hs}
@@ -502,8 +509,8 @@ class HaaLimits(Limits):
                 if not self.do2D:
                     g.Fit(fitFuncs[h][param])
                     g = ROOT.TGraph(len(xs),array('d',xs),array('d',ys)) # override so we dont plot the fits here
-                g.SetLineColor(colors[h])
-                g.SetMarkerColor(colors[h])
+                g.SetLineColor(self.COLORS[h])
+                g.SetMarkerColor(self.COLORS[h])
                 g.SetTitle('H({h})'.format(h=h))
 
                 legend.AddEntry(g,g.GetTitle(),'lp')
@@ -519,9 +526,9 @@ class HaaLimits(Limits):
                     fxs += [a*0.1]
                     fys += [y]
                 fg = ROOT.TGraph(len(fxs),array('d',fxs),array('d',fys))
-                fg.SetLineColor(colors[h])
+                fg.SetLineColor(self.COLORS[h])
                 fg.SetLineWidth(3)
-                fg.SetMarkerColor(colors[h])
+                fg.SetMarkerColor(self.COLORS[h])
                 fmg.Add(fg)
 
             canvas.DrawFrame(self.ARANGE[0],min(zvals)*0.9,self.ARANGE[1],max(zvals)*1.1)
@@ -555,8 +562,8 @@ class HaaLimits(Limits):
                     ys = [zvals[i] for i in range(len(xvals)) if yvals[i]==a]
 
                     g = ROOT.TGraph(len(xs),array('d',xs),array('d',ys))
-                    g.SetLineColor(colors[a])
-                    g.SetMarkerColor(colors[a])
+                    g.SetLineColor(self.COLORS[a])
+                    g.SetMarkerColor(self.COLORS[a])
                     g.SetTitle('a({a})'.format(a=a))
 
                     legend.AddEntry(g,g.GetTitle(),'lp')
@@ -569,9 +576,9 @@ class HaaLimits(Limits):
                         fxs += [h*0.1]
                         fys += [y]
                     fg = ROOT.TGraph(len(fxs),array('d',fxs),array('d',fys))
-                    fg.SetLineColor(colors[a])
+                    fg.SetLineColor(self.COLORS[a])
                     fg.SetLineWidth(3)
-                    fg.SetMarkerColor(colors[a])
+                    fg.SetMarkerColor(self.COLORS[a])
                     fmg.Add(fg)
 
                 canvas.DrawFrame(self.HRANGE[0],min(zvals)*0.9,self.HRANGE[1],max(zvals)*1.1)
@@ -673,8 +680,8 @@ class HaaLimits(Limits):
                 paramMasses = [[],[]]
                 paramValues = []
                 paramShifts = {}
-                for h in vals['']:
-                    for a in vals[''][h]:
+                for h in sorted(vals['']):
+                    for a in self.aSorted(vals[''][h]):
                         paramMasses[0] += [h]
                         paramMasses[1] += [self.aToFloat(a)]
                         paramValues += [vals[''][h][a]['{param}_h{h}_a{a}_{region}'.format(param=param,h=h,a=a,region=region)]]
@@ -696,7 +703,7 @@ class HaaLimits(Limits):
                     paramMasses = []
                     paramValues = []
                     paramShifts = {}
-                    for a in vals[''][h]:
+                    for a in self.aSorted(vals[''][h]):
                         paramMasses += [self.aToFloat(a)]
                         paramValues += [vals[''][h][a]['{param}_h{h}_a{a}_{region}'.format(param=param,h=h,a=a,region=region)]]
                         for shift in shifts:
@@ -718,8 +725,8 @@ class HaaLimits(Limits):
             paramMasses = [[],[]]
             paramValues = []
             paramShifts = {}
-            for h in vals['']:
-                for a in vals[''][h]:
+            for h in sorted(vals['']):
+                for a in self.aSorted(vals[''][h]):
                     paramMasses[0] += [h]
                     paramMasses[1] += [self.aToFloat(a)]
                     paramValues += [integrals[''][h][a]]
@@ -741,7 +748,7 @@ class HaaLimits(Limits):
                 paramMasses = []
                 paramValues = []
                 paramShifts = {}
-                for a in vals[''][h]:
+                for a in self.aSorted(vals[''][h]):
                     paramMasses += [self.aToFloat(a)]
                     paramValues += [integrals[''][h][a]]
                     for shift in shifts:

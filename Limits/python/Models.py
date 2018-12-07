@@ -182,6 +182,10 @@ def buildSpline(ws,label,MH,masses,values):
                 tree.Fill()
             spline = ROOT.RooSplineND(label, label, args, tree, 'f', 1, True)
         else:
+            if sorted(masses) != masses:
+                print 'Masses are not in increasing order for', label
+                print masses
+                raise ValueError
             spline  = ROOT.RooSpline1D(label,  label,  ws.var(MH), len(masses), array('d',masses), array('d',values))
     else: # TFn case
         if not isinstance(MH, list): MH = [MH]
