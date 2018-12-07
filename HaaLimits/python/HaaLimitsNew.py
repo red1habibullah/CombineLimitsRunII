@@ -1353,6 +1353,8 @@ class HaaLimits(Limits):
 
         bgs = [b.rstrip('_'+self.REGIONS[0]) for b in bgs]
         sigs = [self.SPLINENAME] if self.do2D else [self.SPLINENAME.format(h=h) for h in self.HMASSES]
+        self.bgs = bgs
+        self.sigs = sigs
 
         # setup bins
         for region in self.REGIONS:
@@ -1391,23 +1393,7 @@ class HaaLimits(Limits):
 
             self.setObserved(region,-1) # reads from histogram
 
-        # add higgs cross section
-        tfile = ROOT.TFile.Open('CombineLimits/Limits/data/Higgs_YR4_BSM_13TeV.root')
-        ws = tfile.Get('YR4_BSM_13TeV')
-        name = 'xsec_ggF_VBF'
-        ggFName = 'xsec_ggF_N3LO'
-        vbfName = 'xsec_VBF'
-        ggF = ws.function(ggFName)
-        vbf = ws.function(vbfName)
-        formula = '@0+@1'
-        args = ROOT.RooArgList()
-        args.add(ggF)
-        args.add(vbf)
-        spline = ROOT.RooFormulaVar(name,name,formula,args)
-        getattr(self.workspace,'import')(spline, ROOT.RooFit.RecycleConflictNodes())
-        for region in self.REGIONS:
-            for proc in sigs:
-                self.addRateParam(name,region,proc)
+        self.addCrossSection()
 
         if addControl:
             region = 'control'
@@ -1422,6 +1408,33 @@ class HaaLimits(Limits):
                 #    self.addShape(region,proc,proc)
 
             self.setObserved(region,-1) # reads from histogram
+
+    def addCrossSection(self):
+        # add higgs cross section
+        tfile = ROOT.TFile.Open('CombineLimits/Limits/data/Higgs_YR4_BSM_13TeV.root')
+        ws = tfile.Get('YR4_BSM_13TeV')
+        name = 'xsec_ggF_VBF'
+        ggFName = 'xsec_ggF_N3LO'
+        vbfName = 'xsec_VBF'
+        ggF = ws.function(ggFName)
+        vbf = ws.function(vbfName)
+        # add gg+VBF/gg acceptance correction
+        accfile = ROOT.TFile.Open('CombineLimits/HaaLimits/data/acceptance.root')
+        acc = accfile.Get('acceptance')
+        from CombineLimits.Limits.Models import buildSpline
+        accspline = buildSpline(self.workspace, 'ggF_VBF_acceptance', ['MH','MA'], None, acc)
+        # build the final spline
+        formula = '(@0+@1)*@2'
+        args = ROOT.RooArgList()
+        args.add(ggF)
+        args.add(vbf)
+        args.add(accspline)
+        spline = ROOT.RooFormulaVar(name,name,formula,args)
+        getattr(self.workspace,'import')(spline, ROOT.RooFit.RecycleConflictNodes())
+        # define the rate params for combine
+        for region in self.REGIONS:
+            for proc in self.sigs:
+                self.addRateParam(name,region,proc)
 
 
     ###################

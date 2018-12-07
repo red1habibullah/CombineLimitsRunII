@@ -1773,23 +1773,7 @@ class HaaLimits2D(HaaLimits):
                 
             self.setObserved(region,-1) # reads from histogram
 
-        # add higgs cross section
-        tfile = ROOT.TFile.Open('CombineLimits/Limits/data/Higgs_YR4_BSM_13TeV.root')
-        ws = tfile.Get('YR4_BSM_13TeV')
-        name = 'xsec_ggF_VBF'
-        ggFName = 'xsec_ggF_N3LO'
-        vbfName = 'xsec_VBF'
-        ggF = ws.function(ggFName)
-        vbf = ws.function(vbfName)
-        formula = '@0+@1'
-        args = ROOT.RooArgList()
-        args.add(ggF)
-        args.add(vbf)
-        spline = ROOT.RooFormulaVar(name,name,formula,args)
-        getattr(self.workspace,'import')(spline, ROOT.RooFit.RecycleConflictNodes())
-        for region in self.REGIONS:
-            for proc in sigs:
-                self.addRateParam(name,region,proc)
+        self.addCrossSection()
 
         if addControl:
             region = 'control'
