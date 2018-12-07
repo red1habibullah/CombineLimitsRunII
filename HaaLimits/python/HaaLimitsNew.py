@@ -437,8 +437,7 @@ class HaaLimits(Limits):
         if self.do2D:
             fitFuncs = {
                 'mean' :    ROOT.TF2('mean_{}'.format(tag),     '[0]+[1]*y',                                 *self.HRANGE+self.ARANGE), 
-                #'width':    ROOT.TF2('width_{}'.format(tag),    '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE), 
-                'width':    ROOT.TF2('width_{}'.format(tag),    '[0]+[1]*x+[2]*y+[3]*x*y+[4]*y*y',           *self.HRANGE+self.ARANGE), 
+                'width':    ROOT.TF2('width_{}'.format(tag),    '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE), 
                 'sigma':    ROOT.TF2('sigma_{}'.format(tag),    '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE), 
                 #'integral': ROOT.TF2('integral_{}'.format(tag), 'exp([0]+[1]*x)*([2]+[3]*y+[4]*y*y+[5]*x*y+[6]*y*y*y+[7]*y*y*y*y)',*self.HRANGE+self.ARANGE),
                 #'integral': ROOT.TF2('integral_{}'.format(tag), '[0]+[1]*x+[2]*y+[3]*x*x+[4]*y*y+[5]*x*y+[6]*y*y*y+[7]*y*y*y*y',*self.HRANGE+self.ARANGE),

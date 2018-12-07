@@ -770,9 +770,9 @@ class HaaLimits2D(HaaLimits):
         if self.do2D:
             fitFuncs = {
                 'mean_sigx'      : ROOT.TF2('xmean_{}'.format(tag),     '[0]+[1]*y',                                 *self.HRANGE+self.ARANGE),
-                'width_sigx'     : ROOT.TF2('xwidth_{}'.format(tag),    '[0]+[1]*x+[2]*y+[3]*x*y+[4]*y*y',           *self.HRANGE+self.ARANGE),
+                'width_sigx'     : ROOT.TF2('xwidth_{}'.format(tag),    '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',  *self.HRANGE+self.ARANGE),
                 'sigma_sigx'     : ROOT.TF2('xsigma_{}'.format(tag),    '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
-                'mean_sigy'      : ROOT.TF2('ymean_{}'.format(tag),     '[0]+[1]*x',                                 *self.HRANGE+self.ARANGE),
+                'mean_sigy'      : ROOT.TF2('ymean_{}'.format(tag),     '[0]+[1]*x+[2]*y+[3]*x*y',                   *self.HRANGE+self.ARANGE),
                 'width_sigy'     : ROOT.TF2('ywidth_{}'.format(tag),    '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
                 'width1_sigy'    : ROOT.TF2('ywidth1_{}'.format(tag),   '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
                 'width2_sigy'    : ROOT.TF2('ywidth2_{}'.format(tag),   '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
@@ -792,7 +792,7 @@ class HaaLimits2D(HaaLimits):
                 'erfShift_sigy'  : ROOT.TF2('yerfShift_{}'.format(tag), '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
                 'mu_sigy'        : ROOT.TF2('mu_{}'.format(tag),        '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
                 'sigma_sigy'     : ROOT.TF2('sigma_{}'.format(tag),     '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
-                'integral'       : ROOT.TF2('integral_{}'.format(tag), '[0]+[1]*x+TMath::Erf([2]+[3]*y+[4]*x)*TMath::Erfc([5]+[6]*y+[7]*x)',*self.HRANGE+self.ARANGE),
+                'integral'       : ROOT.TF2('integral_{}'.format(tag),  '[0]+[1]*x+TMath::Erf([2]+[3]*y+[4]*x)*TMath::Erfc([5]+[6]*y+[7]*x)',*self.HRANGE+self.ARANGE),
             }
             #fitFuncs['integral'].SetParameter(2,-0.005)
             #fitFuncs['integral'].SetParameter(3,0.02)
@@ -839,6 +839,7 @@ class HaaLimits2D(HaaLimits):
         xparams, yparams = self.getParams(yFitFunc)
 
         for param in xparams+yparams+['integral']:
+            logging.info('Fitting {}'.format(param))
             Hs = sorted(results)
             As = {h: [self.aToStr(a) for a in sorted([self.aToFloat(x) for x in results[h]])] for h in Hs}
             xvals = [h for h in Hs for a in As[h]]
@@ -998,6 +999,7 @@ class HaaLimits2D(HaaLimits):
         yFitFunc = kwargs.pop('yFitFunc','G')
         ygausOnly = kwargs.get('ygausOnly',False)
         dobgsig = kwargs.get('doBackgroundSignal',False)
+        fitFuncs = kwargs.get('fitFuncs',{})
 
         # create parameter splines
         splines = {}
