@@ -788,10 +788,20 @@ class HaaLimits2D(HaaLimits):
                 'betaScale_sigy' : ROOT.TF2('ybetaScale_{}'.format(tag),'[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
                 'betaA_sigy'     : ROOT.TF2('ybetaA_{}'.format(tag),    '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
                 'betaB_sigy'     : ROOT.TF2('ybetaB_{}'.format(tag),    '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
-                'erfScale_sigy'  : ROOT.TF2('yerfScale_{}'.format(tag), '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
-                'erfShift_sigy'  : ROOT.TF2('yerfShift_{}'.format(tag), '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
-                'mu_sigy'        : ROOT.TF2('mu_{}'.format(tag),        '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
-                'sigma_sigy'     : ROOT.TF2('sigma_{}'.format(tag),     '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
+                'mean_ttgaus'    : ROOT.TF2('mean_ttgaus_{}'.format(tag),     '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
+                'sigma_ttgaus'   : ROOT.TF2('sigma_ttgaus_{}'.format(tag),    '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
+                'erfScale_tterf' : ROOT.TF2('yerfScale_tterf_{}'.format(tag), '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
+                'erfShift_tterf' : ROOT.TF2('yerfShift_tterf_{}'.format(tag), '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
+                'mu_ttland'      : ROOT.TF2('mu_ttland_{}'.format(tag),       '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
+                'sigma_ttland'   : ROOT.TF2('sigma_ttland_{}'.format(tag),    '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
+                'mean_g1'        : ROOT.TF2('mean_g1_{}'.format(tag),         '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
+                'sigma_g1'       : ROOT.TF2('sigma_g1_{}'.format(tag),        '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
+                'mean_g2'        : ROOT.TF2('mean_g2_{}'.format(tag),         '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
+                'sigma_g2'       : ROOT.TF2('sigma_g2_{}'.format(tag),        '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
+                'mean_g3'        : ROOT.TF2('mean_g3_{}'.format(tag),         '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
+                'sigma_g3'       : ROOT.TF2('sigma_g3_{}'.format(tag),        '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
+                'g1_frac'        : ROOT.TF2('g1_frac_{}'.format(tag),         '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
+                'g2_frac'        : ROOT.TF2('g2_frac_{}'.format(tag),         '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
                 'integral'       : ROOT.TF2('integral_{}'.format(tag),  '[0]+[1]*x+TMath::Erf([2]+[3]*y+[4]*x)*TMath::Erfc([5]+[6]*y+[7]*x)',*self.HRANGE+self.ARANGE),
             }
             #fitFuncs['integral'].SetParameter(2,-0.005)
@@ -824,10 +834,20 @@ class HaaLimits2D(HaaLimits):
                     'betaScale_sigy': ROOT.TF1('ybetaScale_h{}_{}'.format(h,tag),'[0]+[1]*x+[2]*x*x', *self.ARANGE),
                     'betaA_sigy'    : ROOT.TF1('ybetaA_h{}_{}'.format(h,tag),    '[0]+[1]*x+[2]*x*x', *self.ARANGE),
                     'betaB_sigy'    : ROOT.TF1('ybetaB_h{}_{}'.format(h,tag),    '[0]+[1]*x+[2]*x*x', *self.ARANGE),
-                    'erfScale_sigy' : ROOT.TF1('yerfScale_h{}_{}'.format(h,tag), '[0]+[1]*x+[2]*x*x', *self.ARANGE),
-                    'erfShift_sigy' : ROOT.TF1('yerfShift_h{}_{}'.format(h,tag), '[0]+[1]*x+[2]*x*x', *self.ARANGE),
-                    'mu_sigy'       : ROOT.TF1('mu_h{}_{}'.format(h,tag),        '[0]+[1]*x+[2]*x*x', *self.ARANGE),
-                    'sigma_sigy'    : ROOT.TF1('sigma_h{}_{}'.format(h,tag),     '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'mean_ttgaus'   : ROOT.TF1('mean_ttgaus_h{}_{}'.format(h,tag),     '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'sigma_ttgaus'  : ROOT.TF1('sigma_ttgaus_h{}_{}'.format(h,tag),    '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'erfScale_tterf': ROOT.TF1('yerfScale_tterf_h{}_{}'.format(h,tag), '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'erfShift_tterf': ROOT.TF1('yerfShift_tterf_h{}_{}'.format(h,tag), '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'mu_ttland'     : ROOT.TF1('mu_ttland_h{}_{}'.format(h,tag),       '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'sigma_ttland'  : ROOT.TF1('sigma_ttland_h{}_{}'.format(h,tag),    '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'mean_g1'       : ROOT.TF1('mean_g1_h{}_{}'.format(h,tag),         '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'sigma_g1'      : ROOT.TF1('sigma_g1_h{}_{}'.format(h,tag),        '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'mean_g2'       : ROOT.TF1('mean_g2_h{}_{}'.format(h,tag),         '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'sigma_g2'      : ROOT.TF1('sigma_g2_h{}_{}'.format(h,tag),        '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'mean_g3'       : ROOT.TF1('mean_g3_h{}_{}'.format(h,tag),         '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'sigma_g3'      : ROOT.TF1('sigma_g3_h{}_{}'.format(h,tag),        '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'g1_frac'       : ROOT.TF1('g1_frac_h{}_{}'.format(h,tag),         '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'g2_frac'       : ROOT.TF1('g2_frac_h{}_{}'.format(h,tag),         '[0]+[1]*x+[2]*x*x', *self.ARANGE),
                     'integral'      : ROOT.TF1('integral_h{}_{}'.format(h,tag),  '[0]+TMath::Erf([1]+[2]*x)*TMath::Erfc([3]+[4]*x)', *self.ARANGE),
                 }
                 # set initial values
@@ -1043,15 +1063,31 @@ class HaaLimits2D(HaaLimits):
             if self.do2D:
                 modelx = Models.Voigtian(self.SPLINENAME+'_x',
                     x = xVar,
-                    **{param[1:]: '{param}_{splinename}_{region}'.format(param=param, splinename=self.SPLINENAME, region=region) for param in xparams}
+                    **{param.rstrip('_sigx'): '{param}_{splinename}_{region}'.format(param=param, splinename=self.SPLINENAME, region=region) for param in xparams}
                 )
                 modelx.build(workspace,'{}_{}'.format(self.SPLINENAME,region+'_x'))
 
-                modely = ym(self.SPLINENAME+'_y',
-                    x = yVar,
-                    yMax = self.YRANGE[1],
-                    **{param: '{param}_{splinename}_{region}'.format(param=param, splinename=self.SPLINENAME, region=region) for param in yparams}
-                )
+                if yFitFunc=='L':
+                    modely_gaus = Models.Gaussian("model_gaus",
+                        x = yVar,
+                         **{param: '{param}_ttgaus_{splinename}_{region}'.format(param=param, splinename=self.SPLINENAME, region=region) for param in ['mean','sigma']}
+                    )
+                    modely_gaus.build(workspace,'{}_{}'.format(self.SPLINENAME,region+'_gaus_y'))
+                    modely_land = Models.Landau("model_land",
+                        x = yVar,
+                         **{param: '{param}_ttland_{splinename}_{region}'.format(param=param, splinename=self.SPLINENAME, region=region) for param in ['mu','sigma']}
+                    )
+                    modely_land.build(workspace,'{}_{}'.format(self.SPLINENAME,region+'_land_y'))
+                    modely = Models.Prod(self.SPLINENAME+'_y',
+                        '{}_{}'.format(self.SPLINENAME,region+'_gaus_y'),
+                        '{}_{}'.format(self.SPLINENAME,region+'_land_y'),
+                    )
+                else:
+                    modely = ym(self.SPLINENAME+'_y',
+                        x = yVar,
+                        yMax = self.YRANGE[1],
+                        **{param.rstrip('_sigy'): '{param}_{splinename}_{region}'.format(param=param, splinename=self.SPLINENAME, region=region) for param in yparams}
+                    )
                 modely.build(workspace,'{}_{}'.format(self.SPLINENAME,region+'_y'))
                         
                 model = Models.Prod(self.SPLINENAME,
@@ -1067,15 +1103,31 @@ class HaaLimits2D(HaaLimits):
                 for h in self.HMASSES:
                     modelx = Models.Voigtian(self.SPLINENAME.format(h=h)+'_x',
                         x = xVar,
-                        **{param[1:]: '{param}_{splinename}_{region}'.format(param=param, splinename=self.SPLINENAME.format(h=h), region=region) for param in xparams}
+                        **{param.rstrip('_sigx'): '{param}_{splinename}_{region}'.format(param=param, splinename=self.SPLINENAME.format(h=h), region=region) for param in xparams}
                     )
                     modelx.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_x'))
 
-                    modely = ym(self.SPLINENAME.format(h=h)+'_y',
-                        x = yVar,
-                        yMax = self.YRANGE[1],
-                        **{param: '{param}_{splinename}_{region}'.format(param=param, splinename=self.SPLINENAME.format(h=h), region=region) for param in yparams}
-                    )
+                    if yFitFunc=='L':
+                        modely_gaus = Models.Gaussian("model_gaus",
+                            x = yVar,
+                             **{param: '{param}_ttgaus_{splinename}_{region}'.format(param=param, splinename=self.SPLINENAME.format(h=h), region=region) for param in ['mean','sigma']}
+                        )
+                        modely_gaus.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_gaus_y'))
+                        modely_land = Models.Landau("model_land",
+                            x = yVar,
+                             **{param: '{param}_ttland_{splinename}_{region}'.format(param=param, splinename=self.SPLINENAME.format(h=h), region=region) for param in ['mu','sigma']}
+                        )
+                        modely_land.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_land_y'))
+                        modely = Models.Prod(self.SPLINENAME.format(h=h)+'_y',
+                            '{}_{}'.format(self.SPLINENAME.format(h=h),region+'_gaus_y'),
+                            '{}_{}'.format(self.SPLINENAME.format(h=h),region+'_land_y'),
+                        )
+                    else:
+                        modely = ym(self.SPLINENAME.format(h=h)+'_y',
+                            x = yVar,
+                            yMax = self.YRANGE[1],
+                            **{param.rstrip('_sigy'): '{param}_{splinename}_{region}'.format(param=param, splinename=self.SPLINENAME.format(h=h), region=region) for param in yparams}
+                        )
                     modely.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_y'))
                             
                     model = Models.Prod(self.SPLINENAME.format(h=h),
@@ -1184,15 +1236,31 @@ class HaaLimits2D(HaaLimits):
         if self.do2D:
             modelx = Models.Voigtian(self.SPLINENAME+'_x',
                 x = xVar,
-                **{param[1:]: '{param}_{region}'.format(param=param, region=region) for param in xparams}
+                **{param.rstrip('_sigx'): '{param}_{region}'.format(param=param, region=region) for param in xparams}
             )
             modelx.build(workspace,'{}_{}'.format(self.SPLINENAME,region+'_x'))
 
-            modely = ym(self.SPLINENAME+'_y',
-                x = yVar,
-                yMax = self.YRANGE[1],
-                **{param: '{param}_{region}'.format(param=param, region=region) for param in yparams}
-            )
+            if yFitFunc=='L':
+                modely_gaus = Models.Gaussian("model_gaus",
+                    x = yVar,
+                     **{param: '{param}_ttgaus_{region}'.format(param=param, region=region) for param in ['mean','sigma']}
+                )
+                modely_gaus.build(workspace,'{}_{}'.format(self.SPLINENAME,region+'_gaus_y'))
+                modely_land = Models.Landau("model_land",
+                    x = yVar,
+                     **{param: '{param}_ttland_{region}'.format(param=param, region=region) for param in ['mu','sigma']}
+                )
+                modely_land.build(workspace,'{}_{}'.format(self.SPLINENAME,region+'_land_y'))
+                modely = Models.Prod(self.SPLINENAME+'_y',
+                    '{}_{}'.format(self.SPLINENAME,region+'_gaus_y'),
+                    '{}_{}'.format(self.SPLINENAME,region+'_land_y'),
+                )
+            else:
+                modely = ym(self.SPLINENAME+'_y',
+                    x = yVar,
+                    yMax = self.YRANGE[1],
+                    **{param.rstrip('_sigy'): '{param}_{region}'.format(param=param, region=region) for param in yparams}
+                )
             modely.build(workspace,'{}_{}'.format(self.SPLINENAME,region+'_y'))
                     
             model = Models.Prod(self.SPLINENAME,
@@ -1208,15 +1276,31 @@ class HaaLimits2D(HaaLimits):
             for h in self.HMASSES:
                 modelx = Models.Voigtian(self.SPLINENAME.format(h=h)+'_x',
                     x = xVar,
-                    **{param[1:]: '{param}_h{h}_{region}'.format(param=param, h=h, region=region) for param in xparams}
+                    **{param.rstrip('_sigx'): '{param}_h{h}_{region}'.format(param=param, h=h, region=region) for param in xparams}
                 )
                 modelx.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_x'))
 
-                modely = ym(self.SPLINENAME.format(h=h)+'_y',
-                    x = yVar,
-                    yMax = self.YRANGE[1],
-                    **{param: '{param}_h{h}_{region}'.format(param=param, h=h, region=region) for param in yparams}
-                )
+                if yFitFunc=='L':
+                    modely_gaus = Models.Gaussian("model_gaus",
+                        x = yVar,
+                         **{param: '{param}_ttgaus_h{h}_{region}'.format(param=param, h=h, region=region) for param in ['mean','sigma']}
+                    )
+                    modely_gaus.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_gaus_y'))
+                    modely_land = Models.Landau("model_land",
+                        x = yVar,
+                         **{param: '{param}_ttland_h{h}_{region}'.format(param=param, h=h, region=region) for param in ['mu','sigma']}
+                    )
+                    modely_land.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_land_y'))
+                    modely = Models.Prod(self.SPLINENAME.format(h=h)+'_y',
+                        '{}_{}'.format(self.SPLINENAME.format(h=h),region+'_gaus_y'),
+                        '{}_{}'.format(self.SPLINENAME.format(h=h),region+'_land_y'),
+                    )
+                else:
+                    modely = ym(self.SPLINENAME.format(h=h)+'_y',
+                        x = yVar,
+                        yMax = self.YRANGE[1],
+                        **{param.rstrip('_sigy'): '{param}_h{h}_{region}'.format(param=param, h=h, region=region) for param in yparams}
+                    )
                 modely.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_y'))
                         
                 model = Models.Prod(self.SPLINENAME.format(h=h),
@@ -1739,6 +1823,12 @@ class HaaLimits2D(HaaLimits):
               "h125a17" : { "mean_ttgaus": 9.90, "sigma_ttgaus": 2.90, "mu_ttland": 4.40, "sigma_ttland": 1.60},
               "h125a19" : { "mean_ttgaus": 11.0, "sigma_ttgaus": 3.80, "mu_ttland": 6.00, "sigma_ttland": 2.00},
               "h125a21" : { "mean_ttgaus": 12.0, "sigma_ttgaus": 3.80, "mu_ttland": 6.00, "sigma_ttland": 1.90},
+              "h200a5"  : { "mean_ttgaus": 3.01, "sigma_ttgaus": 1.00, "mu_ttland": 1.10, "sigma_ttland": 0.20},# Can Be improved 
+              "h200a9"  : { "mean_ttgaus": 3.01, "sigma_ttgaus": 1.00, "mu_ttland": 1.10, "sigma_ttland": 0.20},# Can Be improved 
+              "h200a15" : { "mean_ttgaus": 3.01, "sigma_ttgaus": 1.00, "mu_ttland": 1.10, "sigma_ttland": 0.20},# Can Be improved 
+              "h250a5"  : { "mean_ttgaus": 3.01, "sigma_ttgaus": 1.00, "mu_ttland": 1.10, "sigma_ttland": 0.20},# Can Be improved 
+              "h250a9"  : { "mean_ttgaus": 3.01, "sigma_ttgaus": 1.00, "mu_ttland": 1.10, "sigma_ttland": 0.20},# Can Be improved 
+              "h250a15" : { "mean_ttgaus": 3.01, "sigma_ttgaus": 1.00, "mu_ttland": 1.10, "sigma_ttland": 0.20},# Can Be improved 
               "h300a5"  : { "mean_ttgaus": 3.01, "sigma_ttgaus": 1.00, "mu_ttland": 1.10, "sigma_ttland": 0.20},# Can Be improved 
               "h300a7"  : { "mean_ttgaus": 4.01, "sigma_ttgaus": 1.20, "mu_ttland": 1.40, "sigma_ttland": 0.20},# Can Be improved 
               "h300a9"  : { "mean_ttgaus": 5.42, "sigma_ttgaus": 1.51, "mu_ttland": 1.66, "sigma_ttland": 0.30},
@@ -1748,6 +1838,12 @@ class HaaLimits2D(HaaLimits):
               "h300a17" : { "mean_ttgaus": 10.2, "sigma_ttgaus": 2.93, "mu_ttland": 2.89, "sigma_ttland": 0.80},
               "h300a19" : { "mean_ttgaus": 11.4, "sigma_ttgaus": 3.31, "mu_ttland": 3.14, "sigma_ttland": 0.96},
               "h300a21" : { "mean_ttgaus": 12.6, "sigma_ttgaus": 3.54, "mu_ttland": 3.33, "sigma_ttland": 0.94},
+              "h400a5"  : { "mean_ttgaus": 3.01, "sigma_ttgaus": 1.00, "mu_ttland": 1.10, "sigma_ttland": 0.20},# Can Be improved 
+              "h400a9"  : { "mean_ttgaus": 3.01, "sigma_ttgaus": 1.00, "mu_ttland": 1.10, "sigma_ttland": 0.20},# Can Be improved 
+              "h400a15" : { "mean_ttgaus": 3.01, "sigma_ttgaus": 1.00, "mu_ttland": 1.10, "sigma_ttland": 0.20},# Can Be improved 
+              "h500a5"  : { "mean_ttgaus": 3.01, "sigma_ttgaus": 1.00, "mu_ttland": 1.10, "sigma_ttland": 0.20},# Can Be improved 
+              "h500a9"  : { "mean_ttgaus": 3.01, "sigma_ttgaus": 1.00, "mu_ttland": 1.10, "sigma_ttland": 0.20},# Can Be improved 
+              "h500a15" : { "mean_ttgaus": 3.01, "sigma_ttgaus": 1.00, "mu_ttland": 1.10, "sigma_ttland": 0.20},# Can Be improved 
               "h750a5"  : { "mean_ttgaus": 2.51, "sigma_ttgaus": 2.00, "mu_ttland": 1.87, "sigma_ttland": 0.35},# Can Be improved 
               "h750a7"  : { "mean_ttgaus": 3.01, "sigma_ttgaus": 2.00, "mu_ttland": 1.80, "sigma_ttland": 0.35},# Can Be improved 
               "h750a9"  : { "mean_ttgaus": 4.00, "sigma_ttgaus": 2.00, "mu_ttland": 1.90, "sigma_ttland": 0.35},# Can Be improved 
@@ -1757,6 +1853,9 @@ class HaaLimits2D(HaaLimits):
               "h750a17" : { "mean_ttgaus": 10.1, "sigma_ttgaus": 2.98, "mu_ttland": 2.30, "sigma_ttland": 0.63},
               "h750a19" : { "mean_ttgaus": 11.2, "sigma_ttgaus": 3.25, "mu_ttland": 2.39, "sigma_ttland": 0.67},
               "h750a21" : { "mean_ttgaus": 12.4, "sigma_ttgaus": 3.69, "mu_ttland": 2.70, "sigma_ttland": 0.83},
+              "h1000a5" : { "mean_ttgaus": 8.90, "sigma_ttgaus": 2.80, "mu_ttland": 2.20, "sigma_ttland": 0.60},
+              "h1000a9" : { "mean_ttgaus": 8.90, "sigma_ttgaus": 2.80, "mu_ttland": 2.20, "sigma_ttland": 0.60},
+              "h1000a15": { "mean_ttgaus": 8.90, "sigma_ttgaus": 2.80, "mu_ttland": 2.20, "sigma_ttland": 0.60},
             }
         else:
             initialValues = {
@@ -1772,6 +1871,12 @@ class HaaLimits2D(HaaLimits):
               "h125a17" : { "mean_sigy": 8.51, "sigma_sigy": 3.16, "width_sigy": 0.10},
               "h125a19" : { "mean_sigy": 8.78, "sigma_sigy": 3.35, "width_sigy": 0.01},
               "h125a21" : { "mean_sigy": 9.94, "sigma_sigy": 3.93, "width_sigy": 0.01},
+              "h200a5"  : { "mean_sigy": 2.21, "sigma_sigy": 0.58, "width_sigy": 0.50},
+              "h200a9"  : { "mean_sigy": 2.21, "sigma_sigy": 0.58, "width_sigy": 0.50},
+              "h200a15" : { "mean_sigy": 2.21, "sigma_sigy": 0.58, "width_sigy": 0.50},
+              "h250a5"  : { "mean_sigy": 2.21, "sigma_sigy": 0.58, "width_sigy": 0.50},
+              "h250a9"  : { "mean_sigy": 2.21, "sigma_sigy": 0.58, "width_sigy": 0.50},
+              "h250a15" : { "mean_sigy": 2.21, "sigma_sigy": 0.58, "width_sigy": 0.50},
               "h300a5"  : { "mean_sigy": 2.21, "sigma_sigy": 0.58, "width_sigy": 0.50},
               "h300a7"  : { "mean_sigy": 3.07, "sigma_sigy": 1.06, "width_sigy": 0.40},
               "h300a9"  : { "mean_sigy": 3.99, "sigma_sigy": 1.50, "width_sigy": 0.50},
@@ -1781,6 +1886,12 @@ class HaaLimits2D(HaaLimits):
               "h300a17" : { "mean_sigy": 7.68, "sigma_sigy": 3.10, "width_sigy": 0.30},
               "h300a19" : { "mean_sigy": 8.59, "sigma_sigy": 3.50, "width_sigy": 0.30},
               "h300a21" : { "mean_sigy": 9.33, "sigma_sigy": 3.80, "width_sigy": 0.40},
+              "h400a5"  : { "mean_sigy": 2.21, "sigma_sigy": 0.58, "width_sigy": 0.50},
+              "h400a9"  : { "mean_sigy": 2.21, "sigma_sigy": 0.58, "width_sigy": 0.50},
+              "h400a15" : { "mean_sigy": 2.21, "sigma_sigy": 0.58, "width_sigy": 0.50},
+              "h500a5"  : { "mean_sigy": 2.21, "sigma_sigy": 0.58, "width_sigy": 0.50},
+              "h500a9"  : { "mean_sigy": 2.21, "sigma_sigy": 0.58, "width_sigy": 0.50},
+              "h500a15" : { "mean_sigy": 2.21, "sigma_sigy": 0.58, "width_sigy": 0.50},
               "h750a5"  : { "mean_sigy": 2.10, "sigma_sigy": 0.50, "width_sigy": 0.80},
               "h750a7"  : { "mean_sigy": 2.90, "sigma_sigy": 1.00, "width_sigy": 0.80},
               "h750a9"  : { "mean_sigy": 3.80, "sigma_sigy": 1.50, "width_sigy": 0.80},
@@ -1789,7 +1900,10 @@ class HaaLimits2D(HaaLimits):
               "h750a15" : { "mean_sigy": 6.20, "sigma_sigy": 2.80, "width_sigy": 0.70},
               "h750a17" : { "mean_sigy": 7.10, "sigma_sigy": 3.10, "width_sigy": 0.80},
               "h750a19" : { "mean_sigy": 8.00, "sigma_sigy": 3.50, "width_sigy": 0.50},
-              "h750a21" : { "mean_sigy": 8.80, "sigma_sigy": 4.00, "width_sigy": 0.80}
+              "h750a21" : { "mean_sigy": 8.80, "sigma_sigy": 4.00, "width_sigy": 0.80},
+              "h1000a5" : { "mean_sigy": 2.10, "sigma_sigy": 0.50, "width_sigy": 0.80},
+              "h1000a9" : { "mean_sigy": 2.10, "sigma_sigy": 0.50, "width_sigy": 0.80},
+              "h1000a15": { "mean_sigy": 2.10, "sigma_sigy": 0.50, "width_sigy": 0.80},
             }
         return initialValues
 
@@ -1865,7 +1979,7 @@ class HaaLimits2D(HaaLimits):
               "h750a17" : { "a1": 3.0, "a2": 6.5, "n1": 18.0, "n2": 17.0, "sigma": 111},
               "h750a19" : { "a1": 3.0, "a2": 6.5, "n1": 18.0, "n2": 17.0, "sigma": 111},
               "h750a21" : { "a1": 3.0, "a2": 6.5, "n1": 18.0, "n2": 17.0, "sigma": 111},
-              "750" : {"a1" : 3.0, "a2": 6.5, "n1": 18.0, "n2": 17.0, "sigma": 110.0}
+              "750" : {"a1" : 3.0, "a2": 6.5, "n1": 18.0, "n2": 17.0, "sigma": 110.0},
               #"h125a3p6": { "a1": 3.1, "a2": 2.96, "n1": 2.3, "n2": 1.3, "sigma": 12.10},
               #"h125a4"  : { "a1": 3.0, "a2": 2.57, "n1": 3.3, "n2": 1.3, "sigma": 12.96},
               #"h125a5"  : { "a1": 3.0, "a2": 3.16, "n1": 2.4, "n2": 1.2, "sigma": 14.46},
@@ -1898,7 +2012,7 @@ class HaaLimits2D(HaaLimits):
               #"h750a17" : { "a1": 4.0, "a2": 4.33, "n1": 9.20, "n2": 18.0, "sigma": 114.0},
               #"h750a19" : { "a1": 5.8, "a2": 5.80, "n1": 4.30, "n2": 19.0, "sigma": 114.3},
               #"h750a21" : { "a1": 4.1, "a2": 5.30, "n1": 17.6, "n2": 15.0, "sigma": 114.7},
-              #"750" : {"a1" : 4.8, "a2": 5.00, "n1": 4.6, "n2": 16.0, "sigma": 109.0}
+              #"750" : {"a1" : 4.8, "a2": 5.00, "n1": 4.6, "n2": 16.0, "sigma": 109.0},
             }
         return initialValues
 
@@ -1967,7 +2081,7 @@ class HaaLimits2D(HaaLimits):
               "h750a15" : { "mean": 525},
               "h750a17" : { "mean": 540},
               "h750a19" : { "mean": 545},
-              "h750a21" : { "mean": 550}
+              "h750a21" : { "mean": 550},
             }
         return initialValues
 
