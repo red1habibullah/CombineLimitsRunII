@@ -1528,8 +1528,11 @@ class HaaLimits2D(HaaLimits):
                 else:
                     data_obs = model.generate(ROOT.RooArgSet(self.workspace.var(xVar),self.workspace.var(yVar)),int(integral))
                 if addSignal:
+                    # TODO, doesn't work with new setup
+                    raise NotImplementedError
                     logging.info('Generating dataset with signal {}'.format(region))
-                    self.workspace.var('MH').setVal(ma)
+                    self.workspace.var('MH').setVal(mh)
+                    self.workspace.var('MA').setVal(ma)
                     model = self.workspace.pdf('{}_{}'.format(self.SPLINENAME.format(h=mh),region))
                     integral = self.workspace.function('integral_{}_{}'.format(self.SPLINENAME.format(h=mh),region)).getVal()
                     if asimov:
@@ -1669,9 +1672,9 @@ class HaaLimits2D(HaaLimits):
                     fitFuncs[region][shift] = fits
                 elif shift in self.QCDSHIFTS:
                     vals, errs, ints, fits = self.fitSignals(region=region,shift=shift,yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
-                    values[region][h][shift] = vals
-                    errors[region][h][shift] = errs
-                    integrals[region][h][shift] = ints
+                    values[region][shift] = vals
+                    errors[region][shift] = errs
+                    integrals[region][shift] = ints
                     fitFuncs[region][shift] = fits
                 else:
                     valsUp, errsUp, intsUp, fitsUp = self.fitSignals(region=region,shift=shift+'Up',yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
@@ -1720,7 +1723,7 @@ class HaaLimits2D(HaaLimits):
                     savename = '{}/{}_{}.json'.format(savedir,region,shift)
                     jsonData = {'vals': values[region][shift], 'errs': errors[region][shift], 'integrals': integrals[region][shift]}
                     self.dump(savename,jsonData)
-                fitFuncs[region]['qcdUp']   = self.fitSignalParams(values[region]['qcdUp'],  errors[region]['qcdUp'],  integrals[region]['qcdUp'],  region,'qcdUp',yFitFun=yFitFunc)
+                fitFuncs[region]['qcdUp']   = self.fitSignalParams(values[region]['qcdUp'],  errors[region]['qcdUp'],  integrals[region]['qcdUp'],  region,'qcdUp',yFitFunc=yFitFunc)
                 fitFuncs[region]['qcdDown'] = self.fitSignalParams(values[region]['qcdDown'],errors[region]['qcdDown'],integrals[region]['qcdDown'],region,'qcdDown',yFitFunc=yFitFunc)
             if self.QCDSHIFTS:
                 models[region] = self.buildSpline(values[region],errors[region],integrals[region],region,self.SIGNALSHIFTS+['qcd'],yFitFunc=yFitFunc,isKinFit=isKinFit,fitFuncs=fitFuncs[region],**kwargs)
@@ -1736,6 +1739,8 @@ class HaaLimits2D(HaaLimits):
         bgs = [b.rstrip('_x') for b in bgs]
         bgs = [b.rstrip('_'+self.REGIONS[0]) for b in bgs]
         sigs = [self.SPLINENAME.format(h=h) for h in self.HMASSES]
+        self.bgs = bgs
+        self.sigs = sigs
 
         # setup bins
         for region in self.REGIONS:
@@ -2184,6 +2189,7 @@ class HaaLimits2D(HaaLimits):
         #self._addComponentSystematic(addControl=addControl)
         self._addRelativeNormUnc()
         self._addHiggsSystematic()
+        self._addAcceptanceSystematic()
         if not doBinned and not addControl: self._addControlSystematics()
 
 

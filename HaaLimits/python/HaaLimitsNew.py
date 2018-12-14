@@ -951,7 +951,10 @@ class HaaLimits(Limits):
                 else:
                     data_obs = model.generate(ROOT.RooArgSet(self.workspace.var(xVar)),int(integral))
                 if addSignal:
-                    self.workspace.var('MH').setVal(ma)
+                    # TODO, doesn't work with new setup
+                    raise NotImplementedError
+                    self.workspace.var('MH').setVal(mh)
+                    self.workspace.var('MA').setVal(ma)
                     model = self.workspace.pdf('{}_{}'.format(self.SPLINENAME,region))
                     integral = self.workspace.function('integral_{}_{}'.format(self.SPLINENAME,region)).getVal()
                     if asimov:
@@ -1303,41 +1306,41 @@ class HaaLimits(Limits):
                     errors[region][shift+'Down'] = errsDown
                     integrals[region][shift+'Down'] = intsDown
                     fitFuncs[region][shift+'Down'] = fitsDown
-                # special handling for QCD scale uncertainties
-                if self.QCDSHIFTS:
-                    values[region]['qcdUp']      = {}
-                    values[region]['qcdDown']    = {}
-                    errors[region]['qcdUp']      = {}
-                    errors[region]['qcdDown']    = {}
-                    integrals[region]['qcdUp']   = {}
-                    integrals[region]['qcdDown'] = {}
-                    for h in values[region]['']:
-                        values[region]['qcdUp'][h]      = {}
-                        values[region]['qcdDown'][h]    = {}
-                        errors[region]['qcdUp'][h]      = {}
-                        errors[region]['qcdDown'][h]    = {}
-                        integrals[region]['qcdUp'][h]   = {}
-                        integrals[region]['qcdDown'][h] = {}
-                        for a in values[region][''][h]:
-                            values[region]['qcdUp'][h][a]      = {}
-                            values[region]['qcdDown'][h][a]    = {}
-                            errors[region]['qcdUp'][h][a]      = {}
-                            errors[region]['qcdDown'][h][a]    = {}
-                            integrals[region]['qcdUp'  ][h][a] = max([integrals[region][shift][h][a] for shift in self.QCDSHIFTS])
-                            integrals[region]['qcdDown'][h][a] = min([integrals[region][shift][h][a] for shift in self.QCDSHIFTS])
-                            for val in values[region][''][h][a]:
-                                values[region]['qcdUp'  ][h][a][val+'_qcdUp'  ] = max([values[region][shift][h][a][val+'_'+shift] for shift in self.QCDSHIFTS])
-                                values[region]['qcdDown'][h][a][val+'_qcdDown'] = min([values[region][shift][h][a][val+'_'+shift] for shift in self.QCDSHIFTS])
-                                errors[region]['qcdUp'  ][h][a][val+'_qcdUp'  ] = max([errors[region][shift][h][a][val+'_'+shift] for shift in self.QCDSHIFTS])
-                                errors[region]['qcdDown'][h][a][val+'_qcdDown'] = min([errors[region][shift][h][a][val+'_'+shift] for shift in self.QCDSHIFTS])
-                    for shift in ['qcdUp','qcdDown']:
-                        savedir = '{}/{}'.format(self.fitsDir,shift)
-                        python_mkdir(savedir)
-                        savename = '{}/{}_{}.json'.format(savedir,region,shift)
-                        jsonData = {'vals': values[region][shift], 'errs': errors[region][shift], 'integrals': integrals[region][shift]}
-                        self.dump(savename,jsonData)
-                    fitFuncs[region]['qcdUp']   = self.fitSignalParams(values[region]['qcdUp'],  errors[region]['qcdUp'],  integrals[region]['qcdUp'],  region,'qcdUp')
-                    fitFuncs[region]['qcdDown'] = self.fitSignalParams(values[region]['qcdDown'],errors[region]['qcdDown'],integrals[region]['qcdDown'],region,'qcdDown')
+            # special handling for QCD scale uncertainties
+            if self.QCDSHIFTS:
+                values[region]['qcdUp']      = {}
+                values[region]['qcdDown']    = {}
+                errors[region]['qcdUp']      = {}
+                errors[region]['qcdDown']    = {}
+                integrals[region]['qcdUp']   = {}
+                integrals[region]['qcdDown'] = {}
+                for h in values[region]['']:
+                    values[region]['qcdUp'][h]      = {}
+                    values[region]['qcdDown'][h]    = {}
+                    errors[region]['qcdUp'][h]      = {}
+                    errors[region]['qcdDown'][h]    = {}
+                    integrals[region]['qcdUp'][h]   = {}
+                    integrals[region]['qcdDown'][h] = {}
+                    for a in values[region][''][h]:
+                        values[region]['qcdUp'][h][a]      = {}
+                        values[region]['qcdDown'][h][a]    = {}
+                        errors[region]['qcdUp'][h][a]      = {}
+                        errors[region]['qcdDown'][h][a]    = {}
+                        integrals[region]['qcdUp'  ][h][a] = max([integrals[region][shift][h][a] for shift in self.QCDSHIFTS])
+                        integrals[region]['qcdDown'][h][a] = min([integrals[region][shift][h][a] for shift in self.QCDSHIFTS])
+                        for val in values[region][''][h][a]:
+                            values[region]['qcdUp'  ][h][a][val+'_qcdUp'  ] = max([values[region][shift][h][a][val+'_'+shift] for shift in self.QCDSHIFTS])
+                            values[region]['qcdDown'][h][a][val+'_qcdDown'] = min([values[region][shift][h][a][val+'_'+shift] for shift in self.QCDSHIFTS])
+                            errors[region]['qcdUp'  ][h][a][val+'_qcdUp'  ] = max([errors[region][shift][h][a][val+'_'+shift] for shift in self.QCDSHIFTS])
+                            errors[region]['qcdDown'][h][a][val+'_qcdDown'] = min([errors[region][shift][h][a][val+'_'+shift] for shift in self.QCDSHIFTS])
+                for shift in ['qcdUp','qcdDown']:
+                    savedir = '{}/{}'.format(self.fitsDir,shift)
+                    python_mkdir(savedir)
+                    savename = '{}/{}_{}.json'.format(savedir,region,shift)
+                    jsonData = {'vals': values[region][shift], 'errs': errors[region][shift], 'integrals': integrals[region][shift]}
+                    self.dump(savename,jsonData)
+                fitFuncs[region]['qcdUp']   = self.fitSignalParams(values[region]['qcdUp'],  errors[region]['qcdUp'],  integrals[region]['qcdUp'],  region,'qcdUp')
+                fitFuncs[region]['qcdDown'] = self.fitSignalParams(values[region]['qcdDown'],errors[region]['qcdDown'],integrals[region]['qcdDown'],region,'qcdDown')
 
             if self.QCDSHIFTS:
                 models[region] = self.buildSpline(values[region],errors[region],integrals[region],region,self.SIGNALSHIFTS+['qcd'],fitFuncs=fitFuncs[region],**kwargs)
@@ -1378,7 +1381,9 @@ class HaaLimits(Limits):
                     self.addShape(region,proc,'{}_{}_binned'.format(proc,region))
                     continue
                 self.setExpected(proc,region,1) 
-                self.addRateParam('integral_{}_{}'.format(proc,region),region,proc)
+                if proc not in sigs:
+                    self.addRateParam('integral_{}_{}'.format(proc,region),region,proc)
+
                 #self.addRateParam('integral_{}_{}'.format(proc,region),region,proc)
                 #if proc in sigs:
                 #    self.setExpected(proc,region,1) 
@@ -1413,27 +1418,47 @@ class HaaLimits(Limits):
         # add higgs cross section
         tfile = ROOT.TFile.Open('CombineLimits/Limits/data/Higgs_YR4_BSM_13TeV.root')
         ws = tfile.Get('YR4_BSM_13TeV')
-        name = 'xsec_ggF_VBF'
-        ggFName = 'xsec_ggF_N3LO'
-        vbfName = 'xsec_VBF'
-        ggF = ws.function(ggFName)
-        vbf = ws.function(vbfName)
+        ggF = ws.function('xsec_ggF_N3LO')
+        vbf = ws.function('xsec_VBF')
+        # uncs
+        ggF_pdfalpha = ws.function('pdfalpha_err_ggF_N3LO')
+        vbf_pdfalpha = ws.function('pdfalpha_err_VBF')
+
         # add gg+VBF/gg acceptance correction
         accfile = ROOT.TFile.Open('CombineLimits/HaaLimits/data/acceptance.root')
         acc = accfile.Get('acceptance')
         from CombineLimits.Limits.Models import buildSpline
         accspline = buildSpline(self.workspace, 'ggF_VBF_acceptance', ['MH','MA'], None, acc)
-        # build the final spline
-        formula = '(@0+@1)*@2'
-        args = ROOT.RooArgList()
-        args.add(ggF)
-        args.add(vbf)
-        args.add(accspline)
-        spline = ROOT.RooFormulaVar(name,name,formula,args)
-        getattr(self.workspace,'import')(spline, ROOT.RooFit.RecycleConflictNodes())
-        # define the rate params for combine
+
+        ## build the final spline
+        #name = 'xsec_ggF_VBF'
+        #formula = '(@0+@1)*@2'
+        #args = ROOT.RooArgList()
+        #args.add(ggF)
+        #args.add(vbf)
+        #args.add(accspline)
+        #spline = ROOT.RooFormulaVar(name,name,formula,args)
+        #getattr(self.workspace,'import')(spline, ROOT.RooFit.RecycleConflictNodes())
+        ## define the rate params for combine
+        #for region in self.REGIONS:
+        #    for proc in self.sigs:
+        #        self.addRateParam(name,region,proc)
+
+        self.workspace.factory('pdfalpha[0,-10,10]')
         for region in self.REGIONS:
             for proc in self.sigs:
+                formula = '(@0*(1+@4*@2*0.01) + @1*(1+@4*@3*0.01))*@5*@6'
+                args = ROOT.RooArgList()
+                args.add(ggF)
+                args.add(vbf)
+                args.add(ggF_pdfalpha)
+                args.add(vbf_pdfalpha)
+                args.add(self.workspace.var('pdfalpha'))
+                args.add(accspline)
+                args.add(self.workspace.function('integral_{}_{}'.format(proc,region)))
+                name = 'fullIntegral_{}_{}'.format(proc,region)
+                spline = ROOT.RooFormulaVar(name,name,formula,args)
+                getattr(self.workspace,'import')(spline, ROOT.RooFit.RecycleConflictNodes())
                 self.addRateParam(name,region,proc)
 
 
@@ -1453,6 +1478,7 @@ class HaaLimits(Limits):
         #self._addComponentSystematic(addControl=addControl)
         self._addRelativeNormUnc()
         self._addHiggsSystematic()
+        self._addAcceptanceSystematic()
         if not doBinned and not addControl: self._addControlSystematics()
 
     def _addControlSystematics(self):
@@ -1494,21 +1520,21 @@ class HaaLimits(Limits):
             self.addSystematic(param, 'param', systematics=[v,e])
 
     def _addHiggsSystematic(self):
-        #TODO switch to spline
-        if self.do2D: return
-        # theory
-        syst = {}
-        if 125 in self.HMASSES: syst[((self.SPLINENAME.format(h=125),), tuple(self.REGIONS))] = (1+(0.046*48.52+0.004*3.779)/(48.52+3.779)    , 1+(-0.067*48.52-0.003*3.779)/(48.52+3.779))
-        if 300 in self.HMASSES: syst[((self.SPLINENAME.format(h=300),), tuple(self.REGIONS))] = (1+(0.015*6.59+0.003*1.256)/(6.59+1.256)      , 1+(-0.032*6.59-0.001*1.256)/(6.59+1.256))
-        if 750 in self.HMASSES: syst[((self.SPLINENAME.format(h=750),), tuple(self.REGIONS))] = (1+(0.020*0.4969+0.003*0.1915)/(0.4969+0.1915), 1+(-0.037*0.4969-0.004*0.1915)/(0.4969+0.1915))
-        self.addSystematic('higgs_theory','lnN',systematics=syst)
+        self.addSystematic('pdfalpha', 'param', systematics=[0,1])
 
-        # pdf+alpha_s
-        syst = {}
-        if 125 in self.HMASSES: syst[((self.SPLINENAME.format(h=125),), tuple(self.REGIONS))] = 1+(0.032*48.52+0.021*3.779)/(48.52+3.779)
-        if 300 in self.HMASSES: syst[((self.SPLINENAME.format(h=300),), tuple(self.REGIONS))] = 1+(0.030*6.59+0.014*1.256)/(6.59+1.256)
-        if 750 in self.HMASSES: syst[((self.SPLINENAME.format(h=750),), tuple(self.REGIONS))] = 1+(0.040*0.4969+0.022*0.1915)/(0.4969+0.1915)
-        self.addSystematic('pdf_alpha','lnN',systematics=syst)
+        ## theory
+        #syst = {}
+        #if 125 in self.HMASSES: syst[((self.SPLINENAME.format(h=125),), tuple(self.REGIONS))] = (1+(0.046*48.52+0.004*3.779)/(48.52+3.779)    , 1+(-0.067*48.52-0.003*3.779)/(48.52+3.779))
+        #if 300 in self.HMASSES: syst[((self.SPLINENAME.format(h=300),), tuple(self.REGIONS))] = (1+(0.015*6.59+0.003*1.256)/(6.59+1.256)      , 1+(-0.032*6.59-0.001*1.256)/(6.59+1.256))
+        #if 750 in self.HMASSES: syst[((self.SPLINENAME.format(h=750),), tuple(self.REGIONS))] = (1+(0.020*0.4969+0.003*0.1915)/(0.4969+0.1915), 1+(-0.037*0.4969-0.004*0.1915)/(0.4969+0.1915))
+        #self.addSystematic('higgs_theory','lnN',systematics=syst)
+
+        ## pdf+alpha_s
+        #syst = {}
+        #if 125 in self.HMASSES: syst[((self.SPLINENAME.format(h=125),), tuple(self.REGIONS))] = 1+(0.032*48.52+0.021*3.779)/(48.52+3.779)
+        #if 300 in self.HMASSES: syst[((self.SPLINENAME.format(h=300),), tuple(self.REGIONS))] = 1+(0.030*6.59+0.014*1.256)/(6.59+1.256)
+        #if 750 in self.HMASSES: syst[((self.SPLINENAME.format(h=750),), tuple(self.REGIONS))] = 1+(0.040*0.4969+0.022*0.1915)/(0.4969+0.1915)
+        #self.addSystematic('pdf_alpha','lnN',systematics=syst)
 
 
     def _addShapeSystematic(self,doBinned=False):
@@ -1524,6 +1550,13 @@ class HaaLimits(Limits):
             else:
                 if self.workspace.var(shift): self.addSystematic(shift, 'param', systematics=[0,1])
     
+    def _addAcceptanceSystematic(self):
+        accproc = self.sigProcesses
+        accsyst = {
+            (accproc,tuple(self.REGIONS)) : 1.005,
+        }
+        self.addSystematic('acc','lnN',systematics=accsyst)
+
     def _addLumiSystematic(self):
         # lumi: 2.5% 2016
         lumiproc = self.sigProcesses

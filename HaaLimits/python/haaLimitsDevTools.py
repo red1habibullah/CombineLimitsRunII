@@ -28,8 +28,8 @@ logging.basicConfig(level=logging.INFO, stream=sys.stderr, format='%(asctime)s.%
 ROOT.RooMsgService.instance().setGlobalKillBelow(ROOT.RooFit.WARNING)
 
 
-testing = True
-detailed = False
+testing = False
+detailed = True
 skipSignal = False
 
 
@@ -515,7 +515,6 @@ def create_datacard(args):
     # rescale signal
     scales = {}
     for proc in signals:
-        newproc = 'gg'+proc
         gg = getXsec(proc,'gg')
         vbf = getXsec(proc,'vbf')
         # scale gg to gg+vbf

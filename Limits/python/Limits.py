@@ -28,6 +28,7 @@ class Limits(object):
         self.systematics = {} # systematic uncertainties
         self.param_systematics = {}
         self.rates = []
+        #self.rates = {}
         self.shapes = {}
         self.name = name
         self.workspace = self.buildWorkspace(self.name)
@@ -177,6 +178,13 @@ class Limits(object):
         }]
         if filename: self.rates[-1]['filename'] = filename
         if workspace: self.rates[-1]['workspace'] = workspace
+        #self.rates[ratename] = {
+        #    'name': ratename,
+        #    'bin': bin,
+        #    'process': process,
+        #}
+        #if filename: self.rates[ratename]['filename'] = filename
+        #if workspace: self.rates[ratename]['workspace'] = workspace
         
     def addShape(self,bin,process,shape):
         '''
@@ -441,6 +449,11 @@ class Limits(object):
             p = rate['process']
             f = rate.get('filename',filename+'.root')
             w = rate.get('workspace',self.name)
+            #n = self.rates[rate]['name']
+            #b = self.rates[rate]['bin']
+            #p = self.rates[rate]['process']
+            #f = self.rates[rate].get('filename',filename+'.root')
+            #w = self.rates[rate].get('workspace',self.name)
             if b in bins and p in processes:
                 norms += [[n,'rateParam',b,p,'{}:{}'.format(f,w)]]
 

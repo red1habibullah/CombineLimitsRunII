@@ -746,7 +746,7 @@ class LimitPlotter(PlotterBase):
     def plotMultiExpected(self,xvals,quartiles,labels,savename,**kwargs):
         '''Plot limits'''
         xaxis = kwargs.pop('xaxis','x')
-        yaxis = kwargs.pop('yaxis','95% CLs Upper Limit on #sigma/#sigma_{model}')
+        yaxis = kwargs.pop('yaxis','95% CL Upper Limit on #sigma/#sigma_{model}')
         blind = kwargs.pop('blind',True)
         lumipos = kwargs.pop('lumipos',11)
         isprelim = kwargs.pop('isprelim',True)

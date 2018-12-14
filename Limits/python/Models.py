@@ -168,6 +168,7 @@ class Model(object):
 def buildSpline(ws,label,MH,masses,values):
     if isinstance(values, list):
         if isinstance(MH, list):
+            # TODO: doesn't work
             args = ROOT.RooArgList(*[ws.var(mh) for mh in MH])
             tree = ROOT.TTree('tree','tree')
             val = array('d',[0])
@@ -190,15 +191,27 @@ def buildSpline(ws,label,MH,masses,values):
     else: # TFn case
         if not isinstance(MH, list): MH = [MH]
         args = ROOT.RooArgList(*[ws.var(mh) for mh in MH])
-        params = []
+
+        # RooTFnBinding
+        #params = []
+        #for p in range(values.GetNpar()):
+        #    name = '{}_p{}'.format(label,p)
+        #    ws.factory('{}[{}]'.format(name,values.GetParameter(p)))
+        #    params += [ws.var(name)]
+        #pargs = ROOT.RooArgList(*params)
+        #values.SetName(label)
+        #values.SetTitle(label)
+        #spline = ROOT.RooTFnBinding(label,label,values,args,pargs)
+
+        # RooFormulaVar
+        expr = str(values.GetExpFormula())
+        dims = ['x','y','z']
+        for d in range(len(MH)):
+            expr = expr.replace(dims[d],'@{}'.format(d))
         for p in range(values.GetNpar()):
-            name = '{}_p{}'.format(label,p)
-            ws.factory('{}[{}]'.format(name,values.GetParameter(p)))
-            params += [ws.var(name)]
-        pargs = ROOT.RooArgList(*params)
-        values.SetName(label)
-        values.SetTitle(label)
-        spline = ROOT.RooTFnBinding(label,label,values,args,pargs)
+            expr = expr.replace('[p{}]'.format(p),'{:f}'.format(values.GetParameter(p)))
+        spline = ROOT.RooFormulaVar(label, label, expr, args)
+
     return spline
 
 class ModelSpline(Model):
@@ -258,16 +271,16 @@ class Spline(object):
         masses = self.kwargs.get('masses', [])
         values = self.kwargs.get('values', [])
         shifts = self.kwargs.get('shifts', {})
-        uncertainty = self.kwargs.get('uncertainty',0.00)
+        uncertainty = self.kwargs.get('uncertainty',0.001)
         splineName = label
         if shifts:
-            args = ROOT.TList()
-            centralName = '{0}_central'.format(label)
-            splineCentral = buildSpline(ws,centralName,self.mh,masses,values)
-            shiftFormula = '@0'
-            args.Add(splineCentral)
-            for shift in shifts:
-                if isinstance(values,list):
+            if isinstance(values,list):
+                args = ROOT.TList()
+                centralName = '{0}_central'.format(label)
+                splineCentral = buildSpline(ws,centralName,self.mh,masses,values)
+                shiftFormula = '@0'
+                args.Add(splineCentral)
+                for shift in shifts:
                     up = [u-c for u,c in zip(shifts[shift]['up'],values)]
                     down = [c-d for d,c in zip(shifts[shift]['down'],values)]
                     upName = '{0}_{1}Up'.format(splineName,shift)
@@ -282,20 +295,57 @@ class Spline(object):
                         args.Add(ws.var(shift))
                         args.Add(splineUp)
                         args.Add(splineDown)
-                else:
-                    up = shifts[shift]['up']
-                    down = shifts[shift]['down']
-                    upName = '{0}_{1}Up'.format(splineName,shift)
-                    downName = '{0}_{1}Down'.format(splineName,shift)
-                    ws.factory('{}[0,-10,10]'.format(shift))
-                    splineUp   = buildSpline(ws,upName,  self.mh,masses,up)
-                    splineDown = buildSpline(ws,downName,self.mh,masses,down)
-                    shiftFormula += ' + TMath::Max(0,@{shift})*(@{up}-@0) + TMath::Min(0,@{shift})*(@0-@{down})'.format(shift=len(args),up=len(args)+1,down=len(args)+2)
-                    args.Add(ws.var(shift))
-                    args.Add(splineUp)
-                    args.Add(splineDown)
-            arglist = ROOT.RooArgList(args)
-            spline = ROOT.RooFormulaVar(splineName, splineName, shiftFormula, arglist)
+                arglist = ROOT.RooArgList(args)
+                spline = ROOT.RooFormulaVar(splineName, splineName, shiftFormula, arglist)
+            else:
+                MH = self.mh
+                if not isinstance(MH, list): MH = [MH]
+                args = ROOT.RooArgList(*[ws.var(mh) for mh in MH])
+
+                #expr = str(values.GetExpFormula())
+                #dims = ['x','y','z']
+                #for d in range(len(MH)):
+                #    expr = expr.replace(dims[d],'@{}'.format(d))
+
+                params = []
+                for p in range(values.GetNpar()):
+                    pargs = ROOT.RooArgList()
+                    c = values.GetParameter(p)
+                    shiftFormula = '{:f}'.format(c)
+                    for shift in shifts:
+                        u = shifts[shift]['up'].GetParameter(p)
+                        d = shifts[shift]['down'].GetParameter(p)
+                        up = u-c
+                        down = c-d
+                        if c and (abs(up/c)<uncertainty and abs(down/c)<uncertainty): continue
+                        ws.factory('{}[0,-10,10]'.format(shift))
+                        shiftFormula += ' + TMath::Max(0,@{shift})*({up:f}) + TMath::Min(0,@{shift})*({down:f})'.format(shift=len(pargs),up=up,down=down)
+                        pargs.add(ws.var(shift))
+                    pname = 'p{}_{}'.format(p,splineName)
+                    pform = ROOT.RooFormulaVar(pname,pname,shiftFormula,pargs)
+                    params += [pform]
+                    #args.add(pform)
+                    #expr = expr.replace('[p{}]'.format(p),'@{}'.format(len(MH)+p))
+
+                #spline = ROOT.RooFormulaVar(splineName, splineName, expr, args)
+
+                pargs = ROOT.RooArgList(*params)
+                values.SetName(splineName)
+                values.SetTitle(splineName)
+                spline = ROOT.RooTFnBinding(splineName,splineName,values,args,pargs)
+
+
+                #up = shifts[shift]['up']
+                #down = shifts[shift]['down']
+                #upName = '{0}_{1}Up'.format(splineName,shift)
+                #downName = '{0}_{1}Down'.format(splineName,shift)
+                #ws.factory('{}[0,-10,10]'.format(shift))
+                #splineUp   = buildSpline(ws,upName,  self.mh,masses,up)
+                #splineDown = buildSpline(ws,downName,self.mh,masses,down)
+                #shiftFormula += ' + TMath::Max(0,@{shift})*(@{up}-@0) + TMath::Min(0,@{shift})*(@0-@{down})'.format(shift=len(args),up=len(args)+1,down=len(args)+2)
+                #args.Add(ws.var(shift))
+                #args.Add(splineUp)
+                #args.Add(splineDown)
         else:
             spline = buildSpline(ws,splineName,self.mh,masses,values)
         getattr(ws, "import")(spline, ROOT.RooFit.RecycleConflictNodes())
