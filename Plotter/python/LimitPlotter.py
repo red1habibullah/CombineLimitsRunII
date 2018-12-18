@@ -42,7 +42,8 @@ class LimitPlotter(PlotterBase):
     def plotLimit(self,xvals,quartiles,savename,**kwargs):
         '''Plot limits'''
         xaxis = kwargs.pop('xaxis','x')
-        yaxis = kwargs.pop('yaxis','95% CLs Upper Limit on #sigma/#sigma_{model}')
+        yaxis = kwargs.pop('yaxis','95% CL upper limit on #sigma/#sigma_{model}')
+        legendtitle = kwargs.pop('legendtitle','95% CL upper limits')
         blind = kwargs.pop('blind',True)
         lumipos = kwargs.pop('lumipos',11)
         isprelim = kwargs.pop('isprelim',True)
@@ -258,7 +259,7 @@ class LimitPlotter(PlotterBase):
             [twoSigma,'95% expected','F'],
         ]
         if not blind: entries = [[observed,'Observed','l']] + entries
-        legend = self._getLegend(entries=entries,numcol=numcol,position=legendpos,title='95% CL upper limits')
+        legend = self._getLegend(entries=entries,numcol=numcol,position=legendpos,title=legendtitle)
         legend.Draw()
 
 
@@ -279,7 +280,8 @@ class LimitPlotter(PlotterBase):
         '''Plot limits'''
         xaxis = kwargs.pop('xaxis','x')
         yaxis = kwargs.pop('yaxis','y')
-        zaxis = kwargs.pop('zaxis','95% CLs Upper Limit on #sigma/#sigma_{model}')
+        zaxis = kwargs.pop('zaxis','95% CL upper limit on #sigma/#sigma_{model}')
+        legendtitle = kwargs.pop('legendtitle','95% CL upper limits')
         blind = kwargs.pop('blind',True)
         lumipos = kwargs.pop('lumipos',11)
         isprelim = kwargs.pop('isprelim',True)
@@ -295,7 +297,7 @@ class LimitPlotter(PlotterBase):
         xVar = kwargs.pop('x',None)
         expectedBands = kwargs.pop('expectedBands', [])
         zmin = kwargs.pop('zmin',1e-2)
-        zmax = kwargs.pop('zmax',1)
+        zmax = kwargs.pop('zmax',10)
 
         logging.info('Plotting {0}'.format(savename))
 
@@ -585,8 +587,7 @@ class LimitPlotter(PlotterBase):
 
         # special legend
         entries = [[expected_graphs[eb][0],'#splitline{{Expected exclusion}}{{BR(H #rightarrow aa) = {}}}'.format(eb),'l'] for eb in expectedBands if len(expected_graphs[eb])]
-        title = '#splitline{{2HDM+S Type {}}}{{95% CL upper limits}}'.format(modelkey)
-        legend = self._getLegend(entries=entries,numcol=1,position=24,title=title)
+        legend = self._getLegend(entries=entries,numcol=1,position=24,title=legendtitle)
         legend.Draw()
 
         # manually add the 1 sigma bands
@@ -746,7 +747,7 @@ class LimitPlotter(PlotterBase):
     def plotMultiExpected(self,xvals,quartiles,labels,savename,**kwargs):
         '''Plot limits'''
         xaxis = kwargs.pop('xaxis','x')
-        yaxis = kwargs.pop('yaxis','95% CL Upper Limit on #sigma/#sigma_{model}')
+        yaxis = kwargs.pop('yaxis','95% CL upper limit on #sigma/#sigma_{model}')
         blind = kwargs.pop('blind',True)
         lumipos = kwargs.pop('lumipos',11)
         isprelim = kwargs.pop('isprelim',True)

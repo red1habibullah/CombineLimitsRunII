@@ -1427,6 +1427,8 @@ class HaaLimits(Limits):
         # add gg+VBF/gg acceptance correction
         accfile = ROOT.TFile.Open('CombineLimits/HaaLimits/data/acceptance.root')
         acc = accfile.Get('acceptance')
+        accgraph = accfile.Get('acceptance_graph')
+        accgraph.Fit(acc)
         from CombineLimits.Limits.Models import buildSpline
         accspline = buildSpline(self.workspace, 'ggF_VBF_acceptance', ['MH','MA'], None, acc)
 

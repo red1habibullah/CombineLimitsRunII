@@ -1762,7 +1762,8 @@ class HaaLimits2D(HaaLimits):
                     self.addShape(region,proc,'{}_{}_binned'.format(proc,region))
                     continue
                 self.setExpected(proc,region,1)
-                self.addRateParam('integral_{}_{}'.format(proc,region),region,proc)
+                if proc not in sigs:
+                    self.addRateParam('integral_{}_{}'.format(proc,region),region,proc)
                 #if proc in sigs:
                 #    self.setExpected(proc,region,1)
                 #    self.addRateParam('integral_{}_{}'.format(proc,region),region,proc)

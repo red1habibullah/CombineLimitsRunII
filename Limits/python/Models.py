@@ -209,7 +209,7 @@ def buildSpline(ws,label,MH,masses,values):
         for d in range(len(MH)):
             expr = expr.replace(dims[d],'@{}'.format(d))
         for p in range(values.GetNpar()):
-            expr = expr.replace('[p{}]'.format(p),'{:f}'.format(values.GetParameter(p)))
+            expr = expr.replace('[p{}]'.format(p),'({:g})'.format(values.GetParameter(p)))
         spline = ROOT.RooFormulaVar(label, label, expr, args)
 
     return spline
@@ -271,7 +271,7 @@ class Spline(object):
         masses = self.kwargs.get('masses', [])
         values = self.kwargs.get('values', [])
         shifts = self.kwargs.get('shifts', {})
-        uncertainty = self.kwargs.get('uncertainty',0.001)
+        uncertainty = self.kwargs.get('uncertainty',0.000)
         splineName = label
         if shifts:
             if isinstance(values,list):
@@ -311,7 +311,7 @@ class Spline(object):
                 for p in range(values.GetNpar()):
                     pargs = ROOT.RooArgList()
                     c = values.GetParameter(p)
-                    shiftFormula = '{:f}'.format(c)
+                    shiftFormula = '({:g})'.format(c)
                     for shift in shifts:
                         u = shifts[shift]['up'].GetParameter(p)
                         d = shifts[shift]['down'].GetParameter(p)
@@ -319,7 +319,7 @@ class Spline(object):
                         down = c-d
                         if c and (abs(up/c)<uncertainty and abs(down/c)<uncertainty): continue
                         ws.factory('{}[0,-10,10]'.format(shift))
-                        shiftFormula += ' + TMath::Max(0,@{shift})*({up:f}) + TMath::Min(0,@{shift})*({down:f})'.format(shift=len(pargs),up=up,down=down)
+                        shiftFormula += ' + TMath::Max(0,@{shift})*({up:g}) + TMath::Min(0,@{shift})*({down:g})'.format(shift=len(pargs),up=up,down=down)
                         pargs.add(ws.var(shift))
                     pname = 'p{}_{}'.format(p,splineName)
                     pform = ROOT.RooFormulaVar(pname,pname,shiftFormula,pargs)
