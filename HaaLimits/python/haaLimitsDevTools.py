@@ -62,13 +62,17 @@ ggsigname = 'ggHToAAH{h}A{a}'
 vbfsigname = 'vbfHToAAH{h}A{a}'
 
 shiftTypes = ['lep','pu','fake','trig','btag','tau','MuonEn','TauEn']#,'JetEn','UnclusteredEn']
+#if testing: shiftTypes = ['fake','tau','MuonEn'] if detailed else []
 if testing: shiftTypes = ['fake','tau'] if detailed else []
+#if testing: shiftTypes = ['tau'] if detailed else []
 
 signalShiftTypes = ['lep','pu','trig','btag','tau','MuonEn','TauEn']#,'JetEn','UnclusteredEn']
+#if testing: signalShiftTypes = ['tau','MuonEn'] if detailed else []
 if testing: signalShiftTypes = ['tau'] if detailed else []
 
 backgroundShiftTypes = ['fake']
 if testing: backgroundShiftTypes = ['fake'] if detailed else []
+#if testing: backgroundShiftTypes = []
 
 qcdShifts = []
 for muR in [0.5,1.0,2.0]:
@@ -378,8 +382,7 @@ def create_datacard(args):
 
     xBinWidth = 0.1
     if do2D:
-        xBinWidth = 0.2
-        yBinWidth = 2 if var[1]=='tt' else 20
+        yBinWidth = 0.25 if var[1]=='tt' else 10
 
     global hmasses
     if not args.do2DInterpolation:
@@ -517,18 +520,9 @@ def create_datacard(args):
     for proc in signals:
         gg = getXsec(proc,'gg')
         vbf = getXsec(proc,'vbf')
-        # scale gg to gg+vbf
-        # apply acceptance correction
-        scale = sum([gg,vbf])/gg
-        # TODO update
-        #if '125' in proc:
-        #    scale *= 1.01
-        #elif '300' in proc:
-        #    scale *= 1.005
-        #elif '750' in proc:
-        #    scale *= 1.025
-        # divide out H cross section
-        scale *= 1./gg
+        # divide out H cross section from sample
+        # it was gg only, we will scale to gg+vbf with acceptance correction in the HaaLimits class
+        scale = 1./gg
         scales[proc] = scale
         #print proc, gg, vbf, scale
 
@@ -571,10 +565,15 @@ def create_datacard(args):
         if project:
             haaLimits.addSignalModels(scale=scales)
         elif 'tt' in var:
-            haaLimits.addSignalModels(scale=scales,yFitFuncFP='V',yFitFuncPP='L')#,cutOffFP=0.75,cutOffPP=0.75)
+            if args.yFitFunc:
+                haaLimits.addSignalModels(scale=scales,yFitFuncFP=args.yFitFunc,yFitFuncPP=args.yFitFunc)#,cutOffFP=0.0,cutOffPP=0.0)
+            else:
+                haaLimits.addSignalModels(scale=scales,yFitFuncFP='V',yFitFuncPP='L')#,cutOffFP=0.75,cutOffPP=0.75)
         elif 'h' in var or 'hkf' in var:
-            #haaLimits.addSignalModels(scale=scales,yFitFuncFP='DG',yFitFuncPP='DG')#,cutOffFP=0.0,cutOffPP=0.0)
-            haaLimits.addSignalModels(scale=scales,yFitFuncFP=args.yFitFunc,yFitFuncPP=args.yFitFunc)#,cutOffFP=0.0,cutOffPP=0.0)
+            if args.yFitFunc:
+                haaLimits.addSignalModels(scale=scales,yFitFuncFP=args.yFitFunc,yFitFuncPP=args.yFitFunc)#,cutOffFP=0.0,cutOffPP=0.0)
+            else:
+                haaLimits.addSignalModels(scale=scales,yFitFuncFP='DG',yFitFuncPP='DG')#,cutOffFP=0.0,cutOffPP=0.0)
         else:
             haaLimits.addSignalModels(scale=scales)
         haaLimits.XRANGE = xRange
@@ -604,7 +603,7 @@ def parse_command_line(argv):
     parser.add_argument('--fitParams', action='store_true', help='fit parameters')
     parser.add_argument('--higgs', type=int, default=125, choices=[125,300,750])
     parser.add_argument('--pseudoscalar', type=int, default=7, choices=[5,7,9,11,13,15,17,19,21])
-    parser.add_argument('--yFitFunc', type=str, default='DG', choices=['G','V','CB','DCB','DG','DV','B','G2','G3','errG','L'])
+    parser.add_argument('--yFitFunc', type=str, default='', choices=['G','V','CB','DCB','DG','DV','B','G2','G3','errG','L','MB'])
     parser.add_argument('--xRange', type=float, nargs='*', default=[4,25])
     parser.add_argument('--yRange', type=float, nargs='*', default=[])
     parser.add_argument('--tag', type=str, default='')

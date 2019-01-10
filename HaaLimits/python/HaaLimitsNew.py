@@ -436,7 +436,7 @@ class HaaLimits(Limits):
         # Fit using ROOT rather than RooFit for the splines
         if self.do2D:
             fitFuncs = {
-                'mean' :    ROOT.TF2('mean_{}'.format(tag),     '[0]+[1]*y',                                 *self.HRANGE+self.ARANGE), 
+                'mean' :    ROOT.TF2('mean_{}'.format(tag),     '[0]+[1]*x+[2]*y',                           *self.HRANGE+self.ARANGE), 
                 'width':    ROOT.TF2('width_{}'.format(tag),    '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE), 
                 'sigma':    ROOT.TF2('sigma_{}'.format(tag),    '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE), 
                 #'integral': ROOT.TF2('integral_{}'.format(tag), 'exp([0]+[1]*x)*([2]+[3]*y+[4]*y*y+[5]*x*y+[6]*y*y*y+[7]*y*y*y*y)',*self.HRANGE+self.ARANGE),
@@ -594,6 +594,10 @@ class HaaLimits(Limits):
 
         return fitFuncs
 
+    def fitToList(self,fit,xvals):
+        yvals = [fit.Eval(x) for x in xvals]
+        return yvals
+
     def buildSpline(self,vals,errs,integrals,region,shifts=[],**kwargs):
         '''
         Get the signal spline for a given Higgs mass.
@@ -623,6 +627,19 @@ class HaaLimits(Limits):
         xVar = kwargs.pop('xVar','x')
         fitFuncs = kwargs.get('fitFuncs',{})
 
+        amasses = []
+        a = self.ARANGE[0]
+        while a<=self.ARANGE[1]:
+            amasses += [a]
+            a += self.ABINNING
+
+        hmasses = []
+        h = self.HRANGE[0]
+        while h<=self.HRANGE[1]:
+            hmasses += [h]
+            h += self.HBINNING
+
+
         splines = {}
         params = ['mean','width','sigma']
         if self.doParamFit:
@@ -640,11 +657,23 @@ class HaaLimits(Limits):
                 else:
                     for h in self.HMASSES:
                         name = '{param}_{splinename}_{region}'.format(param=param,region=region,splinename=self.SPLINENAME.format(h=h))
+                        # here is using the TF1
+                        #spline = Models.Spline(name,
+                        #    MH = 'MA',
+                        #    masses = None,
+                        #    values = fitFuncs[''][h][param],
+                        #    shifts = {shift: {'up': fitFuncs[shift+'Up'][h][param], 'down': fitFuncs[shift+'Down'][h][param],} for shift in shifts},
+                        #)
+                        # here is converting to a spline first
                         spline = Models.Spline(name,
                             MH = 'MA',
-                            masses = None,
-                            values = fitFuncs[''][h][param],
-                            shifts = {shift: {'up': fitFuncs[shift+'Up'][h][param], 'down': fitFuncs[shift+'Down'][h][param],} for shift in shifts},
+                            masses = amasses,
+                            values = self.fitToList(fitFuncs[''][h][param],amasses),
+                            shifts = {shift: 
+                                {
+                                    'up'  : self.fitToList(fitFuncs[shift+'Up'][h][param],amasses), 
+                                    'down': self.fitToList(fitFuncs[shift+'Down'][h][param],amasses),
+                                } for shift in shifts},
                         )
                         spline.build(workspace, name)
                         splines[name] = spline
@@ -891,9 +920,12 @@ class HaaLimits(Limits):
             xVar = 'x' # decide if we want a different one for each region
 
             # build the models after doing the prefit stuff
-            prebuiltParams = {p:p for p in self.background_params[region]}
+            #prebuiltParams = {p:p for p in self.background_params[region]}
             self.addVar(xVar, *self.XRANGE, unit='GeV', label=self.XLABEL, workspace=workspace)
-            self.buildModel(region=region,workspace=workspace,xVar=xVar,**prebuiltParams)
+            # this uses the parameters from the prefit with uncertainties
+            #self.buildModel(region=region,workspace=workspace,xVar=xVar,**prebuiltParams)
+            # this just uses the initial guess
+            self.buildModel(region=region,workspace=workspace,xVar=xVar)
             self.loadBackgroundFit(region, workspace=workspace)
 
             # save binned data
@@ -938,6 +970,7 @@ class HaaLimits(Limits):
             hist = self.histMap[region]['']['data']
             if blind:
                 x = workspace.var(xVar)
+                # temporarily bin it
                 x.setBins(self.XBINNING)
                 # generate a toy data observation from the model
                 model = workspace.pdf('bg_{}'.format(region))
@@ -1229,7 +1262,7 @@ class HaaLimits(Limits):
             if load:
                 allintegrals[region], errors[region] = self.loadComponentIntegrals(region)
             if not skipFit:
-                allparams[region] = self.buildParams(region,vals,errs,integrals,workspace=self.workspace)
+                #allparams[region] = self.buildParams(region,vals,errs,integrals,workspace=self.workspace)
                 allintegrals[region], errors[region] = self.buildComponentIntegrals(region,vals,errs,integrals,workspace.pdf('bg_{}'.format(region)), workspace=self.workspace)
 
         if fixAfterControl:
@@ -1239,7 +1272,7 @@ class HaaLimits(Limits):
         self.background_integrals = integrals
         self.background_integralErrors = errors
         self.background_integralValues = allintegrals
-        self.background_params = allparams
+        #self.background_params = allparams
 
 
     def addBackgroundHists(self):
@@ -1450,6 +1483,7 @@ class HaaLimits(Limits):
         for region in self.REGIONS:
             for proc in self.sigs:
                 formula = '(@0*(1+@4*@2*0.01) + @1*(1+@4*@3*0.01))*@5*@6'
+                #formula = '(@0 + @1)*@2'
                 args = ROOT.RooArgList()
                 args.add(ggF)
                 args.add(vbf)
@@ -1522,6 +1556,7 @@ class HaaLimits(Limits):
             self.addSystematic(param, 'param', systematics=[v,e])
 
     def _addHiggsSystematic(self):
+        #return
         self.addSystematic('pdfalpha', 'param', systematics=[0,1])
 
         ## theory

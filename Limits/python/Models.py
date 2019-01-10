@@ -894,6 +894,43 @@ class ErfSpline(ModelSpline):
         )
         self.params = [erfScaleName,erfShiftName]
 
+class MaxwellBoltzmann(Model):
+
+    def __init__(self,name,**kwargs):
+        super(MaxwellBoltzmann,self).__init__(name,**kwargs)
+
+    def build(self,ws,label):
+        logging.debug('Building {}'.format(label))
+        scale = self.kwargs.get('scale', [1,0,10])
+        scaleName = scale if isinstance(scale,str) else 'scale_{0}'.format(label)
+        # variables
+        if not isinstance(scale,str): ws.factory('{0}[{1}, {2}, {3}]'.format(scaleName,*scale))
+        # build model
+        ws.factory("EXPR::{0}('{1}^2/{2}^3*exp(-{1}^2/(2*{2}^2))', {1}, {2})".format(
+            label,self.x,scaleName)
+        )
+        self.params = [scaleName]
+
+class MaxwellBoltzmannSpline(ModelSpline):
+        
+    def __init__(self,name,**kwargs):
+        super(MaxwellBoltzmannSpline,self).__init__(name,**kwargs)
+    
+    def build(self,ws,label):
+        logging.debug('Building {}'.format(label))
+        masses    = self.kwargs.get('masses', [])
+        scales = self.kwargs.get('scales',  [])
+        scaleName = 'scale_{0}'.format(label)
+        # splines  
+        scaleSpline = buildSpline(ws,scaleName,self.mh,masses,scales)
+        # import
+        getattr(ws, "import")(scaleSpline, ROOT.RooFit.RecycleConflictNodes())
+        # build model
+        ws.factory("EXPR::{0}('{1}^2/{2}^3*exp(-{1}^2/(2*{2}^2))', {1}, {2})".format(
+                   label,self.x,scaleName)
+        )
+        self.params = [scaleName]
+
 class Beta(Model):
 
     def __init__(self,name,**kwargs):

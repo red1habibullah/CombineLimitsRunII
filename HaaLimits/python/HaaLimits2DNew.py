@@ -29,7 +29,7 @@ class HaaLimits2D(HaaLimits):
     '''
 
     YRANGE = [50,1000]
-    YBINNING = 19
+    YBINNING = 950
     YLABEL = 'm_{#mu#mu#tau_{#mu}#tau_{h}}'
 
     def __init__(self,histMap,tag='',do2DInterpolation=False,doParamFit=False):
@@ -169,42 +169,48 @@ class HaaLimits2D(HaaLimits):
             #    }
             #)
 
-            # landua plus upsilon gaussian
+            ## landua plus upsilon gaussian
             nameL1 = 'land1{}'.format('_'+tag if tag else '')
-            land1 = Models.Landau('land1',
+            #land1 = Models.Landau('land1',
+            #    x = yVar,
+            #    mu    = kwargs.pop('mu_{}'.format(nameL1), [1.5,0,5]),
+            #    sigma = kwargs.pop('sigma_{}'.format(nameL1), [0.4,0,2]),
+            #)
+            #land1.build(workspace,nameL1)
+
+            ## jpsi
+            ##jpsi2 = Models.Voigtian('jpsi2S',
+            ##    x = yVar,
+            ##    mean  = [3.7,3.6,3.8],
+            ##    sigma = [0.1,0.01,0.5],
+            ##    width = [0.1,0.01,0.5],
+            ##)
+            ##nameJ2 = 'jpsi2Stt'
+            ##jpsi2.build(workspace,nameJ2)
+
+
+            ## add a guassian for upsilon
+            #nameU1 = 'upsilontt'
+            #upsilon1 = Models.Gaussian('upsilon1',
+            #    x = yVar,
+            #    mean  = kwargs.pop('mean_{}'.format(nameU1), [6,5,7]),
+            #    sigma = kwargs.pop('sigma_{}'.format(nameU1), [0.02,0,1]),
+            #)
+            #upsilon1.build(workspace,nameU1)
+
+            #bg = Models.Sum('bg',
+            #    **{
+            #        nameL1     : [0.95,0,1],
+            #        #nameJ2     : [0.1,0,1],
+            #        nameU1     : [0.1,0,1],
+            #        'recursive': True,
+            #    }
+            #)
+
+            bg = Models.Landau('land1',
                 x = yVar,
                 mu    = kwargs.pop('mu_{}'.format(nameL1), [1.5,0,5]),
                 sigma = kwargs.pop('sigma_{}'.format(nameL1), [0.4,0,2]),
-            )
-            land1.build(workspace,nameL1)
-
-            # jpsi
-            #jpsi2 = Models.Voigtian('jpsi2S',
-            #    x = yVar,
-            #    mean  = [3.7,3.6,3.8],
-            #    sigma = [0.1,0.01,0.5],
-            #    width = [0.1,0.01,0.5],
-            #)
-            #nameJ2 = 'jpsi2Stt'
-            #jpsi2.build(workspace,nameJ2)
-
-
-            # add a guassian for upsilon
-            nameU1 = 'upsilontt'
-            upsilon1 = Models.Gaussian('upsilon1',
-                x = yVar,
-                mean  = kwargs.pop('mean_{}'.format(nameU1), [6,5,7]),
-                sigma = kwargs.pop('sigma_{}'.format(nameU1), [0.02,0,1]),
-            )
-            upsilon1.build(workspace,nameU1)
-
-            bg = Models.Sum('bg',
-                **{
-                    nameL1     : [0.95,0,1],
-                    #nameJ2     : [0.1,0,1],
-                    nameU1     : [0.1,0,1],
-                    'recursive': True,
-                }
             )
 
 
@@ -457,6 +463,11 @@ class HaaLimits2D(HaaLimits):
                     width2 = [2.0,0.01,10.0],
                     yMax = self.YRANGE[1],
                 )
+            elif yFitFunc == "MB":
+                modely = Models.MaxwellBoltzmann('sigy',
+                    x = 'y',
+                    scale = [0.5*h,0,1000],
+                )
             elif yFitFunc == "B":
                 modely = Models.Beta('sigy',
                     x = 'y',
@@ -570,6 +581,11 @@ class HaaLimits2D(HaaLimits):
                     width1 = [0.1,0.01,5],
                     width2 = [0.3,0.01,5],
                     yMax = self.YRANGE[1],
+                )
+            elif yFitFunc == "MB":
+                modely = Models.MaxwellBoltzmann('sigy',
+                    x = 'y',
+                    scale = [0.5*aval,0,30],
                 )
             elif yFitFunc == "B":
                 modely = Models.Beta('sigy',
@@ -755,6 +771,7 @@ class HaaLimits2D(HaaLimits):
         elif yFitFunc == "DCB" : yparams = ['mean_sigy', 'sigma_sigy', 'a1_sigy', 'n1_sigy', 'a2_sigy', 'n2_sigy']
         elif yFitFunc == "DG"  : yparams = ['mean_sigy', 'sigma1_sigy', 'sigma2_sigy']
         elif yFitFunc == "DV"  : yparams = ['mean_sigy', 'sigma1_sigy', 'sigma2_sigy','width1_sigy','width2_sigy']
+        elif yFitFunc == "MB"  : yparams = ['scale_sigy']
         elif yFitFunc == "B"   : yparams = ['betaScale_sigy','betaA_sigy','betaB_sigy']
         elif yFitFunc == "errG": yparams = ['mean_ttgaus', 'sigma_ttgaus','erfShift_tterf','erfScale_tterf']
         elif yFitFunc == "L"   : yparams = ['mean_ttgaus', 'sigma_ttgaus','mu_ttland','sigma_ttland']
@@ -769,8 +786,8 @@ class HaaLimits2D(HaaLimits):
 
         if self.do2D:
             fitFuncs = {
-                'mean_sigx'      : ROOT.TF2('xmean_{}'.format(tag),     '[0]+[1]*y',                                 *self.HRANGE+self.ARANGE),
-                'width_sigx'     : ROOT.TF2('xwidth_{}'.format(tag),    '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',  *self.HRANGE+self.ARANGE),
+                'mean_sigx'      : ROOT.TF2('xmean_{}'.format(tag),     '[0]+[1]*x+[2]*y',                           *self.HRANGE+self.ARANGE),
+                'width_sigx'     : ROOT.TF2('xwidth_{}'.format(tag),    '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
                 'sigma_sigx'     : ROOT.TF2('xsigma_{}'.format(tag),    '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
                 'mean_sigy'      : ROOT.TF2('ymean_{}'.format(tag),     '[0]+[1]*x+[2]*y+[3]*x*y',                   *self.HRANGE+self.ARANGE),
                 'width_sigy'     : ROOT.TF2('ywidth_{}'.format(tag),    '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
@@ -786,6 +803,7 @@ class HaaLimits2D(HaaLimits):
                 'n1_sigy'        : ROOT.TF2('yn1_{}'.format(tag),       '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
                 'n2_sigy'        : ROOT.TF2('yn2_{}'.format(tag),       '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
                 'betaScale_sigy' : ROOT.TF2('ybetaScale_{}'.format(tag),'[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
+                'scale_sigy'     : ROOT.TF2('yscale_{}'.format(tag),    '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
                 'betaA_sigy'     : ROOT.TF2('ybetaA_{}'.format(tag),    '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
                 'betaB_sigy'     : ROOT.TF2('ybetaB_{}'.format(tag),    '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
                 'mean_ttgaus'    : ROOT.TF2('mean_ttgaus_{}'.format(tag),     '[0]+[1]*x+[2]*y+[3]*x*y+[4]*x*x+[5]*y*y',   *self.HRANGE+self.ARANGE),
@@ -832,6 +850,7 @@ class HaaLimits2D(HaaLimits):
                     'n1_sigy'       : ROOT.TF1('yn1_h{}_{}'.format(h,tag),       '[0]+[1]*x+[2]*x*x', *self.ARANGE),
                     'n2_sigy'       : ROOT.TF1('yn2_h{}_{}'.format(h,tag),       '[0]+[1]*x+[2]*x*x', *self.ARANGE),
                     'betaScale_sigy': ROOT.TF1('ybetaScale_h{}_{}'.format(h,tag),'[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'scale_sigy'    : ROOT.TF1('yscale_h{}_{}'.format(h,tag),    '[0]+[1]*x+[2]*x*x', *self.ARANGE),
                     'betaA_sigy'    : ROOT.TF1('ybetaA_h{}_{}'.format(h,tag),    '[0]+[1]*x+[2]*x*x', *self.ARANGE),
                     'betaB_sigy'    : ROOT.TF1('ybetaB_h{}_{}'.format(h,tag),    '[0]+[1]*x+[2]*x*x', *self.ARANGE),
                     'mean_ttgaus'   : ROOT.TF1('mean_ttgaus_h{}_{}'.format(h,tag),     '[0]+[1]*x+[2]*x*x', *self.ARANGE),
@@ -1021,6 +1040,18 @@ class HaaLimits2D(HaaLimits):
         dobgsig = kwargs.get('doBackgroundSignal',False)
         fitFuncs = kwargs.get('fitFuncs',{})
 
+        amasses = []
+        a = self.ARANGE[0]
+        while a<=self.ARANGE[1]:
+            amasses += [a]
+            a += self.ABINNING
+
+        hmasses = []
+        h = self.HRANGE[0]
+        while h<=self.HRANGE[1]:
+            hmasses += [h]
+            h += self.HBINNING
+
         # create parameter splines
         splines = {}
         xparams, yparams = self.getParams(yFitFunc)
@@ -1031,6 +1062,7 @@ class HaaLimits2D(HaaLimits):
         elif yFitFunc == "DCB" : ym = Models.DoubleCrystalBall
         elif yFitFunc == "DG"  : ym = Models.DoubleSidedGaussian
         elif yFitFunc == "DV"  : ym = Models.DoubleSidedVoigtian
+        elif yFitFunc == "MB"  : ym = Models.MaxwellBoltzmann
         elif yFitFunc == "B"   : ym = Models.Beta
         elif yFitFunc != "L" and yFitFunc != "errG" and yFitFunc != "G3" and yFitFunc != "G2": raise
 
@@ -1050,11 +1082,23 @@ class HaaLimits2D(HaaLimits):
                 else:
                     for h in self.HMASSES:
                         name = '{param}_{splinename}_{region}'.format(param=param,splinename=self.SPLINENAME.format(h=h),region=region)
+                        # here is using TF1
+                        #spline = Models.Spline(name,
+                        #    MH = 'MA',
+                        #    masses = None,
+                        #    values = fitFuncs[''][h][param],
+                        #    shifts = {shift: {'up': fitFuncs[shift+'Up'][h][param], 'down': fitFuncs[shift+'Down'][h][param],} for shift in shifts},
+                        #)
+                        # here is converting to a spline first
                         spline = Models.Spline(name,
                             MH = 'MA',
-                            masses = None,
-                            values = fitFuncs[''][h][param],
-                            shifts = {shift: {'up': fitFuncs[shift+'Up'][h][param], 'down': fitFuncs[shift+'Down'][h][param],} for shift in shifts},
+                            masses = amasses,
+                            values = self.fitToList(fitFuncs[''][h][param],amasses),
+                            shifts = {shift: 
+                                {
+                                    'up'  : self.fitToList(fitFuncs[shift+'Up'][h][param],amasses), 
+                                    'down': self.fitToList(fitFuncs[shift+'Down'][h][param],amasses),
+                                } for shift in shifts},
                         )
                         spline.build(workspace, name)
                         splines[name] = spline
@@ -1513,6 +1557,7 @@ class HaaLimits2D(HaaLimits):
             hist = self.histMap[region]['']['data']
             if blind:
                 x = workspace.var(xVar)
+                # temporarily bin it
                 x.setBins(self.XBINNING)
                 y = workspace.var(yVar)
                 y.setBins(self.YBINNING)
