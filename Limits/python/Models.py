@@ -432,7 +432,7 @@ class Gaussian(Model):
         meanName  = mean if isinstance(mean,str) else 'mean_{0}'.format(label)
         sigmaName = sigma if isinstance(sigma,str) else 'sigma_{0}'.format(label)
         # variables
-        if not isinstance(mean,str): ws.factory('{0}[{1}, {2}, {3}]'.format(meanName,*mean))
+        if not isinstance(mean,str): ws.factory('{0}[{1}]'.format(meanName,', '.join(['{}'.format(m) for m in mean])))
         if not isinstance(sigma,str): ws.factory('{0}[{1}, {2}, {3}]'.format(sigmaName,*sigma))
         # build model
         ws.factory("Gaussian::{0}({1}, {2}, {3})".format(label,self.x,meanName,sigmaName))
@@ -953,6 +953,43 @@ class Beta(Model):
             label,self.x,betaScaleName,betaAName,betaBName)
         )
         self.params = [betaScaleName,betaAName,betaBName]
+
+class BetaConv(Model):
+
+    def __init__(self,name,**kwargs):
+        super(BetaConv,self).__init__(name,**kwargs)
+
+    def build(self,ws,label):
+        logging.debug('Building {}'.format(label))
+        betaScale = self.kwargs.get('betaScale', [1,0,1])
+        betaA = self.kwargs.get('betaA', [5,0,10])
+        betaB = self.kwargs.get('betaB', [2,0,10])
+        mean = self.kwargs.get('mean',[0])
+        sigma = self.kwargs.get('sigma',[1,0,10])
+        betaScaleName = betaScale if isinstance(betaScale,str) else 'betaScale_{0}'.format(label)
+        betaAName = betaA if isinstance(betaA,str) else 'betaA_{0}'.format(label)
+        betaBName = betaB if isinstance(betaB,str) else 'betaB_{0}'.format(label)
+        meanName = mean if isinstance(mean,str) else 'mean_{0}'.format(label)
+        sigmaName = sigma if isinstance(sigma,str) else 'sigma_{0}'.format(label)
+        # variables
+        if not isinstance(betaScale,str): ws.factory('{0}[{1}, {2}, {3}]'.format(betaScaleName,*betaScale))
+        if not isinstance(betaA,str): ws.factory('{0}[{1}, {2}, {3}]'.format(betaAName,*betaA))
+        if not isinstance(betaB,str): ws.factory('{0}[{1}, {2}, {3}]'.format(betaBName,*betaB))
+        if not isinstance(mean,str): ws.factory('{0}[{1}]'.format(meanName,*mean))
+        if not isinstance(sigma,str): ws.factory('{0}[{1}, {2}, {3}]'.format(sigmaName,*sigma))
+        # build model
+        ws.factory("EXPR::{0}_beta('TMath::BetaDist({1}*{2},{3},{4})', {1}, {2}, {3}, {4})".format(
+            label,self.x,betaScaleName,betaAName,betaBName)
+        )
+        g = Gaussian('{}_gaus'.format(label),
+            mean = mean,
+            sigma = sigma,
+        )
+        g.build(ws,'{}_gaus'.format(label))
+        f = ROOT.RooFFTConvPdf(label,label,ws.var(self.x),ws.pdf('{}_beta'.format(label)),ws.pdf('{}_gaus'.format(label))) 
+        #f = ROOT.RooNumConvPdf(label,label,ws.var(self.x),ws.pdf('{}_beta'.format(label)),ws.pdf('{}_gaus'.format(label))) 
+        getattr(ws,'import')(f)
+        self.params = [betaScaleName,betaAName,betaBName,meanName,sigmaName]
 
 class BetaSpline(ModelSpline):
         
