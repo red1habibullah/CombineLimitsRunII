@@ -1465,20 +1465,6 @@ class HaaLimits(Limits):
         from CombineLimits.Limits.Models import buildSpline
         accspline = buildSpline(self.workspace, 'ggF_VBF_acceptance', ['MH','MA'], None, acc)
 
-        ## build the final spline
-        #name = 'xsec_ggF_VBF'
-        #formula = '(@0+@1)*@2'
-        #args = ROOT.RooArgList()
-        #args.add(ggF)
-        #args.add(vbf)
-        #args.add(accspline)
-        #spline = ROOT.RooFormulaVar(name,name,formula,args)
-        #getattr(self.workspace,'import')(spline, ROOT.RooFit.RecycleConflictNodes())
-        ## define the rate params for combine
-        #for region in self.REGIONS:
-        #    for proc in self.sigs:
-        #        self.addRateParam(name,region,proc)
-
         self.workspace.factory('pdfalpha[0,-10,10]')
         for region in self.REGIONS:
             for proc in self.sigs:
@@ -1496,6 +1482,32 @@ class HaaLimits(Limits):
                 spline = ROOT.RooFormulaVar(name,name,formula,args)
                 getattr(self.workspace,'import')(spline, ROOT.RooFit.RecycleConflictNodes())
                 self.addRateParam(name,region,proc)
+
+        # alternative SM xsec
+        tfile = ROOT.TFile.Open('CombineLimits/Limits/data/Higgs_YR4_SM_13TeV.root')
+        ws = tfile.Get('YR4_SM_13TeV')
+        ggF = ws.function('xsec_ggF_N3LO')
+        vbf = ws.function('xsec_VBF')
+        # uncs
+        ggF_pdfalpha = ws.function('pdfalpha_err_ggF_N3LO')
+        vbf_pdfalpha = ws.function('pdfalpha_err_VBF')
+
+        for region in self.REGIONS:
+            for proc in self.sigs:
+                formula = '(@0*(1+@4*@2*0.01) + @1*(1+@4*@3*0.01))*@5*@6'
+                #formula = '(@0 + @1)*@2'
+                args = ROOT.RooArgList()
+                args.add(ggF)
+                args.add(vbf)
+                args.add(ggF_pdfalpha)
+                args.add(vbf_pdfalpha)
+                args.add(self.workspace.var('pdfalpha'))
+                args.add(accspline)
+                args.add(self.workspace.function('integral_{}_{}'.format(proc,region)))
+                name = 'fullIntegral_SM_{}_{}'.format(proc,region)
+                spline = ROOT.RooFormulaVar(name,name,formula,args)
+                getattr(self.workspace,'import')(spline, ROOT.RooFit.RecycleConflictNodes())
+                #self.addRateParam(name,region,proc)
 
 
     ###################

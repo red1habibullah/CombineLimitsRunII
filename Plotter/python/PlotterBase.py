@@ -50,28 +50,31 @@ class PlotterBase(object):
         width = widthScale*(0.21*numcol+0.1)
         numentries = len(entryArgs)
         height = heightScale*(math.ceil(float(numentries)/numcol)*0.07+0.04)
-        if position % 10 == 1:   # bottom
-            ystart = 0.16
-            yend = ystart+height
-        elif position % 10 == 2: # middle
-            yend = 0.54+height/2
-            ystart = 0.54-height/2
-        elif position % 10 == 3: # top
-            yend = 0.84
-            ystart = yend-height
-        else:                    # verytop
-            yend = 0.92
-            ystart = yend-height
-        if position / 10 == 1:   # left
-            xstart = 0.19
-            xend = xstart+width
-        elif position / 10 == 2: # middle
-            xstart = 0.57-width/2
-            xend = 0.57+width/2
-        else:                    # right
-            xend = 0.95
-            xstart = xend-width
-        legend = ROOT.TLegend(xstart,ystart,xend,yend,'','NDC')
+        if isinstance(position,list):
+            legend = ROOT.TLegend(*position+['','NDC'])
+        else:
+            if position % 10 == 1:   # bottom
+                ystart = 0.16
+                yend = ystart+height
+            elif position % 10 == 2: # middle
+                yend = 0.54+height/2
+                ystart = 0.54-height/2
+            elif position % 10 == 3: # top
+                yend = 0.84
+                ystart = yend-height
+            else:                    # verytop
+                yend = 0.92
+                ystart = yend-height
+            if position / 10 == 1:   # left
+                xstart = 0.19
+                xend = xstart+width
+            elif position / 10 == 2: # middle
+                xstart = 0.57-width/2
+                xend = 0.57+width/2
+            else:                    # right
+                xend = 0.95
+                xstart = xend-width
+            legend = ROOT.TLegend(xstart,ystart,xend,yend,'','NDC')
         if numcol>1: legend.SetNColumns(int(numcol))
         legend.SetTextFont(42)
         legend.SetBorderSize(0)

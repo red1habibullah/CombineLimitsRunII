@@ -587,7 +587,8 @@ class LimitPlotter(PlotterBase):
 
         # special legend
         entries = [[expected_graphs[eb][0],'#splitline{{Expected exclusion}}{{BR(H #rightarrow aa) = {}}}'.format(eb),'l'] for eb in expectedBands if len(expected_graphs[eb])]
-        legend = self._getLegend(entries=entries,numcol=1,position=24,title=legendtitle)
+        #legend = self._getLegend(entries=entries,numcol=1,position=24,title=legendtitle)
+        legend = self._getLegend(entries=entries,numcol=1,position=[0.44,0.66,0.75,0.92],title=legendtitle)
         legend.Draw()
 
         # manually add the 1 sigma bands

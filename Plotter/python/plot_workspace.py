@@ -146,7 +146,7 @@ for prim in canvas.GetListOfPrimitives():
     elif 'bg' in prim.GetTitle():
         legend.AddEntry(prim, 'Background Model', 'l')
     elif 'sig' in prim.GetTitle():
-        title = '#splitline{{m_{{h}} = {} GeV, m_{{a}} = {} GeV}}{{BR(h #rightarrow aa #rightarrow #mu#mu#tau#tau) = {}}}'.format(h,a,floatToText(br))
+        title = '#splitline{{m_{{H}} = {} GeV, m_{{a}} = {} GeV}}{{BR(h #rightarrow aa #rightarrow #mu#mu#tau#tau) = {}}}'.format(h,a,floatToText(br))
         legend.AddEntry(prim, title, 'l')
 
 legend.Draw()
@@ -208,7 +208,7 @@ for prim in canvas.GetListOfPrimitives():
     elif 'bg' in prim.GetTitle():
         legend.AddEntry(prim, 'Background Model', 'l')
     elif 'sig' in prim.GetTitle():
-        title = '#splitline{{m_{{h}} = {} GeV, m_{{a}} = {} GeV}}{{BR(h #rightarrow aa #rightarrow #mu#mu#tau#tau) = {}}}'.format(h,a,floatToText(br))
+        title = '#splitline{{m_{{H}} = {} GeV, m_{{a}} = {} GeV}}{{BR(h #rightarrow aa #rightarrow #mu#mu#tau#tau) = {}}}'.format(h,a,floatToText(br))
         legend.AddEntry(prim, title, 'l')
 
 legend.Draw()

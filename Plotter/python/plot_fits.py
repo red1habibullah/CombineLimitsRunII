@@ -131,7 +131,7 @@ for prim in canvas.GetListOfPrimitives():
         if yvar=='tt':
             title = 'm_{{a}} = {} GeV'.format(amasses[i])
         else:
-            title = 'm_{{h}} = {} GeV'.format(hmasses[i])
+            title = 'm_{{H}} = {} GeV'.format(hmasses[i])
             if hmasses[i]==750: title += ' (x10)'
         legend.AddEntry(prim, title, 'l')
         i += 1

@@ -121,7 +121,9 @@ bsmws = bsmtfile.Get('YR4_BSM_13TeV')
 def getXsec(proc,mode):
     h = int(proc.split('H')[-1].split('A')[0])
     a = float(proc.split('A')[-1].replace('p','.'))
+    # this was input as SM for 125 and BSM for others
     ws = smws if h==125 else bsmws
+    #ws = bsmws
     names = {
         'gg' : 'xsec_ggF_N3LO',
         'vbf': 'xsec_VBF',
