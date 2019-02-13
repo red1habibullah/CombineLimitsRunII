@@ -474,6 +474,7 @@ class Limits(object):
         systRows = []
         for syst in sorted(combinedSysts.keys()):
             thisRow = [syst,combinedSysts[syst]['mode']]
+            keep = False
             for bin in bins:
                 for process in processesOrdered:
                     key = (bin,process)
@@ -493,9 +494,11 @@ class Limits(object):
                                 logging.debug('Importing {}'.format(label))
                                 self.wsimport(datahist)
                             s = '1'
+                            keep = True
                         elif isinstance(s,basestring):
                             label = '{0}_{1}_{2}'.format(process,binName.format(bin=bin),syst)
                             s = '1'
+                            keep = True
                         elif (isinstance(s,tuple) or isinstance(s,list)) and len(s)==2:
                             if isinstance(s[0],ROOT.TH1):
                                 label_up = '{0}_{1}_{2}Up'.format(process,binName.format(bin=bin),syst)
@@ -513,19 +516,23 @@ class Limits(object):
                                     logging.debug('Importing {}'.format(label_down))
                                     self.wsimport(datahist_down)
                                 s = '1'
+                                keep = True
                             elif isinstance(s[0],basestring):
                                 label_up = '{0}_{1}_{2}Up'.format(process,binName.format(bin=bin),syst)
                                 label_down = '{0}_{1}_{2}Down'.format(process,binName.format(bin=bin),syst)
                                 s = '1'
+                                keep = True
                             elif isinstance(s[0],numbers.Number):
                                 s = '{0:>4.4g}/{1:<4.4g}'.format(*s)
+                                keep = True
                             else:
                                 logging.error('Do not know how to handle {0}'.format(s))
                                 raise
                         elif isinstance(s,numbers.Number):
                             s = '{0:<10.4g}'.format(s)
+                            keep = True
                     thisRow += [s]
-            systRows += [thisRow]
+            if keep: systRows += [thisRow]
 
         logging.debug('Params systs to add: {0}'.format([str(x) for x in sorted(self.param_systematics.keys())]))
         paramRows = []

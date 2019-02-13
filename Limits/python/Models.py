@@ -138,7 +138,7 @@ class Model(object):
                     prim.SetTextSize(0.02)
             canvas.Print('{0}_yproj.png'.format(savename))
 
-            histM = model.createHistogram('x,y',100,100)
+            histM = model.createHistogram('{},{}'.format(self.x,self.y),100,100)
             histM.SetLineColor(ROOT.kBlue)
             histM.Draw('surf3')
             canvas.Print('{0}_model.png'.format(savename))
@@ -634,6 +634,7 @@ class DoubleCrystalBall(Model):
         doubleCB = ROOT.DoubleCrystalBall(label, label, ws.arg(self.x), ws.arg(meanName), ws.arg(sigmaName), 
                    ws.arg(a1Name), ws.arg(n1Name), ws.arg(a2Name), ws.arg(n2Name) )
         self.wsimport(ws, doubleCB)
+        ws.importClassCode(label)
         self.params = [meanName,sigmaName,a1Name,n1Name,a2Name,n2Name]
 
 class DoubleCrystalBallSpline(ModelSpline):
@@ -675,6 +676,7 @@ class DoubleCrystalBallSpline(ModelSpline):
         doubleCB = ROOT.DoubleCrystalBall(label, label, ws.arg(self.x), ws.arg(meanName), ws.arg(sigmaName), 
                    ws.arg(a1Name), ws.arg(n1Name), ws.arg(a2Name), ws.arg(n2Name) )
         self.wsimport(ws, doubleCB)
+        ws.importClassCode(label)
         self.params = [meanName,sigmaName,a1Name,n1Name,a2Name,n2Name]
 
 class DoubleSidedGaussian(Model):
@@ -700,6 +702,7 @@ class DoubleSidedGaussian(Model):
         # build model
         doubleG = ROOT.DoubleSidedGaussian(label, label, ws.arg(self.x), ws.arg(meanName), ws.arg(sigma1Name), ws.arg(sigma2Name), yMax )
         self.wsimport(ws, doubleG)
+        ws.importClassCode(label)
         self.params = [meanName,sigma1Name,sigma2Name]
 
 class DoubleSidedGaussianSpline(ModelSpline):
@@ -729,6 +732,7 @@ class DoubleSidedGaussianSpline(ModelSpline):
         # build model
         doubleG = ROOT.DoubleSidedGaussian(label, label, ws.arg(self.x), ws.arg(meanName), ws.arg(sigma1Name), ws.arg(sigma2Name), yMax )
         self.wsimport(ws, doubleG)
+        ws.importClassCode(label)
         self.params = [meanName,sigma1Name,sigma2Name] 
 
 class DoubleSidedVoigtian(Model):
@@ -760,6 +764,7 @@ class DoubleSidedVoigtian(Model):
         # build model
         doubleV = ROOT.DoubleSidedVoigtian(label, label, ws.arg(self.x), ws.arg(meanName), ws.arg(sigma1Name), ws.arg(sigma2Name), ws.arg(width1Name), ws.arg(width2Name), yMax )
         self.wsimport(ws, doubleV)
+        ws.importClassCode(label)
         self.params = [meanName,sigma1Name,sigma2Name,width1Name,width2Name]
 
 class DoubleSidedVoigtianSpline(ModelSpline):
@@ -797,6 +802,7 @@ class DoubleSidedVoigtianSpline(ModelSpline):
         # build model
         doubleV = ROOT.DoubleSidedVoigtian(label, label, ws.arg(self.x), ws.arg(meanName), ws.arg(sigma1Name), ws.arg(sigma2Name), ws.arg(width1Name), ws.arg(width2Name), yMax )
         self.wsimport(ws, doubleV)
+        ws.importClassCode(label)
         self.params = [meanName,sigma1Name,sigma2Name,width1Name,width2Name] 
 
 class Exponential(Model):

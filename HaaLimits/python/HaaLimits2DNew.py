@@ -31,6 +31,7 @@ class HaaLimits2D(HaaLimits):
     YRANGE = [50,1000]
     YBINNING = 950
     YLABEL = 'm_{#mu#mu#tau_{#mu}#tau_{h}}'
+    YVAR = 'CMS_haa_y'
 
     def __init__(self,histMap,tag='',do2DInterpolation=False,doParamFit=False):
         '''
@@ -61,15 +62,15 @@ class HaaLimits2D(HaaLimits):
     def initializeWorkspace(self,**kwargs):
         logging.debug('initializeWorkspace')
         logging.debug(str(kwargs))
-        self.addX(*self.XRANGE,unit='GeV',label=self.XLABEL,**kwargs)
-        self.addY(*self.YRANGE,unit='GeV',label=self.YLABEL,**kwargs)
+        self.addVar(self.XVAR,*self.XRANGE,unit='GeV',label=self.XLABEL,**kwargs)
+        self.addVar(self.YVAR,*self.YRANGE,unit='GeV',label=self.YLABEL,**kwargs)
         self.addMH(*self.HRANGE,unit='GeV',label=self.HLABEL,**kwargs)
         self.addMA(*self.ARANGE,unit='GeV',label=self.ALABEL,**kwargs)
 
     def _buildYModel(self,region,**kwargs):
         workspace = kwargs.pop('workspace',self.workspace)
-        xVar = kwargs.pop('xVar','x')
-        yVar = kwargs.pop('yVar','y')
+        xVar = kwargs.pop('xVar',self.XVAR)
+        yVar = kwargs.pop('yVar',self.YVAR)
         tag = kwargs.pop('tag',region)
 
         # try landau
@@ -108,7 +109,7 @@ class HaaLimits2D(HaaLimits):
 
             #nameP1 = 'erfShiftPoly{}'.format('_'+tag if tag else '')
             #poly1 = Models.PolynomialExpr('poly1',
-            #    x = xVar,
+            #    x = yVar,
             #    order = 1,
             #    p0 = kwargs.pop('p0_{}'.format(nameP1), [45,30,70]),
             #    p1 = kwargs.pop('p1_{}'.format(nameP1), [0.75,0,2]),
@@ -382,17 +383,16 @@ class HaaLimits2D(HaaLimits):
         if self.YRANGE[1]>100:
             thisyrange = [0.15*h, 1.2*h]
         ws = ROOT.RooWorkspace('sig')
-        ws.factory('x[{0}, {1}]'.format(*thisxrange)) 
-        #ws.factory('x[{0}, {1}]'.format(*self.XRANGE))
-        ws.var('x').setUnit('GeV')
-        ws.var('x').setPlotLabel(self.XLABEL)
-        ws.var('x').SetTitle(self.XLABEL)
-        ws.factory('y[{0}, {1}]'.format(*thisyrange)) 
-        #ws.factory('y[{0}, {1}]'.format(*self.YRANGE))
-        ws.var('y').setUnit('GeV')
-        ws.var('y').setPlotLabel(self.YLABEL)
-        ws.var('y').SetTitle(self.YLABEL)
+        ws.factory('{0}[{1}, {2}]'.format(self.XVAR,*thisxrange)) 
+        ws.var(self.XVAR).setUnit('GeV')
+        ws.var(self.XVAR).setPlotLabel(self.XLABEL)
+        ws.var(self.XVAR).SetTitle(self.XLABEL)
+        ws.factory('{0}[{1}, {2}]'.format(self.YVAR,*thisyrange)) 
+        ws.var(self.YVAR).setUnit('GeV')
+        ws.var(self.YVAR).setPlotLabel(self.YLABEL)
+        ws.var(self.YVAR).SetTitle(self.YLABEL)
         modelx = Models.Voigtian('sigx',
+            x = self.XVAR,
             mean  = [aval,0,30],
             width = [0.01*aval,0.001,5],
             sigma = [0.01*aval,0.001,5],
@@ -401,20 +401,20 @@ class HaaLimits2D(HaaLimits):
         if self.YRANGE[1]>100: # y variable is h mass
             if yFitFunc == "G": 
                 modely = Models.Gaussian('sigy',
-                    x = 'y',
+                    x = self.YVAR,
                     mean  = [h,0,1.25*h],
                     sigma = [0.1*h,0.01,0.5*h],
                 )
             elif yFitFunc == "V":
                 modely = Models.Voigtian('sigy',
-                    x = 'y',
+                    x = self.YVAR,
                     mean  = [0.75*h,0,1.25*h],
                     width = [0.1*h,0.01,0.5*h],
                     sigma = [0.1*h,0.01,0.5*h],
                 )
             elif yFitFunc == "CB":
                 modely = Models.CrystalBall('sigy',
-                    x = 'y',
+                    x = self.YVAR,
                     mean  = [h,0,1.25*h],
                     sigma = [0.1*h,0.01,0.5*h],
                     a = [1.0,.5,5],
@@ -422,7 +422,7 @@ class HaaLimits2D(HaaLimits):
                 )
             elif yFitFunc == "DCB":
                 modely = Models.DoubleCrystalBall('sigy',
-                    x = 'y',
+                    x = self.YVAR,
                     mean  = [h,0,1.25*h],
                     sigma = [initialValuesDCB["h"+str(h)+"a"+str(a)]["sigma"],0.05*h,0.5*h],
                     a1    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["a1"],0.1,10],
@@ -434,7 +434,7 @@ class HaaLimits2D(HaaLimits):
                 MEAN = initialMeans["h"+str(h)+"a"+str(a)]["mean"]
                 self.YRANGE[0] = MEAN
                 modely = Models.DoubleCrystalBall('sigy',
-                    x = 'y',
+                    x = self.YVAR,
                     mean  = [MEAN, MEAN-2, MEAN+2],
                     sigma = [initialValuesDCB["h"+str(h)+"a"+str(a)]["sigma"],0.05*h,0.5*h],
                     a1    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["a1"],0.1,10],
@@ -444,7 +444,7 @@ class HaaLimits2D(HaaLimits):
                 )
             elif yFitFunc == "DG":
                 modely = Models.DoubleSidedGaussian('sigy',
-                    x = 'y',
+                    x = self.YVAR,
                     #mean  = [h,0,1.25*h],
                     #sigma1 = [0.1*h,0.05*h,0.5*h],
                     #sigma2 = [0.2*h,0.05*h,0.5*h],
@@ -455,7 +455,7 @@ class HaaLimits2D(HaaLimits):
                 )
             elif yFitFunc == "DV":
                 modely = Models.DoubleSidedVoigtian('sigy',
-                    x = 'y',
+                    x = self.YVAR,
                     mean  = [h,0,1.25*h],
                     sigma1 = [0.1*h,0.01,0.5*h],
                     sigma2 = [0.2*h,0.01,0.5*h],
@@ -465,25 +465,25 @@ class HaaLimits2D(HaaLimits):
                 )
             elif yFitFunc == "MB":
                 modely = Models.MaxwellBoltzmann('sigy',
-                    x = 'y',
+                    x = self.YVAR,
                     scale = [0.5*h,0,1000],
                 )
             elif yFitFunc == "B":
                 modely = Models.Beta('sigy',
-                    x = 'y',
+                    x = self.YVAR,
                     betaScale = [1/h,0,1],
                     betaA = [5,0,20],
                     betaB = [2,0,10],
                 )
             elif yFitFunc == "G2":
                 g1 = Models.Gaussian('g1',
-                    x = 'y',
+                    x = self.YVAR,
                     mean  = [0.7*h, 0.6*h, h],
                     sigma = [0.1*h, 0, 0.5*h], 
                 )
                 g1.build(ws,'g1')
                 g2 = Models.Gaussian('g2',
-                    x = 'y',
+                    x = self.YVAR,
                     #mean  = 'mean_g1',
                     mean  = [0.8*h, 0.6*h, h],
                     sigma = [0.1*h, 0, 0.5*h], 
@@ -494,24 +494,25 @@ class HaaLimits2D(HaaLimits):
                         'g1'     : [0.7,0.5,0.9],
                         'g2'     : [0.5,0,1],
                         'recursive': True,
+                        'x'      : self.YVAR,
                     }
                 )
             elif yFitFunc == "G3":
                 g1 = Models.Gaussian('g1',
-                    x = 'y',
+                    x = self.YVAR,
                     mean  = [0.7*h, 0.6*h, h],
                     sigma = [0.1*h, 0, 0.5*h], 
                 )
                 g1.build(ws,'g1')
                 g2 = Models.Gaussian('g2',
-                    x = 'y',
+                    x = self.YVAR,
                     #mean  = 'mean_g1',
                     mean  = [0.8*h, 0.6*h, h],
                     sigma = [0.1*h, 0, 0.5*h], 
                 )
                 g2.build(ws,'g2')
                 g3 = Models.Gaussian('g3',
-                    x = 'y',
+                    x = self.YVAR,
                     #mean  = 'mean_g1',
                     mean  = [0.8*h, 0.6*h, h],
                     sigma = [0.1*h, 0, 0.5*h], 
@@ -523,6 +524,7 @@ class HaaLimits2D(HaaLimits):
                         'g2'     : [0.5,0,1],
                         'g3'     : [0.5,0,1],
                         'recursive': True,
+                        'x'      : self.YVAR,
                     }
                 )
             else:
@@ -531,24 +533,26 @@ class HaaLimits2D(HaaLimits):
             model = Models.Prod('sig',
                 'sigx',
                 'sigy',
+                x = self.XVAR,
+                y = self.YVAR,
             )
         else: # y variable is tt
             if yFitFunc == "G":
                 modely = Models.Gaussian('sigy',
-                    x = 'y',
+                    x = self.YVAR,
                     mean  = [0.5*aval,0,1.25*aval],
                     sigma = [0.1*aval,0.01,0.5*aval],
                 )
             elif yFitFunc == "V":
                 modely = Models.Voigtian('sigy',
-                    x = 'y',
+                    x = self.YVAR,
                     mean  = [initialValuesV["h"+str(h)+"a"+str(a)]["mean_sigy"],0.75,30],
                     width = [initialValuesV["h"+str(h)+"a"+str(a)]["width_sigy"],0.01,5],
                     sigma = [initialValuesV["h"+str(h)+"a"+str(a)]["sigma_sigy"],0.01,5],
                 )
             elif yFitFunc == "CB":
                 modely = Models.CrystalBall('sigy',
-                    x = 'y',
+                    x = self.YVAR,
                     mean  = [0.5*aval,0,30],
                     sigma = [0.1*aval,0,5],
                     a = [1.0,0.5,5],
@@ -556,7 +560,7 @@ class HaaLimits2D(HaaLimits):
                 )
             elif yFitFunc == "DCB":
                 modely = Models.DoubleCrystalBall('sigy',
-                    x = 'y',
+                    x = self.YVAR,
                     mean  = [0.5*aval,0.5,30],
                     sigma = [0.1*aval,0.1,5],
                     a1 = [1.0,0.1,6],
@@ -566,7 +570,7 @@ class HaaLimits2D(HaaLimits):
                 )
             elif yFitFunc == "DG":
                 modely = Models.DoubleSidedGaussian('sigy',
-                    x = 'y',
+                    x = self.YVAR,
                     mean  = [0.5*aval,0,30],
                     sigma1 = [0.1*aval,0.05*aval,0.4*aval],
                     sigma2 = [0.3*aval,0.05*aval,0.4*aval],
@@ -574,7 +578,7 @@ class HaaLimits2D(HaaLimits):
                 )
             elif yFitFunc == "DV":
                 modely = Models.DoubleSidedVoigtian('sigy',
-                    x = 'y',
+                    x = self.YVAR,
                     mean  = [0.5*aval,0,30],
                     sigma1 = [0.1*aval,0.05*aval,0.4*aval],
                     sigma2 = [0.3*aval,0.05*aval,0.4*aval],
@@ -584,24 +588,24 @@ class HaaLimits2D(HaaLimits):
                 )
             elif yFitFunc == "MB":
                 modely = Models.MaxwellBoltzmann('sigy',
-                    x = 'y',
+                    x = self.YVAR,
                     scale = [0.5*aval,0,30],
                 )
             elif yFitFunc == "B":
                 modely = Models.Beta('sigy',
-                    x = 'y',
+                    x = self.YVAR,
                     betaScale = [1/a,0,1],
                     betaA = [5,0,20],
                     betaB = [2,0,10],
                 )
             elif yFitFunc == "errG":
                 tterf = Models.Erf('tterf',
-                   x = 'y',
+                   x = self.YVAR,
                    erfScale = [0.4,0.1,5],
                    erfShift = [0.2*aval,0.05*aval,aval],
                 )
                 ttgaus = Models.Gaussian('ttgaus',
-                   x = 'y',
+                   x = self.YVAR,
                    mean  = [0.45*aval,0,aval],
                    sigma = [0.1*aval,0.05*aval,0.4*aval],
                 )
@@ -610,21 +614,22 @@ class HaaLimits2D(HaaLimits):
                 modely = Models.Prod('sigy',
                         'ttgaus',
                         'tterf',
+                        x = self.YVAR,
                 )
             elif yFitFunc == "L":
                 #modely = Models.Landau('sigy',
-                #    x = 'y',
+                #    x = self.YVAR,
                 #    mu  = [0.5*aval,0,30],
                 #    sigma = [0.1*aval,0.05*aval,aval],
                 #)
                 ttland = Models.Landau('ttland',
-                    x = 'y',
+                    x = self.YVAR,
                     mu  = [initialValuesL["h"+str(h)+"a"+str(a)]["mu_ttland"],0.1*aval,0.7*aval],
                     sigma = [initialValuesL["h"+str(h)+"a"+str(a)]["sigma_ttland"],0.01,aval],
                 )
                 ttland.build(ws,'ttland')
                 ttgaus = Models.Gaussian('ttgaus',
-                   x = 'y',
+                   x = self.YVAR,
                    mean  = [initialValuesL["h"+str(h)+"a"+str(a)]["mean_ttgaus"],0.1*aval,0.7*aval],
                    #mean  = [initialValuesL["h"+str(h)+"a"+str(a)]["mean_ttgaus"],0.2*initialValuesL["h"+str(h)+"a"+str(a)]["mean_ttgaus"],30],
                    sigma = [initialValuesL["h"+str(h)+"a"+str(a)]["sigma_ttgaus"],0.01,aval],
@@ -633,6 +638,7 @@ class HaaLimits2D(HaaLimits):
                 modely = Models.Prod('sigy',
                         'ttgaus',
                         'ttland',
+                        x = self.YVAR,
                 )
                 #modely = Models.Sum('sigy',
                 #    **{
@@ -650,16 +656,18 @@ class HaaLimits2D(HaaLimits):
                 model = Models.Prod('sig',
                     'sigx',
                     'sigy',
+                    x = self.XVAR,
+                    y = self.YVAR,
                 )
             else:
                 conty = Models.Exponential('conty',
-                    x = 'y',
+                    x = self.YVAR,
                     lamb = [-0.25,-1,-0.001], # visible
                 )
                 conty.build(ws,'conty')
 
                 erfy = Models.Erf('erfy',
-                    x = 'y',
+                    x = self.YVAR,
                     erfScale = [0.1,0.01,10],
                     erfShift = [2,0,10],
                 )
@@ -668,6 +676,7 @@ class HaaLimits2D(HaaLimits):
                 erfc = Models.Prod('erfcy',
                     'erfy',
                     'conty',
+                    x = self.YVAR,
                 )
                 erfc.build(ws,'erfcy')
 
@@ -676,6 +685,7 @@ class HaaLimits2D(HaaLimits):
                         'erfcy'    : [0.5,0,1],
                         'sigy'     : [0.5,0,1],
                         'recursive': True,
+                        'x'        : self.YVAR,
                     }
                 )
                 modelymod.build(ws,'bgsigy')
@@ -683,6 +693,8 @@ class HaaLimits2D(HaaLimits):
                 model = Models.Prod('sig',
                     'sigx',
                     'bgsigy',
+                    x = self.XVAR,
+                    y = self.YVAR,
                 )
 
         name = 'h{}_a{}_{}'.format(h,a,tag)
@@ -696,7 +708,7 @@ class HaaLimits2D(HaaLimits):
         if self.binned:
             integral = histMap[self.SIGNAME.format(h=h,a=a)].Integral() * scale
         else:
-            integral = histMap[self.SIGNAME.format(h=h,a=a)].sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE)) * scale
+            integral = histMap[self.SIGNAME.format(h=h,a=a)].sumEntries('{0}>{2} && {0}<{3} && {1}>{4} && {1}<{5}'.format(self.XVAR,self.YVAR,*self.XRANGE+self.YRANGE)) * scale
             if integral!=integral:
                 logging.error('Integral for spline is invalid: h{h} a{a} {region} {shift}'.format(h=h,a=a,region=region,shift=shift))
                 raise
@@ -1033,8 +1045,8 @@ class HaaLimits2D(HaaLimits):
         and similarly for errors and integrals.
         '''
         workspace = kwargs.pop('workspace',self.workspace)
-        xVar = kwargs.pop('xVar','x')
-        yVar = kwargs.pop('yVar','y')
+        xVar = kwargs.pop('xVar',self.XVAR)
+        yVar = kwargs.pop('yVar',self.YVAR)
         yFitFunc = kwargs.pop('yFitFunc','G')
         ygausOnly = kwargs.get('ygausOnly',False)
         dobgsig = kwargs.get('doBackgroundSignal',False)
@@ -1387,18 +1399,18 @@ class HaaLimits2D(HaaLimits):
             return super(HaaLimits2D, self).fitBackground(region=region, shift=shift, **kwargs)
 
         workspace = kwargs.pop('workspace',self.workspace)
-        xVar = kwargs.pop('xVar','x')
-        yVar = kwargs.pop('yVar','y')
+        xVar = kwargs.pop('xVar',self.XVAR)
+        yVar = kwargs.pop('yVar',self.YVAR)
 
         model = workspace.pdf('bg_{}_xy'.format(region))
         name = 'data_prefit_{}{}'.format(region,'_'+shift if shift else '')
         hist = self.histMap[region][shift]['dataNoSig']
         if hist.InheritsFrom('TH1'):
             integral = hist.Integral() * scale # 2D restricted integral?
-            data = ROOT.RooDataHist(name,name,ROOT.RooArgList(workspace.var('x'),workspace.var('y')),hist)
+            data = ROOT.RooDataHist(name,name,ROOT.RooArgList(workspace.var(xVar),workspace.var(yVar)),hist)
         else:
             data = hist.Clone(name)
-            integral = hist.sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE)) * scale
+            integral = hist.sumEntries('{0}>{2} && {0}<{3} && {1}>{4} && {1}<{5}'.format(xVar,yVar,*self.XRANGE+self.YRANGE)) * scale
 
         fr = model.fitTo(data,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
 
@@ -1480,8 +1492,8 @@ class HaaLimits2D(HaaLimits):
     def addControlData(self,**kwargs):
         # build the models after doing the prefit stuff
         region = 'control'
-        xVar = 'x_{}'.format(region)
-        #xVar = 'x'
+        xVar = '{}_{}'.format(self.XVAR,region)
+        #xVar = self.XVAR
         self.addVar(xVar, *self.XRANGE, unit='GeV', label=self.XLABEL, workspace=self.workspace)
         super(HaaLimits2D, self).buildModel(region=region, workspace=self.workspace, xVar=xVar)
         self.loadBackgroundFit(region, workspace=self.workspace)
@@ -1504,8 +1516,8 @@ class HaaLimits2D(HaaLimits):
         workspace = self.workspace
 
         for region in self.REGIONS:
-            xVar = 'x'
-            yVar = 'y'
+            xVar = self.XVAR
+            yVar = self.YVAR
 
             # build the models after doing the prefit stuff
             prebuiltParams = {p:p for p in self.background_params[region]}
@@ -1513,6 +1525,11 @@ class HaaLimits2D(HaaLimits):
             self.addVar(yVar, *self.YRANGE, unit='GeV', label=self.XLABEL, workspace=workspace)
             self.buildModel(region=region,workspace=workspace,xVar=xVar,yVar=yVar,**prebuiltParams)
             self.loadBackgroundFit(region,workspace=workspace)
+
+            x = workspace.var(xVar)
+            x.setBins(self.XBINNING)
+            y = workspace.var(yVar)
+            y.setBins(self.YBINNING)
 
             # save binned data
             if doBinned:
@@ -1524,10 +1541,6 @@ class HaaLimits2D(HaaLimits):
                     pdf = workspace.pdf(bg)
                     integral = workspace.function('integral_{}'.format(bgname))
 
-                    x = workspace.var(xVar)
-                    x.setBins(self.XBINNING)
-                    y = workspace.var(yVar)
-                    y.setBins(self.YBINNING)
                     args = ROOT.RooArgSet(x,y)
                     for shift in ['']+self.BACKGROUNDSHIFTS:
                         if shift:
@@ -1556,18 +1569,13 @@ class HaaLimits2D(HaaLimits):
             name = 'data_obs_{}'.format(region)
             hist = self.histMap[region]['']['data']
             if blind:
-                x = workspace.var(xVar)
-                # temporarily bin it
-                x.setBins(self.XBINNING)
-                y = workspace.var(yVar)
-                y.setBins(self.YBINNING)
                 # generate a toy data observation from the model
                 model = workspace.pdf('bg_{}_xy'.format(region))
                 h = self.histMap[region]['']['dataNoSig']
                 if h.InheritsFrom('TH1'):
                     integral = h.Integral() * scale # 2D integral?
                 else:
-                    integral = h.sumEntries('x>{} && x<{} && y>{} && y<{}'.format(*self.XRANGE+self.YRANGE)) * scale
+                    integral = h.sumEntries('{0}>{2} && {0}<{3} && {1}>{4} && {1}<{5}'.format(xVar,yVar,*self.XRANGE+self.YRANGE)) * scale
                 if asimov:
                     data_obs = model.generateBinned(ROOT.RooArgSet(self.workspace.var(xVar),self.workspace.var(yVar)),integral,1)
                 else:
@@ -1593,6 +1601,8 @@ class HaaLimits2D(HaaLimits):
                     data_obs = ROOT.RooDataHist(name,name,ROOT.RooArgList(self.workspace.var(xVar),self.workspace.var(yVar)),self.histMap[region]['']['data'])
                 else:
                     data_obs = hist.Clone(name)
+                    data_obs.get().find(xVar).setBins(self.XBINNING)
+                    data_obs.get().find(yVar).setBins(self.YBINNING)
             self.wsimport(data_obs)
 
             if hist.InheritsFrom('TH1'):
@@ -1628,12 +1638,14 @@ class HaaLimits2D(HaaLimits):
 
         if addControl: #ADDED BY KYLE
             region = 'control'
+            xVar = '{}_{}'.format(self.XVAR,region)
             name = 'data_obs_{}'.format(region)
             hist = self.histMap[region]['']['data']
             if hist.InheritsFrom('TH1'):
                 data_obs = ROOT.RooDataHist(name,name,ROOT.RooArgList(self.workspace.var(xVar)),hist)
             else:
                 data_obs = hist.Clone(name)
+                data_obs.get().find(xVar).setBins(self.XBINNING)
             self.wsimport(data_obs, ROOT.RooFit.RecycleConflictNodes() )
 
 
@@ -1733,45 +1745,45 @@ class HaaLimits2D(HaaLimits):
                     integrals[region][shift+'Down'] = intsDown
                     fitFuncs[region][shift+'Down'] = fitsDown
             if self.QCDSHIFTS:
-                values[region]['qcdUp']      = {}
-                values[region]['qcdDown']    = {}
-                errors[region]['qcdUp']      = {}
-                errors[region]['qcdDown']    = {}
-                integrals[region]['qcdUp']   = {}
-                integrals[region]['qcdDown'] = {}
-                fitFuncs[region]['qcdUp']    = {}
-                fitFuncs[region]['qcdDown']  = {}
+                values[region]['QCDscale_ggHUp']      = {}
+                values[region]['QCDscale_ggHDown']    = {}
+                errors[region]['QCDscale_ggHUp']      = {}
+                errors[region]['QCDscale_ggHDown']    = {}
+                integrals[region]['QCDscale_ggHUp']   = {}
+                integrals[region]['QCDscale_ggHDown'] = {}
+                fitFuncs[region]['QCDscale_ggHUp']    = {}
+                fitFuncs[region]['QCDscale_ggHDown']  = {}
                 for h in values[region]['']:
-                    values[region]['qcdUp'][h]      = {}
-                    values[region]['qcdDown'][h]    = {}
-                    errors[region]['qcdUp'][h]      = {}
-                    errors[region]['qcdDown'][h]    = {}
-                    integrals[region]['qcdUp'][h]   = {}
-                    integrals[region]['qcdDown'][h] = {}
-                    fitFuncs[region]['qcdUp'][h]    = {}
-                    fitFuncs[region]['qcdDown'][h]  = {}
+                    values[region]['QCDscale_ggHUp'][h]      = {}
+                    values[region]['QCDscale_ggHDown'][h]    = {}
+                    errors[region]['QCDscale_ggHUp'][h]      = {}
+                    errors[region]['QCDscale_ggHDown'][h]    = {}
+                    integrals[region]['QCDscale_ggHUp'][h]   = {}
+                    integrals[region]['QCDscale_ggHDown'][h] = {}
+                    fitFuncs[region]['QCDscale_ggHUp'][h]    = {}
+                    fitFuncs[region]['QCDscale_ggHDown'][h]  = {}
                     for a in values[region][''][h]:
-                        values[region]['qcdUp'][h][a]      = {}
-                        values[region]['qcdDown'][h][a]    = {}
-                        errors[region]['qcdUp'][h][a]      = {}
-                        errors[region]['qcdDown'][h][a]    = {}
-                        integrals[region]['qcdUp'  ][h][a] = max([integrals[region][shift][h][a] for shift in self.QCDSHIFTS])
-                        integrals[region]['qcdDown'][h][a] = min([integrals[region][shift][h][a] for shift in self.QCDSHIFTS])
+                        values[region]['QCDscale_ggHUp'][h][a]      = {}
+                        values[region]['QCDscale_ggHDown'][h][a]    = {}
+                        errors[region]['QCDscale_ggHUp'][h][a]      = {}
+                        errors[region]['QCDscale_ggHDown'][h][a]    = {}
+                        integrals[region]['QCDscale_ggHUp'  ][h][a] = max([integrals[region][shift][h][a] for shift in self.QCDSHIFTS])
+                        integrals[region]['QCDscale_ggHDown'][h][a] = min([integrals[region][shift][h][a] for shift in self.QCDSHIFTS])
                         for val in values[region][''][h][a]:
-                            values[region]['qcdUp'  ][h][a][val] = max([values[region][shift][h][a][val] for shift in self.QCDSHIFTS])
-                            values[region]['qcdDown'][h][a][val] = min([values[region][shift][h][a][val] for shift in self.QCDSHIFTS])
-                            errors[region]['qcdUp'  ][h][a][val] = max([errors[region][shift][h][a][val] for shift in self.QCDSHIFTS])
-                            errors[region]['qcdDown'][h][a][val] = min([errors[region][shift][h][a][val] for shift in self.QCDSHIFTS])
-                for shift in ['qcdUp','qcdDown']:
+                            values[region]['QCDscale_ggHUp'  ][h][a][val] = max([values[region][shift][h][a][val] for shift in self.QCDSHIFTS])
+                            values[region]['QCDscale_ggHDown'][h][a][val] = min([values[region][shift][h][a][val] for shift in self.QCDSHIFTS])
+                            errors[region]['QCDscale_ggHUp'  ][h][a][val] = max([errors[region][shift][h][a][val] for shift in self.QCDSHIFTS])
+                            errors[region]['QCDscale_ggHDown'][h][a][val] = min([errors[region][shift][h][a][val] for shift in self.QCDSHIFTS])
+                for shift in ['QCDscale_ggHUp','QCDscale_ggHDown']:
                     savedir = '{}/{}'.format(self.fitsDir,shift)
                     python_mkdir(savedir)
                     savename = '{}/{}_{}.json'.format(savedir,region,shift)
                     jsonData = {'vals': values[region][shift], 'errs': errors[region][shift], 'integrals': integrals[region][shift]}
                     self.dump(savename,jsonData)
-                fitFuncs[region]['qcdUp']   = self.fitSignalParams(values[region]['qcdUp'],  errors[region]['qcdUp'],  integrals[region]['qcdUp'],  region,'qcdUp',yFitFunc=yFitFunc)
-                fitFuncs[region]['qcdDown'] = self.fitSignalParams(values[region]['qcdDown'],errors[region]['qcdDown'],integrals[region]['qcdDown'],region,'qcdDown',yFitFunc=yFitFunc)
+                fitFuncs[region]['QCDscale_ggHUp']   = self.fitSignalParams(values[region]['QCDscale_ggHUp'],  errors[region]['QCDscale_ggHUp'],  integrals[region]['QCDscale_ggHUp'],  region,'QCDscale_ggHUp',yFitFunc=yFitFunc)
+                fitFuncs[region]['QCDscale_ggHDown'] = self.fitSignalParams(values[region]['QCDscale_ggHDown'],errors[region]['QCDscale_ggHDown'],integrals[region]['QCDscale_ggHDown'],region,'QCDscale_ggHDown',yFitFunc=yFitFunc)
             if self.QCDSHIFTS:
-                models[region] = self.buildSpline(values[region],errors[region],integrals[region],region,self.SIGNALSHIFTS+['qcd'],yFitFunc=yFitFunc,isKinFit=isKinFit,fitFuncs=fitFuncs[region],**kwargs)
+                models[region] = self.buildSpline(values[region],errors[region],integrals[region],region,self.SIGNALSHIFTS+['QCDscale_ggH'],yFitFunc=yFitFunc,isKinFit=isKinFit,fitFuncs=fitFuncs[region],**kwargs)
             else:
                 models[region] = self.buildSpline(values[region],errors[region],integrals[region],region,self.SIGNALSHIFTS,yFitFunc=yFitFunc,isKinFit=isKinFit,fitFuncs=fitFuncs[region],**kwargs)
         self.fitted_models = models

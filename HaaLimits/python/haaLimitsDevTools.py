@@ -60,13 +60,25 @@ hamap = {
 signame = 'HToAAH{h}A{a}'
 ggsigname = 'ggHToAAH{h}A{a}'
 vbfsigname = 'vbfHToAAH{h}A{a}'
+xVar = 'CMS_haa_x'
+yVar = 'CMS_haa_y'
 
-shiftTypes = ['lep','pu','fake','trig','btag','tau','MuonEn','TauEn']#,'JetEn','UnclusteredEn']
+systLabels = {
+    'MuonEn': 'CMS_scale_m',
+    'TauEn' : 'CMS_scale_t',
+    'tau'   : 'CMS_eff_t',
+    'lep'   : 'CMS_eff_m',
+    'fake'  : 'CMS_fake_t',
+    'btag'  : 'CMS_btag_comb',
+    'pu'    : 'CMS_pu',
+}
+
+shiftTypes = ['pu','fake','btag','tau','MuonEn','TauEn']#,'JetEn','UnclusteredEn']
 #if testing: shiftTypes = ['fake','tau','MuonEn'] if detailed else []
 if testing: shiftTypes = ['fake','tau'] if detailed else []
 #if testing: shiftTypes = ['tau'] if detailed else []
 
-signalShiftTypes = ['lep','pu','trig','btag','tau','MuonEn','TauEn']#,'JetEn','UnclusteredEn']
+signalShiftTypes = ['pu','btag','tau','MuonEn','TauEn']#,'JetEn','UnclusteredEn']
 #if testing: signalShiftTypes = ['tau','MuonEn'] if detailed else []
 if testing: signalShiftTypes = ['tau'] if detailed else []
 
@@ -84,6 +96,8 @@ if testing: qcdShifts = []
 shifts = []
 for s in shiftTypes:
     shifts += [s+'Up', s+'Down']
+    if s in systLabels: systLabels[s+'Up'] = systLabels[s]+'Up'
+    if s in systLabels: systLabels[s+'Down'] = systLabels[s]+'Down'
 shifts += qcdShifts
 
 
@@ -139,9 +153,9 @@ def getXsec(proc,mode):
 #################
 def getControlDataset(wrapper,plotname):
     selDatasets = {
-        'x' : 'x>{} && x<{}'.format(*xRange),
+        'x' : '{0}>{1} && {0}<{2}'.format(xVar,*xRange),
     }
-    return wrapper.getDataset(plotname,selection=selDatasets['x'],xRange=xRange,weight='w')
+    return wrapper.getDataset(plotname,selection=selDatasets['x'],xRange=xRange,weight='w',xVar=xVar)
 
 def getDataset(wrapper,plotname):
     thisxrange = xRange
@@ -159,19 +173,19 @@ def getDataset(wrapper,plotname):
             else:                  h = 125 #thisyrange = [20,150]
             thisyrange = [0.15*h, 1.2*h]
     selDatasets = {
-        'x' : 'x>{} && x<{}'.format(*thisxrange),
-        'y' : 'y>{} && y<{}'.format(*thisyrange),
+        'x' : '{0}>{1} && {0}<{2}'.format(xVar,*thisxrange),
+        'y' : '{0}>{1} && {0}<{2}'.format(yVar,*thisyrange),
     }
     if project:
         if 'hMass' in plotname:
-            return wrapper.getDataset(plotname,selection=' && '.join([selDatasets['x'],selDatasets['y'],hCut]),xRange=thisxrange,weight='w',yRange=thisyrange,project='x')
+            return wrapper.getDataset(plotname,selection=' && '.join([selDatasets['x'],selDatasets['y'],hCut]),xRange=thisxrange,weight='w',yRange=thisyrange,project=xVar,xVar=xVar,yVar=yVar)
         elif 'attMass' in plotname:
-            return wrapper.getDataset(plotname,selection=' && '.join([selDatasets['x'],selDatasets['y']]),xRange=thisxrange,weight='w',yRange=thisyrange,project='x')
+            return wrapper.getDataset(plotname,selection=' && '.join([selDatasets['x'],selDatasets['y']]),xRange=thisxrange,weight='w',yRange=thisyrange,project=xVar,xVar=xVar,yVar=yVar)
     else:
         if 'hMass' in plotname or 'attMass' in plotname:
-            return wrapper.getDataset(plotname,selection=' && '.join([selDatasets['x'],selDatasets['y']]),xRange=thisxrange,weight='w',yRange=thisyrange)
+            return wrapper.getDataset(plotname,selection=' && '.join([selDatasets['x'],selDatasets['y']]),xRange=thisxrange,weight='w',yRange=thisyrange,xVar=xVar,yVar=yVar)
         else:
-            return wrapper.getDataset(plotname,selection=selDatasets['x'],xRange=thisxrange,weight='w')
+            return wrapper.getDataset(plotname,selection=selDatasets['x'],xRange=thisxrange,weight='w',xVar=xVar)
 
 def getControlHist(proc,**kwargs):
     wrappers = kwargs.pop('wrappers',{})
@@ -208,13 +222,13 @@ def getHist(proc,**kwargs):
     if chi2Mass: plotname = 'chi2_{}/{}'.format(chi2Mass,plotname)
     if doUnbinned:
         hists = [getDataset(wrappers[s+shift],plotname) for s in sampleMap[proc]]
-        hist = sumDatasets(proc+region,*hists)
+        hist = sumDatasets(proc+region+shift,*hists)
     else:
         if do2D:
             hists = [wrappers[s+shift].getHist2D(plotname) for s in sampleMap[proc]]
         else:
             hists = [wrappers[s+shift].getHist(plotname) for s in sampleMap[proc]]
-        hist = sumHists(proc+region,*hists)
+        hist = sumHists(proc+region+shift,*hists)
         hist.Scale(scale)
     return hist
 
@@ -237,13 +251,13 @@ def getDatadrivenHist(**kwargs):
     if chi2Mass: plotname = 'chi2_{}/{}'.format(chi2Mass,plotname)
     if doUnbinned:
         hists = [getDataset(wrappers[s+shift],plotname) for s in sampleMap['data']]
-        hist = sumDatasets('data'+region+source,*hists)
+        hist = sumDatasets('data'+region+source+shift,*hists)
     else:
         if do2D:
             hists = [wrappers[s+shift].getHist2D(plotname) for s in sampleMap['data']]
         else:
             hists = [wrappers[s+shift].getHist(plotname) for s in sampleMap['data']]
-        hist = sumHists('data'+region+source,*hists)
+        hist = sumHists('data'+region+source+shift,*hists)
     return hist
 
 def getMatrixHist(proc,**kwargs):
@@ -282,9 +296,9 @@ def getMatrixHist(proc,**kwargs):
                 if doPrompt: hists += [wrappers[s+shift].getHist(plotname) for plotname in applot]
                 if doFake: hists += [wrappers[s+shift].getHist(plotname) for plotname in afplot]
     if doUnbinned:
-        hist = sumDatasets(proc+region+source,*hists)
+        hist = sumDatasets(proc+region+source+shift,*hists)
     else:
-        hist = sumHists(proc+region+source,*hists)
+        hist = sumHists(proc+region+source+shift,*hists)
         hist.Scale(scale)
     return hist
 
@@ -325,9 +339,9 @@ def getMatrixDatadrivenHist(**kwargs):
                 if doPrompt: hists += [wrappers[s+shift].getHist(plotname) for plotname in bpplot]
                 if doFake: hists += [wrappers[s+shift].getHist(plotname) for plotname in bfplot]
     if doUnbinned:
-        hist = sumDatasets('data'+region+source,*hists)
+        hist = sumDatasets('data'+region+source+shift,*hists)
     else:
-        hist = sumHists('data'+region+source,*hists)
+        hist = sumHists('data'+region+source+shift,*hists)
     return hist
 
 def sumHists(name,*hists):
@@ -431,24 +445,21 @@ def create_datacard(args):
     for mode in ['PP','FP']:
         histMap[mode] = {}
         for shift in ['']+shifts:
-            histMap[mode][shift] = {}
+            shiftLabel = systLabels.get(shift,shift)
+            histMap[mode][shiftLabel] = {}
             for proc in backgrounds+signals:
                 logging.info('Getting {} {}'.format(proc,shift))
                 if proc=='datadriven':
                     if mode=='PP':
                         if doMatrix:
-                            #histMap[mode][shift][proc] = getMatrixDatadrivenHist(doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
-                            histMap[mode][shift][proc] = getMatrixDatadrivenHist(doUnbinned=True,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
+                            histMap[mode][shiftLabel][proc] = getMatrixDatadrivenHist(doUnbinned=True,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
                         else:
-                            #histMap[mode][shift][proc] = getDatadrivenHist(doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
-                            histMap[mode][shift][proc] = getDatadrivenHist(doUnbinned=True,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
+                            histMap[mode][shiftLabel][proc] = getDatadrivenHist(doUnbinned=True,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
                     else:
                         if doMatrix:
-                            #histMap[mode][shift][proc] = getMatrixHist('data',doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
-                            histMap[mode][shift][proc] = getMatrixHist('data',doUnbinned=True,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
+                            histMap[mode][shiftLabel][proc] = getMatrixHist('data',doUnbinned=True,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
                         else:
-                            #histMap[mode][shift][proc] = getHist('data',doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
-                            histMap[mode][shift][proc] = getHist('data',doUnbinned=True,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
+                            histMap[mode][shiftLabel][proc] = getHist('data',doUnbinned=True,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
                 else:
                     if proc in signals:
                         newproc = 'gg'+proc
@@ -458,16 +469,14 @@ def create_datacard(args):
                     oldXRange = xRange
                     xRange = [0,30]
                     if doMatrix:
-                        #histMap[mode][shift][proc] = getMatrixHist(newproc,doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
-                        histMap[mode][shift][proc] = getMatrixHist(newproc,doUnbinned=True,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
+                        histMap[mode][shiftLabel][proc] = getMatrixHist(newproc,doUnbinned=True,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
                     else:
-                        #histMap[mode][shift][proc] = getHist(newproc,doUnbinned=doUnbinned,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
-                        histMap[mode][shift][proc] = getHist(newproc,doUnbinned=True,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
+                        histMap[mode][shiftLabel][proc] = getHist(newproc,doUnbinned=True,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
                     xRange = oldXRange
                 #if do2D or doUnbinned:
                 #    pass # TODO, figure out how to rebin 2D
                 #else:
-                #    histMap[mode][shift][proc].Rebin(rebinning[var[0]])
+                #    histMap[mode][shiftLabel][proc].Rebin(rebinning[var[0]])
             #if shift: continue
             logging.info('Getting observed')
             samples = backgrounds
@@ -475,8 +484,8 @@ def create_datacard(args):
             hists = []
             histsNoSig = []
             for proc in samples:
-                hists += [histMap[mode][shift][proc].Clone()]
-                if proc!=signalToAdd: histsNoSig += [histMap[mode][shift][proc].Clone()]
+                hists += [histMap[mode][shiftLabel][proc].Clone()]
+                if proc!=signalToAdd: histsNoSig += [histMap[mode][shiftLabel][proc].Clone()]
             #if doUnbinned:
             hist = sumDatasets('obs{}{}'.format(mode,shift),*hists)
             histNoSig = sumDatasets('obsNoSig{}{}'.format(mode,shift),*histsNoSig)
@@ -490,32 +499,32 @@ def create_datacard(args):
             #    hist.SetBinContent(b,val)
             #    #hist.SetBinError(b,err)
             if blind:
-                histMap[mode][shift]['data'] = hist.Clone()
-                histMap[mode][shift]['dataNoSig'] = histNoSig.Clone()
+                histMap[mode][shiftLabel]['data'] = hist.Clone()
+                histMap[mode][shiftLabel]['dataNoSig'] = histNoSig.Clone()
             else:
-                #hist = getHist('data',doUnbinned=doUnbinned,var=var,wrappers=wrappers,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
                 hist = getHist('data',doUnbinned=True,var=var,wrappers=wrappers,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
-                histMap[mode][shift]['data'] = hist.Clone()
-                histMap[mode][shift]['dataNoSig'] = histNoSig.Clone()
+                histMap[mode][shiftLabel]['data'] = hist.Clone()
+                histMap[mode][shiftLabel]['dataNoSig'] = histNoSig.Clone()
                 #if do2D or doUnbinned:
                 #    pass
                 #else:
-                #    histMap[mode][shift]['data'].Rebin(rebinning[var[0]])
-                #    histMap[mode][shift]['dataNoSig'].Rebin(rebinning[var[0]])
+                #    histMap[mode][shiftLabel]['data'].Rebin(rebinning[var[0]])
+                #    histMap[mode][shiftLabel]['dataNoSig'].Rebin(rebinning[var[0]])
 
     for mode in ['control']:
         histMap[mode] = {}
         for shift in ['']:
-            histMap[mode][shift] = {}
+            shiftLabel = systLabels.get(shift,shift)
+            histMap[mode][shiftLabel] = {}
             for proc in backgrounds:
                 logging.info('Getting {} {}'.format(proc,shift))
                 if proc=='datadriven':
-                    histMap[mode][shift][proc] = getControlHist('data',doUnbinned=doUnbinned,var=var,wrappers=wrappers_mm)
+                    histMap[mode][shiftLabel][proc] = getControlHist('data',doUnbinned=doUnbinned,var=var,wrappers=wrappers_mm)
             if shift: continue
             logging.info('Getting observed')
             hist = getControlHist('data',doUnbinned=doUnbinned,var=var,wrappers=wrappers_mm)
-            histMap[mode][shift]['data'] = hist.Clone()
-            histMap[mode][shift]['dataNoSig'] = hist.Clone()
+            histMap[mode][shiftLabel]['data'] = hist.Clone()
+            histMap[mode][shiftLabel]['dataNoSig'] = hist.Clone()
 
     # rescale signal
     scales = {}
@@ -527,6 +536,23 @@ def create_datacard(args):
         scale = 1./gg
         scales[proc] = scale
         #print proc, gg, vbf, scale
+
+
+
+    # before doing anything print out integrals to make sure things are okay
+    #h=125
+    #a=7
+    #SIGNAME = 'HToAAH{h}A{a}'
+    #for s in ['']+[systLabels.get(shift,shift) for shift in shiftTypes]:
+    #    if s:
+    #        integral = histMap['PP'][s+'Up'][SIGNAME.format(h=h,a=a)].sumEntries('{0}>{1} && {0}<{2}'.format(xVar,*xRange))
+    #        print s, 'Up', integral
+    #        integral = histMap['PP'][s+'Down'][SIGNAME.format(h=h,a=a)].sumEntries('{0}>{1} && {0}<{2}'.format(xVar,*xRange))
+    #        print s, 'Down', integral
+    #    else:
+    #        integral = histMap['PP'][''][SIGNAME.format(h=h,a=a)].sumEntries('{0}>{1} && {0}<{2}'.format(xVar,*xRange))
+    #        print 'central', integral
+    #return
 
     name = []
     if args.unbinned: name += ['unbinned']
@@ -545,16 +571,18 @@ def create_datacard(args):
     else:
         logging.error('Unsupported fit vars: ',var)
         raise
-    haaLimits.SHIFTS = shiftTypes
-    haaLimits.SIGNALSHIFTS = signalShiftTypes
-    haaLimits.BACKGROUNDSHIFTS = backgroundShiftTypes
-    haaLimits.QCDSHIFTS = qcdShifts
+    haaLimits.SHIFTS = [systLabels.get(shift,shift) for shift in shiftTypes]
+    haaLimits.SIGNALSHIFTS = [systLabels.get(shift,shift) for shift in signalShiftTypes]
+    haaLimits.BACKGROUNDSHIFTS = [systLabels.get(shift,shift) for shift in backgroundShiftTypes]
+    haaLimits.QCDSHIFTS = [systLabels.get(shift,shift) for shift in qcdShifts]
     haaLimits.AMASSES = amasses
     haaLimits.HMASSES = [chi2Mass] if chi2Mass else hmasses
     haaLimits.HAMAP = hamap
     haaLimits.XRANGE = xRange
     haaLimits.XBINNING = int((xRange[1]-xRange[0])/xBinWidth)
+    haaLimits.XVAR = xVar
     if do2D: 
+        haaLimits.YVAR = yVar
         haaLimits.YRANGE = yRange
         haaLimits.YBINNING = int((yRange[1]-yRange[0])/yBinWidth)
     if 'tt' in var: haaLimits.YLABEL = 'm_{#tau_{#mu}#tau_{h}}'
@@ -606,7 +634,7 @@ def parse_command_line(argv):
     parser.add_argument('--higgs', type=int, default=125, choices=[125,300,750])
     parser.add_argument('--pseudoscalar', type=int, default=7, choices=[5,7,9,11,13,15,17,19,21])
     parser.add_argument('--yFitFunc', type=str, default='', choices=['G','V','CB','DCB','DG','DV','B','G2','G3','errG','L','MB'])
-    parser.add_argument('--xRange', type=float, nargs='*', default=[4,25])
+    parser.add_argument('--xRange', type=float, nargs='*', default=[2.5,25])
     parser.add_argument('--yRange', type=float, nargs='*', default=[])
     parser.add_argument('--tag', type=str, default='')
     parser.add_argument('--chi2Mass', type=int, default=0)

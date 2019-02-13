@@ -14,6 +14,8 @@ yvar = 'h'
 #yvar = 'tt'
 h = 125
 a = 8
+xVar = 'CMS_haa_x'
+yVar = 'CMS_haa_y'
 xRange = [2.5,25]
 xBinWidth = 0.25
 #yRange = [30,250]
@@ -75,7 +77,7 @@ def floatToText(x):
     return '{} #times 10^{{{}}}'.format(float(s[0]),int(s[1]))
 
 if doPostfit:
-    jfile = 'impacts_mm_h_with1DFits_125_7.json' # for now while the other is not working
+    jfile = 'impacts_mm_h_unbinned_with1DFits_125_7.json' # for now while the other is not working
     with open(jfile,'r') as f:
         postfit = json.load(f)
     
@@ -95,14 +97,14 @@ mh.setVal(h)
 ma = ws.var('MA')
 ma.setVal(a)
 
-sig_x = ws.pdf('sig{}_PP_x'.format(h))
-sig_y = ws.pdf('sig{}_PP_y'.format(h))
+sig_x = ws.pdf('ggH_haa_{}_PP_x'.format(h))
+sig_y = ws.pdf('ggH_haa_{}_PP_y'.format(h))
 
 integral = results['integral']
-sigintegral = ws.function('fullIntegral_sig{}_PP'.format(h)).getVal() * br/0.001
+sigintegral = ws.function('fullIntegral_ggH_haa_{}_PP'.format(h)).getVal() * br/0.001
 
 # x
-x = ws.var('x')
+x = ws.var(xVar)
 x.setUnit('GeV')
 x.setPlotLabel('m(#mu#mu)')
 x.SetTitle('m(#mu#mu)')
@@ -145,7 +147,7 @@ for prim in canvas.GetListOfPrimitives():
         legend.AddEntry(prim, title, 'ep')
     elif 'bg' in prim.GetTitle():
         legend.AddEntry(prim, 'Background Model', 'l')
-    elif 'sig' in prim.GetTitle():
+    elif 'ggH' in prim.GetTitle():
         title = '#splitline{{m_{{H}} = {} GeV, m_{{a}} = {} GeV}}{{BR(h #rightarrow aa #rightarrow #mu#mu#tau#tau) = {}}}'.format(h,a,floatToText(br))
         legend.AddEntry(prim, title, 'l')
 
@@ -158,7 +160,7 @@ for ext in ['png','pdf','root']:
     canvas.Print('bg_mm_pdf.{}'.format(ext))
 
 # y
-y = ws.var('y')
+y = ws.var(yVar)
 y.setUnit('GeV')
 if yvar=='h':
     y.setPlotLabel('m(#mu#mu#tau_{#mu}#tau_{h})')
@@ -207,7 +209,7 @@ for prim in canvas.GetListOfPrimitives():
         legend.AddEntry(prim, title, 'ep')
     elif 'bg' in prim.GetTitle():
         legend.AddEntry(prim, 'Background Model', 'l')
-    elif 'sig' in prim.GetTitle():
+    elif 'ggH' in prim.GetTitle():
         title = '#splitline{{m_{{H}} = {} GeV, m_{{a}} = {} GeV}}{{BR(h #rightarrow aa #rightarrow #mu#mu#tau#tau) = {}}}'.format(h,a,floatToText(br))
         legend.AddEntry(prim, title, 'l')
 
