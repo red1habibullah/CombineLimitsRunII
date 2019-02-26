@@ -242,18 +242,27 @@ class Param(object):
 
     def build(self,ws,label):
         logging.debug('Building {}'.format(label))
-        paramName = '{0}'.format(label) 
+        paramName = '{}'.format(label) 
         value = self.kwargs.get('value', 0)
+        vargs = self.kwargs.get('valueArgs',[])
         shifts = self.kwargs.get('shifts', {})
         uncertainty = self.kwargs.get('uncertainty',0.00)
         args = ROOT.TList()
-        shiftFormula = '{}'.format(value)
+        if isinstance(value,basestring):
+            shiftFormula = value
+            for a in vargs:
+                av = ws.var(a)
+                if not av:
+                    av = ws.function(a)
+                args.Add(av)
+        else:
+            shiftFormula = '{}'.format(value)
         for shift in shifts:
-            up = shifts[shift]['up'] - value
-            down = value - shifts[shift]['down']
-            if abs(up/value)>uncertainty or abs(down/value)>uncertainty:
+            up = shifts[shift]['up']
+            down = shifts[shift]['down']
+            if isinstance(value,basestring) or  abs(up/value)>uncertainty or abs(down/value)>uncertainty:
                 ws.factory('{}[0,-10,10]'.format(shift))
-                shiftFormula += ' + TMath::Max(0,@{shift})*{up} + TMath::Min(0,@{shift})*{down}'.format(shift=len(args),up=up,down=down)
+                shiftFormula += ' + TMath::Max(0,@{shift})*({up}) + TMath::Min(0,@{shift})*({down})'.format(shift=len(args),up=up,down=down)
                 args.Add(ws.var(shift))
         arglist = ROOT.RooArgList(args)
         param = ROOT.RooFormulaVar(paramName, paramName, shiftFormula, arglist)

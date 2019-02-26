@@ -15,11 +15,11 @@ def floatToText(x):
     s = '{:.1E}'.format(x).split('E')
     return '{} #times 10^{{{}}}'.format(float(s[0]),int(s[1]))
 
-def plot(h,a,dim):
+def plot(h,a,dim,region):
     br = 0.0005
-    region = 'PP'
     mode = 'fit_s'
     var = 'CMS_haa_{}'.format(dim)
+    if region=='control': var += '_control'
     fname = 'fitDiagnostics.root'
 
     tfile = ROOT.TFile.Open(fname)
@@ -59,10 +59,15 @@ def plot(h,a,dim):
     if 'x' in var:
         rooplot.GetXaxis().SetTitle('m(#mu#mu) (GeV)')
         rooplot.GetYaxis().SetTitle('Events / 0.1 GeV')
+        if region=='control': rooplot.GetYaxis().SetTitle('Events / 0.01 GeV')
     else:
         rooplot.GetXaxis().SetTitle('m(#mu#mu#tau_{#mu}#tau_{h}) (GeV)')
         rooplot.GetYaxis().SetTitle('Events / 10 GeV')
     rooplot.SetMaximum(600)
+    if region=='FP': rooplot.SetMaximum(2000)
+    if region=='control':
+        rooplot.SetMaximum(1e6)
+        rooplot.SetMinimum(100)
     
     canvas.SetLogy()
     
@@ -82,7 +87,8 @@ def plot(h,a,dim):
     foundSig = False
     foundObs = False
     for prim in canvas.GetListOfPrimitives():
-        if 'h_PP' in prim.GetName():
+        print prim
+        if 'h_{}'.format(region) in prim.GetName():
             if foundObs: continue
             foundObs = True
             title = 'Observed'
@@ -100,11 +106,12 @@ def plot(h,a,dim):
     
     legend.Draw()
     
-    canvas.Print('haa_h_{}_{}_{}.png'.format(region,var,mode))
-    canvas.Print('haa_h_{}_{}_{}.pdf'.format(region,var,mode))
+    canvas.Print('haa_mm_h_{}_{}_{}.png'.format(region,var,mode))
+    canvas.Print('haa_mm_h_{}_{}_{}.pdf'.format(region,var,mode))
 
 h = 125
 a = 7
-plot(h,a,'x')
-plot(h,a,'y')
+for region in ['PP','FP','control']:
+    plot(h,a,'x',region)
+    if region!='control': plot(h,a,'y',region)
 

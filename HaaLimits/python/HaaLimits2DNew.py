@@ -1690,7 +1690,7 @@ class HaaLimits2D(HaaLimits):
                     errs[region][shift+'Down'] = eDown
                     integrals[region][shift+'Down'] = iDown
 
-        for region in self.REGIONS:
+        for region in reversed(self.REGIONS):
             if load:
                 allintegrals[region], errors[region] = self.loadComponentIntegrals(region)
             if not skipFit:
@@ -1844,14 +1844,15 @@ class HaaLimits2D(HaaLimits):
             self.addBin(region)
 
             for proc in bgs:
-                key = proc if proc in self.control_integralValues else '{}_{}'.format(proc,region)
-                integral = self.control_integralValues[key]
-
-                self.setExpected(proc,region,integral)
+                #key = proc if proc in self.control_integralValues else '{}_{}'.format(proc,region)
+                #integral = self.control_integralValues[key]
+                #self.setExpected(proc,region,integral)
+                self.setExpected(proc,region,1)
+                self.addRateParam('integral_{}_{}'.format(proc,region),region,proc)
                 #if 'cont' not in proc and proc not in sigs:
                 #    self.addShape(region,proc,proc)
                 #if 'cont' in proc:
-                self.addShape(region,proc,'{}_{}'.format(proc,region))
+                #self.addShape(region,proc,'{}_{}'.format(proc,region))
 
             self.setObserved(region,-1) # reads from histogram
 

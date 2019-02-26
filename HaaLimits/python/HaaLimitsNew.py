@@ -66,6 +66,8 @@ class HaaLimits(Limits):
     SIGNALSHIFTS = []
     QCDSHIFTS = [] # note, max/min of all (excluding 0.5/2)
 
+    FIXFP = False
+
     COLORS = {
         125 : ROOT.kBlack,
         200 : ROOT.kMagenta,
@@ -923,12 +925,12 @@ class HaaLimits(Limits):
             xVar = self.XVAR # decide if we want a different one for each region
 
             # build the models after doing the prefit stuff
-            #prebuiltParams = {p:p for p in self.background_params[region]}
+            prebuiltParams = {p:p for p in self.background_params[region]}
             self.addVar(xVar, *self.XRANGE, unit='GeV', label=self.XLABEL, workspace=workspace)
             # this uses the parameters from the prefit with uncertainties
-            #self.buildModel(region=region,workspace=workspace,xVar=xVar,**prebuiltParams)
+            self.buildModel(region=region,workspace=workspace,xVar=xVar,**prebuiltParams)
             # this just uses the initial guess
-            self.buildModel(region=region,workspace=workspace,xVar=xVar)
+            #self.buildModel(region=region,workspace=workspace,xVar=xVar)
             self.loadBackgroundFit(region, workspace=workspace)
 
             x = workspace.var(xVar)
@@ -1066,14 +1068,30 @@ class HaaLimits(Limits):
             paramValue = vals[region][''][param]
             paramShifts = {}
             for shift in self.BACKGROUNDSHIFTS:
-                shiftValueUp   = vals[region][shift+'Up'  ][param]
-                shiftValueDown = vals[region][shift+'Down'][param]
+                shiftValueUp   = vals[region][shift+'Up'  ][param] - paramValue
+                shiftValueDown = paramValue - vals[region][shift+'Down'][param]
                 paramShifts[shift] = {'up': shiftValueUp, 'down': shiftValueDown}
-            paramModel = Models.Param(param,
-                value  = paramValue,
-                shifts = paramShifts,
-            )
-            paramModel.build(workspace, param)
+            if self.FIXFP:
+                paramModel = Models.Param(param,
+                    value  = paramValue,
+                    shifts = paramShifts,
+                )
+                paramModel.build(workspace, param)
+            else:
+                fpValue = vals['FP'][''][param.replace(region,'FP')]
+                ppValue = vals['PP'][''][param.replace(region,'PP')]
+                scale   = ppValue/fpValue if fpValue else ppValue
+                fpErr   = errs['FP'][''][param.replace(region,'FP')]
+                if region=='FP':
+                    workspace.factory('{}[{},{},{}]'.format(param,fpValue,fpValue-10*fpErr,fpValue+10*fpErr))
+                    paramModel = None
+                else:
+                    paramModel = Models.Param(param,
+                        value  = '({})*@0'.format(scale),
+                        valueArgs = [param.replace(region,'FP')],
+                        shifts = paramShifts,
+                    )
+                    paramModel.build(workspace, param)
             params[param] = paramModel
             #workspace.Print()
         return params
@@ -1084,13 +1102,16 @@ class HaaLimits(Limits):
         logging.debug(', '.join([region,str(vals),str(errs),str(integrals),str(pdf),str(kwargs)]))
         workspace = kwargs.pop('workspace',self.workspace)
         fracMap = self.getComponentFractions(pdf)
+        regVals = vals
+        regErrs = errs
+        regInts = integrals
         if isinstance(integrals,dict):
             vals = vals[region]['']
             errs = errs[region]['']
             integrals = integrals[region]
         allerrors = {}
         allintegrals = {}
-        for component in fracMap:
+        for component in sorted(fracMap):
             subint = 1.
             suberr2 = 0.
             # TODO: errors are way larger than they should be, need to look into this
@@ -1109,25 +1130,70 @@ class HaaLimits(Limits):
             component = component.rstrip('_'+region)
             allerrors[component] = suberr
 
-            name = 'integral_{}_{}'.format(component,region)
             if isinstance(integrals,dict):
                 paramValue = subint*integrals['']
                 paramShifts = {}
                 for shift in self.BACKGROUNDSHIFTS:
-                    shiftValueUp   = subint*integrals[shift+'Up'  ]
-                    shiftValueDown = subint*integrals[shift+'Down']
+                    shiftValueUp   = subint*integrals[shift+'Up'  ] - paramValue
+                    shiftValueDown = paramValue - subint*integrals[shift+'Down']
                     paramShifts[shift] = {'up': shiftValueUp, 'down': shiftValueDown}
-                param = Models.Param(name,
-                    value  = paramValue,
-                    shifts = paramShifts,
-                )
             else:
                 paramValue = subint*integrals
-                param = Models.Param(name,
-                    value  = paramValue,
-                )
-            param.build(workspace, name)
             allintegrals[component] = paramValue
+
+            if self.FIXFP:
+                if isinstance(integrals,dict):
+                    param = Models.Param(name,
+                        value  = paramValue,
+                        shifts = paramShifts,
+                    )
+                    param.build(workspace, name)
+                else:
+                    param = Models.Param(name,
+                        value  = paramValue,
+                    )
+                    param.build(workspace, name)
+
+            else:
+                # TODO: fix ratio between integrals to control for resonances, floating for exponential
+                name = 'integral_{}_{}'.format(component,region)
+                controlIntegrals = allintegrals if region=='control' else self.control_integralValues
+                # 2S and 3S set to a scale factor times 1S that is common to all regions
+                if region=='PP':
+                    fpValue = subint*regInts['FP']['']
+                    ppValue = subint*regInts['PP']['']
+                    scale   = ppValue/fpValue if fpValue else ppValue
+                    param = Models.Param(name,
+                        value  = '({})*@0'.format(scale),
+                        valueArgs = [name.replace(region,'FP')],
+                        shifts = paramShifts,
+                    )
+                    param.build(workspace, name)
+                else:
+                    if '2S' in component:
+                        rname = 'relNorm_{}'.format(component)
+                        if region=='control':
+                            rvalue = controlIntegrals[component]/controlIntegrals[component.replace('2S','1S')]
+                            workspace.factory('{}[{},{},{}]'.format(rname,rvalue,rvalue*0.5,rvalue*1.5))
+                        param = Models.Param(name,
+                            value = '@0*@1',
+                            valueArgs = [rname,name.replace('2S','1S')],
+                        )
+                        param.build(workspace, name)
+                    elif '3S' in component:
+                        rname = 'relNorm_{}'.format(component)
+                        if region=='control':
+                            rvalue = controlIntegrals[component]/controlIntegrals[component.replace('3S','1S')]
+                            workspace.factory('{}[{},{},{}]'.format(rname,rvalue,rvalue*0.5,rvalue*1.5))
+                        param = Models.Param(name,
+                            value = '@0*@1',
+                            valueArgs = [rname,name.replace('3S','1S')],
+                        )
+                        param.build(workspace, name)
+                    else:
+                        # unconstrained for control, FP, but initialized to best fit value
+                        value = allintegrals[component]
+                        workspace.factory('{}[{},{},{}]'.format(name,value,value*0.5,value*1.5))
 
         python_mkdir(self.fitsDir)
         jfile = '{}/components_{}.json'.format(self.fitsDir,region)
@@ -1261,11 +1327,11 @@ class HaaLimits(Limits):
                     integrals[region][shift+'Down'] = iDown
 
 
-        for region in self.REGIONS:
+        for region in reversed(self.REGIONS):
             if load:
                 allintegrals[region], errors[region] = self.loadComponentIntegrals(region)
             if not skipFit:
-                #allparams[region] = self.buildParams(region,vals,errs,integrals,workspace=self.workspace)
+                allparams[region] = self.buildParams(region,vals,errs,integrals,workspace=self.workspace)
                 allintegrals[region], errors[region] = self.buildComponentIntegrals(region,vals,errs,integrals,workspace.pdf('bg_{}'.format(region)), workspace=self.workspace)
 
         if fixAfterControl:
@@ -1275,7 +1341,7 @@ class HaaLimits(Limits):
         self.background_integrals = integrals
         self.background_integralErrors = errors
         self.background_integralValues = allintegrals
-        #self.background_params = allparams
+        self.background_params = allparams
 
 
     def addBackgroundHists(self):
@@ -1442,9 +1508,11 @@ class HaaLimits(Limits):
             self.addBin(region)
 
             for proc in bgs:
-                key = proc if proc in self.control_integralValues else '{}_{}'.format(proc,region)
-                integral = self.control_integralValues[key]
-                self.setExpected(proc,region,integral)
+                #key = proc if proc in self.control_integralValues else '{}_{}'.format(proc,region)
+                #integral = self.control_integralValues[key]
+                #self.setExpected(proc,region,integral)
+                self.setExpected(proc,region,1) 
+                self.addRateParam('integral_{}_{}'.format(proc,region),region,proc)
                 #if 'cont' not in proc and proc not in sigs:
                 #    self.addShape(region,proc,proc)
 

@@ -490,7 +490,7 @@ class LimitPlotter(PlotterBase):
             for xi in range(nx+1):
                 x = xmin + xi*dx
                 val = expected.Eval(x)
-                #if val<1e-3: val = 1e-3
+                if val<zmin: val = zmin
                 eb = expectedHist.GetBin(xi+1,yi+1)
                 #eb = expectedHist.FindBin(x,y)
                 expectedHist.SetBinContent(eb,val)
@@ -499,6 +499,10 @@ class LimitPlotter(PlotterBase):
                 oneSigmaHighHist.SetBinContent(eb, oneSigma_high.Eval(x))
                 twoSigmaLowHist.SetBinContent( eb, twoSigma_low.Eval(x))
                 twoSigmaHighHist.SetBinContent(eb, twoSigma_high.Eval(x))
+
+                oval = observed.Eval(x)
+                if oval<zmin: oval = zmin
+                observedHist.SetBinContent(eb, oval)
 
                 #expected_curr      = expected.Eval(x)
                 #oneSigma_low_curr  = oneSigma_low.Eval(x)
@@ -520,15 +524,20 @@ class LimitPlotter(PlotterBase):
                 #twoSigma_high_prev = twoSigma_high_curr
 
         expectedHistCont = expectedHist.Clone()
+        observedHistCont = observedHist.Clone()
 
-        expectedHist.GetXaxis().SetTitle(xaxis)
-        expectedHist.GetYaxis().SetTitle(yaxis)
-        expectedHist.GetZaxis().SetTitle(zaxis)
-        expectedHist.GetYaxis().SetTitleSize(0.05)
-        expectedHist.GetYaxis().SetTitleOffset(1.2)
-        expectedHist.GetZaxis().SetTitleSize(0.05)
-        expectedHist.GetZaxis().SetTitleOffset(1.5)
-        expectedHist.GetZaxis().SetRangeUser(zmin,zmax)
+        def setHistStyle(hist):
+            hist.GetXaxis().SetTitle(xaxis)
+            hist.GetYaxis().SetTitle(yaxis)
+            hist.GetZaxis().SetTitle(zaxis)
+            hist.GetYaxis().SetTitleSize(0.05)
+            hist.GetYaxis().SetTitleOffset(1.2)
+            hist.GetZaxis().SetTitleSize(0.05)
+            hist.GetZaxis().SetTitleOffset(1.5)
+            hist.GetZaxis().SetRangeUser(zmin,zmax)
+
+        setHistStyle(expectedHist)
+        setHistStyle(observedHist)
 
         def get_contours(hist,val=1.0):
             contours = array('d',[val])
@@ -548,8 +557,10 @@ class LimitPlotter(PlotterBase):
         expected_graphs = {}
         oneSigma_graphs = {}
         twoSigma_graphs = {}
+        observed_graphs = {}
         for eb in expectedBands:
             expected_graphs[eb] =  get_contours(expectedHistCont,eb)
+            observed_graphs[eb] =  get_contours(observedHistCont,eb)
             oneSigma_graphs[eb] =  get_contours(oneSigmaLowHist, eb)
             oneSigma_graphs[eb] += get_contours(oneSigmaHighHist,eb)
             twoSigma_graphs[eb] =  get_contours(twoSigmaLowHist, eb)
@@ -559,7 +570,10 @@ class LimitPlotter(PlotterBase):
 
         colors = [ROOT.kBlack, ROOT.kRed+2, ROOT.kRed]
 
-        expectedHist.Draw('colz')
+        if blind:
+            expectedHist.Draw('colz')
+        else:
+            observedHist.Draw('colz')
         for i in range(len(expectedBands)):
             eb = expectedBands[i]
             c = colors[i]
@@ -570,6 +584,14 @@ class LimitPlotter(PlotterBase):
                 g.SetLineColor(c)
                 g.SetMarkerStyle(0)
                 g.Draw('same')
+            if not blind:
+                for g in observed_graphs[eb]:
+                    g.SetLineStyle(1)
+                    g.SetLineWidth(2)
+                    g.SetFillStyle(0)
+                    g.SetLineColor(c)
+                    g.SetMarkerStyle(0)
+                    g.Draw('same')
             #for g in oneSigma_graphs[eb]:
             #    g.SetLineStyle(2)
             #    g.SetLineWidth(2)
@@ -586,7 +608,13 @@ class LimitPlotter(PlotterBase):
             #    #g.Draw('same')
 
         # special legend
-        entries = [[expected_graphs[eb][0],'#splitline{{Expected exclusion}}{{BR(H #rightarrow aa) = {}}}'.format(eb),'l'] for eb in expectedBands if len(expected_graphs[eb])]
+        if blind:
+            entries = [[expected_graphs[eb][0],'#splitline{{Expected exclusion}}{{BR(H #rightarrow aa) = {}}}'.format(eb),'l'] for eb in expectedBands if len(expected_graphs[eb])]
+        else:
+            entries = []
+            for eb in expectedBands:
+                if len(expected_graphs[eb]): entries += [[expected_graphs[eb][0],'#splitline{{Expected exclusion}}{{BR(H #rightarrow aa) = {}}}'.format(eb),'l']]
+                if len(observed_graphs[eb]): entries += [[observed_graphs[eb][0],'#splitline{{Observed exclusion}}{{BR(H #rightarrow aa) = {}}}'.format(eb),'l']]
         #legend = self._getLegend(entries=entries,numcol=1,position=24,title=legendtitle)
         legend = self._getLegend(entries=entries,numcol=1,position=[0.44,0.66,0.75,0.92],title=legendtitle)
         legend.Draw()

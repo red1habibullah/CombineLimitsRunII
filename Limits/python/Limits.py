@@ -411,7 +411,7 @@ class Limits(object):
                 exp = self.getExpected(process,bin)
                 if not exp: 
                     toSkip += [(bin,process)]
-                    logging.debug('Skipping {} {}'.format(process,bin))
+                    logging.warning('Skipping {} {}'.format(process,bin))
                     continue
                 binsForRates[colpos] = binName.format(bin=bin)
                 processNames[colpos] = process
