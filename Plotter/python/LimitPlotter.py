@@ -1046,7 +1046,7 @@ class LimitPlotter(PlotterBase):
         if plotcolz:
             legend = self._getLegend(entries=entries,numcol=1,position=[0.44,0.66,0.75,0.92],title=legendtitle)
         else:
-            legend = self._getLegend(entries=entries,numcol=1,position=[0.54,0.66,0.85,0.92],title=legendtitle)
+            legend = self._getLegend(entries=entries,numcol=1,position=[0.54,0.62,0.95,0.92],title=legendtitle)
         legend.Draw()
 
         # manually add the 1 sigma bands
