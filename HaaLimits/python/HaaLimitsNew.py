@@ -118,6 +118,10 @@ class HaaLimits(Limits):
             self.SPLINENAME = 'ggH_haa'
         self.doParamFit = doParamFit
 
+    def rstrip(self,obj,string):
+        if obj.endswith(string): obj = obj[:-1*len(string)]
+        return obj
+
     def dump(self,name,results):
         with open(name,'w') as f:
             f.write(json.dumps(results, indent=4, sort_keys=True))
@@ -818,6 +822,97 @@ class HaaLimits(Limits):
 
             return models
 
+    def plotModelX(self,workspace,xVar,data,model,region,shift='',**kwargs):
+        xRange = kwargs.pop('xRange',[])
+        postfix = kwargs.pop('postfix','')
+
+        if xRange:
+            xFrame = workspace.var(xVar).frame(ROOT.RooFit.Range(*xRange))
+        else:
+            xFrame = workspace.var(xVar).frame()
+        data.plotOn(xFrame)
+        model.plotOn(xFrame,ROOT.RooFit.Components('cont1_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+        model.plotOn(xFrame,ROOT.RooFit.Components('cont2_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+        model.plotOn(xFrame,ROOT.RooFit.Components('cont1_{}_x'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+        model.plotOn(xFrame,ROOT.RooFit.Components('cont2_{}_x'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+        model.plotOn(xFrame,ROOT.RooFit.Components('cont1'),ROOT.RooFit.LineStyle(ROOT.kDashed))
+        model.plotOn(xFrame,ROOT.RooFit.Components('cont2'),ROOT.RooFit.LineStyle(ROOT.kDashed))
+        if self.XRANGE[0]<4:
+            # jpsi
+            model.plotOn(xFrame,ROOT.RooFit.Components('jpsi1S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
+            model.plotOn(xFrame,ROOT.RooFit.Components('jpsi2S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
+            model.plotOn(xFrame,ROOT.RooFit.Components('jpsi1S'),ROOT.RooFit.LineColor(ROOT.kRed))
+            model.plotOn(xFrame,ROOT.RooFit.Components('jpsi2S'),ROOT.RooFit.LineColor(ROOT.kRed))
+        model.plotOn(xFrame,ROOT.RooFit.Components('upsilon1S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
+        model.plotOn(xFrame,ROOT.RooFit.Components('upsilon2S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
+        model.plotOn(xFrame,ROOT.RooFit.Components('upsilon3S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
+        model.plotOn(xFrame,ROOT.RooFit.Components('upsilon1S'),ROOT.RooFit.LineColor(ROOT.kRed))
+        model.plotOn(xFrame,ROOT.RooFit.Components('upsilon2S'),ROOT.RooFit.LineColor(ROOT.kRed))
+        model.plotOn(xFrame,ROOT.RooFit.Components('upsilon3S'),ROOT.RooFit.LineColor(ROOT.kRed))
+        # combined model
+        model.plotOn(xFrame)
+        model.paramOn(xFrame,ROOT.RooFit.Layout(0.82,0.98,0.90))
+
+        resid = xFrame.residHist()
+        pull = xFrame.pullHist()
+
+        if xRange:
+            xFrame2 = workspace.var(xVar).frame(ROOT.RooFit.Range(*xRange))
+        else:
+            xFrame2 = workspace.var(xVar).frame()
+        xFrame2.addPlotable(pull,'P')
+
+        canvas = ROOT.TCanvas('c','c',1200,800)
+        ROOT.SetOwnership(canvas,False)
+        #canvas.SetRightMargin(0.3)
+        plotpad = ROOT.TPad("plotpad", "top pad", 0.0, 0.21, 1.0, 1.0)
+        ROOT.SetOwnership(plotpad,False)
+        plotpad.SetBottomMargin(0.00)
+        plotpad.SetRightMargin(0.2)
+        plotpad.Draw()
+        ratiopad = ROOT.TPad("ratiopad", "bottom pad", 0.0, 0.0, 1.0, 0.21)
+        ROOT.SetOwnership(ratiopad,False)
+        ratiopad.SetTopMargin(0.00)
+        ratiopad.SetRightMargin(0.2)
+        ratiopad.SetBottomMargin(0.5)
+        ratiopad.SetLeftMargin(0.16)
+        ratiopad.SetTickx(1)
+        ratiopad.SetTicky(1)
+        ratiopad.Draw()
+        if plotpad != ROOT.TVirtualPad.Pad(): plotpad.cd()
+        xFrame.Draw()
+        #prims = canvas.GetListOfPrimitives()
+        prims = plotpad.GetListOfPrimitives()
+        for prim in prims:
+            if 'paramBox' in prim.GetName():
+                prim.SetTextSize(0.02)
+        mi = xFrame.GetMinimum()
+        ma = xFrame.GetMaximum()
+        if mi<0:
+            xFrame.SetMinimum(0.1)
+        ratiopad.cd()
+        xFrame2.Draw()
+        prims = ratiopad.GetListOfPrimitives()
+        for prim in prims:
+            if 'frame' in prim.GetName():
+                prim.GetXaxis().SetLabelSize(0.19)
+                prim.GetXaxis().SetTitleSize(0.21)
+                prim.GetXaxis().SetTitleOffset(1.0)
+                prim.GetXaxis().SetLabelOffset(0.03)
+                prim.GetYaxis().SetLabelSize(0.19)
+                prim.GetYaxis().SetLabelOffset(0.006)
+                prim.GetYaxis().SetTitleSize(0.21)
+                prim.GetYaxis().SetTitleOffset(0.35)
+                prim.GetYaxis().SetNdivisions(503)
+                prim.GetYaxis().SetTitle('Pull')
+                prim.GetYaxis().SetRangeUser(-3,3)
+                continue
+        canvas.cd()
+        python_mkdir(self.plotDir)
+        canvas.Print('{}/model_fit_{}{}{}.png'.format(self.plotDir,region,'_'+shift if shift else '','_'+postfix if postfix else ''))
+        #canvas.SetLogy(True)
+        plotpad.SetLogy(True)
+        canvas.Print('{}/model_fit_{}{}{}_log.png'.format(self.plotDir,region,'_'+shift if shift else '','_'+postfix if postfix else ''))
 
     def fitBackground(self,region,shift='', **kwargs):
         scale = kwargs.pop('scale',1)
@@ -836,43 +931,12 @@ class HaaLimits(Limits):
 
         fr = model.fitTo(data, ROOT.RooFit.Save(), ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
 
-        xFrame = workspace.var(xVar).frame()
-        data.plotOn(xFrame)
-        model.plotOn(xFrame,ROOT.RooFit.Components('cont1_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
-        model.plotOn(xFrame,ROOT.RooFit.Components('cont2_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
-        #model.plotOn(xFrame,ROOT.RooFit.Components('cont1'),ROOT.RooFit.LineStyle(ROOT.kDashed))
-        #model.plotOn(xFrame,ROOT.RooFit.Components('cont2'),ROOT.RooFit.LineStyle(ROOT.kDashed))
-        if self.XRANGE[0]<4:
-            # jpsi
-            model.plotOn(xFrame,ROOT.RooFit.Components('jpsi1S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
-            model.plotOn(xFrame,ROOT.RooFit.Components('jpsi2S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
-            #model.plotOn(xFrame,ROOT.RooFit.Components('jpsi1S'),ROOT.RooFit.LineColor(ROOT.kRed))
-            #model.plotOn(xFrame,ROOT.RooFit.Components('jpsi2S'),ROOT.RooFit.LineColor(ROOT.kRed))
-        model.plotOn(xFrame,ROOT.RooFit.Components('upsilon1S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
-        model.plotOn(xFrame,ROOT.RooFit.Components('upsilon2S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
-        model.plotOn(xFrame,ROOT.RooFit.Components('upsilon3S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
-        #model.plotOn(xFrame,ROOT.RooFit.Components('upsilon1S'),ROOT.RooFit.LineColor(ROOT.kRed))
-        #model.plotOn(xFrame,ROOT.RooFit.Components('upsilon2S'),ROOT.RooFit.LineColor(ROOT.kRed))
-        #model.plotOn(xFrame,ROOT.RooFit.Components('upsilon3S'),ROOT.RooFit.LineColor(ROOT.kRed))
-        # combined model
-        model.plotOn(xFrame)
-        model.paramOn(xFrame,ROOT.RooFit.Layout(0.72,0.98,0.90))
+        workspace.var(xVar).setBins(self.XBINNING)
 
-        canvas = ROOT.TCanvas('c','c',800,800)
-        canvas.SetRightMargin(0.3)
-        xFrame.Draw()
-        prims = canvas.GetListOfPrimitives()
-        for prim in prims:
-            if 'paramBox' in prim.GetName():
-                prim.SetTextSize(0.02)
-        mi = xFrame.GetMinimum()
-        ma = xFrame.GetMaximum()
-        if mi<0:
-            xFrame.SetMinimum(0.1)
-        python_mkdir(self.plotDir)
-        canvas.Print('{}/model_fit_{}{}.png'.format(self.plotDir,region,'_'+shift if shift else ''))
-        canvas.SetLogy(True)
-        canvas.Print('{}/model_fit_{}{}_log.png'.format(self.plotDir,region,'_'+shift if shift else ''))
+        self.plotModelX(workspace,xVar,data,model,region,shift)
+        if region=='control':
+            self.plotModelX(workspace,xVar,data,model,region,shift,xRange=[2.5,5],postfix='jpsi')
+            self.plotModelX(workspace,xVar,data,model,region,shift,xRange=[8,12],postfix='upsilon')
 
         pars = fr.floatParsFinal()
         vals = {}
@@ -1056,13 +1120,17 @@ class HaaLimits(Limits):
             for res in subresult:
                 subresult[res] += [coefs.at(i)]
             result.update(subresult)
+        logging.debug('returning')
+        logging.debug(str(result))
         return result
 
     def buildParams(self,region,vals,errs,integrals,**kwargs):
         logging.debug('buildParams')
-        logging.debug(region,vals,errs,integrals,kwargs)
+        logging.debug(', '.join([region,str(vals),str(errs),str(integrals),str(kwargs)]))
         workspace = kwargs.pop('workspace',self.workspace)
         params = {}
+        ppRegion = region.replace('FP','PP')
+        fpRegion = region.replace('PP','FP')
         for param in vals[region]['']:
             if 'frac' in param: continue
             paramValue = vals[region][''][param]
@@ -1078,22 +1146,24 @@ class HaaLimits(Limits):
                 )
                 paramModel.build(workspace, param)
             else:
-                fpValue = vals['FP'][''][param.replace(region,'FP')]
-                ppValue = vals['PP'][''][param.replace(region,'PP')]
+                fpValue = vals[fpRegion][''][param.replace(region,fpRegion)]
+                ppValue = vals[ppRegion][''][param.replace(region,ppRegion)]
                 scale   = ppValue/fpValue if fpValue else ppValue
-                fpErr   = errs['FP'][''][param.replace(region,'FP')]
-                if region=='FP':
+                fpErr   = errs[fpRegion][''][param.replace(region,fpRegion)]
+                if 'FP' in region:
                     workspace.factory('{}[{},{},{}]'.format(param,fpValue,fpValue-10*fpErr,fpValue+10*fpErr))
                     paramModel = None
                 else:
                     paramModel = Models.Param(param,
                         value  = '({})*@0'.format(scale),
-                        valueArgs = [param.replace(region,'FP')],
+                        valueArgs = [param.replace(region,fpRegion)],
                         shifts = paramShifts,
                     )
                     paramModel.build(workspace, param)
             params[param] = paramModel
             #workspace.Print()
+        logging.debug('returning')
+        logging.debug(str(params))
         return params
 
 
@@ -1102,6 +1172,7 @@ class HaaLimits(Limits):
         logging.debug(', '.join([region,str(vals),str(errs),str(integrals),str(pdf),str(kwargs)]))
         workspace = kwargs.pop('workspace',self.workspace)
         fracMap = self.getComponentFractions(pdf)
+        components = sorted(fracMap.keys())
         regVals = vals
         regErrs = errs
         regInts = integrals
@@ -1111,7 +1182,7 @@ class HaaLimits(Limits):
             integrals = integrals[region]
         allerrors = {}
         allintegrals = {}
-        for component in sorted(fracMap):
+        for component in components:
             subint = 1.
             suberr2 = 0.
             # TODO: errors are way larger than they should be, need to look into this
@@ -1126,8 +1197,8 @@ class HaaLimits(Limits):
                     subint *= frac.getVal()
                     suberr2 += (frac.getError()/frac.getVal())**2
             suberr = suberr2**0.5
-            component = component.rstrip('_x')
-            component = component.rstrip('_'+region)
+            component = self.rstrip(component,'_x')
+            component = self.rstrip(component,'_'+region)
             allerrors[component] = suberr
 
             if isinstance(integrals,dict):
@@ -1159,13 +1230,15 @@ class HaaLimits(Limits):
                 name = 'integral_{}_{}'.format(component,region)
                 controlIntegrals = allintegrals if region=='control' else self.control_integralValues
                 # 2S and 3S set to a scale factor times 1S that is common to all regions
-                if region=='PP':
-                    fpValue = subint*regInts['FP']['']
-                    ppValue = subint*regInts['PP']['']
+                fpRegion = region.replace('PP','FP')
+                ppRegion = region.replace('FP','PP')
+                if 'PP' in region:
+                    fpValue = subint*regInts[fpRegion]['']
+                    ppValue = subint*regInts[ppRegion]['']
                     scale   = ppValue/fpValue if fpValue else ppValue
                     param = Models.Param(name,
                         value  = '({})*@0'.format(scale),
-                        valueArgs = [name.replace(region,'FP')],
+                        valueArgs = [name.replace(region,fpRegion)],
                         shifts = paramShifts,
                     )
                     param.build(workspace, name)
@@ -1201,6 +1274,8 @@ class HaaLimits(Limits):
         self.dump(jfile,results)
 
 
+        logging.debug('returning')
+        logging.debug(', '.join([str(allintegrals),str(allerrors)]))
         return allintegrals, allerrors
 
 
@@ -1220,9 +1295,11 @@ class HaaLimits(Limits):
                 try:
                     workspace.function(param)
                 except:
-                    print 'ERROR on finding param {} in {} workspace'.format(param,region)
+                    logging.error('cant find param {} in {} workspace'.format(param,region))
                     workspace.Print()
                     
+        logging.debug('returning')
+        logging.debug(', '.join([str(vals),str(errs),str(ints)]))
         return vals, errs, ints
 
     def loadComponentIntegrals(self, region):
@@ -1456,7 +1533,7 @@ class HaaLimits(Limits):
     def setupDatacard(self, addControl=False, doBinned=False):
         bgs = self.getComponentFractions(self.workspace.pdf('bg_'+self.REGIONS[0]))
 
-        bgs = [b.rstrip('_'+self.REGIONS[0]) for b in bgs]
+        bgs = [self.rstrip(b,'_'+self.REGIONS[0]) for b in bgs]
         sigs = [self.SPLINENAME] if self.do2D else [self.SPLINENAME.format(h=h) for h in self.HMASSES]
         self.bgs = bgs
         self.sigs = sigs
@@ -1588,7 +1665,7 @@ class HaaLimits(Limits):
         logging.debug('addSystematics')
         self.sigProcesses = tuple([self.SPLINENAME]) if self.do2D else tuple([self.SPLINENAME.format(h=h) for h in self.HMASSES])
         bgs = self.getComponentFractions(self.workspace.pdf('bg_'+self.REGIONS[0]))
-        bgs = [b.rstrip('_'+self.REGIONS[0]) for b in bgs]
+        bgs = [self.rstrip(b,'_'+self.REGIONS[0]) for b in bgs]
         self.bgProcesses = tuple(bgs)
         self._addLumiSystematic()
         self._addMuonSystematic()
@@ -1703,8 +1780,7 @@ class HaaLimits(Limits):
 
     def _addComponentSystematic(self,addControl=False):
         bgs = self.getComponentFractions(self.workspace.pdf('bg_'+self.REGIONS[0]))
-        #bgs = [b.rstrip('_'+self.REGIONS[0]) for b in bgs if 'cont' not in b]
-        bgs = [b.rstrip('_'+self.REGIONS[0]) for b in bgs]
+        bgs = [self.rstrip(b,'_'+self.REGIONS[0]) for b in bgs]
         bins = self.REGIONS
         if addControl: bins += ['control']
         syst = {}
@@ -1729,7 +1805,7 @@ class HaaLimits(Limits):
     def save(self,name='mmmt', subdirectory=''):
         processes = {}
         bgs = self.getComponentFractions(self.workspace.pdf('bg_'+self.REGIONS[0]))
-        bgs = [b.rstrip('_'+self.REGIONS[0]) for b in bgs]
+        bgs = [self.rstrip(b,'_'+self.REGIONS[0]) for b in bgs]
         if self.do2D:
             processes = [self.SPLINENAME] + bgs
         else:

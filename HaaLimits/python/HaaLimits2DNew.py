@@ -1119,7 +1119,7 @@ class HaaLimits2D(HaaLimits):
             if self.do2D:
                 modelx = Models.Voigtian(self.SPLINENAME+'_x',
                     x = xVar,
-                    **{param.rstrip('_sigx'): '{param}_{splinename}_{region}'.format(param=param, splinename=self.SPLINENAME, region=region) for param in xparams}
+                    **{self.rstrip(param,'_sigx'): '{param}_{splinename}_{region}'.format(param=param, splinename=self.SPLINENAME, region=region) for param in xparams}
                 )
                 modelx.build(workspace,'{}_{}'.format(self.SPLINENAME,region+'_x'))
 
@@ -1142,7 +1142,7 @@ class HaaLimits2D(HaaLimits):
                     modely = ym(self.SPLINENAME+'_y',
                         x = yVar,
                         yMax = self.YRANGE[1],
-                        **{param.rstrip('_sigy'): '{param}_{splinename}_{region}'.format(param=param, splinename=self.SPLINENAME, region=region) for param in yparams}
+                        **{self.rstrip(param,'_sigy'): '{param}_{splinename}_{region}'.format(param=param, splinename=self.SPLINENAME, region=region) for param in yparams}
                     )
                 modely.build(workspace,'{}_{}'.format(self.SPLINENAME,region+'_y'))
                         
@@ -1159,7 +1159,7 @@ class HaaLimits2D(HaaLimits):
                 for h in self.HMASSES:
                     modelx = Models.Voigtian(self.SPLINENAME.format(h=h)+'_x',
                         x = xVar,
-                        **{param.rstrip('_sigx'): '{param}_{splinename}_{region}'.format(param=param, splinename=self.SPLINENAME.format(h=h), region=region) for param in xparams}
+                        **{self.rstrip(param,'_sigx'): '{param}_{splinename}_{region}'.format(param=param, splinename=self.SPLINENAME.format(h=h), region=region) for param in xparams}
                     )
                     modelx.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_x'))
 
@@ -1182,7 +1182,7 @@ class HaaLimits2D(HaaLimits):
                         modely = ym(self.SPLINENAME.format(h=h)+'_y',
                             x = yVar,
                             yMax = self.YRANGE[1],
-                            **{param.rstrip('_sigy'): '{param}_{splinename}_{region}'.format(param=param, splinename=self.SPLINENAME.format(h=h), region=region) for param in yparams}
+                            **{self.rstrip(param,'_sigy'): '{param}_{splinename}_{region}'.format(param=param, splinename=self.SPLINENAME.format(h=h), region=region) for param in yparams}
                         )
                     modely.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_y'))
                             
@@ -1292,7 +1292,7 @@ class HaaLimits2D(HaaLimits):
         if self.do2D:
             modelx = Models.Voigtian(self.SPLINENAME+'_x',
                 x = xVar,
-                **{param.rstrip('_sigx'): '{param}_{region}'.format(param=param, region=region) for param in xparams}
+                **{self.rstrip(param,'_sigx'): '{param}_{region}'.format(param=param, region=region) for param in xparams}
             )
             modelx.build(workspace,'{}_{}'.format(self.SPLINENAME,region+'_x'))
 
@@ -1315,7 +1315,7 @@ class HaaLimits2D(HaaLimits):
                 modely = ym(self.SPLINENAME+'_y',
                     x = yVar,
                     yMax = self.YRANGE[1],
-                    **{param.rstrip('_sigy'): '{param}_{region}'.format(param=param, region=region) for param in yparams}
+                    **{self.rstrip(param,'_sigy'): '{param}_{region}'.format(param=param, region=region) for param in yparams}
                 )
             modely.build(workspace,'{}_{}'.format(self.SPLINENAME,region+'_y'))
                     
@@ -1332,7 +1332,7 @@ class HaaLimits2D(HaaLimits):
             for h in self.HMASSES:
                 modelx = Models.Voigtian(self.SPLINENAME.format(h=h)+'_x',
                     x = xVar,
-                    **{param.rstrip('_sigx'): '{param}_h{h}_{region}'.format(param=param, h=h, region=region) for param in xparams}
+                    **{self.rstrip(param,'_sigx'): '{param}_h{h}_{region}'.format(param=param, h=h, region=region) for param in xparams}
                 )
                 modelx.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_x'))
 
@@ -1355,7 +1355,7 @@ class HaaLimits2D(HaaLimits):
                     modely = ym(self.SPLINENAME.format(h=h)+'_y',
                         x = yVar,
                         yMax = self.YRANGE[1],
-                        **{param.rstrip('_sigy'): '{param}_h{h}_{region}'.format(param=param, h=h, region=region) for param in yparams}
+                        **{self.rstrip(param,'_sigy'): '{param}_h{h}_{region}'.format(param=param, h=h, region=region) for param in yparams}
                     )
                 modely.build(workspace,'{}_{}'.format(self.SPLINENAME.format(h=h),region+'_y'))
                         
@@ -1392,6 +1392,84 @@ class HaaLimits2D(HaaLimits):
         self.control_integralErrors = errors
         self.control_integralValues = allintegrals
 
+    def plotModelY(self,workspace,yVar,data,model,region,shift='',**kwargs):
+        yRange = kwargs.pop('yRange',[])
+        postfix = kwargs.pop('postfix','')
+
+        if yRange:
+            yFrame = workspace.var(yVar).frame(ROOT.RooFit.Range(*yRange))
+        else:
+            yFrame = workspace.var(yVar).frame()
+        data.plotOn(yFrame)
+        # continuum
+        model.plotOn(yFrame,ROOT.RooFit.Components('conty1_{}_y'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+        # combined model
+        model.plotOn(yFrame)
+        model.paramOn(yFrame,ROOT.RooFit.Layout(0.72,0.98,0.90))
+
+        resid = yFrame.residHist()
+        pull = yFrame.pullHist()
+
+        if yRange:
+            yFrame2 = workspace.var(yVar).frame(ROOT.RooFit.Range(*yRange))
+        else:
+            yFrame2 = workspace.var(yVar).frame()
+        yFrame2.addPlotable(pull,'P')
+
+        canvas = ROOT.TCanvas('c','c',1200,800)
+        ROOT.SetOwnership(canvas,False)
+        #canvas.SetRightMargin(0.3)
+        plotpad = ROOT.TPad("plotpad", "top pad", 0.0, 0.21, 1.0, 1.0)
+        ROOT.SetOwnership(plotpad,False)
+        plotpad.SetBottomMargin(0.00)
+        plotpad.SetRightMargin(0.2)
+        plotpad.Draw()
+        ratiopad = ROOT.TPad("ratiopad", "bottom pad", 0.0, 0.0, 1.0, 0.21)
+        ROOT.SetOwnership(ratiopad,False)
+        ratiopad.SetTopMargin(0.00)
+        ratiopad.SetRightMargin(0.2)
+        ratiopad.SetBottomMargin(0.5)
+        ratiopad.SetLeftMargin(0.16)
+        ratiopad.SetTickx(1)
+        ratiopad.SetTicky(1)
+        ratiopad.Draw()
+        if plotpad != ROOT.TVirtualPad.Pad(): plotpad.cd()
+        yFrame.Draw()
+        #prims = canvas.GetListOfPrimitives()
+        prims = plotpad.GetListOfPrimitives()
+        for prim in prims:
+            if 'paramBox' in prim.GetName():
+                prim.SetTextSize(0.02)
+        mi = yFrame.GetMinimum()
+        ma = yFrame.GetMaximum()
+        if mi<0:
+            yFrame.SetMinimum(0.1)
+        ratiopad.cd()
+        yFrame2.Draw()
+        prims = ratiopad.GetListOfPrimitives()
+        for prim in prims:
+            if 'frame' in prim.GetName():
+                prim.GetXaxis().SetLabelSize(0.19)
+                prim.GetXaxis().SetTitleSize(0.21)
+                prim.GetXaxis().SetTitleOffset(1.0)
+                prim.GetXaxis().SetLabelOffset(0.03)
+                prim.GetYaxis().SetLabelSize(0.19)
+                prim.GetYaxis().SetLabelOffset(0.006)
+                prim.GetYaxis().SetTitleSize(0.21)
+                prim.GetYaxis().SetTitleOffset(0.35)
+                prim.GetYaxis().SetNdivisions(503)
+                prim.GetYaxis().SetTitle('Pull')
+                prim.GetYaxis().SetRangeUser(-3,3)
+                continue
+        canvas.cd()
+        python_mkdir(self.plotDir)
+        canvas.Print('{}/model_fit_{}{}{}.png'.format(self.plotDir,region,'_'+shift if shift else '','_'+postfix if postfix else ''))
+        if mi<0:
+            yFrame.SetMinimum(0.1)
+        #canvas.SetLogy(True)
+        plotpad.SetLogy(True)
+        canvas.Print('{}/model_fit_{}{}{}_log.png'.format(self.plotDir,region,'_'+shift if shift else '','_'+postfix if postfix else ''))
+
     def fitBackground(self,region,shift='',**kwargs):
         scale = kwargs.pop('scale',1)
 
@@ -1414,62 +1492,15 @@ class HaaLimits2D(HaaLimits):
 
         fr = model.fitTo(data,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
 
-        xFrame = workspace.var(xVar).frame()
-        data.plotOn(xFrame)
-        # continuum
-        model.plotOn(xFrame,ROOT.RooFit.Components('cont1_{}_x'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
-        if self.XRANGE[0]<4:
-            model.plotOn(xFrame,ROOT.RooFit.Components('cont3_{}_x'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
-            # jpsi
-            model.plotOn(xFrame,ROOT.RooFit.Components('jpsi2S'),ROOT.RooFit.LineColor(ROOT.kRed))
-        if self.XRANGE[0]<3.3:
-            model.plotOn(xFrame,ROOT.RooFit.Components('jpsi1S'),ROOT.RooFit.LineColor(ROOT.kRed))
-        # upsilon
-        model.plotOn(xFrame,ROOT.RooFit.Components('upsilon1S'),ROOT.RooFit.LineColor(ROOT.kRed))
-        model.plotOn(xFrame,ROOT.RooFit.Components('upsilon2S'),ROOT.RooFit.LineColor(ROOT.kRed))
-        model.plotOn(xFrame,ROOT.RooFit.Components('upsilon3S'),ROOT.RooFit.LineColor(ROOT.kRed))
-        # combined model
-        model.plotOn(xFrame)
-        model.paramOn(xFrame,ROOT.RooFit.Layout(0.72,0.98,0.90))
+        workspace.var(xVar).setBins(self.XBINNING)
+        workspace.var(yVar).setBins(self.YBINNING)
 
-        canvas = ROOT.TCanvas('c','c',800,800)
-        canvas.SetRightMargin(0.3)
-        xFrame.Draw()
-        prims = canvas.GetListOfPrimitives()
-        for prim in prims:
-            if 'paramBox' in prim.GetName():
-                prim.SetTextSize(0.02)
-        mi = xFrame.GetMinimum()
-        ma = xFrame.GetMaximum()
-        python_mkdir(self.plotDir)
-        canvas.Print('{}/model_fit_{}{}_xproj.png'.format(self.plotDir,region,'_'+shift if shift else ''))
-        if mi<0:
-            xFrame.SetMinimum(0.1)
-        canvas.SetLogy(True)
-        canvas.Print('{}/model_fit_{}{}_xproj_log.png'.format(self.plotDir,region,'_'+shift if shift else ''))
+        self.plotModelX(workspace,xVar,data,model,region,shift,postfix='xproj')
+        if region=='control':
+            self.plotModelX(workspace,xVar,data,model,region,shift,xRange=[2.5,5],postfix='xproj_jpsi')
+            self.plotModelX(workspace,xVar,data,model,region,shift,xRange=[8,12],postfix='xproj_upsilon')
 
-        yFrame = workspace.var(yVar).frame()
-        data.plotOn(yFrame)
-        # continuum
-        model.plotOn(yFrame,ROOT.RooFit.Components('conty1_{}_y'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
-        # combined model
-        model.plotOn(yFrame)
-        model.paramOn(yFrame,ROOT.RooFit.Layout(0.72,0.98,0.90))
-
-        canvas = ROOT.TCanvas('c','c',800,800)
-        canvas.SetRightMargin(0.3)
-        yFrame.Draw()
-        prims = canvas.GetListOfPrimitives()
-        for prim in prims:
-            if 'paramBox' in prim.GetName():
-                prim.SetTextSize(0.02)
-        mi = yFrame.GetMinimum()
-        ma = yFrame.GetMaximum()
-        canvas.Print('{}/model_fit_{}{}_yproj.png'.format(self.plotDir,region,'_'+shift if shift else ''))
-        if mi<0:
-            yFrame.SetMinimum(0.1)
-        canvas.SetLogy(True)
-        canvas.Print('{}/model_fit_{}{}_yproj_log.png'.format(self.plotDir,region,'_'+shift if shift else ''))
+        self.plotModelY(workspace,yVar,data,model,region,shift,postfix='yproj')
 
         pars = fr.floatParsFinal()
         vals = {}
@@ -1793,8 +1824,8 @@ class HaaLimits2D(HaaLimits):
     ######################
     def setupDatacard(self, addControl=False, doBinned=False):
         bgs = self.getComponentFractions(self.workspace.pdf('bg_{}_x'.format(self.REGIONS[0])))
-        bgs = [b.rstrip('_x') for b in bgs]
-        bgs = [b.rstrip('_'+self.REGIONS[0]) for b in bgs]
+        bgs = [self.rstrip(b,'_x') for b in bgs]
+        bgs = [self.rstrip(b,'_'+self.REGIONS[0]) for b in bgs]
         sigs = [self.SPLINENAME.format(h=h) for h in self.HMASSES]
         self.bgs = bgs
         self.sigs = sigs
@@ -2182,7 +2213,7 @@ class HaaLimits2D(HaaLimits):
                 "h1000a9" : { "mean": 640, "sigma1": 156.2, "sigma2": 82.1},
                 "h1000a15": { "mean": 640, "sigma1": 155.5, "sigma2": 82.9},
             }
-        elif region == "FP": 
+        elif 'FP' in region: 
             initialValues = {
                 "h125a3p6": { "mean": 93.4, "sigma1": 13.5, "sigma2": 13.0},
                 "h125a4"  : { "mean": 95.8, "sigma1": 15.8, "sigma2": 12.2},
@@ -2239,7 +2270,7 @@ class HaaLimits2D(HaaLimits):
     def addSystematics(self,doBinned=False,addControl=False):
         self.sigProcesses = tuple([self.SPLINENAME.format(h=h) for h in self.HMASSES])
         bgs = self.getComponentFractions(self.workspace.pdf('bg_{}_x'.format(self.REGIONS[0])))
-        bgs = [b.rstrip('_{}_x'.format(self.REGIONS[0])) for b in bgs]
+        bgs = [self.rstrip(b,'_'+self.REGIONS[0]) for b in bgs]
         self.bgProcesses = bgs
         self._addLumiSystematic()
         self._addMuonSystematic()
@@ -2258,8 +2289,8 @@ class HaaLimits2D(HaaLimits):
     def save(self,name='mmmt', subdirectory=''):
         processes = {}
         bgs = self.getComponentFractions(self.workspace.pdf('bg_{}_x'.format(self.REGIONS[0])))
-        bgs = [b.rstrip('_x') for b in bgs]
-        bgs = [b.rstrip('_'+self.REGIONS[0]) for b in bgs]
+        bgs = [self.rstrip(b,'_x') for b in bgs]
+        bgs = [self.rstrip(b,'_'+self.REGIONS[0]) for b in bgs]
         if self.do2D:
             processes = [self.SPLINENAME] + bgs
         else:
