@@ -73,55 +73,35 @@ class HaaLimits2D(HaaLimits):
         yVar = kwargs.pop('yVar',self.YVAR)
         tag = kwargs.pop('tag',region)
 
-        # try landau
+        # h
         if self.YRANGE[1]>100:
-            #bg = Models.Landau('bg',
-            #    x = yVar,
-            #    mu    = [50,0,200],
-            #   sigma = [10,0,100],
-            #)
-            #bg = Models.Polynomial('bg',
-            #    x = yVar,
-            #    order = 3,
-            #    p0 = [50,0,10000],
-            #    p1 = [-5,-100,100],
-            #    p2 = [-0.3,-100,100],
-            #)
 
-            #bg = Models.Polynomial('bg',
+            #nameE = 'erf{}'.format('_'+tag if tag else '')
+            #erf = Models.Erf('erf1',
             #    x = yVar,
-            #    order = 4,
-            #    p0 = [-1,0,10000],
-            #    p1 = [0.25,-100,100],
-            #    p2 = [0.03,-100,100],
-            #    p3 = [0.5,-100,100],
+            #    erfScale = kwargs.pop('erfScale_{}'.format(nameE), [0.05,0,10]),
+            #    erfShift = kwargs.pop('erfShift_{}'.format(nameE), [70,10,200]),
+            #    #erfShift = nameP1,
             #)
+            #erf.build(workspace,nameE)
 
-            #bg = Models.Polynomial('bg',
+            #nameC = 'conty{}'.format('_'+tag if tag else '')
+            #cont = Models.Exponential('conty',
             #    x = yVar,
-            #    order = 5,
-            #    p0 = [965,0,10000],
-            #    p1 = [-12, -100, 100],
-            #    p2 = [0.06,-100,100],
-            #    p3 = [-0.1,-100,100],
-            #    p4 = [-0.01,-100,100],
+            #    lamb = kwargs.pop('lambda_{}'.format(nameC), [-0.05,-1,0]),
             #)
+            #cont.build(workspace,nameC1)
 
-            #nameP1 = 'erfShiftPoly{}'.format('_'+tag if tag else '')
-            #poly1 = Models.PolynomialExpr('poly1',
-            #    x = yVar,
-            #    order = 1,
-            #    p0 = kwargs.pop('p0_{}'.format(nameP1), [45,30,70]),
-            #    p1 = kwargs.pop('p1_{}'.format(nameP1), [0.75,0,2]),
+            #bg = Models.Prod('bg',
+            #    nameE,
+            #    nameC,
             #)
-            #poly1.build(workspace,nameP1)
 
             nameE1 = 'erf1{}'.format('_'+tag if tag else '')
             erf1 = Models.Erf('erf1',
                 x = yVar,
                 erfScale = kwargs.pop('erfScale_{}'.format(nameE1), [0.05,0,10]),
                 erfShift = kwargs.pop('erfShift_{}'.format(nameE1), [70,10,200]),
-                #erfShift = nameP1,
             )
             erf1.build(workspace,nameE1)
 
@@ -132,9 +112,42 @@ class HaaLimits2D(HaaLimits):
             )
             cont1.build(workspace,nameC1)
 
-            bg = Models.Prod('bg',
+            bg1 = Models.Prod('bg',
                 nameE1,
                 nameC1,
+            )
+            nameB1 = 'bg1{}'.format('_'+tag if tag else '')
+            bg1.build(workspace,nameB1)
+
+            nameE2 = 'erf2{}'.format('_'+tag if tag else '')
+            erf2 = Models.Erf('erf2',
+                x = yVar,
+                #erfScale = kwargs.pop('erfScale_{}'.format(nameE2), [0.05,0,10]),
+                #erfShift = kwargs.pop('erfShift_{}'.format(nameE2), [70,10,200]),
+                erfScale = kwargs.pop('erfScale_{}'.format(nameE1),'erfScale_{}'.format(nameE1)),
+                erfShift = kwargs.pop('erfShift_{}'.format(nameE1),'erfShift_{}'.format(nameE1)),
+            )
+            erf2.build(workspace,nameE2)
+
+            nameC2 = 'conty2{}'.format('_'+tag if tag else '')
+            cont2 = Models.Exponential('conty2',
+                x = yVar,
+                lamb = kwargs.pop('lambda_{}'.format(nameC2), [-0.025,-1,0]),
+            )
+            cont2.build(workspace,nameC2)
+
+            bg2 = Models.Prod('bg',
+                nameE2,
+                nameC2,
+            )
+            nameB2 = 'bg2{}'.format('_'+tag if tag else '')
+            bg2.build(workspace,nameB2)
+
+            bg = Models.Sum('bg',
+                **{
+                    nameB1: [0.95,0,1],
+                    nameB2: [0.05,0,1],
+                }
             )
         else:
             # Landau only
@@ -704,7 +717,7 @@ class HaaLimits2D(HaaLimits):
                 ws.var(param).setVal(results[param])
         hist = histMap[self.SIGNAME.format(h=h,a=a)]
         saveDir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
-        results, errors = model.fit2D(ws, hist, name, saveDir=saveDir, save=True, doErrors=True)
+        results, errors = model.fit2D(ws, hist, name, saveDir=saveDir, save=True, doErrors=True, xRange=[0.9*aval,1.1*aval])
         if self.binned:
             integral = histMap[self.SIGNAME.format(h=h,a=a)].Integral() * scale
         else:
@@ -1402,7 +1415,9 @@ class HaaLimits2D(HaaLimits):
             yFrame = workspace.var(yVar).frame()
         data.plotOn(yFrame)
         # continuum
+        model.plotOn(yFrame,ROOT.RooFit.Components('conty_{}_y'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
         model.plotOn(yFrame,ROOT.RooFit.Components('conty1_{}_y'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+        model.plotOn(yFrame,ROOT.RooFit.Components('conty2_{}_y'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
         # combined model
         model.plotOn(yFrame)
         model.paramOn(yFrame,ROOT.RooFit.Layout(0.72,0.98,0.90))

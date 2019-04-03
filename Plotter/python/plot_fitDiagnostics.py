@@ -20,7 +20,7 @@ def plot(h,a,dim,region):
     mode = 'fit_s'
     var = 'CMS_haa_{}'.format(dim)
     if region=='control': var += '_control'
-    fname = 'fitDiagnostics.root'
+    fname = 'temp_fitDiagnostics/{h}_{a}/fitDiagnostics.Test.root'.format(h=h,a=a)
 
     tfile = ROOT.TFile.Open(fname)
     
@@ -58,11 +58,11 @@ def plot(h,a,dim,region):
     
     if 'x' in var:
         rooplot.GetXaxis().SetTitle('m(#mu#mu) (GeV)')
-        rooplot.GetYaxis().SetTitle('Events / 0.1 GeV')
-        if region=='control': rooplot.GetYaxis().SetTitle('Events / 0.01 GeV')
+        rooplot.GetYaxis().SetTitle('Events / 0.2 GeV')
+        if region=='control': rooplot.GetYaxis().SetTitle('Events / 0.02 GeV')
     else:
         rooplot.GetXaxis().SetTitle('m(#mu#mu#tau_{#mu}#tau_{h}) (GeV)')
-        rooplot.GetYaxis().SetTitle('Events / 10 GeV')
+        rooplot.GetYaxis().SetTitle('Events / 20 GeV')
     rooplot.SetMaximum(600)
     if region=='FP': rooplot.SetMaximum(2000)
     if region=='control':

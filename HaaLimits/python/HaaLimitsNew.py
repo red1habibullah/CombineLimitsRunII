@@ -377,7 +377,7 @@ class HaaLimits(Limits):
                 ws.var(param+'_{}'.format(shift) if shift else param).setVal(results[param])
         hist = histMap[self.SIGNAME.format(h=h,a=a)]
         saveDir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
-        results, errors = model.fit(ws, hist, name, saveDir=saveDir, save=True, doErrors=True)
+        results, errors = model.fit(ws, hist, name, saveDir=saveDir, save=True, doErrors=True, xRange=[0.9*aval,1.1*aval])
         if self.binned:
             integral = histMap[self.SIGNAME.format(h=h,a=a)].Integral() * scale
         else:
