@@ -39,35 +39,9 @@ class LimitPlotter(PlotterBase):
         super(LimitPlotter, self).__init__('Limits',**kwargs)
         # initialize stuff
 
-    def plotLimit(self,xvals,quartiles,savename,**kwargs):
-        '''Plot limits'''
-        xaxis = kwargs.pop('xaxis','x')
-        yaxis = kwargs.pop('yaxis','95% CL upper limit on #sigma/#sigma_{model}')
-        legendtitle = kwargs.pop('legendtitle','95% CL upper limits')
-        blind = kwargs.pop('blind',True)
-        lumipos = kwargs.pop('lumipos',11)
-        isprelim = kwargs.pop('isprelim',True)
-        legendpos = kwargs.pop('legendpos',31)
-        numcol = kwargs.pop('numcol',1)
-        asymptoticFilenames = kwargs.pop('asymptoticFilenames',[])
+    def _getGraphs(xvals,limits,**kwargs):
+        xVar = kwargs.pop('xVar',None)
         smooth = kwargs.pop('smooth',False)
-        ymin = kwargs.pop('ymin',None)
-        ymax = kwargs.pop('ymax',None)
-        logy = kwargs.pop('logy',1)
-        plotunity = kwargs.pop('plotunity',True)
-        leftmargin = kwargs.pop('leftmargin',None)
-        model = kwargs.pop('model',None)
-        xVar = kwargs.pop('x',None)
-        overlay = kwargs.pop('overlay',None)
-        overlayLabels = kwargs.pop('overlayLabels',None)
-
-        logging.info('Plotting {0}'.format(savename))
-
-        canvas = ROOT.TCanvas(savename,savename,50,50,600,600)
-        canvas.SetLogy(logy)
-        if leftmargin: canvas.SetLeftMargin(leftmargin)
-
-        limits = quartiles
 
         n = len(xvals)
         twoSigma = ROOT.TGraph(2*n)
@@ -83,10 +57,6 @@ class LimitPlotter(PlotterBase):
         oneSigmaForSmoothing_low = ROOT.TGraph(n)
         oneSigmaForSmoothing_high = ROOT.TGraph(n)
         expectedForSmoothing = ROOT.TGraph(n)
-        twoSigma_asym = ROOT.TGraph(2*n)
-        oneSigma_asym = ROOT.TGraph(2*n)
-        expected_asym = ROOT.TGraph(n)
-        observed_asym = ROOT.TGraph(n)
 
         if xVar:
             w = ROOT.RooRealVar('w','w',0,10000)
@@ -115,13 +85,6 @@ class LimitPlotter(PlotterBase):
             oneSigmaForSmoothing_low.SetPoint(n-i-1, xvals[i],  math.log(limits[xvals[i]][3])) # 0.84
             twoSigmaForSmoothing_low.SetPoint(n-i-1, xvals[i],  math.log(limits[xvals[i]][4])) # 0.975
             expectedForSmoothing.SetPoint(     i, xvals[i],     math.log(limits[xvals[i]][2])) # 0.5
-            if asymptoticFilenames:
-                twoSigma_asym.SetPoint(i,  xvals[i],     limits_asym[xvals[i]][0]) # 0.025
-                oneSigma_asym.SetPoint(i,  xvals[i],     limits_asym[xvals[i]][1]) # 0.16
-                expected_asym.SetPoint(i,  xvals[i],     limits_asym[xvals[i]][2]) # 0.5
-                oneSigma_asym.SetPoint(2*n-i-1,xvals[i], limits_asym[xvals[i]][3]) # 0.84
-                twoSigma_asym.SetPoint(2*n-i-1,xvals[i], limits_asym[xvals[i]][4]) # 0.975
-                observed_asym.SetPoint(i,  xvals[i],     limits_asym[xvals[i]][5]) # obs
             if xVar:
                 xVar.setVal(xvals[i])
                 w.setVal(limits[xvals[i]][0])
@@ -228,6 +191,40 @@ class LimitPlotter(PlotterBase):
         expected.GetYaxis().SetTitleSize(0.05)
         expected.GetYaxis().SetTitleOffset(1.6)
 
+
+        return expected, oneSigma, twoSigma, observed
+
+    def plotLimit(self,xvals,quartiles,savename,**kwargs):
+        '''Plot limits'''
+        xaxis = kwargs.pop('xaxis','x')
+        yaxis = kwargs.pop('yaxis','95% CL upper limit on #sigma/#sigma_{model}')
+        legendtitle = kwargs.pop('legendtitle','95% CL upper limits')
+        blind = kwargs.pop('blind',True)
+        lumipos = kwargs.pop('lumipos',11)
+        isprelim = kwargs.pop('isprelim',True)
+        legendpos = kwargs.pop('legendpos',31)
+        numcol = kwargs.pop('numcol',1)
+        smooth = kwargs.pop('smooth',False)
+        ymin = kwargs.pop('ymin',None)
+        ymax = kwargs.pop('ymax',None)
+        logy = kwargs.pop('logy',1)
+        plotunity = kwargs.pop('plotunity',True)
+        leftmargin = kwargs.pop('leftmargin',None)
+        model = kwargs.pop('model',None)
+        xVar = kwargs.pop('x',None)
+        overlay = kwargs.pop('overlay',None)
+        overlayLabels = kwargs.pop('overlayLabels',None)
+
+        logging.info('Plotting {0}'.format(savename))
+
+        canvas = ROOT.TCanvas(savename,savename,50,50,600,600)
+        canvas.SetLogy(logy)
+        if leftmargin: canvas.SetLeftMargin(leftmargin)
+
+        limits = quartiles
+
+        expected, oneSigma, twoSigma, observed = self._getGraphs(xvals,limits,xVar=xVar,smooth=smooth)
+
         expected.Draw()
         if ymin is not None: expected.SetMinimum(ymin)
         if ymax is not None: expected.SetMaximum(ymax)
@@ -276,6 +273,99 @@ class LimitPlotter(PlotterBase):
         self._save(canvas,savename)
 
 
+    def plotLimitMulti(self,xvalsMulti,quartilesMulti,savename,**kwargs):
+        '''Plot limits
+        
+        Structure should be:
+            xvals: [[x00, x01, ...], [x10, x11, ...], ...]
+            quartiles: similarly but with [xij] replaced by {xij: [-2s, -1s, exp, +1s, +2s, obs]}
+
+        Each set will correspond to a limit.
+        '''
+        xaxis = kwargs.pop('xaxis','x')
+        yaxis = kwargs.pop('yaxis','95% CL upper limit on #sigma/#sigma_{model}')
+        legendtitle = kwargs.pop('legendtitle','95% CL upper limits')
+        blind = kwargs.pop('blind',True)
+        lumipos = kwargs.pop('lumipos',11)
+        isprelim = kwargs.pop('isprelim',True)
+        legendpos = kwargs.pop('legendpos',31)
+        numcol = kwargs.pop('numcol',1)
+        smooth = kwargs.pop('smooth',False)
+        ymin = kwargs.pop('ymin',None)
+        ymax = kwargs.pop('ymax',None)
+        logy = kwargs.pop('logy',1)
+        plotunity = kwargs.pop('plotunity',True)
+        leftmargin = kwargs.pop('leftmargin',None)
+        model = kwargs.pop('model',None)
+        xVar = kwargs.pop('x',None)
+        overlay = kwargs.pop('overlay',None)
+        overlayLabels = kwargs.pop('overlayLabels',None)
+
+        logging.info('Plotting {0}'.format(savename))
+
+        canvas = ROOT.TCanvas(savename,savename,50,50,600,600)
+        canvas.SetLogy(logy)
+        if leftmargin: canvas.SetLeftMargin(leftmargin)
+
+        twoSigma = {}
+        oneSigma = {}
+        expected = {}
+        observed = {}
+
+        for ilim, (xvals, quartiles) in enumerate(zip(xvalsMulti, quartilesMulti)):
+
+            limits = quartiles
+            expected[ilim], oneSigma[ilim], twoSigma[ilim], observed[ilim] = self._getGraphs(xvals,limits,xVar=xVar,smooth=smooth)
+
+            if ilim==0:
+                expected[ilim].Draw()
+                if ymin is not None: expected[ilim].SetMinimum(ymin)
+                if ymax is not None: expected[ilim].SetMaximum(ymax)
+            twoSigma[ilim].Draw('f')
+            oneSigma[ilim].Draw('f')
+
+            expected[ilim].Draw('same')
+            ROOT.gPad.RedrawAxis()
+
+            colors = [ROOT.kRed, ROOT.kBlue-4, ROOT.kMagenta+1, ROOT.kAzure, ROOT.kOrange+7]
+            if overlay:
+                c = 0
+                for graph in overlay:
+                    graph.SetLineColor(colors[c])
+                    graph.SetLineWidth(2)
+                    graph.Draw('same')
+                    c += 1
+                    if c >= len(colors): c = 0
+
+            if not blind: observed[ilim].Draw('same')
+
+            ratiounity = ROOT.TLine(expected[ilim].GetXaxis().GetXmin(),1,expected[ilim].GetXaxis().GetXmax(),1)
+            if plotunity: ratiounity.Draw()
+
+        # get the legend
+        entries = [
+            [expected[0],'Median expected','l'],
+            [oneSigma[0],'68% expected','F'],
+            [twoSigma[0],'95% expected','F'],
+        ]
+        if not blind: entries = [[observed[0],'Observed','l']] + entries
+        legend = self._getLegend(entries=entries,numcol=numcol,position=legendpos,title=legendtitle)
+        legend.Draw()
+
+
+        if overlayLabels:
+            entries = []
+            for g,l in zip(overlay,overlayLabels):
+                entries += [[g,l,'l']]
+            legendOverlay = self._getLegend(entries=entries,numcol=1,position=32)
+            legendOverlay.Draw()
+
+        # cms lumi styling
+        self._setStyle(canvas,position=lumipos,preliminary=isprelim)
+
+        self._save(canvas,savename)
+
+
     def plotLimit2D(self,xvals,yvals,quartiles,scales,savename,**kwargs):
         '''Plot limits'''
         xaxis = kwargs.pop('xaxis','x')
@@ -287,7 +377,6 @@ class LimitPlotter(PlotterBase):
         isprelim = kwargs.pop('isprelim',True)
         legendpos = kwargs.pop('legendpos',31)
         numcol = kwargs.pop('numcol',1)
-        asymptoticFilenames = kwargs.pop('asymptoticFilenames',[])
         smooth = kwargs.pop('smooth',False)
         logz = kwargs.pop('logz',1)
         logy = kwargs.pop('logy',0)
@@ -349,10 +438,6 @@ class LimitPlotter(PlotterBase):
             oneSigmaForSmoothing_low = ROOT.TGraph(n)
             oneSigmaForSmoothing_high = ROOT.TGraph(n)
             expectedForSmoothing = ROOT.TGraph(n)
-            twoSigma_asym = ROOT.TGraph(2*n)
-            oneSigma_asym = ROOT.TGraph(2*n)
-            expected_asym = ROOT.TGraph(n)
-            observed_asym = ROOT.TGraph(n)
 
             if xVar:
                 w = ROOT.RooRealVar('w','w',0,10000)
@@ -383,13 +468,6 @@ class LimitPlotter(PlotterBase):
                 oneSigmaForSmoothing_low.SetPoint(n-i-1, xvals[i],  math.log(limits[xvals[i]][3]*scale)) # 0.84
                 twoSigmaForSmoothing_low.SetPoint(n-i-1, xvals[i],  math.log(limits[xvals[i]][4]*scale)) # 0.975
                 expectedForSmoothing.SetPoint(     i, xvals[i],     math.log(limits[xvals[i]][2]*scale)) # 0.5
-                if asymptoticFilenames:
-                    twoSigma_asym.SetPoint(i,  xvals[i],     limits_asym[xvals[i]][0]*scale) # 0.025
-                    oneSigma_asym.SetPoint(i,  xvals[i],     limits_asym[xvals[i]][1]*scale) # 0.16
-                    expected_asym.SetPoint(i,  xvals[i],     limits_asym[xvals[i]][2]*scale) # 0.5
-                    oneSigma_asym.SetPoint(2*n-i-1,xvals[i], limits_asym[xvals[i]][3]*scale) # 0.84
-                    twoSigma_asym.SetPoint(2*n-i-1,xvals[i], limits_asym[xvals[i]][4]*scale) # 0.975
-                    observed_asym.SetPoint(i,  xvals[i],     limits_asym[xvals[i]][5]*scale) # obs
                 if xVar:
                     xVar.setVal(xvals[i])
                     w.setVal(limits[xvals[i]][0])
@@ -753,7 +831,6 @@ class LimitPlotter(PlotterBase):
         isprelim = kwargs.pop('isprelim',True)
         legendpos = kwargs.pop('legendpos',31)
         numcol = kwargs.pop('numcol',1)
-        asymptoticFilenames = kwargs.pop('asymptoticFilenames',[])
         smooth = kwargs.pop('smooth',False)
         ymin = kwargs.pop('ymin',None)
         ymax = kwargs.pop('ymax',None)
