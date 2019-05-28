@@ -30,7 +30,7 @@ class Model(object):
         '''Dummy method to add model to workspace'''
         logging.debug('Building {}'.format(label))
 
-    def fit(self,ws,hist,name,save=False,doErrors=False,saveDir='', xFitRange=[0,30]):
+    def fit(self,ws,hist,name,save=False,doErrors=False,saveDir='', xFitRange=[0,30], xRange=[]):
         '''Fit the model to a histogram and return the fit values'''
 
         if isinstance(hist,ROOT.TH1):
@@ -54,7 +54,10 @@ class Model(object):
             if saveDir: python_mkdir(saveDir)
             savename = '{}/{}_{}'.format(saveDir,self.name,name) if saveDir else '{}_{}'.format(self.name,name)
             x = ws.var(self.x)
-            xFrame = x.frame()
+            if xRange:
+                xFrame = x.frame(ROOT.RooFit.Range(*xRange))
+            else:
+                xFrame = x.frame()
             xFrame.SetTitle('')
             hist.plotOn(xFrame)
             model.plotOn(xFrame)
@@ -62,21 +65,72 @@ class Model(object):
             pt = ROOT.TPaveText(.72,.1,.90,.2, "brNDC") # Adding chi2 info
             pt.AddText(chi2Line ) # Adding chi2 info
             model.paramOn(xFrame,ROOT.RooFit.Layout(0.72,0.98,0.90))
+
+            resid = xFrame.residHist()
+            pull = xFrame.pullHist()
+
+            if xRange:
+                xFrame2 = x.frame(ROOT.RooFit.Range(*xRange))
+            else:
+                xFrame2 = x.frame()
+            xFrame2.addPlotable(pull,'P')
+
             canvas = ROOT.TCanvas(savename,savename,800,800)
-            canvas.SetRightMargin(0.3)
+            ROOT.SetOwnership(canvas,False)
+            #canvas.SetRightMargin(0.3)
+            plotpad = ROOT.TPad("plotpad", "top pad", 0.0, 0.21, 1.0, 1.0)
+            ROOT.SetOwnership(plotpad,False)
+            plotpad.SetBottomMargin(0.00)
+            plotpad.SetRightMargin(0.2)
+            plotpad.SetLeftMargin(0.16)
+            plotpad.Draw()
+            ratiopad = ROOT.TPad("ratiopad", "bottom pad", 0.0, 0.0, 1.0, 0.21)
+            ROOT.SetOwnership(ratiopad,False)
+            ratiopad.SetTopMargin(0.00)
+            ratiopad.SetRightMargin(0.2)
+            ratiopad.SetBottomMargin(0.5)
+            ratiopad.SetLeftMargin(0.16)
+            ratiopad.SetTickx(1)
+            ratiopad.SetTicky(1)
+            ratiopad.Draw()
+            if plotpad != ROOT.TVirtualPad.Pad(): plotpad.cd()
             xFrame.Draw()
             pt.Draw()
-            prims = canvas.GetListOfPrimitives()
+            #prims = canvas.GetListOfPrimitives()
+            prims = plotpad.GetListOfPrimitives()
             for prim in prims:
                 if 'paramBox' in prim.GetName():
                     prim.SetTextSize(0.02)
+            #mi = xFrame.GetMinimum()
+            #ma = xFrame.GetMaximum()
+            #if mi<0:
+            #    xFrame.SetMinimum(0.1)
+            ratiopad.cd()
+            xFrame2.Draw()
+            prims = ratiopad.GetListOfPrimitives()
+            for prim in prims:
+                if 'frame' in prim.GetName():
+                    prim.GetXaxis().SetLabelSize(0.19)
+                    prim.GetXaxis().SetTitleSize(0.21)
+                    prim.GetXaxis().SetTitleOffset(1.0)
+                    prim.GetXaxis().SetLabelOffset(0.03)
+                    prim.GetYaxis().SetLabelSize(0.19)
+                    prim.GetYaxis().SetLabelOffset(0.006)
+                    prim.GetYaxis().SetTitleSize(0.21)
+                    prim.GetYaxis().SetTitleOffset(0.35)
+                    prim.GetYaxis().SetNdivisions(503)
+                    prim.GetYaxis().SetTitle('Pull')
+                    prim.GetYaxis().SetRangeUser(-3,3)
+                    continue
+            canvas.cd()
+
             canvas.Print('{0}.png'.format(savename))
 
         if doErrors:
             return vals, errs
         return vals
 
-    def fit2D(self,ws,hist,name,save=False,doErrors=False,saveDir='', xFitRange=[0,30], yFitRange=[0,30], logy=False):
+    def fit2D(self,ws,hist,name,save=False,doErrors=False,saveDir='', xFitRange=[0,30], yFitRange=[0,30], logy=False, xRange=[], yRange=[]):
         '''Fit the model to a histogram and return the fit values'''
 
         if isinstance(hist,ROOT.TH1):
@@ -102,7 +156,10 @@ class Model(object):
             if saveDir: python_mkdir(saveDir)
             savename = '{}/{}_{}'.format(saveDir,self.name,name) if saveDir else '{}_{}'.format(self.name,name)
             x = ws.var(self.x)
-            xFrame = x.frame()
+            if xRange:
+                xFrame = x.frame(ROOT.RooFit.Range(*xRange))
+            else:
+                xFrame = x.frame()
             xFrame.SetTitle('')
             hist.plotOn(xFrame)
             model.plotOn(xFrame)
@@ -110,18 +167,72 @@ class Model(object):
             ptx = ROOT.TPaveText(.72,.1,.90,.2, "brNDC") # Adding chi2 info
             ptx.AddText(chi2Linex) # Adding chi2 info
             model.paramOn(xFrame,ROOT.RooFit.Layout(0.72,0.98,0.90))
+
+            resid = xFrame.residHist()
+            pull = xFrame.pullHist()
+
+            if xRange:
+                xFrame2 = x.frame(ROOT.RooFit.Range(*xRange))
+            else:
+                xFrame2 = x.frame()
+            xFrame2.addPlotable(pull,'P')
+
             canvas = ROOT.TCanvas(savename,savename,800,800)
-            canvas.SetRightMargin(0.3)
+            ROOT.SetOwnership(canvas,False)
+            #canvas.SetRightMargin(0.3)
+            plotpad = ROOT.TPad("plotpad", "top pad", 0.0, 0.21, 1.0, 1.0)
+            ROOT.SetOwnership(plotpad,False)
+            plotpad.SetBottomMargin(0.00)
+            plotpad.SetRightMargin(0.2)
+            plotpad.SetLeftMargin(0.16)
+            plotpad.Draw()
+            ratiopad = ROOT.TPad("ratiopad", "bottom pad", 0.0, 0.0, 1.0, 0.21)
+            ROOT.SetOwnership(ratiopad,False)
+            ratiopad.SetTopMargin(0.00)
+            ratiopad.SetRightMargin(0.2)
+            ratiopad.SetBottomMargin(0.5)
+            ratiopad.SetLeftMargin(0.16)
+            ratiopad.SetTickx(1)
+            ratiopad.SetTicky(1)
+            ratiopad.Draw()
+            if plotpad != ROOT.TVirtualPad.Pad(): plotpad.cd()
             xFrame.Draw()
             ptx.Draw()
-            prims = canvas.GetListOfPrimitives()
+            #prims = canvas.GetListOfPrimitives()
+            prims = plotpad.GetListOfPrimitives()
             for prim in prims:
                 if 'paramBox' in prim.GetName():
                     prim.SetTextSize(0.02)
+            #mi = xFrame.GetMinimum()
+            #ma = xFrame.GetMaximum()
+            #if mi<0:
+            #    xFrame.SetMinimum(0.1)
+            ratiopad.cd()
+            xFrame2.Draw()
+            prims = ratiopad.GetListOfPrimitives()
+            for prim in prims:
+                if 'frame' in prim.GetName():
+                    prim.GetXaxis().SetLabelSize(0.19)
+                    prim.GetXaxis().SetTitleSize(0.21)
+                    prim.GetXaxis().SetTitleOffset(1.0)
+                    prim.GetXaxis().SetLabelOffset(0.03)
+                    prim.GetYaxis().SetLabelSize(0.19)
+                    prim.GetYaxis().SetLabelOffset(0.006)
+                    prim.GetYaxis().SetTitleSize(0.21)
+                    prim.GetYaxis().SetTitleOffset(0.35)
+                    prim.GetYaxis().SetNdivisions(503)
+                    prim.GetYaxis().SetTitle('Pull')
+                    prim.GetYaxis().SetRangeUser(-3,3)
+                    continue
+            canvas.cd()
+
             canvas.Print('{0}_xproj.png'.format(savename))
 
             y = ws.var(self.y)
-            yFrame = y.frame()
+            if yRange:
+                yFrame = y.frame(ROOT.RooFit.Range(*yRange))
+            else:
+                yFrame = y.frame()
             yFrame.SetTitle('')
             hist.plotOn(yFrame)
             model.plotOn(yFrame)
@@ -129,16 +240,68 @@ class Model(object):
             pty = ROOT.TPaveText(.72,.1,.90,.2, "brNDC") # Adding chi2 info            
             pty.AddText(chi2Liney ) # Adding chi2 info
             model.paramOn(yFrame,ROOT.RooFit.Layout(0.72,0.98,0.90))
-            if logy: canvas.SetLogy()
+
+            resid = yFrame.residHist()
+            pull = yFrame.pullHist()
+
+            if yRange:
+                yFrame2 = y.frame(ROOT.RooFit.Range(*yRange))
+            else:
+                yFrame2 = y.frame()
+            yFrame2.addPlotable(pull,'P')
+
+            canvas = ROOT.TCanvas(savename+'y',savename+'y',800,800)
+            ROOT.SetOwnership(canvas,False)
+            #canvas.SetRightMargin(0.3)
+            plotpad = ROOT.TPad("plotpad", "top pad", 0.0, 0.21, 1.0, 1.0)
+            ROOT.SetOwnership(plotpad,False)
+            plotpad.SetBottomMargin(0.00)
+            plotpad.SetRightMargin(0.2)
+            plotpad.SetLeftMargin(0.16)
+            plotpad.Draw()
+            ratiopad = ROOT.TPad("ratiopad", "bottom pad", 0.0, 0.0, 1.0, 0.21)
+            ROOT.SetOwnership(ratiopad,False)
+            ratiopad.SetTopMargin(0.00)
+            ratiopad.SetRightMargin(0.2)
+            ratiopad.SetBottomMargin(0.5)
+            ratiopad.SetLeftMargin(0.16)
+            ratiopad.SetTickx(1)
+            ratiopad.SetTicky(1)
+            ratiopad.Draw()
+            if plotpad != ROOT.TVirtualPad.Pad(): plotpad.cd()
             yFrame.Draw()
             pty.Draw()
-            prims = canvas.GetListOfPrimitives()
+            #prims = canvas.GetListOfPrimitives()
+            prims = plotpad.GetListOfPrimitives()
             for prim in prims:
                 if 'paramBox' in prim.GetName():
                     prim.SetTextSize(0.02)
+            #mi = xFrame.GetMinimum()
+            #ma = xFrame.GetMaximum()
+            #if mi<0:
+            #    xFrame.SetMinimum(0.1)
+            ratiopad.cd()
+            yFrame2.Draw()
+            prims = ratiopad.GetListOfPrimitives()
+            for prim in prims:
+                if 'frame' in prim.GetName():
+                    prim.GetXaxis().SetLabelSize(0.19)
+                    prim.GetXaxis().SetTitleSize(0.21)
+                    prim.GetXaxis().SetTitleOffset(1.0)
+                    prim.GetXaxis().SetLabelOffset(0.03)
+                    prim.GetYaxis().SetLabelSize(0.19)
+                    prim.GetYaxis().SetLabelOffset(0.006)
+                    prim.GetYaxis().SetTitleSize(0.21)
+                    prim.GetYaxis().SetTitleOffset(0.35)
+                    prim.GetYaxis().SetNdivisions(503)
+                    prim.GetYaxis().SetTitle('Pull')
+                    prim.GetYaxis().SetRangeUser(-3,3)
+                    continue
+            canvas.cd()
+
             canvas.Print('{0}_yproj.png'.format(savename))
 
-            histM = model.createHistogram('x,y',100,100)
+            histM = model.createHistogram('{},{}'.format(self.x,self.y),100,100)
             histM.SetLineColor(ROOT.kBlue)
             histM.Draw('surf3')
             canvas.Print('{0}_model.png'.format(savename))
@@ -242,18 +405,27 @@ class Param(object):
 
     def build(self,ws,label):
         logging.debug('Building {}'.format(label))
-        paramName = '{0}'.format(label) 
+        paramName = '{}'.format(label) 
         value = self.kwargs.get('value', 0)
+        vargs = self.kwargs.get('valueArgs',[])
         shifts = self.kwargs.get('shifts', {})
         uncertainty = self.kwargs.get('uncertainty',0.00)
         args = ROOT.TList()
-        shiftFormula = '{}'.format(value)
+        if isinstance(value,basestring):
+            shiftFormula = value
+            for a in vargs:
+                av = ws.var(a)
+                if not av:
+                    av = ws.function(a)
+                args.Add(av)
+        else:
+            shiftFormula = '{}'.format(value)
         for shift in shifts:
-            up = shifts[shift]['up'] - value
-            down = value - shifts[shift]['down']
-            if abs(up/value)>uncertainty or abs(down/value)>uncertainty:
+            up = shifts[shift]['up']
+            down = shifts[shift]['down']
+            if isinstance(value,basestring) or  abs(up/value)>uncertainty or abs(down/value)>uncertainty:
                 ws.factory('{}[0,-10,10]'.format(shift))
-                shiftFormula += ' + TMath::Max(0,@{shift})*{up} + TMath::Min(0,@{shift})*{down}'.format(shift=len(args),up=up,down=down)
+                shiftFormula += ' + TMath::Max(0,@{shift})*({up}) + TMath::Min(0,@{shift})*({down})'.format(shift=len(args),up=up,down=down)
                 args.Add(ws.var(shift))
         arglist = ROOT.RooArgList(args)
         param = ROOT.RooFormulaVar(paramName, paramName, shiftFormula, arglist)
@@ -634,6 +806,7 @@ class DoubleCrystalBall(Model):
         doubleCB = ROOT.DoubleCrystalBall(label, label, ws.arg(self.x), ws.arg(meanName), ws.arg(sigmaName), 
                    ws.arg(a1Name), ws.arg(n1Name), ws.arg(a2Name), ws.arg(n2Name) )
         self.wsimport(ws, doubleCB)
+        ws.importClassCode(label)
         self.params = [meanName,sigmaName,a1Name,n1Name,a2Name,n2Name]
 
 class DoubleCrystalBallSpline(ModelSpline):
@@ -675,6 +848,7 @@ class DoubleCrystalBallSpline(ModelSpline):
         doubleCB = ROOT.DoubleCrystalBall(label, label, ws.arg(self.x), ws.arg(meanName), ws.arg(sigmaName), 
                    ws.arg(a1Name), ws.arg(n1Name), ws.arg(a2Name), ws.arg(n2Name) )
         self.wsimport(ws, doubleCB)
+        ws.importClassCode(label)
         self.params = [meanName,sigmaName,a1Name,n1Name,a2Name,n2Name]
 
 class DoubleSidedGaussian(Model):
@@ -700,6 +874,7 @@ class DoubleSidedGaussian(Model):
         # build model
         doubleG = ROOT.DoubleSidedGaussian(label, label, ws.arg(self.x), ws.arg(meanName), ws.arg(sigma1Name), ws.arg(sigma2Name), yMax )
         self.wsimport(ws, doubleG)
+        ws.importClassCode(label)
         self.params = [meanName,sigma1Name,sigma2Name]
 
 class DoubleSidedGaussianSpline(ModelSpline):
@@ -729,6 +904,7 @@ class DoubleSidedGaussianSpline(ModelSpline):
         # build model
         doubleG = ROOT.DoubleSidedGaussian(label, label, ws.arg(self.x), ws.arg(meanName), ws.arg(sigma1Name), ws.arg(sigma2Name), yMax )
         self.wsimport(ws, doubleG)
+        ws.importClassCode(label)
         self.params = [meanName,sigma1Name,sigma2Name] 
 
 class DoubleSidedVoigtian(Model):
@@ -760,6 +936,7 @@ class DoubleSidedVoigtian(Model):
         # build model
         doubleV = ROOT.DoubleSidedVoigtian(label, label, ws.arg(self.x), ws.arg(meanName), ws.arg(sigma1Name), ws.arg(sigma2Name), ws.arg(width1Name), ws.arg(width2Name), yMax )
         self.wsimport(ws, doubleV)
+        ws.importClassCode(label)
         self.params = [meanName,sigma1Name,sigma2Name,width1Name,width2Name]
 
 class DoubleSidedVoigtianSpline(ModelSpline):
@@ -797,6 +974,7 @@ class DoubleSidedVoigtianSpline(ModelSpline):
         # build model
         doubleV = ROOT.DoubleSidedVoigtian(label, label, ws.arg(self.x), ws.arg(meanName), ws.arg(sigma1Name), ws.arg(sigma2Name), ws.arg(width1Name), ws.arg(width2Name), yMax )
         self.wsimport(ws, doubleV)
+        ws.importClassCode(label)
         self.params = [meanName,sigma1Name,sigma2Name,width1Name,width2Name] 
 
 class Exponential(Model):
