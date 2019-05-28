@@ -12,6 +12,9 @@ from DevTools.Utilities.utilities import *
 ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 2001;")
 tdrstyle.setTDRStyle()
 
+mode = 'mm'
+#mode = 'mm_tt'
+#mode = 'mm_h'
 
 
 workspaces = {}
@@ -36,11 +39,11 @@ def get_graph(MA,func):
 xvar = 'CMS_haa_x'
 yvar = 'CMS_haa_y'
 colors = [ROOT.kRed+1, ROOT.kGreen+2, ROOT.kBlue+1, ROOT.kYellow+1, ROOT.kCyan+1, ROOT.kMagenta+1, ROOT.kGreen-2, ROOT.kBlue-2]
-#uncertainties = ['CMS_btag_comb','CMS_eff_t','CMS_fake_t','CMS_pu','CMS_scale_m','CMS_scale_t','QCDscale_ggH','pdf_gg']
-uncertainties = ['CMS_scale_m','CMS_scale_t','CMS_eff_t','CMS_btag_comb','CMS_pu']
+uncertainties = ['CMS_btag_comb','CMS_eff_t','CMS_fake_t','CMS_pu','CMS_scale_m','CMS_scale_t','QCDscale_ggH','pdf_gg']
+#uncertainties = ['CMS_scale_m','CMS_scale_t','CMS_eff_t','CMS_btag_comb','CMS_pu']
 regions = ['PP','FP']
 
-ws = get_workspace('mmmt_mm_h_parametric_unbinned_with1DFits')
+ws = get_workspace('mmmt_{}_parametric_unbinned_with1DFits'.format(mode))
 
 MH = ws.var('MH')
 MA = ws.var('MA')
@@ -54,13 +57,21 @@ for u,unc in enumerate(uncertainties):
 
 plots = {
     'integral': {'label': 'Integral',               'name': 'fullIntegral_ggH_haa_{h}_{region}',},
-    'xmean'   : {'label': 'm(#mu#mu) Mean',         'name': 'mean_sigx_ggH_haa_{h}_{region}',},
-    'xwidth'  : {'label': 'm(#mu#mu) Width',        'name': 'width_sigx_ggH_haa_{h}_{region}',},
-    'xsigma'  : {'label': 'm(#mu#mu) Sigma',        'name': 'sigma_sigx_ggH_haa_{h}_{region}',},
-    'ymean'   : {'label': 'm(#mu#mu#tau#tau) Mean', 'name': 'mean_sigy_ggH_haa_{h}_{region}',},
-    'ysigma1' : {'label': 'm(#mu#mu) Sigma 1',      'name': 'sigma1_sigy_ggH_haa_{h}_{region}',},
-    'ysigma2' : {'label': 'm(#mu#mu) Sigma 2',      'name': 'sigma2_sigy_ggH_haa_{h}_{region}',},
 }
+
+if mode in ['mm_tt','mm_h']:
+    plots['xmean']   = {'label': 'm(#mu#mu) Mean',         'name': 'mean_sigx_ggH_haa_{h}_{region}',}
+    plots['xwidth']  = {'label': 'm(#mu#mu) Width',        'name': 'width_sigx_ggH_haa_{h}_{region}',}
+    plots['xsigma']  = {'label': 'm(#mu#mu) Sigma',        'name': 'sigma_sigx_ggH_haa_{h}_{region}',}
+    plots['ymean']   = {'label': 'm(#mu#mu#tau#tau) Mean', 'name': 'mean_sigy_ggH_haa_{h}_{region}',}
+    plots['ysigma1'] = {'label': 'm(#mu#mu) Sigma 1',      'name': 'sigma1_sigy_ggH_haa_{h}_{region}',}
+    plots['ysigma2'] = {'label': 'm(#mu#mu) Sigma 2',      'name': 'sigma2_sigy_ggH_haa_{h}_{region}',}
+else:
+    plots['xmean']   = {'label': 'm(#mu#mu) Mean',         'name': 'mean_ggH_haa_{h}_{region}',}
+    plots['xwidth']  = {'label': 'm(#mu#mu) Width',        'name': 'width_ggH_haa_{h}_{region}',}
+    plots['xsigma']  = {'label': 'm(#mu#mu) Sigma',        'name': 'sigma_ggH_haa_{h}_{region}',}
+
+
 
 for region in regions:
     for h in [125,300,750]:

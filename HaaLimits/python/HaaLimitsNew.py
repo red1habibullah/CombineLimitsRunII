@@ -45,6 +45,8 @@ class HaaLimits(Limits):
     HBINNING = 25 # GeV
     ABINNING = 0.1 # GeV
 
+    SPLITBGS = True # False doesnt work!
+
     XVAR = 'CMS_haa_x'
 
     SIGNAME = 'HToAAH{h}A{a}'
@@ -105,7 +107,7 @@ class HaaLimits(Limits):
         self.histMap = histMap
         self.tag = tag
 
-        top = [k for k in self.histMap.keys() if 'PP' in k][0]
+        top = [k for k in self.histMap.keys() if self.REGIONS[0] in k][0]
         sample = self.histMap[top][''].keys()[0]
 
         self.binned = self.histMap[top][''][sample].InheritsFrom('TH1')
@@ -162,17 +164,31 @@ class HaaLimits(Limits):
 
         bgRes = Models.Voigtian
         #bgRes = Models.BreitWigner
+        #bgRes = Models.CrystalBall
+        #bgRes = Models.DoubleCrystalBall
 
         # jpsi
         nameJ1b = 'jpsi1S'
         workspace.factory('{0}[{1}, {2}, {3}]'.format('mean_{}'.format(nameJ1b), *[3.1,2.9,3.2]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('sigma_{}'.format(nameJ1b),*[0.1,0,0.5]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('width_{}'.format(nameJ1b),*[0.1,0.01,0.5]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('a_{}'.format( nameJ1b),*[5,0.01,10]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('n_{}'.format( nameJ1b),*[10,0.01,20]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('a1_{}'.format(nameJ1b),*[5,0.01,10]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('n1_{}'.format(nameJ1b),*[10,0.01,20]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('a2_{}'.format(nameJ1b),*[5,0.01,10]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('n2_{}'.format(nameJ1b),*[10,0.01,20]))
         jpsi1S = bgRes('jpsi1S',
             x = xVar,
             mean  = 'mean_{}'.format(nameJ1b),
             sigma = 'sigma_{}'.format(nameJ1b),
             width = 'width_{}'.format(nameJ1b),
+            a  = 'a_{}'.format( nameJ1b),
+            n  = 'n_{}'.format( nameJ1b),
+            a1 = 'a1_{}'.format(nameJ1b),
+            n1 = 'n1_{}'.format(nameJ1b),
+            a2 = 'a2_{}'.format(nameJ1b),
+            n2 = 'n2_{}'.format(nameJ1b),
         )
         nameJ1 = '{}{}'.format(nameJ1b,'_'+tag if tag else '')
         jpsi1S.build(workspace,nameJ1)
@@ -181,11 +197,23 @@ class HaaLimits(Limits):
         workspace.factory('{0}[{1}, {2}, {3}]'.format('mean_{}'.format(nameJ2b), *[3.7,3.6,3.8]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('sigma_{}'.format(nameJ2b),*[0.1,0,0.5]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('width_{}'.format(nameJ2b),*[0.1,0.01,0.5]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('a_{}'.format( nameJ2b),*[5,0.01,10]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('n_{}'.format( nameJ2b),*[10,0.01,20]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('a1_{}'.format(nameJ2b),*[5,0.01,10]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('n1_{}'.format(nameJ2b),*[10,0.01,20]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('a2_{}'.format(nameJ2b),*[5,0.01,10]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('n2_{}'.format(nameJ2b),*[10,0.01,20]))
         jpsi2S = bgRes('jpsi2S',
             x = xVar,
             mean  = 'mean_{}'.format(nameJ2b),
             sigma = 'sigma_{}'.format(nameJ2b),
             width = 'width_{}'.format(nameJ2b),
+            a  = 'a_{}'.format( nameJ2b),
+            n  = 'n_{}'.format( nameJ2b),
+            a1 = 'a1_{}'.format(nameJ2b),
+            n1 = 'n1_{}'.format(nameJ2b),
+            a2 = 'a2_{}'.format(nameJ2b),
+            n2 = 'n2_{}'.format(nameJ2b),
         )
         nameJ2 = '{}{}'.format(nameJ2b,'_'+tag if tag else '')
         jpsi2S.build(workspace,nameJ2)
@@ -207,11 +235,23 @@ class HaaLimits(Limits):
         workspace.factory('{0}[{1}, {2}, {3}]'.format('mean_{}'.format(nameU1b), *[9.5,9.3,9.7]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('sigma_{}'.format(nameU1b),*[0.05,0,0.3]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('width_{}'.format(nameU1b),*[0.1,0.01,1]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('a_{}'.format( nameU1b),*[5,0.01,10]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('n_{}'.format( nameU1b),*[10,0.01,20]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('a1_{}'.format(nameU1b),*[5,0.01,10]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('n1_{}'.format(nameU1b),*[10,0.01,20]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('a2_{}'.format(nameU1b),*[5,0.01,10]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('n2_{}'.format(nameU1b),*[10,0.01,20]))
         upsilon1S = bgRes('upsilon1S',
             x = xVar,
             mean  = 'mean_{}'.format(nameU1b),
             sigma = 'sigma_{}'.format(nameU1b),
             width = 'width_{}'.format(nameU1b),
+            a  = 'a_{}'.format( nameU1b),
+            n  = 'n_{}'.format( nameU1b),
+            a1 = 'a1_{}'.format(nameU1b),
+            n1 = 'n1_{}'.format(nameU1b),
+            a2 = 'a2_{}'.format(nameU1b),
+            n2 = 'n2_{}'.format(nameU1b),
         )
         nameU1 = '{}{}'.format(nameU1b,'_'+tag if tag else '')
         upsilon1S.build(workspace,nameU1)
@@ -220,11 +260,23 @@ class HaaLimits(Limits):
         workspace.factory('{0}[{1}, {2}, {3}]'.format('mean_{}'.format(nameU2b), *[10.0,9.8,10.15]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('sigma_{}'.format(nameU2b),*[0.06,0,0.3]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('width_{}'.format(nameU2b),*[0.1,0.01,1]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('a_{}'.format( nameU2b),*[5,0.01,10]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('n_{}'.format( nameU2b),*[10,0.01,20]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('a1_{}'.format(nameU2b),*[5,0.01,10]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('n1_{}'.format(nameU2b),*[10,0.01,20]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('a2_{}'.format(nameU2b),*[5,0.01,10]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('n2_{}'.format(nameU2b),*[10,0.01,20]))
         upsilon2S = bgRes('upsilon2S',
             x = xVar,
             mean  = 'mean_{}'.format(nameU2b),
             sigma = 'sigma_{}'.format(nameU2b),
             width = 'width_{}'.format(nameU2b),
+            a  = 'a_{}'.format( nameU2b),
+            n  = 'n_{}'.format( nameU2b),
+            a1 = 'a1_{}'.format(nameU2b),
+            n1 = 'n1_{}'.format(nameU2b),
+            a2 = 'a2_{}'.format(nameU2b),
+            n2 = 'n2_{}'.format(nameU2b),
         )
         nameU2 = '{}{}'.format(nameU2b,'_'+tag if tag else '')
         upsilon2S.build(workspace,nameU2)
@@ -233,11 +285,23 @@ class HaaLimits(Limits):
         workspace.factory('{0}[{1}, {2}, {3}]'.format('mean_{}'.format(nameU3b), *[10.3,10.22,10.5]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('sigma_{}'.format(nameU3b),*[0.07,0,0.3]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('width_{}'.format(nameU3b),*[0.1,0.01,1]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('a_{}'.format( nameU3b),*[5,0.01,10]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('n_{}'.format( nameU3b),*[10,0.01,20]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('a1_{}'.format(nameU3b),*[5,0.01,10]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('n1_{}'.format(nameU3b),*[10,0.01,20]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('a2_{}'.format(nameU3b),*[5,0.01,10]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('n2_{}'.format(nameU3b),*[10,0.01,20]))
         upsilon3S = bgRes('upsilon3S',
             x = xVar,
             mean  = 'mean_{}'.format(nameU3b),
             sigma = 'sigma_{}'.format(nameU3b),
             width = 'width_{}'.format(nameU3b),
+            a  = 'a_{}'.format( nameU3b),
+            n  = 'n_{}'.format( nameU3b),
+            a1 = 'a1_{}'.format(nameU3b),
+            n1 = 'n1_{}'.format(nameU3b),
+            a2 = 'a2_{}'.format(nameU3b),
+            n2 = 'n2_{}'.format(nameU3b),
         )
         nameU3 = '{}{}'.format(nameU3b,'_'+tag if tag else '')
         upsilon3S.build(workspace,nameU3)
@@ -1182,6 +1246,7 @@ class HaaLimits(Limits):
             integrals = integrals[region]
         allerrors = {}
         allintegrals = {}
+        integral_params = []
         for component in components:
             subint = 1.
             suberr2 = 0.
@@ -1212,6 +1277,8 @@ class HaaLimits(Limits):
                 paramValue = subint*integrals
             allintegrals[component] = paramValue
 
+            name = 'integral_{}_{}'.format(component,region)
+            integral_params += [name]
             if self.FIXFP:
                 if isinstance(integrals,dict):
                     param = Models.Param(name,
@@ -1226,8 +1293,6 @@ class HaaLimits(Limits):
                     param.build(workspace, name)
 
             else:
-                # TODO: fix ratio between integrals to control for resonances, floating for exponential
-                name = 'integral_{}_{}'.format(component,region)
                 controlIntegrals = allintegrals if region=='control' else self.control_integralValues
                 # 2S and 3S set to a scale factor times 1S that is common to all regions
                 fpRegion = region.replace('PP','FP')
@@ -1236,6 +1301,31 @@ class HaaLimits(Limits):
                     fpValue = subint*regInts[fpRegion]['']
                     ppValue = subint*regInts[ppRegion]['']
                     scale   = ppValue/fpValue if fpValue else ppValue
+                    #if 'upsilon2S' in name:
+                    #    relName = 'CMS_haa_relNormUnc_upsilon2S'
+                    #    workspace.factory('{}[0,-10,10]'.format(relName))
+                    #    param = Models.Param(name,
+                    #        value  = '({})*@0*(1+0.05*@1)'.format(scale), # 5% uncertainty
+                    #        valueArgs = [name.replace(region,fpRegion),relName],
+                    #        shifts = paramShifts,
+                    #    )
+                    #elif 'upsilon3S' in name:
+                    #    relName = 'CMS_haa_relNormUnc_upsilon3S'
+                    #    workspace.factory('{}[0,-10,10]'.format(relName))
+                    #    param = Models.Param(name,
+                    #        value  = '({})*@0*(1+0.10*@1)'.format(scale), # 10% uncertainty
+                    #        valueArgs = [name.replace(region,fpRegion),relName],
+                    #        shifts = paramShifts,
+                    #    )
+                    #elif 'jpsi2S' in name:
+                    #    relName = 'CMS_haa_relNormUnc_jpsi2S'
+                    #    workspace.factory('{}[0,-10,10]'.format(relName))
+                    #    param = Models.Param(name,
+                    #        value  = '({})*@0*(1+0.20*@1)'.format(scale), # 20% uncertainty
+                    #        valueArgs = [name.replace(region,fpRegion),relName],
+                    #        shifts = paramShifts,
+                    #    )
+                    #else:
                     param = Models.Param(name,
                         value  = '({})*@0'.format(scale),
                         valueArgs = [name.replace(region,fpRegion)],
@@ -1267,6 +1357,14 @@ class HaaLimits(Limits):
                         # unconstrained for control, FP, but initialized to best fit value
                         value = allintegrals[component]
                         workspace.factory('{}[{},{},{}]'.format(name,value,value*0.5,value*1.5))
+
+        # sum all integrals
+        name = 'integral_bg_{}'.format(region)
+        param = Models.Param(name,
+            value = '+'.join(['@{}'.format(i) for i in range(len(components))]),
+            valueArgs = integral_params,
+        )
+        param.build(workspace,name)
 
         python_mkdir(self.fitsDir)
         jfile = '{}/components_{}.json'.format(self.fitsDir,region)
@@ -1532,10 +1630,14 @@ class HaaLimits(Limits):
     ######################
     def setupDatacard(self, addControl=False, doBinned=False):
         bgs = self.getComponentFractions(self.workspace.pdf('bg_'+self.REGIONS[0]))
-
         bgs = [self.rstrip(b,'_'+self.REGIONS[0]) for b in bgs]
+
         sigs = [self.SPLINENAME] if self.do2D else [self.SPLINENAME.format(h=h) for h in self.HMASSES]
-        self.bgs = bgs
+
+        if self.SPLITBGS:
+            self.bgs = bgs
+        else:
+            self.bgs = ['bg']
         self.sigs = sigs
 
         # setup bins
@@ -1543,7 +1645,6 @@ class HaaLimits(Limits):
             self.addBin(region)
 
         # add processes
-        #self.addProcess('bg')
         for proc in bgs:
             self.addProcess(proc)
 
@@ -1666,7 +1767,10 @@ class HaaLimits(Limits):
         self.sigProcesses = tuple([self.SPLINENAME]) if self.do2D else tuple([self.SPLINENAME.format(h=h) for h in self.HMASSES])
         bgs = self.getComponentFractions(self.workspace.pdf('bg_'+self.REGIONS[0]))
         bgs = [self.rstrip(b,'_'+self.REGIONS[0]) for b in bgs]
-        self.bgProcesses = tuple(bgs)
+        if self.SPLITBGS:
+            self.bgProcesses = tuple(bgs)
+        else:
+            self.bgProcesses = tuple(['bg'])
         self._addLumiSystematic()
         self._addMuonSystematic()
         #self._addTauSystematic()
@@ -1781,8 +1885,10 @@ class HaaLimits(Limits):
     def _addComponentSystematic(self,addControl=False):
         bgs = self.getComponentFractions(self.workspace.pdf('bg_'+self.REGIONS[0]))
         bgs = [self.rstrip(b,'_'+self.REGIONS[0]) for b in bgs]
+        if not self.SPLITBGS:
+            bgs = ['bg']
         bins = self.REGIONS
-        if addControl: bins += ['control']
+        if addControl: bins = bins + ['control']
         syst = {}
         for bg in bgs:
             for b in bins:
@@ -1798,6 +1904,11 @@ class HaaLimits(Limits):
            (tuple(['jpsi2S']),     tuple([self.REGIONS[0]])) : 1.20,
         }
         self.addSystematic('CMS_haa_relNormUnc_{process}', 'lnN', systematics=relativesyst)
+        # These have been defined as params earlier
+        #self.addSystematic('CMS_haa_relNormUnc_upsilon2S', 'param', systematics=[0,1])
+        #self.addSystematic('CMS_haa_relNormUnc_upsilon3S', 'param', systematics=[0,1])
+        #self.addSystematic('CMS_haa_relNormUnc_jpsi2S', 'param', systematics=[0,1])
+
 
     ###################################
     ### Save workspace and datacard ###
@@ -1806,6 +1917,8 @@ class HaaLimits(Limits):
         processes = {}
         bgs = self.getComponentFractions(self.workspace.pdf('bg_'+self.REGIONS[0]))
         bgs = [self.rstrip(b,'_'+self.REGIONS[0]) for b in bgs]
+        if not self.SPLITBGS:
+            bgs = ['bg']
         if self.do2D:
             processes = [self.SPLINENAME] + bgs
         else:

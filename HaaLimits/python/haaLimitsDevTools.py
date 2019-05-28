@@ -32,6 +32,7 @@ ROOT.RooMsgService.instance().setGlobalKillBelow(ROOT.RooFit.WARNING)
 testing = False
 detailed = True
 skipSignal = False
+correlation = False
 
 
 xRange = [2.5,25] # with jpsi
@@ -77,12 +78,14 @@ systLabels = {
 }
 
 shiftTypes = ['pu','fake','btag','tau','MuonEn','TauEn']#,'JetEn','UnclusteredEn']
-#if testing: shiftTypes = ['fake','tau','MuonEn'] if detailed else []
+#shiftTypes = ['pu','fake','btag','tau']#,'MuonEn','TauEn']#,'JetEn','UnclusteredEn']
+#if testing: shiftTypes = ['fake','tau','btag','pu'] if detailed else []
 if testing: shiftTypes = ['fake','tau'] if detailed else []
 #if testing: shiftTypes = ['tau'] if detailed else []
 
 signalShiftTypes = ['pu','btag','tau','MuonEn','TauEn']#,'JetEn','UnclusteredEn']
-#if testing: signalShiftTypes = ['tau','MuonEn'] if detailed else []
+#signalShiftTypes = ['pu','btag','tau']#,'MuonEn','TauEn']#,'JetEn','UnclusteredEn']
+#if testing: signalShiftTypes = ['tau','btag','pu'] if detailed else []
 if testing: signalShiftTypes = ['tau'] if detailed else []
 
 backgroundShiftTypes = ['fake']
@@ -665,6 +668,8 @@ def create_datacard(args):
         logging.error('Unsupported fit vars: ',var)
         raise
     if args.decayMode: haaLimits.REGIONS = modes
+    if 'h' in var:
+        haaLimits.YCORRELATION = correlation
     haaLimits.SHIFTS = [systLabels.get(shift,shift) for shift in shiftTypes]
     haaLimits.SIGNALSHIFTS = [systLabels.get(shift,shift) for shift in signalShiftTypes]
     haaLimits.BACKGROUNDSHIFTS = [systLabels.get(shift,shift) for shift in backgroundShiftTypes]

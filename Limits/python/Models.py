@@ -1287,6 +1287,22 @@ class Sum(Model):
             ws.factory("SUM::{0}({1})".format(label, ', '.join(sumargs)))
         self.params = sumnames
 
+class Expression(Model):
+
+    def __init__(self,name,**kwargs):
+        super(Expression,self).__init__(name,**kwargs)
+
+    def build(self,ws,label):
+        logging.debug('Building {}'.format(label))
+        expr = self.kwargs.pop('expr','')
+        thevars = self.kwargs.pop('variables',[])
+        for tv in thevars:
+            v = self.kwargs.get(tv,'')
+            if not isinstance(v,str): ws.factory('{name}[{vals}]'.format(name=tv, vals=', '.join([str(x) for x in v])))
+        if expr:
+            ws.factory('expr::{name}("{expr}",{thevars})'.format(name=label, expr=expr, thevars=', '.join(thevars)))
+        self.params = thevars
+
 class Prod(Model):
 
     def __init__(self,name,*args,**kwargs):

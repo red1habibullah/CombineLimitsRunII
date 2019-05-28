@@ -40,9 +40,10 @@ class LimitPlotter(PlotterBase):
         super(LimitPlotter, self).__init__('Limits',**kwargs)
         # initialize stuff
 
-    def _getGraphs(xvals,limits,**kwargs):
+    def _getGraphs(self,xvals,limits,**kwargs):
         xVar = kwargs.pop('xVar',None)
         smooth = kwargs.pop('smooth',False)
+        model = kwargs.pop('model',None)
 
         n = len(xvals)
         twoSigma = ROOT.TGraph(2*n)
@@ -142,11 +143,11 @@ class LimitPlotter(PlotterBase):
                     expected.SetPoint(     i+1,   expectedSmooth.GetX()[i+1],         math.exp(expectedSmooth.GetY()[i+1]))
             # smooth linear
             else:
-                twoSigmaSmooth_low    = twoSigmaSmoother_low.SmoothKern( twoSigma_low, 'normal',0.3,n)
-                twoSigmaSmooth_high   = twoSigmaSmoother_high.SmoothKern(twoSigma_high,'normal',0.3,n)
-                oneSigmaSmooth_low    = oneSigmaSmoother_low.SmoothKern( oneSigma_low, 'normal',0.3,n)
-                oneSigmaSmooth_high   = oneSigmaSmoother_high.SmoothKern(oneSigma_high,'normal',0.3,n)
-                expectedSmooth        = expectedSmoother.SmoothKern(     expected,     'normal',0.3,n)
+                twoSigmaSmooth_low    = twoSigmaSmoother_low.SmoothKern( twoSigma_low, 'normal',1.3,n) # originally 0.3, increased to smooth out highmass
+                twoSigmaSmooth_high   = twoSigmaSmoother_high.SmoothKern(twoSigma_high,'normal',1.3,n)
+                oneSigmaSmooth_low    = oneSigmaSmoother_low.SmoothKern( oneSigma_low, 'normal',1.3,n)
+                oneSigmaSmooth_high   = oneSigmaSmoother_high.SmoothKern(oneSigma_high,'normal',1.3,n)
+                expectedSmooth        = expectedSmoother.SmoothKern(     expected,     'normal',1.3,n)
                 #twoSigmaSmooth_low    = twoSigmaSmoother_low.SmoothLowess(twoSigma_low,  '',0.1)
                 #twoSigmaSmooth_high   = twoSigmaSmoother_high.SmoothLowess(twoSigma_high,'',0.1)
                 #oneSigmaSmooth_low    = oneSigmaSmoother_low.SmoothLowess(oneSigma_low,  '',0.1)
@@ -160,7 +161,7 @@ class LimitPlotter(PlotterBase):
                 for i in range(n-2):
                     x = twoSigmaSmooth_high.GetX()[i+1]
                     if x>3 and x<4: continue # jpsi
-                    if x>9 and x<11: continue # upsilon
+                    if x>8.5 and x<11.5: continue # upsilon
                     twoSigma_high.SetPoint(i+1,   twoSigmaSmooth_high.GetX()[i+1],    twoSigmaSmooth_high.GetY()[i+1])
                     twoSigma_low.SetPoint( i+1,   twoSigmaSmooth_low.GetX()[i+1],     twoSigmaSmooth_low.GetY()[i+1])
                     oneSigma_high.SetPoint(i+1,   oneSigmaSmooth_high.GetX()[i+1],    oneSigmaSmooth_high.GetY()[i+1])
@@ -185,12 +186,6 @@ class LimitPlotter(PlotterBase):
         expected.SetFillStyle(0)
         observed.SetMarkerStyle(0)
         observed.SetFillStyle(0)
-
-        expected.GetXaxis().SetLimits(xvals[0],xvals[-1])
-        expected.GetXaxis().SetTitle(xaxis)
-        expected.GetYaxis().SetTitle(yaxis)
-        expected.GetYaxis().SetTitleSize(0.05)
-        expected.GetYaxis().SetTitleOffset(1.6)
 
 
         return expected, oneSigma, twoSigma, observed
@@ -224,7 +219,13 @@ class LimitPlotter(PlotterBase):
 
         limits = quartiles
 
-        expected, oneSigma, twoSigma, observed = self._getGraphs(xvals,limits,xVar=xVar,smooth=smooth)
+        expected, oneSigma, twoSigma, observed = self._getGraphs(xvals,limits,xVar=xVar,smooth=smooth,model=model)
+
+        expected.GetXaxis().SetLimits(xvals[0],xvals[-1])
+        expected.GetXaxis().SetTitle(xaxis)
+        expected.GetYaxis().SetTitle(yaxis)
+        expected.GetYaxis().SetTitleSize(0.05)
+        expected.GetYaxis().SetTitleOffset(1.6)
 
         expected.Draw()
         if ymin is not None: expected.SetMinimum(ymin)
@@ -590,6 +591,7 @@ class LimitPlotter(PlotterBase):
         xaxis = kwargs.pop('xaxis','x')
         yaxis = kwargs.pop('yaxis','95% CL upper limit on #sigma/#sigma_{model}')
         legendtitle = kwargs.pop('legendtitle','95% CL upper limits')
+        drawlines = kwargs.pop('drawlines',True)
         blind = kwargs.pop('blind',True)
         lumipos = kwargs.pop('lumipos',11)
         isprelim = kwargs.pop('isprelim',True)
@@ -617,13 +619,22 @@ class LimitPlotter(PlotterBase):
         expected = {}
         observed = {}
 
+        lines = {}
+        ratiounity = {}
+
         for ilim, (xvals, quartiles) in enumerate(zip(xvalsMulti, quartilesMulti)):
 
             limits = quartiles
-            expected[ilim], oneSigma[ilim], twoSigma[ilim], observed[ilim] = self._getGraphs(xvals,limits,xVar=xVar,smooth=smooth)
+            expected[ilim], oneSigma[ilim], twoSigma[ilim], observed[ilim] = self._getGraphs(xvals,limits,xVar=xVar,smooth=smooth,model=model)
 
             if ilim==0:
+                expected[ilim].GetXaxis().SetLimits(xvalsMulti[0][0],xvalsMulti[-1][-1])
+                expected[ilim].GetXaxis().SetTitle(xaxis)
+                expected[ilim].GetYaxis().SetTitle(yaxis)
+                expected[ilim].GetYaxis().SetTitleSize(0.05)
+                expected[ilim].GetYaxis().SetTitleOffset(1.6)
                 expected[ilim].Draw()
+
                 if ymin is not None: expected[ilim].SetMinimum(ymin)
                 if ymax is not None: expected[ilim].SetMaximum(ymax)
             twoSigma[ilim].Draw('f')
@@ -644,8 +655,13 @@ class LimitPlotter(PlotterBase):
 
             if not blind: observed[ilim].Draw('same')
 
-            ratiounity = ROOT.TLine(expected[ilim].GetXaxis().GetXmin(),1,expected[ilim].GetXaxis().GetXmax(),1)
-            if plotunity: ratiounity.Draw()
+            ratiounity[ilim] = ROOT.TLine(expected[ilim].GetXaxis().GetXmin(),1,expected[ilim].GetXaxis().GetXmax(),1)
+            if plotunity: ratiounity[ilim].Draw()
+
+            if drawlines and ilim:
+                lines[ilim] = ROOT.TLine(xvals[0],expected[0].GetMinimum(),xvals[0],expected[0].GetMaximum())
+                lines[ilim].SetLineStyle(2)
+                lines[ilim].Draw()
 
         # get the legend
         entries = [

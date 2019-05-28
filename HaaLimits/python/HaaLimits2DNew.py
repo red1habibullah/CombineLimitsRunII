@@ -32,6 +32,7 @@ class HaaLimits2D(HaaLimits):
     YBINNING = 950
     YLABEL = 'm_{#mu#mu#tau_{#mu}#tau_{h}}'
     YVAR = 'CMS_haa_y'
+    YCORRELATION = False
 
     def __init__(self,histMap,tag='',do2DInterpolation=False,doParamFit=False):
         '''
@@ -75,80 +76,156 @@ class HaaLimits2D(HaaLimits):
 
         # h
         if self.YRANGE[1]>100:
+            nameE = 'erf{}'.format('_'+tag if tag else '')
 
-            #nameE = 'erf{}'.format('_'+tag if tag else '')
-            #erf = Models.Erf('erf1',
+            if self.YCORRELATION:
+                # build the correlation model for the y variable parameters
+                erfShiftName = kwargs.pop('erfShift_{}'.format(nameE),'erfShift_{}'.format(nameE))
+                erfShiftA0Name = 'erfShiftA0{}'.format('_'+tag if tag else '')
+                erfShiftA0 = kwargs.pop(erfShiftA0Name,[47,10,200])
+                if isinstance(erfShiftA0,str): erfShiftA0Name = erfShiftA0
+                erfShiftA1Name = 'erfShiftA1{}'.format('_'+tag if tag else '')
+                erfShiftA1 = kwargs.pop(erfShiftA1Name,[0.7,0,2])
+                if isinstance(erfShiftA1,str): erfShiftA1Name = erfShiftA1
+                erfShiftExpr = Models.Expression(erfShiftName,
+                    expr = '{x}*{a1}+{a0}'.format(x=xVar,a0=erfShiftA0Name,a1=erfShiftA1Name),
+                    variables = [xVar,erfShiftA1Name,erfShiftA0Name],
+                    **{
+                        xVar: xVar,
+                        erfShiftA1Name: erfShiftA1,
+                        erfShiftA0Name: erfShiftA0,
+                    }
+                )
+                erfShiftExpr.build(workspace,erfShiftName)
+
+                #erfScaleName = kwargs.pop('erfScale_{}'.format(nameE),'erfScale_{}'.format(nameE))
+                #erfScaleA0Name = 'erfScaleA0{}'.format('_'+tag if tag else '')
+                #erfScaleA0 = kwargs.pop(erfScaleA0Name,[0.06,0.005,5])
+                #if isinstance(erfScaleA0,str): erfScaleA0Name = erfScaleA0
+                #erfScaleA1Name = 'erfScaleA1{}'.format('_'+tag if tag else '')
+                #erfScaleA1 = kwargs.pop(erfScaleA1Name,[0,-0.01,0.01])
+                #if isinstance(erfScaleA1,str): erfScaleA1Name = erfScaleA1
+                #erfScaleExpr = Models.Expression(erfScaleName,
+                #    expr = '{x}*{a1}+{a0}'.format(x=xVar,a0=erfScaleA0Name,a1=erfScaleA1Name),
+                #    variables = [xVar,erfScaleA1Name,erfScaleA0Name],
+                #    **{
+                #        xVar: xVar,
+                #        erfScaleA1Name: erfScaleA1,
+                #        erfScaleA0Name: erfScaleA0,
+                #    }
+                #)
+                #erfScaleExpr.build(workspace,erfScaleName)
+
+
+                erf = Models.Erf('erf1',
+                    x = yVar,
+                    #erfScale = erfScaleName,
+                    erfScale = kwargs.pop('erfScale_{}'.format(nameE), [0.06,0,10]),
+                    erfShift = erfShiftName,
+                    #erfShift = kwargs.pop('erfShift_{}'.format(nameE), [65,10,200]),
+                )
+                erf.build(workspace,nameE)
+
+            else:
+                erf = Models.Erf('erf1',
+                    x = yVar,
+                    erfScale = kwargs.pop('erfScale_{}'.format(nameE), [0.05,0,10]),
+                    erfShift = kwargs.pop('erfShift_{}'.format(nameE), [70,10,200]),
+                )
+                erf.build(workspace,nameE)
+
+            nameC = 'conty{}'.format('_'+tag if tag else '')
+            if self.YCORRELATION:
+                #lambdaName = kwargs.pop('lambda_{}'.format(nameC),'lambda_{}'.format(nameC))
+                #lambdaA0Name = 'lambdaA0{}'.format('_'+tag if tag else '')
+                #lambdaA0 = kwargs.pop(lambdaA0Name,[-0.025,-1,-0.001])
+                #if isinstance(lambdaA0,str): lambdaA0Name = lambdaA0
+                #lambdaA1Name = 'lambdaA1{}'.format('_'+tag if tag else '')
+                #lambdaA1 = kwargs.pop(lambdaA1Name,[0,-0.002,0.002])
+                #if isinstance(lambdaA1,str): lambdaA1Name = lambdaA1
+                #lambdaExpr = Models.Expression(lambdaName,
+                #    expr = '{x}*{a1}+{a0}'.format(x=xVar,a0=lambdaA0Name,a1=lambdaA1Name),
+                #    variables = [xVar,lambdaA1Name,lambdaA0Name],
+                #    **{
+                #        xVar: xVar,
+                #        lambdaA1Name: lambdaA1,
+                #        lambdaA0Name: lambdaA0,
+                #    }
+                #)
+                #lambdaExpr.build(workspace,lambdaName)
+
+                cont = Models.Exponential('conty',
+                    x = yVar,
+                    #lamb = lambdaName,
+                    lamb = kwargs.pop('lambda_{}'.format(nameC), [-0.025,-1,-0.001]),
+                )
+                cont.build(workspace,nameC)
+
+            else:
+                cont = Models.Exponential('conty',
+                    x = yVar,
+                    lamb = kwargs.pop('lambda_{}'.format(nameC), [-0.05,-1,0]),
+                )
+                cont.build(workspace,nameC)
+
+            bg = Models.Prod('bg',
+                nameE,
+                nameC,
+            )
+
+            # Double exponential
+            #nameE1 = 'erf1{}'.format('_'+tag if tag else '')
+            #erf1 = Models.Erf('erf1',
             #    x = yVar,
-            #    erfScale = kwargs.pop('erfScale_{}'.format(nameE), [0.05,0,10]),
-            #    erfShift = kwargs.pop('erfShift_{}'.format(nameE), [70,10,200]),
-            #    #erfShift = nameP1,
+            #    erfScale = kwargs.pop('erfScale_{}'.format(nameE1), [0.05,0,10]),
+            #    erfShift = kwargs.pop('erfShift_{}'.format(nameE1), [70,10,200]),
             #)
-            #erf.build(workspace,nameE)
+            #erf1.build(workspace,nameE1)
 
-            #nameC = 'conty{}'.format('_'+tag if tag else '')
-            #cont = Models.Exponential('conty',
+            #nameC1 = 'conty1{}'.format('_'+tag if tag else '')
+            #cont1 = Models.Exponential('conty1',
             #    x = yVar,
-            #    lamb = kwargs.pop('lambda_{}'.format(nameC), [-0.05,-1,0]),
+            #    lamb = kwargs.pop('lambda_{}'.format(nameC1), [-0.05,-1,0]),
             #)
-            #cont.build(workspace,nameC1)
+            #cont1.build(workspace,nameC1)
 
-            #bg = Models.Prod('bg',
-            #    nameE,
-            #    nameC,
+            #bg1 = Models.Prod('bg',
+            #    nameE1,
+            #    nameC1,
             #)
+            #nameB1 = 'bg1{}'.format('_'+tag if tag else '')
+            #bg1.build(workspace,nameB1)
 
-            nameE1 = 'erf1{}'.format('_'+tag if tag else '')
-            erf1 = Models.Erf('erf1',
-                x = yVar,
-                erfScale = kwargs.pop('erfScale_{}'.format(nameE1), [0.05,0,10]),
-                erfShift = kwargs.pop('erfShift_{}'.format(nameE1), [70,10,200]),
-            )
-            erf1.build(workspace,nameE1)
+            #nameE2 = 'erf2{}'.format('_'+tag if tag else '')
+            #erf2 = Models.Erf('erf2',
+            #    x = yVar,
+            #    #erfScale = kwargs.pop('erfScale_{}'.format(nameE2), [0.05,0,10]),
+            #    #erfShift = kwargs.pop('erfShift_{}'.format(nameE2), [70,10,200]),
+            #    erfScale = kwargs.pop('erfScale_{}'.format(nameE1),'erfScale_{}'.format(nameE1)),
+            #    erfShift = kwargs.pop('erfShift_{}'.format(nameE1),'erfShift_{}'.format(nameE1)),
+            #)
+            #erf2.build(workspace,nameE2)
 
-            nameC1 = 'conty1{}'.format('_'+tag if tag else '')
-            cont1 = Models.Exponential('conty1',
-                x = yVar,
-                lamb = kwargs.pop('lambda_{}'.format(nameC1), [-0.05,-1,0]),
-            )
-            cont1.build(workspace,nameC1)
+            #nameC2 = 'conty2{}'.format('_'+tag if tag else '')
+            #cont2 = Models.Exponential('conty2',
+            #    x = yVar,
+            #    lamb = kwargs.pop('lambda_{}'.format(nameC2), [-0.025,-1,0]),
+            #)
+            #cont2.build(workspace,nameC2)
 
-            bg1 = Models.Prod('bg',
-                nameE1,
-                nameC1,
-            )
-            nameB1 = 'bg1{}'.format('_'+tag if tag else '')
-            bg1.build(workspace,nameB1)
+            #bg2 = Models.Prod('bg',
+            #    nameE2,
+            #    nameC2,
+            #)
+            #nameB2 = 'bg2{}'.format('_'+tag if tag else '')
+            #bg2.build(workspace,nameB2)
 
-            nameE2 = 'erf2{}'.format('_'+tag if tag else '')
-            erf2 = Models.Erf('erf2',
-                x = yVar,
-                #erfScale = kwargs.pop('erfScale_{}'.format(nameE2), [0.05,0,10]),
-                #erfShift = kwargs.pop('erfShift_{}'.format(nameE2), [70,10,200]),
-                erfScale = kwargs.pop('erfScale_{}'.format(nameE1),'erfScale_{}'.format(nameE1)),
-                erfShift = kwargs.pop('erfShift_{}'.format(nameE1),'erfShift_{}'.format(nameE1)),
-            )
-            erf2.build(workspace,nameE2)
-
-            nameC2 = 'conty2{}'.format('_'+tag if tag else '')
-            cont2 = Models.Exponential('conty2',
-                x = yVar,
-                lamb = kwargs.pop('lambda_{}'.format(nameC2), [-0.025,-1,0]),
-            )
-            cont2.build(workspace,nameC2)
-
-            bg2 = Models.Prod('bg',
-                nameE2,
-                nameC2,
-            )
-            nameB2 = 'bg2{}'.format('_'+tag if tag else '')
-            bg2.build(workspace,nameB2)
-
-            bg = Models.Sum('bg',
-                **{
-                    nameB1: [0.95,0,1],
-                    nameB2: [0.05,0,1],
-                }
-            )
+            #bg = Models.Sum('bg',
+            #    **{
+            #        nameB1: [0.95,0,1],
+            #        nameB2: [0.05,0,1],
+            #    }
+            #)
         else:
             # Landau only
             #bg = Models.Landau('bg',
@@ -310,65 +387,134 @@ class HaaLimits2D(HaaLimits):
         # build the y variable
         self._buildYModel(region+'_y',workspace=workspace,**kwargs)
 
+        xVar = kwargs.pop('xVar',self.XVAR)
+        yVar = kwargs.pop('yVar',self.YVAR)
+
         # the 2D model
-        cont1 = Models.Prod('cont1',
-            'cont1_{}_x'.format(region),
-            'bg_{}_y'.format(region),
-        )
-        name = 'cont1_{}_xy'.format(region)
-        cont1.build(workspace,name)
+        if self.YCORRELATION:
+            if self.XRANGE[0]<4:
+                cont1 = Models.Prod('cont1',
+                    'bg_{}_y|{}'.format(region,xVar),
+                    'cont1_{}_x'.format(region),
+                )
+                name = 'cont1_{}_xy'.format(region)
+                cont1.build(workspace,name)
 
-        cont2 = Models.Prod('cont2',
-            'cont2_{}_x'.format(region),
-            'bg_{}_y'.format(region),
-        )
-        name = 'cont2_{}_xy'.format(region)
-        cont2.build(workspace,name)
+                cont2 = Models.Prod('cont2',
+                    'bg_{}_y|{}'.format(region,xVar),
+                    'cont2_{}_x'.format(region),
+                )
+                name = 'cont2_{}_xy'.format(region)
+                cont2.build(workspace,name)
+            else:
+                cont = Models.Prod('cont',
+                    'bg_{}_y|{}'.format(region,xVar),
+                    'cont_{}_x'.format(region),
+                )
+                name = 'cont_{}_xy'.format(region)
+                cont.build(workspace,name)
 
-        jpsi1S = Models.Prod('jpsi1S',
-            #'jpsi1S',
-            'jpsi1S_{}_x'.format(region),
-            'bg_{}_y'.format(region),
-        )
-        name = 'jpsi1S_{}_xy'.format(region)
-        jpsi1S.build(workspace,name)
+            jpsi1S = Models.Prod('jpsi1S',
+                'bg_{}_y|{}'.format(region,xVar),
+                'jpsi1S_{}_x'.format(region),
+            )
+            name = 'jpsi1S_{}_xy'.format(region)
+            jpsi1S.build(workspace,name)
   
-        jpsi2S = Models.Prod('jpsi2S',
-            #'jpsi2S',
-            'jpsi2S_{}_x'.format(region),
-            'bg_{}_y'.format(region),
-        )
-        name = 'jpsi2S_{}_xy'.format(region)
-        jpsi2S.build(workspace,name)
+            jpsi2S = Models.Prod('jpsi2S',
+                'bg_{}_y|{}'.format(region,xVar),
+                'jpsi2S_{}_x'.format(region),
+            )
+            name = 'jpsi2S_{}_xy'.format(region)
+            jpsi2S.build(workspace,name)
 
-        upsilon1S = Models.Prod('upsilon1S',
-            #'upsilon1S',
-            'upsilon1S_{}_x'.format(region),
-            'bg_{}_y'.format(region),
-        )
-        name = 'upsilon1S_{}_xy'.format(region)
-        upsilon1S.build(workspace,name)
+            upsilon1S = Models.Prod('upsilon1S',
+                'bg_{}_y|{}'.format(region,xVar),
+                'upsilon1S_{}_x'.format(region),
+            )
+            name = 'upsilon1S_{}_xy'.format(region)
+            upsilon1S.build(workspace,name)
 
-        upsilon2S = Models.Prod('upsilon2S',
-            #'upsilon2S',
-            'upsilon2S_{}_x'.format(region),
-            'bg_{}_y'.format(region),
-        )
-        name = 'upsilon2S_{}_xy'.format(region)
-        upsilon2S.build(workspace,name)
+            upsilon2S = Models.Prod('upsilon2S',
+                'bg_{}_y|{}'.format(region,xVar),
+                'upsilon2S_{}_x'.format(region),
+            )
+            name = 'upsilon2S_{}_xy'.format(region)
+            upsilon2S.build(workspace,name)
 
-        upsilon3S = Models.Prod('upsilon3S',
-            #'upsilon3S',
-            'upsilon3S_{}_x'.format(region),
-            'bg_{}_y'.format(region),
-        )
-        name = 'upsilon3S_{}_xy'.format(region)
-        upsilon3S.build(workspace,name)
+            upsilon3S = Models.Prod('upsilon3S',
+                'bg_{}_y|{}'.format(region,xVar),
+                'upsilon3S_{}_x'.format(region),
+            )
+            name = 'upsilon3S_{}_xy'.format(region)
+            upsilon3S.build(workspace,name)
 
-        bg = Models.Prod('bg',
-            'bg_{}_x'.format(region),
-            'bg_{}_y'.format(region),
-        )
+            bg = Models.Prod('bg',
+                'bg_{}_y|{}'.format(region,xVar),
+                'bg_{}_x'.format(region),
+            )
+        else:
+            if self.XRANGE[0]<4:
+                cont1 = Models.Prod('cont1',
+                    'cont1_{}_x'.format(region),
+                    'bg_{}_y'.format(region),
+                )
+                name = 'cont1_{}_xy'.format(region)
+                cont1.build(workspace,name)
+
+                cont2 = Models.Prod('cont2',
+                    'cont2_{}_x'.format(region),
+                    'bg_{}_y'.format(region),
+                )
+                name = 'cont2_{}_xy'.format(region)
+                cont2.build(workspace,name)
+            else:
+                cont = Models.Prod('cont',
+                    'cont_{}_x'.format(region),
+                    'bg_{}_y'.format(region),
+                )
+                name = 'cont_{}_xy'.format(region)
+                cont.build(workspace,name)
+
+            jpsi1S = Models.Prod('jpsi1S',
+                'jpsi1S_{}_x'.format(region),
+                'bg_{}_y'.format(region),
+            )
+            name = 'jpsi1S_{}_xy'.format(region)
+            jpsi1S.build(workspace,name)
+  
+            jpsi2S = Models.Prod('jpsi2S',
+                'jpsi2S_{}_x'.format(region),
+                'bg_{}_y'.format(region),
+            )
+            name = 'jpsi2S_{}_xy'.format(region)
+            jpsi2S.build(workspace,name)
+
+            upsilon1S = Models.Prod('upsilon1S',
+                'upsilon1S_{}_x'.format(region),
+                'bg_{}_y'.format(region),
+            )
+            name = 'upsilon1S_{}_xy'.format(region)
+            upsilon1S.build(workspace,name)
+
+            upsilon2S = Models.Prod('upsilon2S',
+                'upsilon2S_{}_x'.format(region),
+                'bg_{}_y'.format(region),
+            )
+            name = 'upsilon2S_{}_xy'.format(region)
+            upsilon2S.build(workspace,name)
+
+            upsilon3S = Models.Prod('upsilon3S',
+                'upsilon3S_{}_x'.format(region),
+                'bg_{}_y'.format(region),
+            )
+            name = 'upsilon3S_{}_xy'.format(region)
+            upsilon3S.build(workspace,name)
+
+            bg = Models.Prod('bg',
+                'bg_{}_x'.format(region),
+                'bg_{}_y'.format(region),
+            )
         name = 'bg_{}_xy'.format(region)
         bg.build(workspace,name)
 
@@ -2286,6 +2432,7 @@ class HaaLimits2D(HaaLimits):
         self.sigProcesses = tuple([self.SPLINENAME.format(h=h) for h in self.HMASSES])
         bgs = self.getComponentFractions(self.workspace.pdf('bg_{}_x'.format(self.REGIONS[0])))
         bgs = [self.rstrip(b,'_'+self.REGIONS[0]) for b in bgs]
+        if not self.SPLITBGS: bgs = ['bg']
         self.bgProcesses = bgs
         self._addLumiSystematic()
         self._addMuonSystematic()
@@ -2296,6 +2443,15 @@ class HaaLimits2D(HaaLimits):
         self._addHiggsSystematic()
         self._addAcceptanceSystematic()
         if not doBinned and not addControl: self._addControlSystematics()
+        if self.YRANGE[1] > 100: self._addHModelSystematic()
+
+    def _addHModelSystematic(self):
+
+        syst = {}
+        if 125 in self.HMASSES: syst[((self.SPLINENAME.format(h=125),), tuple(self.REGIONS))] = 1.0
+        if 300 in self.HMASSES: syst[((self.SPLINENAME.format(h=300),), tuple(self.REGIONS))] = 1.05
+        if 750 in self.HMASSES: syst[((self.SPLINENAME.format(h=750),), tuple(self.REGIONS))] = 2.3
+        self.addSystematic('CMS_haa_model_bias','lnN',systematics=syst)
 
 
     ###################################
@@ -2306,6 +2462,7 @@ class HaaLimits2D(HaaLimits):
         bgs = self.getComponentFractions(self.workspace.pdf('bg_{}_x'.format(self.REGIONS[0])))
         bgs = [self.rstrip(b,'_x') for b in bgs]
         bgs = [self.rstrip(b,'_'+self.REGIONS[0]) for b in bgs]
+        if not self.SPLITBGS: bgs = ['bg']
         if self.do2D:
             processes = [self.SPLINENAME] + bgs
         else:
