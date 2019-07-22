@@ -34,6 +34,7 @@ detailed = True
 skipSignal = False
 correlation = False
 
+subtractSR = True
 
 xRange = [2.5,25] # with jpsi
 
@@ -613,10 +614,23 @@ def create_datacard(args):
             for proc in backgrounds:
                 logging.info('Getting {} {}'.format(proc,shift))
                 if proc=='datadriven':
-                    histMap[mode][shiftLabel][proc] = getControlHist('data',doUnbinned=doUnbinned,var=var,wrappers=wrappers_mm)
+                    hist = getControlHist('data',doUnbinned=False,var=var,wrappers=wrappers_mm)
+                    if subtractSR:
+                        # subtract off the signal region and sideband from the control region
+                        for mode2 in modes:
+                            histsub = getHist('data',doUnbinned=False,var=var,wrappers=wrappers,do2D=False,chi2Mass=chi2Mass,**regionArgs[mode2])
+                            histsub.Rebin(histsub.GetNbinsX()/hist.GetNbinsX())
+                            hist.Add(histsub,-1)
+                    histMap[mode][shiftLabel][proc] = hist
             if shift: continue
             logging.info('Getting observed')
-            hist = getControlHist('data',doUnbinned=doUnbinned,var=var,wrappers=wrappers_mm)
+            hist = getControlHist('data',doUnbinned=False,var=var,wrappers=wrappers_mm)
+            if subtractSR:
+                # subtract off the signal region and sideband from the control region
+                for mode2 in modes:
+                    histsub = getHist('data',doUnbinned=False,var=var,wrappers=wrappers,do2D=False,chi2Mass=chi2Mass,**regionArgs[mode2])
+                    histsub.Rebin(histsub.GetNbinsX()/hist.GetNbinsX())
+                    hist.Add(histsub,-1)
             j+=1
             histMap[mode][shiftLabel]['data'] = hist.Clone('hist'+str(j))
             j+=1

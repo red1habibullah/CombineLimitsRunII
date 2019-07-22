@@ -569,7 +569,10 @@ class Chebychev(Model):
         order = self.kwargs.get('order',1)
         params = ['p{}_{}'.format(o,label) for o in range(order)]
         ranges = [self.kwargs.get('p{}'.format(o),[0,-1,1]) for o in range(order)]
-        ws.factory('Chebychev::{}({}, {{ {} }})'.format(label, self.x, ', '.join(['{}[{}]'.format(p,','.join([str(r) for r in rs])) for p,rs in zip(params,ranges)])))
+        for p,rs in zip(params,ranges):
+            ws.factory('{}[{}]'.format(p,', '.join([str(r) for r in rs])))
+        #ws.factory('Chebychev::{}({}, {{ {} }})'.format(label, self.x, ', '.join(['{}[{}]'.format(p,','.join([str(r) for r in rs])) for p,rs in zip(params,ranges)])))
+        ws.factory('Chebychev::{}({}, {{ {} }})'.format(label, self.x, ', '.join(params)))
         self.params = params
 
 class ChebychevSpline(ModelSpline):

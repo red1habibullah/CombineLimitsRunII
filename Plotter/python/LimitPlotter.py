@@ -219,6 +219,7 @@ class LimitPlotter(PlotterBase):
         xVar = kwargs.pop('x',None)
         overlay = kwargs.pop('overlay',None)
         overlayLabels = kwargs.pop('overlayLabels',None)
+        additionaltext = kwargs.pop('additionaltext','')
 
         logging.info('Plotting {0}'.format(savename))
 
@@ -278,6 +279,20 @@ class LimitPlotter(PlotterBase):
             legendOverlay = self._getLegend(entries=entries,numcol=1,position=32)
             legendOverlay.Draw()
 
+        if additionaltext:
+            nlines = 1 if isinstance(additionaltext,str) else len(additionaltext)
+            text = ROOT.TPaveText(0.20,0.90-nlines*0.04,0.45,0.92,'NB NDC')
+            text.SetTextFont(42)
+            text.SetBorderSize(0)
+            text.SetFillColor(0)
+            text.SetTextAlign(11)
+            if isinstance(additionaltext,list):
+                for addt in additionaltext:
+                    text.AddText(addt)
+            else:
+                text.AddText(additionaltext)
+            text.Draw()
+
         # cms lumi styling
         self._setStyle(canvas,position=lumipos,preliminary=isprelim)
 
@@ -289,7 +304,7 @@ class LimitPlotter(PlotterBase):
         yaxis = kwargs.pop('yaxis','95% CL upper limit on #sigma/#sigma_{model}')
         legendtitle = kwargs.pop('legendtitle','95% CL upper limits')
         blind = kwargs.pop('blind',True)
-        lumipos = kwargs.pop('lumipos',11)
+        lumipos = kwargs.pop('lumipos',0)
         isprelim = kwargs.pop('isprelim',True)
         legendpos = kwargs.pop('legendpos',31)
         numcol = kwargs.pop('numcol',1)
@@ -302,6 +317,7 @@ class LimitPlotter(PlotterBase):
         ymin = kwargs.pop('ymin',1e-2)
         ymax = kwargs.pop('ymax',10)
         expectedBands = kwargs.pop('expectedBands', [])
+        additionaltext = kwargs.pop('additionaltext','')
 
         logging.info('Plotting {0}'.format(savename))
 
@@ -393,10 +409,24 @@ class LimitPlotter(PlotterBase):
         entries = [[expected, 'Expected Exclusion','l']]
         if not blind:
             entries += [[observed, 'Observed Exclusion','l']]
-        entries += [[lines[i],'BR(H #rightarrow aa) = {}'.format(eb),'l'] for i,eb in enumerate(expectedBands)]
+        entries += [[lines[i],'B(H #rightarrow aa) = {}'.format(eb),'l'] for i,eb in enumerate(expectedBands)]
         #legend = self._getLegend(entries=entries,numcol=1,position=24,title=legendtitle)
-        legend = self._getLegend(entries=entries,numcol=1,position=[0.55,0.15,0.96,0.40],title=legendtitle)
+        legend = self._getLegend(entries=entries,numcol=1,position=[0.52,0.15,0.96,0.45],title=legendtitle)
         legend.Draw()
+
+        if additionaltext:
+            nlines = 1 if isinstance(additionaltext,str) else len(additionaltext)
+            text = ROOT.TPaveText(0.20,0.90-nlines*0.04,0.45,0.92,'NB NDC')
+            text.SetTextFont(42)
+            text.SetBorderSize(0)
+            text.SetFillColor(0)
+            text.SetTextAlign(11)
+            if isinstance(additionaltext,list):
+                for addt in additionaltext:
+                    text.AddText(addt)
+            else:
+                text.AddText(additionaltext)
+            text.Draw()
 
         # manually add the 1 sigma bands
         leg_one_low  = ROOT.TGraph(2,array('d',[11.72,12.91]),array('d',[8.84,8.84]))
@@ -443,7 +473,7 @@ class LimitPlotter(PlotterBase):
         yaxis = kwargs.pop('yaxis','95% CL upper limit on #sigma/#sigma_{model}')
         legendtitle = kwargs.pop('legendtitle','95% CL upper limits')
         blind = kwargs.pop('blind',True)
-        lumipos = kwargs.pop('lumipos',11)
+        lumipos = kwargs.pop('lumipos',0)
         isprelim = kwargs.pop('isprelim',True)
         legendpos = kwargs.pop('legendpos',31)
         numcol = kwargs.pop('numcol',1)
@@ -456,6 +486,7 @@ class LimitPlotter(PlotterBase):
         ymin = kwargs.pop('ymin',1e-2)
         ymax = kwargs.pop('ymax',10)
         expectedBands = kwargs.pop('expectedBands', [])
+        additionaltext = kwargs.pop('additionaltext','')
 
         logging.info('Plotting {0}'.format(savename))
 
@@ -564,10 +595,25 @@ class LimitPlotter(PlotterBase):
         entries = [[expected[0], 'Expected Exclusion','l']]
         if not blind:
             entries += [[observed[0], 'Observed Exclusion','l']]
-        entries += [[lines[i],'BR(H #rightarrow aa) = {}'.format(eb),'l'] for i,eb in enumerate(expectedBands)]
+        entries += [[lines[i],'B(H #rightarrow aa) = {}'.format(eb),'l'] for i,eb in enumerate(expectedBands)]
         #legend = self._getLegend(entries=entries,numcol=1,position=24,title=legendtitle)
-        legend = self._getLegend(entries=entries,numcol=1,position=[0.55,0.15,0.96,0.40],title=legendtitle)
+        legend = self._getLegend(entries=entries,numcol=1,position=[0.52,0.15,0.96,0.45],title=legendtitle)
         legend.Draw()
+
+        if additionaltext:
+            nlines = 1 if isinstance(additionaltext,str) else len(additionaltext)
+            text = ROOT.TPaveText(0.20,0.90-nlines*0.04,0.45,0.92,'NB NDC')
+            text.SetTextFont(42)
+            text.SetBorderSize(0)
+            text.SetFillColor(0)
+            text.SetTextAlign(11)
+            if isinstance(additionaltext,list):
+                for addt in additionaltext:
+                    text.AddText(addt)
+            else:
+                text.AddText(additionaltext)
+            text.Draw()
+
 
         # manually add the 1 sigma bands
         leg_one_low  = ROOT.TGraph(2,array('d',[11.72,12.91]),array('d',[8.84,8.84]))
@@ -587,6 +633,7 @@ class LimitPlotter(PlotterBase):
         leg_two_high.SetLineStyle(6)
         leg_two_high.SetLineWidth(2)
         #leg_two_high.Draw('same')
+
 
         # cms lumi styling
         self._setStyle(canvas,position=lumipos,preliminary=isprelim)
@@ -637,6 +684,7 @@ class LimitPlotter(PlotterBase):
         xVar = kwargs.pop('x',None)
         overlay = kwargs.pop('overlay',None)
         overlayLabels = kwargs.pop('overlayLabels',None)
+        additionaltext = kwargs.pop('additionaltext','')
 
         logging.info('Plotting {0}'.format(savename))
 
@@ -711,6 +759,20 @@ class LimitPlotter(PlotterBase):
             legendOverlay = self._getLegend(entries=entries,numcol=1,position=32)
             legendOverlay.Draw()
 
+        if additionaltext:
+            nlines = 1 if isinstance(additionaltext,str) else len(additionaltext)
+            text = ROOT.TPaveText(0.20,0.90-nlines*0.04,0.45,0.92,'NB NDC')
+            text.SetTextFont(42)
+            text.SetBorderSize(0)
+            text.SetFillColor(0)
+            text.SetTextAlign(11)
+            if isinstance(additionaltext,list):
+                for addt in additionaltext:
+                    text.AddText(addt)
+            else:
+                text.AddText(additionaltext)
+            text.Draw()
+
         # cms lumi styling
         self._setStyle(canvas,position=lumipos,preliminary=isprelim)
 
@@ -723,7 +785,7 @@ class LimitPlotter(PlotterBase):
         zaxis = kwargs.pop('zaxis','95% CL upper limit on #sigma/#sigma_{model}')
         legendtitle = kwargs.pop('legendtitle','95% CL upper limits')
         blind = kwargs.pop('blind',True)
-        lumipos = kwargs.pop('lumipos',11)
+        lumipos = kwargs.pop('lumipos',0)
         isprelim = kwargs.pop('isprelim',True)
         legendpos = kwargs.pop('legendpos',31)
         numcol = kwargs.pop('numcol',1)
@@ -739,6 +801,7 @@ class LimitPlotter(PlotterBase):
         zmax = kwargs.pop('zmax',10)
         plotcolz = kwargs.pop('plotcolz',True)
         plotfill = kwargs.pop('plotfill',False)
+        additionaltext = kwargs.pop('additionaltext','')
 
         logging.info('Plotting {0}'.format(savename))
 
@@ -1030,18 +1093,32 @@ class LimitPlotter(PlotterBase):
 
         # special legend
         if blind:
-            entries = [[expected_graphs[eb][0],'#splitline{{Expected exclusion}}{{BR(H #rightarrow aa) = {}}}'.format(eb),'l'] for eb in expectedBands if len(expected_graphs[eb])]
+            entries = [[expected_graphs[eb][0],'#splitline{{Expected exclusion}}{{B(H #rightarrow aa) = {}}}'.format(eb),'l'] for eb in expectedBands if len(expected_graphs[eb])]
         else:
             entries = []
             for eb in expectedBands:
-                if len(expected_graphs[eb]): entries += [[expected_graphs[eb][0],'#splitline{{Expected exclusion}}{{BR(H #rightarrow aa) = {}}}'.format(eb),'l']]
-                if len(observed_graphs[eb]): entries += [[observed_graphs[eb][0],'#splitline{{Observed exclusion}}{{BR(H #rightarrow aa) = {}}}'.format(eb),'l']]
+                if len(expected_graphs[eb]): entries += [[expected_graphs[eb][0],'#splitline{{Expected exclusion}}{{B(H #rightarrow aa) = {}}}'.format(eb),'l']]
+                if len(observed_graphs[eb]): entries += [[observed_graphs[eb][0],'#splitline{{Observed exclusion}}{{B(H #rightarrow aa) = {}}}'.format(eb),'l']]
         #legend = self._getLegend(entries=entries,numcol=1,position=24,title=legendtitle)
         if plotcolz:
-            legend = self._getLegend(entries=entries,numcol=1,position=[0.44,0.66,0.75,0.92],title=legendtitle)
+            legend = self._getLegend(entries=entries,numcol=1,position=[0.42,0.59,0.75,0.92],title=legendtitle)
         else:
-            legend = self._getLegend(entries=entries,numcol=1,position=[0.54,0.62,0.95,0.92],title=legendtitle)
+            legend = self._getLegend(entries=entries,numcol=1,position=[0.52,0.55,0.95,0.92],title=legendtitle)
         legend.Draw()
+
+        if additionaltext:
+            nlines = 1 if isinstance(additionaltext,str) else len(additionaltext)
+            text = ROOT.TPaveText(0.16,0.90-nlines*0.04,0.38,0.92,'NB NDC')
+            text.SetTextFont(42)
+            text.SetBorderSize(0)
+            text.SetFillColor(0)
+            text.SetTextAlign(11)
+            if isinstance(additionaltext,list):
+                for addt in additionaltext:
+                    text.AddText(addt)
+            else:
+                text.AddText(additionaltext)
+            text.Draw()
 
         # manually add the 1 sigma bands
         leg_one_low  = ROOT.TGraph(2,array('d',[11.72,12.91]),array('d',[8.84,8.84]))
@@ -1061,6 +1138,7 @@ class LimitPlotter(PlotterBase):
         leg_two_high.SetLineStyle(6)
         leg_two_high.SetLineWidth(2)
         #leg_two_high.Draw('same')
+
 
         # cms lumi styling
         self._setStyle(canvas,position=lumipos,preliminary=isprelim)
@@ -1091,7 +1169,7 @@ class LimitPlotter(PlotterBase):
         zaxis = kwargs.pop('zaxis','95% CL upper limit on #sigma/#sigma_{model}')
         legendtitle = kwargs.pop('legendtitle','95% CL upper limits')
         blind = kwargs.pop('blind',True)
-        lumipos = kwargs.pop('lumipos',11)
+        lumipos = kwargs.pop('lumipos',0)
         isprelim = kwargs.pop('isprelim',True)
         legendpos = kwargs.pop('legendpos',31)
         numcol = kwargs.pop('numcol',1)
@@ -1107,6 +1185,7 @@ class LimitPlotter(PlotterBase):
         zmax = kwargs.pop('zmax',10)
         plotcolz = kwargs.pop('plotcolz',True)
         plotfill = kwargs.pop('plotfill',False)
+        additionaltext = kwargs.pop('additionaltext','')
 
         logging.info('Plotting {0}'.format(savename))
 
@@ -1387,18 +1466,32 @@ class LimitPlotter(PlotterBase):
 
         # special legend
         if blind:
-            entries = [[expected_graphs[eb][0],'#splitline{{Expected exclusion}}{{BR(H #rightarrow aa) = {}}}'.format(eb),'l'] for eb in expectedBands if len(expected_graphs[eb])]
+            entries = [[expected_graphs[eb][0],'#splitline{{Expected exclusion}}{{B(H #rightarrow aa) = {}}}'.format(eb),'l'] for eb in expectedBands if len(expected_graphs[eb])]
         else:
             entries = []
             for eb in expectedBands:
-                if len(expected_graphs[eb]): entries += [[expected_graphs[eb][0],'#splitline{{Expected exclusion}}{{BR(H #rightarrow aa) = {}}}'.format(eb),'l']]
-                if len(observed_graphs[eb]): entries += [[observed_graphs[eb][0],'#splitline{{Observed exclusion}}{{BR(H #rightarrow aa) = {}}}'.format(eb),'l']]
+                if len(expected_graphs[eb]): entries += [[expected_graphs[eb][0],'#splitline{{Expected exclusion}}{{B(H #rightarrow aa) = {}}}'.format(eb),'l']]
+                if len(observed_graphs[eb]): entries += [[observed_graphs[eb][0],'#splitline{{Observed exclusion}}{{B(H #rightarrow aa) = {}}}'.format(eb),'l']]
         #legend = self._getLegend(entries=entries,numcol=1,position=24,title=legendtitle)
         if plotcolz:
-            legend = self._getLegend(entries=entries,numcol=1,position=[0.44,0.66,0.75,0.92],title=legendtitle)
+            legend = self._getLegend(entries=entries,numcol=1,position=[0.42,0.59,0.75,0.92],title=legendtitle)
         else:
-            legend = self._getLegend(entries=entries,numcol=1,position=[0.54,0.62,0.95,0.92],title=legendtitle)
+            legend = self._getLegend(entries=entries,numcol=1,position=[0.52,0.55,0.95,0.92],title=legendtitle)
         legend.Draw()
+
+        if additionaltext:
+            nlines = 1 if isinstance(additionaltext,str) else len(additionaltext)
+            text = ROOT.TPaveText(0.16,0.90-nlines*0.04,0.40,0.92,'NB NDC')
+            text.SetTextFont(42)
+            text.SetBorderSize(0)
+            text.SetFillColor(0)
+            text.SetTextAlign(11)
+            if isinstance(additionaltext,list):
+                for addt in additionaltext:
+                    text.AddText(addt)
+            else:
+                text.AddText(additionaltext)
+            text.Draw()
 
         # manually add the 1 sigma bands
         leg_one_low  = ROOT.TGraph(2,array('d',[11.72,12.91]),array('d',[8.84,8.84]))
@@ -1456,6 +1549,7 @@ class LimitPlotter(PlotterBase):
         colors = kwargs.pop('colors',[])
         plotunity = kwargs.pop('plotunity',True)
         leftmargin = kwargs.pop('leftmargin',None)
+        additionaltext = kwargs.pop('additionaltext','')
 
         logging.info('Plotting {0}'.format(savename))
 
@@ -1541,6 +1635,20 @@ class LimitPlotter(PlotterBase):
             if not blind: entries += [[observed[x],'#splitline{'+labels[x]+'}{Observed}','l']]
         legend = self._getLegend(entries=entries,numcol=numcol,position=legendpos,widthScale=1.2)
         legend.Draw()
+
+        if additionaltext:
+            nlines = 1 if isinstance(additionaltext,str) else len(additionaltext)
+            text = ROOT.TPaveText(0.20,0.90-nlines*0.04,0.45,0.92,'NB NDC')
+            text.SetTextFont(42)
+            text.SetBorderSize(0)
+            text.SetFillColor(0)
+            text.SetTextAlign(11)
+            if isinstance(additionaltext,list):
+                for addt in additionaltext:
+                    text.AddText(addt)
+            else:
+                text.AddText(additionaltext)
+            text.Draw()
 
         # cms lumi styling
         self._setStyle(canvas,position=lumipos,preliminary=isprelim)

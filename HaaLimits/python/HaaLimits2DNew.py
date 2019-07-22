@@ -74,158 +74,162 @@ class HaaLimits2D(HaaLimits):
         yVar = kwargs.pop('yVar',self.YVAR)
         tag = kwargs.pop('tag',region)
 
+        doDouble = True
+
         # h
         if self.YRANGE[1]>100:
             nameE = 'erf{}'.format('_'+tag if tag else '')
 
-            if self.YCORRELATION:
-                # build the correlation model for the y variable parameters
-                erfShiftName = kwargs.pop('erfShift_{}'.format(nameE),'erfShift_{}'.format(nameE))
-                erfShiftA0Name = 'erfShiftA0{}'.format('_'+tag if tag else '')
-                erfShiftA0 = kwargs.pop(erfShiftA0Name,[47,10,200])
-                if isinstance(erfShiftA0,str): erfShiftA0Name = erfShiftA0
-                erfShiftA1Name = 'erfShiftA1{}'.format('_'+tag if tag else '')
-                erfShiftA1 = kwargs.pop(erfShiftA1Name,[0.7,0,2])
-                if isinstance(erfShiftA1,str): erfShiftA1Name = erfShiftA1
-                erfShiftExpr = Models.Expression(erfShiftName,
-                    expr = '{x}*{a1}+{a0}'.format(x=xVar,a0=erfShiftA0Name,a1=erfShiftA1Name),
-                    variables = [xVar,erfShiftA1Name,erfShiftA0Name],
+            if not doDouble:
+                if self.YCORRELATION:
+                    # build the correlation model for the y variable parameters
+                    erfShiftName = kwargs.pop('erfShift_{}'.format(nameE),'erfShift_{}'.format(nameE))
+                    erfShiftA0Name = 'erfShiftA0{}'.format('_'+tag if tag else '')
+                    erfShiftA0 = kwargs.pop(erfShiftA0Name,[47,10,200])
+                    if isinstance(erfShiftA0,str): erfShiftA0Name = erfShiftA0
+                    erfShiftA1Name = 'erfShiftA1{}'.format('_'+tag if tag else '')
+                    erfShiftA1 = kwargs.pop(erfShiftA1Name,[0.7,0,2])
+                    if isinstance(erfShiftA1,str): erfShiftA1Name = erfShiftA1
+                    erfShiftExpr = Models.Expression(erfShiftName,
+                        expr = '{x}*{a1}+{a0}'.format(x=xVar,a0=erfShiftA0Name,a1=erfShiftA1Name),
+                        variables = [xVar,erfShiftA1Name,erfShiftA0Name],
+                        **{
+                            xVar: xVar,
+                            erfShiftA1Name: erfShiftA1,
+                            erfShiftA0Name: erfShiftA0,
+                        }
+                    )
+                    erfShiftExpr.build(workspace,erfShiftName)
+
+                    #erfScaleName = kwargs.pop('erfScale_{}'.format(nameE),'erfScale_{}'.format(nameE))
+                    #erfScaleA0Name = 'erfScaleA0{}'.format('_'+tag if tag else '')
+                    #erfScaleA0 = kwargs.pop(erfScaleA0Name,[0.06,0.005,5])
+                    #if isinstance(erfScaleA0,str): erfScaleA0Name = erfScaleA0
+                    #erfScaleA1Name = 'erfScaleA1{}'.format('_'+tag if tag else '')
+                    #erfScaleA1 = kwargs.pop(erfScaleA1Name,[0,-0.01,0.01])
+                    #if isinstance(erfScaleA1,str): erfScaleA1Name = erfScaleA1
+                    #erfScaleExpr = Models.Expression(erfScaleName,
+                    #    expr = '{x}*{a1}+{a0}'.format(x=xVar,a0=erfScaleA0Name,a1=erfScaleA1Name),
+                    #    variables = [xVar,erfScaleA1Name,erfScaleA0Name],
+                    #    **{
+                    #        xVar: xVar,
+                    #        erfScaleA1Name: erfScaleA1,
+                    #        erfScaleA0Name: erfScaleA0,
+                    #    }
+                    #)
+                    #erfScaleExpr.build(workspace,erfScaleName)
+
+
+                    erf = Models.Erf('erf1',
+                        x = yVar,
+                        #erfScale = erfScaleName,
+                        erfScale = kwargs.pop('erfScale_{}'.format(nameE), [0.06,0,10]),
+                        erfShift = erfShiftName,
+                        #erfShift = kwargs.pop('erfShift_{}'.format(nameE), [65,10,200]),
+                    )
+                    erf.build(workspace,nameE)
+
+                else:
+                    erf = Models.Erf('erf1',
+                        x = yVar,
+                        erfScale = kwargs.pop('erfScale_{}'.format(nameE), [0.05,0,10]),
+                        erfShift = kwargs.pop('erfShift_{}'.format(nameE), [70,10,200]),
+                    )
+                    erf.build(workspace,nameE)
+
+                nameC = 'conty{}'.format('_'+tag if tag else '')
+                if self.YCORRELATION:
+                    #lambdaName = kwargs.pop('lambda_{}'.format(nameC),'lambda_{}'.format(nameC))
+                    #lambdaA0Name = 'lambdaA0{}'.format('_'+tag if tag else '')
+                    #lambdaA0 = kwargs.pop(lambdaA0Name,[-0.025,-1,-0.001])
+                    #if isinstance(lambdaA0,str): lambdaA0Name = lambdaA0
+                    #lambdaA1Name = 'lambdaA1{}'.format('_'+tag if tag else '')
+                    #lambdaA1 = kwargs.pop(lambdaA1Name,[0,-0.002,0.002])
+                    #if isinstance(lambdaA1,str): lambdaA1Name = lambdaA1
+                    #lambdaExpr = Models.Expression(lambdaName,
+                    #    expr = '{x}*{a1}+{a0}'.format(x=xVar,a0=lambdaA0Name,a1=lambdaA1Name),
+                    #    variables = [xVar,lambdaA1Name,lambdaA0Name],
+                    #    **{
+                    #        xVar: xVar,
+                    #        lambdaA1Name: lambdaA1,
+                    #        lambdaA0Name: lambdaA0,
+                    #    }
+                    #)
+                    #lambdaExpr.build(workspace,lambdaName)
+
+                    cont = Models.Exponential('conty',
+                        x = yVar,
+                        #lamb = lambdaName,
+                        lamb = kwargs.pop('lambda_{}'.format(nameC), [-0.025,-1,-0.001]),
+                    )
+                    cont.build(workspace,nameC)
+
+                else:
+                    cont = Models.Exponential('conty',
+                        x = yVar,
+                        lamb = kwargs.pop('lambda_{}'.format(nameC), [-0.05,-1,0]),
+                    )
+                    cont.build(workspace,nameC)
+
+                bg = Models.Prod('bg',
+                    nameE,
+                    nameC,
+                )
+
+            if doDouble:
+                # Double exponential
+                nameE1 = 'erf1{}'.format('_'+tag if tag else '')
+                erf1 = Models.Erf('erf1',
+                    x = yVar,
+                    erfScale = kwargs.pop('erfScale_{}'.format(nameE1), [0.05,0,10]),
+                    erfShift = kwargs.pop('erfShift_{}'.format(nameE1), [70,10,200]),
+                )
+                erf1.build(workspace,nameE1)
+
+                nameC1 = 'conty1{}'.format('_'+tag if tag else '')
+                cont1 = Models.Exponential('conty1',
+                    x = yVar,
+                    lamb = kwargs.pop('lambda_{}'.format(nameC1), [-0.01,-1,0]),
+                )
+                cont1.build(workspace,nameC1)
+
+                bg1 = Models.Prod('bg',
+                    nameE1,
+                    nameC1,
+                )
+                nameB1 = 'bg1{}'.format('_'+tag if tag else '')
+                bg1.build(workspace,nameB1)
+
+                nameE2 = 'erf2{}'.format('_'+tag if tag else '')
+                erf2 = Models.Erf('erf2',
+                    x = yVar,
+                    #erfScale = kwargs.pop('erfScale_{}'.format(nameE2), [0.05,0,10]),
+                    #erfShift = kwargs.pop('erfShift_{}'.format(nameE2), [70,10,200]),
+                    erfScale = kwargs.pop('erfScale_{}'.format(nameE1),'erfScale_{}'.format(nameE1)),
+                    erfShift = kwargs.pop('erfShift_{}'.format(nameE1),'erfShift_{}'.format(nameE1)),
+                )
+                erf2.build(workspace,nameE2)
+
+                nameC2 = 'conty2{}'.format('_'+tag if tag else '')
+                cont2 = Models.Exponential('conty2',
+                    x = yVar,
+                    lamb = kwargs.pop('lambda_{}'.format(nameC2), [-0.025,-1,0]),
+                )
+                cont2.build(workspace,nameC2)
+
+                bg2 = Models.Prod('bg',
+                    nameE2,
+                    nameC2,
+                )
+                nameB2 = 'bg2{}'.format('_'+tag if tag else '')
+                bg2.build(workspace,nameB2)
+
+                bg = Models.Sum('bg',
                     **{
-                        xVar: xVar,
-                        erfShiftA1Name: erfShiftA1,
-                        erfShiftA0Name: erfShiftA0,
+                        nameB1: [0.95,0,1],
+                        nameB2: [0.05,0,1],
                     }
                 )
-                erfShiftExpr.build(workspace,erfShiftName)
-
-                #erfScaleName = kwargs.pop('erfScale_{}'.format(nameE),'erfScale_{}'.format(nameE))
-                #erfScaleA0Name = 'erfScaleA0{}'.format('_'+tag if tag else '')
-                #erfScaleA0 = kwargs.pop(erfScaleA0Name,[0.06,0.005,5])
-                #if isinstance(erfScaleA0,str): erfScaleA0Name = erfScaleA0
-                #erfScaleA1Name = 'erfScaleA1{}'.format('_'+tag if tag else '')
-                #erfScaleA1 = kwargs.pop(erfScaleA1Name,[0,-0.01,0.01])
-                #if isinstance(erfScaleA1,str): erfScaleA1Name = erfScaleA1
-                #erfScaleExpr = Models.Expression(erfScaleName,
-                #    expr = '{x}*{a1}+{a0}'.format(x=xVar,a0=erfScaleA0Name,a1=erfScaleA1Name),
-                #    variables = [xVar,erfScaleA1Name,erfScaleA0Name],
-                #    **{
-                #        xVar: xVar,
-                #        erfScaleA1Name: erfScaleA1,
-                #        erfScaleA0Name: erfScaleA0,
-                #    }
-                #)
-                #erfScaleExpr.build(workspace,erfScaleName)
-
-
-                erf = Models.Erf('erf1',
-                    x = yVar,
-                    #erfScale = erfScaleName,
-                    erfScale = kwargs.pop('erfScale_{}'.format(nameE), [0.06,0,10]),
-                    erfShift = erfShiftName,
-                    #erfShift = kwargs.pop('erfShift_{}'.format(nameE), [65,10,200]),
-                )
-                erf.build(workspace,nameE)
-
-            else:
-                erf = Models.Erf('erf1',
-                    x = yVar,
-                    erfScale = kwargs.pop('erfScale_{}'.format(nameE), [0.05,0,10]),
-                    erfShift = kwargs.pop('erfShift_{}'.format(nameE), [70,10,200]),
-                )
-                erf.build(workspace,nameE)
-
-            nameC = 'conty{}'.format('_'+tag if tag else '')
-            if self.YCORRELATION:
-                #lambdaName = kwargs.pop('lambda_{}'.format(nameC),'lambda_{}'.format(nameC))
-                #lambdaA0Name = 'lambdaA0{}'.format('_'+tag if tag else '')
-                #lambdaA0 = kwargs.pop(lambdaA0Name,[-0.025,-1,-0.001])
-                #if isinstance(lambdaA0,str): lambdaA0Name = lambdaA0
-                #lambdaA1Name = 'lambdaA1{}'.format('_'+tag if tag else '')
-                #lambdaA1 = kwargs.pop(lambdaA1Name,[0,-0.002,0.002])
-                #if isinstance(lambdaA1,str): lambdaA1Name = lambdaA1
-                #lambdaExpr = Models.Expression(lambdaName,
-                #    expr = '{x}*{a1}+{a0}'.format(x=xVar,a0=lambdaA0Name,a1=lambdaA1Name),
-                #    variables = [xVar,lambdaA1Name,lambdaA0Name],
-                #    **{
-                #        xVar: xVar,
-                #        lambdaA1Name: lambdaA1,
-                #        lambdaA0Name: lambdaA0,
-                #    }
-                #)
-                #lambdaExpr.build(workspace,lambdaName)
-
-                cont = Models.Exponential('conty',
-                    x = yVar,
-                    #lamb = lambdaName,
-                    lamb = kwargs.pop('lambda_{}'.format(nameC), [-0.025,-1,-0.001]),
-                )
-                cont.build(workspace,nameC)
-
-            else:
-                cont = Models.Exponential('conty',
-                    x = yVar,
-                    lamb = kwargs.pop('lambda_{}'.format(nameC), [-0.05,-1,0]),
-                )
-                cont.build(workspace,nameC)
-
-            bg = Models.Prod('bg',
-                nameE,
-                nameC,
-            )
-
-            # Double exponential
-            #nameE1 = 'erf1{}'.format('_'+tag if tag else '')
-            #erf1 = Models.Erf('erf1',
-            #    x = yVar,
-            #    erfScale = kwargs.pop('erfScale_{}'.format(nameE1), [0.05,0,10]),
-            #    erfShift = kwargs.pop('erfShift_{}'.format(nameE1), [70,10,200]),
-            #)
-            #erf1.build(workspace,nameE1)
-
-            #nameC1 = 'conty1{}'.format('_'+tag if tag else '')
-            #cont1 = Models.Exponential('conty1',
-            #    x = yVar,
-            #    lamb = kwargs.pop('lambda_{}'.format(nameC1), [-0.05,-1,0]),
-            #)
-            #cont1.build(workspace,nameC1)
-
-            #bg1 = Models.Prod('bg',
-            #    nameE1,
-            #    nameC1,
-            #)
-            #nameB1 = 'bg1{}'.format('_'+tag if tag else '')
-            #bg1.build(workspace,nameB1)
-
-            #nameE2 = 'erf2{}'.format('_'+tag if tag else '')
-            #erf2 = Models.Erf('erf2',
-            #    x = yVar,
-            #    #erfScale = kwargs.pop('erfScale_{}'.format(nameE2), [0.05,0,10]),
-            #    #erfShift = kwargs.pop('erfShift_{}'.format(nameE2), [70,10,200]),
-            #    erfScale = kwargs.pop('erfScale_{}'.format(nameE1),'erfScale_{}'.format(nameE1)),
-            #    erfShift = kwargs.pop('erfShift_{}'.format(nameE1),'erfShift_{}'.format(nameE1)),
-            #)
-            #erf2.build(workspace,nameE2)
-
-            #nameC2 = 'conty2{}'.format('_'+tag if tag else '')
-            #cont2 = Models.Exponential('conty2',
-            #    x = yVar,
-            #    lamb = kwargs.pop('lambda_{}'.format(nameC2), [-0.025,-1,0]),
-            #)
-            #cont2.build(workspace,nameC2)
-
-            #bg2 = Models.Prod('bg',
-            #    nameE2,
-            #    nameC2,
-            #)
-            #nameB2 = 'bg2{}'.format('_'+tag if tag else '')
-            #bg2.build(workspace,nameB2)
-
-            #bg = Models.Sum('bg',
-            #    **{
-            #        nameB1: [0.95,0,1],
-            #        nameB2: [0.05,0,1],
-            #    }
-            #)
         else:
             # Landau only
             #bg = Models.Landau('bg',
@@ -390,9 +394,11 @@ class HaaLimits2D(HaaLimits):
         xVar = kwargs.pop('xVar',self.XVAR)
         yVar = kwargs.pop('yVar',self.YVAR)
 
+        doPoly = True
+
         # the 2D model
         if self.YCORRELATION:
-            if self.XRANGE[0]<4:
+            if self.XRANGE[0]<4 and not doPoly:
                 cont1 = Models.Prod('cont1',
                     'bg_{}_y|{}'.format(region,xVar),
                     'cont1_{}_x'.format(region),
@@ -454,7 +460,7 @@ class HaaLimits2D(HaaLimits):
                 'bg_{}_x'.format(region),
             )
         else:
-            if self.XRANGE[0]<4:
+            if self.XRANGE[0]<4 and not doPoly: 
                 cont1 = Models.Prod('cont1',
                     'cont1_{}_x'.format(region),
                     'bg_{}_y'.format(region),

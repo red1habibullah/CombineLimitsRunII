@@ -10,6 +10,7 @@ import DevTools.Plotter.tdrstyle as tdrstyle
 ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 2001;")
 tdrstyle.setTDRStyle()
 
+isprelim = False
 yvar = 'h'
 #yvar = 'tt'
 h = 125
@@ -24,7 +25,7 @@ yBinWidth = 5
 if yvar=='tt':
     yRange = [1,20]
     yBinWidth = 0.25
-blind = True
+blind = False
 br = 0.0005
 doPostfit = False
 
@@ -74,7 +75,7 @@ params = [
 
 def floatToText(x):
     s = '{:.1E}'.format(x).split('E')
-    return '{} #times 10^{{{}}}'.format(float(s[0]),int(s[1]))
+    return '{} #times 10^{{{}}}'.format(int(float(s[0])),int(s[1]))
 
 if doPostfit:
     jfile = 'impacts_mm_h_unbinned_with1DFits_125_7.json' # for now while the other is not working
@@ -127,14 +128,14 @@ xFrame.SetMaximum(600) # for PP
 xFrame.SetMinimum(0.1)
 
 CMS_lumi.cmsText = 'CMS'
-CMS_lumi.writeExtraText = True
+CMS_lumi.writeExtraText = isprelim
 CMS_lumi.extraText = 'Preliminary'
 CMS_lumi.lumi_13TeV = "%0.1f fb^{-1}" % (35.9)
 CMS_lumi.CMS_lumi(canvas,4,11)
 
 xFrame.SetAxisRange(*xRange)
 
-legend = ROOT.TLegend(0.5,0.6,0.9,0.9)
+legend = ROOT.TLegend(0.4,0.55,0.92,0.92)
 legend.SetTextFont(42)
 legend.SetBorderSize(0)
 legend.SetFillColor(0)
@@ -148,7 +149,7 @@ for prim in canvas.GetListOfPrimitives():
     elif 'bg' in prim.GetTitle():
         legend.AddEntry(prim, 'Background Model', 'l')
     elif 'ggH' in prim.GetTitle():
-        title = '#splitline{{m_{{H}} = {} GeV, m_{{a}} = {} GeV}}{{BR(h #rightarrow aa #rightarrow #mu#mu#tau#tau) = {}}}'.format(h,a,floatToText(br))
+        title = '#splitline{{m_{{H}} = {} GeV, m_{{a}} = {} GeV}}{{B(h #rightarrow aa #rightarrow #mu#mu#tau#tau) = {}}}'.format(h,a,floatToText(br))
         legend.AddEntry(prim, title, 'l')
 
 legend.Draw()
@@ -186,7 +187,7 @@ else:
     yFrame.SetMaximum(140) # for PP
 
 CMS_lumi.cmsText = 'CMS'
-CMS_lumi.writeExtraText = True
+CMS_lumi.writeExtraText = isprelim
 CMS_lumi.extraText = 'Preliminary'
 CMS_lumi.lumi_13TeV = "%0.1f fb^{-1}" % (35.9)
 CMS_lumi.CMS_lumi(canvas,4,11)
@@ -196,7 +197,7 @@ ymax = yFrame.GetMaximum()
 yFrame.SetMaximum(ymax*5)
 xFrame.SetMinimum(0.1)
 
-legend = ROOT.TLegend(0.5,0.6,0.9,0.9)
+legend = ROOT.TLegend(0.4,0.55,0.92,0.92)
 legend.SetTextFont(42)
 legend.SetBorderSize(0)
 legend.SetFillColor(0)
@@ -210,7 +211,7 @@ for prim in canvas.GetListOfPrimitives():
     elif 'bg' in prim.GetTitle():
         legend.AddEntry(prim, 'Background Model', 'l')
     elif 'ggH' in prim.GetTitle():
-        title = '#splitline{{m_{{H}} = {} GeV, m_{{a}} = {} GeV}}{{BR(h #rightarrow aa #rightarrow #mu#mu#tau#tau) = {}}}'.format(h,a,floatToText(br))
+        title = '#splitline{{m_{{H}} = {} GeV, m_{{a}} = {} GeV}}{{B(h #rightarrow aa #rightarrow #mu#mu#tau#tau) = {}}}'.format(h,a,floatToText(br))
         legend.AddEntry(prim, title, 'l')
 
 legend.Draw()

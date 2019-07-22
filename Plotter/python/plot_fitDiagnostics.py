@@ -10,10 +10,11 @@ import DevTools.Plotter.tdrstyle as tdrstyle
 ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 2001;")
 tdrstyle.setTDRStyle()
 
+isprelim = False
 
 def floatToText(x):
     s = '{:.1E}'.format(x).split('E')
-    return '{} #times 10^{{{}}}'.format(float(s[0]),int(s[1]))
+    return '{} #times 10^{{{}}}'.format(int(float(s[0])),int(s[1]))
 
 def plot(h,a,dim,region):
     br = 0.0005
@@ -63,7 +64,7 @@ def plot(h,a,dim,region):
     else:
         rooplot.GetXaxis().SetTitle('m(#mu#mu#tau_{#mu}#tau_{h}) (GeV)')
         rooplot.GetYaxis().SetTitle('Events / 20 GeV')
-    rooplot.SetMaximum(600)
+    rooplot.SetMaximum(2000)
     if region=='FP': rooplot.SetMaximum(2000)
     if region=='control':
         rooplot.SetMaximum(1e6)
@@ -72,13 +73,13 @@ def plot(h,a,dim,region):
     canvas.SetLogy()
     
     CMS_lumi.cmsText = 'CMS'
-    CMS_lumi.writeExtraText = True
+    CMS_lumi.writeExtraText = isprelim
     CMS_lumi.extraText = 'Preliminary'
     CMS_lumi.lumi_13TeV = "%0.1f fb^{-1}" % (35.9)
     CMS_lumi.CMS_lumi(canvas,4,11)
     
     
-    legend = ROOT.TLegend(0.5,0.6,0.9,0.9)
+    legend = ROOT.TLegend(0.4,0.6,0.92,0.92)
     legend.SetTextFont(42)
     legend.SetBorderSize(0)
     legend.SetFillColor(0)
@@ -100,7 +101,7 @@ def plot(h,a,dim,region):
             prim.SetLineColor(ROOT.kRed)
             if foundSig: continue
             foundSig = True
-            title = '#splitline{{m_{{H}} = {} GeV, m_{{a}} = {} GeV}}{{BR(h #rightarrow aa #rightarrow #mu#mu#tau#tau) = {}}}'.format(h,a,floatToText(br))
+            title = '#splitline{{m_{{H}} = {} GeV, m_{{a}} = {} GeV}}{{B(h #rightarrow aa #rightarrow #mu#mu#tau#tau) = {}}}'.format(h,a,floatToText(br))
             #title = 'm_{{H}} = {} GeV, m_{{a}} = {} GeV'.format(h,a)
             legend.AddEntry(prim, title, 'l')
     

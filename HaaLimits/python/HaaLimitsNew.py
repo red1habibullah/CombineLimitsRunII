@@ -166,18 +166,19 @@ class HaaLimits(Limits):
         #bgRes = Models.BreitWigner
         #bgRes = Models.CrystalBall
         #bgRes = Models.DoubleCrystalBall
+        bgResDCB = Models.DoubleCrystalBall
 
         # jpsi
         nameJ1b = 'jpsi1S'
         workspace.factory('{0}[{1}, {2}, {3}]'.format('mean_{}'.format(nameJ1b), *[3.1,2.9,3.2]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('sigma_{}'.format(nameJ1b),*[0.1,0,0.5]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('width_{}'.format(nameJ1b),*[0.1,0.01,0.5]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('a_{}'.format( nameJ1b),*[5,0.01,10]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('n_{}'.format( nameJ1b),*[10,0.01,20]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('a1_{}'.format(nameJ1b),*[5,0.01,10]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('n1_{}'.format(nameJ1b),*[10,0.01,20]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('a2_{}'.format(nameJ1b),*[5,0.01,10]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('n2_{}'.format(nameJ1b),*[10,0.01,20]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('sigma_{}'.format(nameJ1b),*[0.04,0.001,0.5]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('width_{}'.format(nameJ1b),*[0.01,0.001,0.5]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('a_{}'.format( nameJ1b),*[1.9,0.001,10]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('n_{}'.format( nameJ1b),*[1.7,0.001,20]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('a1_{}'.format(nameJ1b),*[1.9,0.001,10]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('n1_{}'.format(nameJ1b),*[1.7,0.001,20]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('a2_{}'.format(nameJ1b),*[2.4,0.001,10]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('n2_{}'.format(nameJ1b),*[1.0,0.001,20]))
         jpsi1S = bgRes('jpsi1S',
             x = xVar,
             mean  = 'mean_{}'.format(nameJ1b),
@@ -195,14 +196,14 @@ class HaaLimits(Limits):
     
         nameJ2b = 'jpsi2S'
         workspace.factory('{0}[{1}, {2}, {3}]'.format('mean_{}'.format(nameJ2b), *[3.7,3.6,3.8]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('sigma_{}'.format(nameJ2b),*[0.1,0,0.5]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('width_{}'.format(nameJ2b),*[0.1,0.01,0.5]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('a_{}'.format( nameJ2b),*[5,0.01,10]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('n_{}'.format( nameJ2b),*[10,0.01,20]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('a1_{}'.format(nameJ2b),*[5,0.01,10]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('n1_{}'.format(nameJ2b),*[10,0.01,20]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('a2_{}'.format(nameJ2b),*[5,0.01,10]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('n2_{}'.format(nameJ2b),*[10,0.01,20]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('sigma_{}'.format(nameJ2b),*[0.04,0.001,0.5]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('width_{}'.format(nameJ2b),*[0.01,0.001,0.5]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('a_{}'.format( nameJ2b),*[2,0.001,10]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('n_{}'.format( nameJ2b),*[2,0.001,20]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('a1_{}'.format(nameJ2b),*[2,0.001,10]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('n1_{}'.format(nameJ2b),*[2,0.0001,20]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('a2_{}'.format(nameJ2b),*[2,0.001,10]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('n2_{}'.format(nameJ2b),*[2,0.0001,20]))
         jpsi2S = bgRes('jpsi2S',
             x = xVar,
             mean  = 'mean_{}'.format(nameJ2b),
@@ -235,12 +236,12 @@ class HaaLimits(Limits):
         workspace.factory('{0}[{1}, {2}, {3}]'.format('mean_{}'.format(nameU1b), *[9.5,9.3,9.7]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('sigma_{}'.format(nameU1b),*[0.05,0,0.3]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('width_{}'.format(nameU1b),*[0.1,0.01,1]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('a_{}'.format( nameU1b),*[5,0.01,10]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('n_{}'.format( nameU1b),*[10,0.01,20]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('a1_{}'.format(nameU1b),*[5,0.01,10]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('n1_{}'.format(nameU1b),*[10,0.01,20]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('a2_{}'.format(nameU1b),*[5,0.01,10]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('n2_{}'.format(nameU1b),*[10,0.01,20]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('a_{}'.format( nameU1b),*[2,0.001,10]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('n_{}'.format( nameU1b),*[2,0.001,20]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('a1_{}'.format(nameU1b),*[2,0.001,10]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('n1_{}'.format(nameU1b),*[2,0.001,20]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('a2_{}'.format(nameU1b),*[2,0.001,10]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('n2_{}'.format(nameU1b),*[2,0.001,20]))
         upsilon1S = bgRes('upsilon1S',
             x = xVar,
             mean  = 'mean_{}'.format(nameU1b),
@@ -260,12 +261,12 @@ class HaaLimits(Limits):
         workspace.factory('{0}[{1}, {2}, {3}]'.format('mean_{}'.format(nameU2b), *[10.0,9.8,10.15]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('sigma_{}'.format(nameU2b),*[0.06,0,0.3]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('width_{}'.format(nameU2b),*[0.1,0.01,1]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('a_{}'.format( nameU2b),*[5,0.01,10]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('n_{}'.format( nameU2b),*[10,0.01,20]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('a1_{}'.format(nameU2b),*[5,0.01,10]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('n1_{}'.format(nameU2b),*[10,0.01,20]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('a2_{}'.format(nameU2b),*[5,0.01,10]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('n2_{}'.format(nameU2b),*[10,0.01,20]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('a_{}'.format( nameU2b),*[2,0.001,10]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('n_{}'.format( nameU2b),*[2,0.001,20]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('a1_{}'.format(nameU2b),*[2,0.001,10]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('n1_{}'.format(nameU2b),*[2,0.001,20]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('a2_{}'.format(nameU2b),*[2,0.001,10]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('n2_{}'.format(nameU2b),*[2,0.001,20]))
         upsilon2S = bgRes('upsilon2S',
             x = xVar,
             mean  = 'mean_{}'.format(nameU2b),
@@ -285,12 +286,12 @@ class HaaLimits(Limits):
         workspace.factory('{0}[{1}, {2}, {3}]'.format('mean_{}'.format(nameU3b), *[10.3,10.22,10.5]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('sigma_{}'.format(nameU3b),*[0.07,0,0.3]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('width_{}'.format(nameU3b),*[0.1,0.01,1]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('a_{}'.format( nameU3b),*[5,0.01,10]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('n_{}'.format( nameU3b),*[10,0.01,20]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('a1_{}'.format(nameU3b),*[5,0.01,10]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('n1_{}'.format(nameU3b),*[10,0.01,20]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('a2_{}'.format(nameU3b),*[5,0.01,10]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('n2_{}'.format(nameU3b),*[10,0.01,20]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('a_{}'.format( nameU3b),*[2,0.001,10]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('n_{}'.format( nameU3b),*[2,0.001,20]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('a1_{}'.format(nameU3b),*[2,0.001,10]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('n1_{}'.format(nameU3b),*[2,0.001,20]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('a2_{}'.format(nameU3b),*[2,0.001,10]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('n2_{}'.format(nameU3b),*[2,0.001,20]))
         upsilon3S = bgRes('upsilon3S',
             x = xVar,
             mean  = 'mean_{}'.format(nameU3b),
@@ -348,40 +349,54 @@ class HaaLimits(Limits):
         #resonant = Models.Sum(nameR, **resonant)
         #resonant.build(workspace,nameR)
 
+        doPoly = True
 
         # continuum background
-        if self.XRANGE[0]<4:
-            nameC1 = 'cont1{}'.format('_'+tag if tag else '')
-            #nameC1 = 'cont1'
-            cont1 = Models.Exponential(nameC1,
-                x = xVar,
-                lamb = kwargs.pop('lambda_{}'.format(nameC1),[-2,-4,0]),
-            )
-            cont1.build(workspace,nameC1)
-
-            nameC2 = 'cont2{}'.format('_'+tag if tag else '')
-            #nameC2 = 'cont2'
-            cont2 = Models.Exponential(nameC2,
-                x = xVar,
-                lamb = kwargs.pop('lambda_{}'.format(nameC2),[-0.75,-5,0]),
-            )
-            cont2.build(workspace,nameC2)
-
+        if doPoly:
+            if self.XRANGE[0]<4 and 'control' in region:
+                order = 5
+            else:
+                order = 3
             nameC = 'cont{}'.format('_'+tag if tag else '')
-            #cont = {'extended': True}
-            cont = {'recursive': True}
-            cont[nameC1] = [0.75,0,1]
-            cont[nameC2] = [0.5,0,1]
-            cont = Models.Sum(nameC, **cont)
+            cont = Models.Chebychev(nameC,
+                x = xVar,
+                order = order,
+            )
             cont.build(workspace,nameC)
+
         else:
-            nameC = 'cont{}'.format('_'+tag if tag else '')
-            #nameC = 'cont'
-            cont = Models.Exponential(nameC,
-                x = xVar,
-                lamb = kwargs.pop('lambda_{}'.format(nameC),[-2,-4,0]),
-            )
-            cont.build(workspace,nameC)
+            if self.XRANGE[0]<4:
+                nameC1 = 'cont1{}'.format('_'+tag if tag else '')
+                #nameC1 = 'cont1'
+                cont1 = Models.Exponential(nameC1,
+                    x = xVar,
+                    lamb = kwargs.pop('lambda_{}'.format(nameC1),[-2,-4,0]),
+                )
+                cont1.build(workspace,nameC1)
+
+                nameC2 = 'cont2{}'.format('_'+tag if tag else '')
+                #nameC2 = 'cont2'
+                cont2 = Models.Exponential(nameC2,
+                    x = xVar,
+                    lamb = kwargs.pop('lambda_{}'.format(nameC2),[-0.75,-5,0]),
+                )
+                cont2.build(workspace,nameC2)
+
+                nameC = 'cont{}'.format('_'+tag if tag else '')
+                #cont = {'extended': True}
+                cont = {'recursive': True}
+                cont[nameC1] = [0.75,0,1]
+                cont[nameC2] = [0.5,0,1]
+                cont = Models.Sum(nameC, **cont)
+                cont.build(workspace,nameC)
+            else:
+                nameC = 'cont{}'.format('_'+tag if tag else '')
+                #nameC = 'cont'
+                cont = Models.Exponential(nameC,
+                    x = xVar,
+                    lamb = kwargs.pop('lambda_{}'.format(nameC),[-2,-4,0]),
+                )
+                cont.build(workspace,nameC)
     
         # sum
         bgs = {'recursive': True}
@@ -895,10 +910,13 @@ class HaaLimits(Limits):
         else:
             xFrame = workspace.var(xVar).frame()
         data.plotOn(xFrame)
+        model.plotOn(xFrame,ROOT.RooFit.Components('cont_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
         model.plotOn(xFrame,ROOT.RooFit.Components('cont1_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
         model.plotOn(xFrame,ROOT.RooFit.Components('cont2_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+        model.plotOn(xFrame,ROOT.RooFit.Components('cont_{}_x'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
         model.plotOn(xFrame,ROOT.RooFit.Components('cont1_{}_x'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
         model.plotOn(xFrame,ROOT.RooFit.Components('cont2_{}_x'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+        model.plotOn(xFrame,ROOT.RooFit.Components('cont'),ROOT.RooFit.LineStyle(ROOT.kDashed))
         model.plotOn(xFrame,ROOT.RooFit.Components('cont1'),ROOT.RooFit.LineStyle(ROOT.kDashed))
         model.plotOn(xFrame,ROOT.RooFit.Components('cont2'),ROOT.RooFit.LineStyle(ROOT.kDashed))
         if self.XRANGE[0]<4:
