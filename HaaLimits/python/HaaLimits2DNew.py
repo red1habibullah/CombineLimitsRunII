@@ -872,8 +872,10 @@ class HaaLimits2D(HaaLimits):
         results, errors = model.fit2D(ws, hist, name, saveDir=saveDir, save=True, doErrors=True, xRange=[0.9*aval,1.1*aval])
         if self.binned:
             integral = histMap[self.SIGNAME.format(h=h,a=a)].Integral() * scale
+            integralerr = getHistogram2DIntegralError(histMap[self.SIGNAME.format(h=h,a=a)]) * scale
         else:
             integral = histMap[self.SIGNAME.format(h=h,a=a)].sumEntries('{0}>{2} && {0}<{3} && {1}>{4} && {1}<{5}'.format(self.XVAR,self.YVAR,*self.XRANGE+self.YRANGE)) * scale
+            integralerr = getDatasetIntegralError(histMap[self.SIGNAME.format(h=h,a=a)],'{0}>{2} && {0}<{3} && {1}>{4} && {1}<{5}'.format(self.XVAR,self.YVAR,*self.XRANGE+self.YRANGE)) * scale
             if integral!=integral:
                 logging.error('Integral for spline is invalid: h{h} a{a} {region} {shift}'.format(h=h,a=a,region=region,shift=shift))
                 raise
@@ -881,10 +883,10 @@ class HaaLimits2D(HaaLimits):
         savedir = '{}/{}'.format(self.fitsDir,shift if shift else 'central')
         python_mkdir(savedir)
         savename = '{}/h{}_a{}_{}.json'.format(savedir,h,a,tag)
-        jsonData = {'vals': results, 'errs': errors, 'integrals': integral}
+        jsonData = {'vals': results, 'errs': errors, 'integrals': integral, 'integralerrs': integralerr}
         self.dump(savename,jsonData)
 
-        return results, errors, integral
+        return results, errors, integral, integralerr
 
 
     def fitSignals(self,region,shift='',**kwargs):
@@ -906,39 +908,41 @@ class HaaLimits2D(HaaLimits):
         # initial fit
         if load:
             # load the previous fit
-            results, errors, integrals = self.loadSignalFits(tag,region,shift)
+            results, errors, integrals, integralerrs = self.loadSignalFits(tag,region,shift)
         elif shift and not skipFit:
             # load the central fits
-            cresults, cerrors, cintegrals = self.loadSignalFits(region,region)
+            cresults, cerrors, cintegrals, cintegralerrs = self.loadSignalFits(region,region)
         if not skipFit:
             results = {}
             errors = {}
             integrals = {}
+            integralerrs = {}
 
             for h in self.HMASSES:
                 results[h] = {}
                 errors[h] = {}
                 integrals[h] = {}
+                integralerrs[h] = {}
 
                 amasses = self.HAMAP[h]
                 avals = [self.aToFloat(x) for x in amasses]
 
                 for a in amasses:
                     if load or (shift and not skipFit):
-                        results[h][a], errors[h][a], integrals[h][a] = self.fitSignal(h,a,region,shift,results=cresults[h][a],**kwargs)
+                        results[h][a], errors[h][a], integrals[h][a], integralerrs[h][a] = self.fitSignal(h,a,region,shift,results=cresults[h][a],**kwargs)
                     elif not skipFit:
-                        results[h][a], errors[h][a], integrals[h][a] = self.fitSignal(h,a,region,shift,**kwargs)
+                        results[h][a], errors[h][a], integrals[h][a], integralerrs[h][a] = self.fitSignal(h,a,region,shift,**kwargs)
 
     
         savedir = '{}/{}'.format(self.fitsDir,shift if shift else 'central')
         python_mkdir(savedir)
         savename = '{}/{}.json'.format(savedir,tag)
-        jsonData = {'vals': results, 'errs': errors, 'integrals': integrals}
+        jsonData = {'vals': results, 'errs': errors, 'integrals': integrals, 'integralerrs': integralerrs}
         self.dump(savename,jsonData)
 
-        fitFuncs = self.fitSignalParams(results,errors,integrals,region,shift,yFitFunc=yFitFunc)
+        fitFuncs = self.fitSignalParams(results,errors,integrals, integralerrs,region,shift,yFitFunc=yFitFunc)
 
-        return results, errors, integrals, fitFuncs
+        return results, errors, integrals, integralerrs, fitFuncs
 
     def getParams(self,yFitFunc):
         xparams = ['mean_sigx','width_sigx','sigma_sigx']
@@ -957,7 +961,7 @@ class HaaLimits2D(HaaLimits):
         else: raise
         return xparams, yparams
 
-    def fitSignalParams(self,results,errors,integrals,region,shift='',**kwargs):
+    def fitSignalParams(self,results,errors,integrals,integralerrs,region,shift='',**kwargs):
         tag = kwargs.get('tag','{}{}'.format(region,'_'+shift if shift else ''))
         yFitFunc = kwargs.get('yFitFunc','G')
 
@@ -1064,6 +1068,7 @@ class HaaLimits2D(HaaLimits):
             yerrs = [0] * len(yvals)
             if param=='integral':
                 zvals = [integrals[h][a] for h in Hs for a in As[h]]
+                zerrs = [integralerrs[h][a] for h in Hs for a in As[h]]
             else:
                 zvals = [results[h][a][param] for h in Hs for a in As[h]]
                 zerrs = [errors[h][a][param] for h in Hs for a in As[h]]
@@ -1184,7 +1189,7 @@ class HaaLimits2D(HaaLimits):
         return fitFuncs
 
 
-    def buildSpline(self,vals,errs,integrals,region,shifts=[],isKinFit=False,**kwargs):
+    def buildSpline(self,vals,errs,integrals,integralerrs,region,shifts=[],isKinFit=False,**kwargs):
         '''
         Get the signal spline for a given Higgs mass.
         Required arguments:
@@ -1192,6 +1197,7 @@ class HaaLimits2D(HaaLimits):
             vals = dict with fitted param values
             errs = dict with fitted param errors
             integrals = dict with integrals for given distribution
+            integralerrs = dict with integral errors for given distribution
 
         The dict should be of the form:
             vals = {
@@ -1542,18 +1548,19 @@ class HaaLimits2D(HaaLimits):
         self.initializeWorkspace(workspace=workspace)
         super(HaaLimits2D, self).buildModel(region=region, workspace=workspace)
         if load:
-            vals, errs, ints = self.loadBackgroundFit(region,workspace=workspace)
+            vals, errs, ints, interrs = self.loadBackgroundFit(region,workspace=workspace)
         if not skipFit:
-            vals, errs, ints = self.fitBackground(region=region, workspace=workspace)
+            vals, errs, ints, interrs = self.fitBackground(region=region, workspace=workspace)
         
         if load:
             allintegrals, errors = self.loadComponentIntegrals(region)
         if not skipFit:
-            allintegrals, errors = self.buildComponentIntegrals(region,vals,errs,ints, workspace.pdf('bg_control'))
+            allintegrals, errors = self.buildComponentIntegrals(region,vals,errs,ints,interrs, workspace.pdf('bg_control'))
 
         self.control_vals = vals
         self.control_errs = errs
         self.control_integrals = ints
+        self.control_integralerrs = interrs
         self.control_integralErrors = errors
         self.control_integralValues = allintegrals
 
@@ -1652,10 +1659,12 @@ class HaaLimits2D(HaaLimits):
         hist = self.histMap[region][shift]['dataNoSig']
         if hist.InheritsFrom('TH1'):
             integral = hist.Integral() * scale # 2D restricted integral?
+            integralerr = getHistogramIntegralError(hist) * scale
             data = ROOT.RooDataHist(name,name,ROOT.RooArgList(workspace.var(xVar),workspace.var(yVar)),hist)
         else:
             data = hist.Clone(name)
             integral = hist.sumEntries('{0}>{2} && {0}<{3} && {1}>{4} && {1}<{5}'.format(xVar,yVar,*self.XRANGE+self.YRANGE)) * scale
+            integralerr = getDatasetIntegralError(hist,'{0}>{2} && {0}<{3} && {1}>{4} && {1}<{5}'.format(xVar,yVar,*self.XRANGE+self.YRANGE)) * scale
 
         fr = model.fitTo(data,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
 
@@ -1678,10 +1687,10 @@ class HaaLimits2D(HaaLimits):
 
         python_mkdir(self.fitsDir)
         jfile = '{}/background_{}{}.json'.format(self.fitsDir,region,'_'+shift if shift else '')
-        results = {'vals':vals, 'errs':errs, 'integral':integral}
+        results = {'vals':vals, 'errs':errs, 'integral':integral, 'integralerr':integralerr}
         self.dump(jfile,results)
 
-        return vals, errs, integral
+        return vals, errs, integral, integralerr
 
 
     ###############################
@@ -1857,6 +1866,7 @@ class HaaLimits2D(HaaLimits):
         vals = {}
         errs = {}
         integrals = {}
+        integralerrs = {}
         allintegrals = {}
         errors = {}
         allparams = {}
@@ -1864,42 +1874,47 @@ class HaaLimits2D(HaaLimits):
             vals[region] = {}
             errs[region] = {}
             integrals[region] = {}
+            integralerrs[region] = {}
             self.buildModel(region=region, workspace=workspace)
             for shift in ['']+self.BACKGROUNDSHIFTS:
                 if shift=='':
                     if load:
-                        v, e, i = self.loadBackgroundFit(region, workspace=workspace)
+                        v, e, i, ie = self.loadBackgroundFit(region, workspace=workspace)
                     else:
-                        v, e, i = self.fitBackground(region=region, workspace=workspace, **kwargs)
+                        v, e, i, ie = self.fitBackground(region=region, workspace=workspace, **kwargs)
                     vals[region][shift] = v
                     errs[region][shift] = e
                     integrals[region][shift] = i
+                    integralerrs[region][shift] = ie
                 else:
                     if load:
-                        vUp, eUp, iUp = self.loadBackgroundFit(region,shift+'Up', workspace=workspace)
-                        vDown, eDown, iDown = self.loadBackgroundFit(region,shift+'Down', workspace=workspace)
+                        vUp, eUp, iUp, ieUp = self.loadBackgroundFit(region,shift+'Up', workspace=workspace)
+                        vDown, eDown, iDown, ieDown = self.loadBackgroundFit(region,shift+'Down', workspace=workspace)
                     if not skipFit:
-                        vUp, eUp, iUp = self.fitBackground(region=region, shift=shift+'Up', workspace=workspace, **kwargs)
-                        vDown, eDown, iDown = self.fitBackground(region=region, shift=shift+'Down', workspace=workspace, **kwargs)
+                        vUp, eUp, iUp, ieUp = self.fitBackground(region=region, shift=shift+'Up', workspace=workspace, **kwargs)
+                        vDown, eDown, iDown, ieDown = self.fitBackground(region=region, shift=shift+'Down', workspace=workspace, **kwargs)
                     vals[region][shift+'Up'] = vUp
                     errs[region][shift+'Up'] = eUp
                     integrals[region][shift+'Up'] = iUp
+                    integralerrs[region][shift+'Up'] = ieUp
                     vals[region][shift+'Down'] = vDown
                     errs[region][shift+'Down'] = eDown
                     integrals[region][shift+'Down'] = iDown
+                    integralerrs[region][shift+'Down'] = ieDown
 
         for region in reversed(self.REGIONS):
             if load:
                 allintegrals[region], errors[region] = self.loadComponentIntegrals(region)
             if not skipFit:
-                allparams[region] = self.buildParams(region,vals,errs,integrals)
-                allintegrals[region], errors[region] = self.buildComponentIntegrals(region,vals,errs,integrals, workspace.pdf('bg_{}_x'.format(region)))
+                allparams[region] = self.buildParams(region,vals,errs,integrals,integralerrs)
+                allintegrals[region], errors[region] = self.buildComponentIntegrals(region,vals,errs,integrals,integralerrs, workspace.pdf('bg_{}_x'.format(region)))
 
         if fixAfterControl:
             self.fix(False, workspace=workspace)
         self.background_values = vals
         self.background_errors = errs
         self.background_integrals = integrals
+        self.background_integralerrs = integralerrs
         self.background_integralErrors = errors
         self.background_integralValues = allintegrals
         self.background_params = allparams
@@ -1909,38 +1924,44 @@ class HaaLimits2D(HaaLimits):
         values = {}
         errors = {}
         integrals = {}
+        integralerrs = {}
         fitFuncs = {}
         for region in self.REGIONS:
             models[region] = {}
             values[region] = {}
             errors[region] = {}
             integrals[region] = {}
+            integralerrs[region] = {}
             fitFuncs[region] = {}
             if 'PP' in region:  yFitFunc=yFitFuncPP
             else: yFitFunc = yFitFuncFP
             for shift in ['']+self.SIGNALSHIFTS+self.QCDSHIFTS:
                 if shift == '':
-                    vals, errs, ints, fits = self.fitSignals(region=region,shift=shift,yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
+                    vals, errs, ints, interrs, fits = self.fitSignals(region=region,shift=shift,yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
                     values[region][shift] = vals
                     errors[region][shift] = errs
                     integrals[region][shift] = ints
+                    integralerrs[region][shift] = interrs
                     fitFuncs[region][shift] = fits
                 elif shift in self.QCDSHIFTS:
-                    vals, errs, ints, fits = self.fitSignals(region=region,shift=shift,yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
+                    vals, errs, ints, interrs, fits = self.fitSignals(region=region,shift=shift,yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
                     values[region][shift] = vals
                     errors[region][shift] = errs
                     integrals[region][shift] = ints
+                    integralerrs[region][shift] = interrs
                     fitFuncs[region][shift] = fits
                 else:
-                    valsUp, errsUp, intsUp, fitsUp = self.fitSignals(region=region,shift=shift+'Up',yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
-                    valsDown, errsDown, intsDown, fitsDown = self.fitSignals(region=region,shift=shift+'Down',yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
+                    valsUp, errsUp, intsUp, interrsUp, fitsUp = self.fitSignals(region=region,shift=shift+'Up',yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
+                    valsDown, errsDown, intsDown, interrsDown, fitsDown = self.fitSignals(region=region,shift=shift+'Down',yFitFunc=yFitFunc,isKinFit=isKinFit,**kwargs)
                     values[region][shift+'Up'] = valsUp
                     errors[region][shift+'Up'] = errsUp
                     integrals[region][shift+'Up'] = intsUp
+                    integralerrs[region][shift+'Up'] = interrsUp
                     fitFuncs[region][shift+'Up'] = fitsUp
                     values[region][shift+'Down'] = valsDown
                     errors[region][shift+'Down'] = errsDown
                     integrals[region][shift+'Down'] = intsDown
+                    integralerrs[region][shift+'Down'] = interrsDown
                     fitFuncs[region][shift+'Down'] = fitsDown
             if self.QCDSHIFTS:
                 values[region]['QCDscale_ggHUp']      = {}
@@ -1949,6 +1970,8 @@ class HaaLimits2D(HaaLimits):
                 errors[region]['QCDscale_ggHDown']    = {}
                 integrals[region]['QCDscale_ggHUp']   = {}
                 integrals[region]['QCDscale_ggHDown'] = {}
+                integralerrs[region]['QCDscale_ggHUp']   = {}
+                integralerrs[region]['QCDscale_ggHDown'] = {}
                 fitFuncs[region]['QCDscale_ggHUp']    = {}
                 fitFuncs[region]['QCDscale_ggHDown']  = {}
                 for h in values[region]['']:
@@ -1958,6 +1981,8 @@ class HaaLimits2D(HaaLimits):
                     errors[region]['QCDscale_ggHDown'][h]    = {}
                     integrals[region]['QCDscale_ggHUp'][h]   = {}
                     integrals[region]['QCDscale_ggHDown'][h] = {}
+                    integralerrs[region]['QCDscale_ggHUp'][h]   = {}
+                    integralerrs[region]['QCDscale_ggHDown'][h] = {}
                     fitFuncs[region]['QCDscale_ggHUp'][h]    = {}
                     fitFuncs[region]['QCDscale_ggHDown'][h]  = {}
                     for a in values[region][''][h]:
@@ -1967,6 +1992,8 @@ class HaaLimits2D(HaaLimits):
                         errors[region]['QCDscale_ggHDown'][h][a]    = {}
                         integrals[region]['QCDscale_ggHUp'  ][h][a] = max([integrals[region][shift][h][a] for shift in self.QCDSHIFTS])
                         integrals[region]['QCDscale_ggHDown'][h][a] = min([integrals[region][shift][h][a] for shift in self.QCDSHIFTS])
+                        integralerrs[region]['QCDscale_ggHUp'  ][h][a] = max([integralerrs[region][shift][h][a] for shift in self.QCDSHIFTS])
+                        integralerrs[region]['QCDscale_ggHDown'][h][a] = min([integralerrs[region][shift][h][a] for shift in self.QCDSHIFTS])
                         for val in values[region][''][h][a]:
                             values[region]['QCDscale_ggHUp'  ][h][a][val] = max([values[region][shift][h][a][val] for shift in self.QCDSHIFTS])
                             values[region]['QCDscale_ggHDown'][h][a][val] = min([values[region][shift][h][a][val] for shift in self.QCDSHIFTS])
@@ -1976,14 +2003,14 @@ class HaaLimits2D(HaaLimits):
                     savedir = '{}/{}'.format(self.fitsDir,shift)
                     python_mkdir(savedir)
                     savename = '{}/{}_{}.json'.format(savedir,region,shift)
-                    jsonData = {'vals': values[region][shift], 'errs': errors[region][shift], 'integrals': integrals[region][shift]}
+                    jsonData = {'vals': values[region][shift], 'errs': errors[region][shift], 'integrals': integrals[region][shift], 'integralerrs': integralerrs[region][shift]}
                     self.dump(savename,jsonData)
-                fitFuncs[region]['QCDscale_ggHUp']   = self.fitSignalParams(values[region]['QCDscale_ggHUp'],  errors[region]['QCDscale_ggHUp'],  integrals[region]['QCDscale_ggHUp'],  region,'QCDscale_ggHUp',yFitFunc=yFitFunc)
-                fitFuncs[region]['QCDscale_ggHDown'] = self.fitSignalParams(values[region]['QCDscale_ggHDown'],errors[region]['QCDscale_ggHDown'],integrals[region]['QCDscale_ggHDown'],region,'QCDscale_ggHDown',yFitFunc=yFitFunc)
+                fitFuncs[region]['QCDscale_ggHUp']   = self.fitSignalParams(values[region]['QCDscale_ggHUp'],  errors[region]['QCDscale_ggHUp'],  integrals[region]['QCDscale_ggHUp'],  integralerrs[region]['QCDscale_ggHUp'],  region,'QCDscale_ggHUp',yFitFunc=yFitFunc)
+                fitFuncs[region]['QCDscale_ggHDown'] = self.fitSignalParams(values[region]['QCDscale_ggHDown'],errors[region]['QCDscale_ggHDown'],integrals[region]['QCDscale_ggHDown'],integralerrs[region]['QCDscale_ggHDown'],region,'QCDscale_ggHDown',yFitFunc=yFitFunc)
             if self.QCDSHIFTS:
-                models[region] = self.buildSpline(values[region],errors[region],integrals[region],region,self.SIGNALSHIFTS+['QCDscale_ggH'],yFitFunc=yFitFunc,isKinFit=isKinFit,fitFuncs=fitFuncs[region],**kwargs)
+                models[region] = self.buildSpline(values[region],errors[region],integrals[region],integralerrs[region],region,self.SIGNALSHIFTS+['QCDscale_ggH'],yFitFunc=yFitFunc,isKinFit=isKinFit,fitFuncs=fitFuncs[region],**kwargs)
             else:
-                models[region] = self.buildSpline(values[region],errors[region],integrals[region],region,self.SIGNALSHIFTS,yFitFunc=yFitFunc,isKinFit=isKinFit,fitFuncs=fitFuncs[region],**kwargs)
+                models[region] = self.buildSpline(values[region],errors[region],integrals[region],integralerrs[region],region,self.SIGNALSHIFTS,yFitFunc=yFitFunc,isKinFit=isKinFit,fitFuncs=fitFuncs[region],**kwargs)
         self.fitted_models = models
 
     ######################
