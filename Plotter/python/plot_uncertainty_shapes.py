@@ -12,9 +12,9 @@ from DevTools.Utilities.utilities import *
 ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 2001;")
 tdrstyle.setTDRStyle()
 
-mode = 'mm'
+#mode = 'mm'
 #mode = 'mm_tt'
-#mode = 'mm_h'
+mode = 'mm_h'
 
 
 workspaces = {}

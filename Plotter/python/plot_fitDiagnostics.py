@@ -19,6 +19,7 @@ def floatToText(x):
 def plot(h,a,dim,region):
     br = 0.0005
     mode = 'fit_s'
+    #mode = 'fit_b'
     var = 'CMS_haa_{}'.format(dim)
     if region=='control': var += '_control'
     fname = 'temp_fitDiagnostics/{h}_{a}/fitDiagnostics.Test.root'.format(h=h,a=a)
@@ -34,19 +35,18 @@ def plot(h,a,dim,region):
     # rooplot.remove("name")
     objToRemove = []
     objs = []
+    print h, a, region, mode, var
     for i in range(7):
         obj = rooplot.nameOf(i)
         o = rooplot.getObject(i)
-        #print obj, o
+        print obj, o
         objs += [obj]
-        if 'errorband' in obj:
-            objToRemove += [obj]
-        if 'pdf' in obj and 'Comp' not in obj:
+        if 'pdf' in obj and not ('Comp' in obj or 'errorband' in obj):
             objToRemove += [obj]
         # scale the signal to desired br
         if 'Sig' in obj:
             for j in range(o.GetN()):
-                o.GetY()[j] *= br/(fittree.r * 0.001)
+                if fittree.r: o.GetY()[j] *= br/(fittree.r * 0.001)
     for obj in objToRemove:
         rooplot.remove(obj)
     
@@ -88,7 +88,6 @@ def plot(h,a,dim,region):
     foundSig = False
     foundObs = False
     for prim in canvas.GetListOfPrimitives():
-        print prim
         if 'h_{}'.format(region) in prim.GetName():
             if foundObs: continue
             foundObs = True
@@ -97,6 +96,9 @@ def plot(h,a,dim,region):
         elif 'Bkg' in prim.GetName():
             prim.SetLineColor(ROOT.kBlue)
             legend.AddEntry(prim, 'Background Model', 'l')
+        elif 'errorband' in prim.GetName():
+            prim.SetLineColor(ROOT.kOrange)
+            legend.AddEntry(prim, 'Uncertainty', 'f')
         elif 'Sig' in prim.GetName():
             prim.SetLineColor(ROOT.kRed)
             if foundSig: continue
@@ -107,12 +109,12 @@ def plot(h,a,dim,region):
     
     legend.Draw()
     
-    canvas.Print('haa_mm_h_{}_{}_{}.png'.format(region,var,mode))
-    canvas.Print('haa_mm_h_{}_{}_{}.pdf'.format(region,var,mode))
+    canvas.Print('haa_mm_h_{}_{}_{}_{}_{}.png'.format(region,var,mode,h,a))
+    canvas.Print('haa_mm_h_{}_{}_{}_{}_{}.pdf'.format(region,var,mode,h,a))
 
-h = 125
-a = 7
-for region in ['PP','FP','control']:
-    plot(h,a,'x',region)
-    if region!='control': plot(h,a,'y',region)
+for h in [125,300,750]:
+    for a in [7,9,15]:
+        for region in ['PP','FP','control']:
+            plot(h,a,'x',region)
+            if region!='control': plot(h,a,'y',region)
 
