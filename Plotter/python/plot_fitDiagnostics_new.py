@@ -12,6 +12,8 @@ tdrstyle.setTDRStyle()
 
 isprelim = False
 br = 0.0005
+doUnc = False
+doRatio = True
 
 def floatToText(x):
     s = '{:.1E}'.format(x).split('E')
@@ -27,6 +29,69 @@ def argsetToList(argset):
         ax = argiter.Next()
     return arglist
 
+def getPoissonError(hist):
+    # adapted from rootpy to get asymmetric poisson errors
+    graph = ROOT.TGraphAsymmErrors(hist.GetNbinsX())
+    chisqr = ROOT.TMath.ChisquareQuantile
+    npoints = 0
+    for bin in range(hist.GetNbinsX()):
+        val = hist.GetBinContent(bin+1)
+        err2 = hist.GetBinError(bin+1)**2
+        width = hist.GetBinWidth(bin+1)
+        varbin = val-err2>0.001
+        entries = val*width if varbin else val
+        if entries <= 0:
+            #continue
+            entries = 0
+        ey_low = entries - 0.5 * chisqr(0.1586555, 2. * entries)
+        ey_high = 0.5 * chisqr(1. - 0.1586555, 2. * (entries + 1)) - entries
+
+        if varbin:
+            ey_low = val - (entries-ey_low) / width
+            ey_high = (entries+ey_high) / width - val
+
+        ex = width / 2.
+        graph.SetPoint(npoints, hist.GetBinCenter(bin+1), val)
+        graph.SetPointEXlow(npoints, 0)
+        graph.SetPointEXhigh(npoints, 0)
+        graph.SetPointEYlow(npoints, ey_low)
+        graph.SetPointEYhigh(npoints, ey_high)
+        npoints += 1
+    graph.Set(npoints)
+    return graph
+
+def getRatioError(num,denom):
+    # get ratio between two hists with poisson errors
+    if isinstance(num,ROOT.TH1):
+        num_graph = getPoissonError(num)
+    else:
+        num_graph = num
+    graph = ROOT.TGraphAsymmErrors(num_graph.GetN())
+    npoints = 0
+    xval = ROOT.Double()
+    yval = ROOT.Double()
+    for bin in range(num_graph.GetN()):
+        num_graph.GetPoint(bin,xval,yval)
+        nval = float(yval)
+        dval = denom.GetBinContent(bin+1)
+        ey_low = num_graph.GetErrorYlow(bin)
+        ey_high = num_graph.GetErrorYhigh(bin)
+        if dval > 0:
+            graph.SetPoint(npoints, xval, nval/dval)
+            graph.SetPointEXlow(npoints, 0)
+            graph.SetPointEXhigh(npoints, 0)
+            graph.SetPointEYlow(npoints, ey_low/dval)
+            graph.SetPointEYhigh(npoints, ey_high/dval)
+        else:
+            graph.SetPoint(npoints, xval, 0)
+            graph.SetPointEXlow(npoints, 0)
+            graph.SetPointEXhigh(npoints, 0)
+            graph.SetPointEYlow(npoints, 0)
+            graph.SetPointEYhigh(npoints, 0)
+        npoints += 1
+    graph.Set(npoints)
+    return graph
+
 def plot(h,a):
     config = {
         'CMS_haa_x': {
@@ -36,6 +101,7 @@ def plot(h,a):
             'binning': 60,
             'xlabel' : 'm(#mu#mu#tau_{#mu}#tau_{h}) (GeV)',
             'ylabel' : 'Events / 20 GeV',
+            'xrange' : [0,800]
         },
         'CMS_haa_x_control': {
             'xlabel' : 'm(#mu#mu) (GeV)',
@@ -43,8 +109,8 @@ def plot(h,a):
     }
     if a < 8.5:
         mode = 'lowmass'
-        config['CMS_haa_x']['binning'] = 52
-        config['CMS_haa_x']['ylabel'] = 'Events / 0.1 GeV'
+        config['CMS_haa_x']['binning'] = 26
+        config['CMS_haa_x']['ylabel'] = 'Events / 0.25 GeV'
         config['CMS_haa_x_control']['binning'] = 65
         config['CMS_haa_x_control']['ylabel'] = 'Events / 0.1 GeV'
     elif a < 11.5:
@@ -106,13 +172,14 @@ def plot(h,a):
                 ROOT.RooFit.DataError(ROOT.RooAbsData.Poisson),
             )
             xargs = ROOT.RooArgSet(x)
-            dpdf.plotOn(frame, 
-                ROOT.RooFit.Normalization(dpdf.expectedEvents(xargs),ROOT.RooAbsReal.NumEvent),
-                ROOT.RooFit.VisualizeError(fr,1),
-                ROOT.RooFit.Components('shapeBkg*'),
-                ROOT.RooFit.FillColor(ROOT.kOrange),
-                ROOT.RooFit.LineColor(ROOT.kOrange),
-            )
+            if doUnc:
+                dpdf.plotOn(frame, 
+                    ROOT.RooFit.Normalization(dpdf.expectedEvents(xargs),ROOT.RooAbsReal.NumEvent),
+                    ROOT.RooFit.VisualizeError(fr,1),
+                    ROOT.RooFit.Components('shapeBkg*'),
+                    ROOT.RooFit.FillColor(ROOT.kOrange),
+                    ROOT.RooFit.LineColor(ROOT.kOrange),
+                )
             if ds.GetName() in sigPdfs:
                 sigPdfs[ds.GetName()].plotOn(frame,
                     ROOT.RooFit.LineColor(ROOT.kRed),
@@ -131,49 +198,75 @@ def plot(h,a):
                 ROOT.RooFit.DataError(ROOT.RooAbsData.Poisson),
             )
 
-            canvas = ROOT.TCanvas('c','c',50,50,800,600)
-            canvas.SetRightMargin(0.05)
-            canvas.SetTopMargin(0.06)
+            canvas = ROOT.TCanvas('c','c',50,50,600,600)
+
+            mainpad = canvas
+
+            if doRatio:
+                plotpad = ROOT.TPad("plotpad", "top pad", 0.0, 0.21, 1.0, 1.0)
+                #ROOT.SetOwnership(plotpad,False)
+                plotpad.SetBottomMargin(0.04)
+                plotpad.SetRightMargin(0.03)
+                plotpad.SetTopMargin(0.06)
+                plotpad.Draw()
+                ratiopad = ROOT.TPad("ratiopad", "bottom pad", 0.0, 0.0, 1.0, 0.21)
+                #ROOT.SetOwnership(ratiopad,False)
+                ratiopad.SetTopMargin(0.06)
+                ratiopad.SetRightMargin(0.03)
+                ratiopad.SetBottomMargin(0.5)
+                ratiopad.SetLeftMargin(0.16)
+                ratiopad.SetTickx(1)
+                ratiopad.SetTicky(1)
+                ratiopad.Draw()
+                if plotpad != ROOT.TVirtualPad.Pad(): plotpad.cd()
+                mainpad = plotpad
+            else:
+                canvas.SetRightMargin(0.05)
+                canvas.SetTopMargin(0.06)
 
             frame.Draw()
-            mi = frame.GetMinimum()
-            if mi<0: frame.SetMinimum(0.1)
+            frame.SetMinimum(0)
             frame.GetXaxis().SetTitle(config[x.GetName()]['xlabel'])
             frame.GetYaxis().SetTitle(config[x.GetName()]['ylabel'])
 
+            if 'xrange' in config[x.GetName()]:
+                frame.GetXaxis().SetRangeUser(*config[x.GetName()]['xrange'])
+
             if x.GetName()=='CMS_haa_x':
                 if a<8.5:
-                    canvas.SetLogy()
+                    frame.SetMinimum(1)
                     frame.SetMaximum(2000)
+                    mainpad.SetLogy()
                 if a>8.5 and a<11.5:
                     frame.SetMaximum(60 if 'PP' in ds.GetName() else 120)
                 if a>11.5:
                     frame.SetMaximum(50 if 'PP' in ds.GetName() else 100)
             elif x.GetName()=='CMS_haa_y':
-                frame.GetXaxis().SetRangeUser(0,800)
-                canvas.SetLogy()
                 frame.SetMaximum(1000)
+                frame.SetMinimum(0.1)
+                mainpad.SetLogy()
             else:
                 if a<8.5:
-                    canvas.SetLogy()
-                    frame.SetMaximum(2e6)
+                    frame.SetMaximum(8e5)
                     frame.SetMinimum(1e4)
+                    mainpad.SetLogy()
                 if a>8.5 and a<11.5:
                     frame.SetMaximum(1.5e5)
                 if a>11.5:
                     frame.SetMaximum(2e4)
 
             frame.GetXaxis().SetLabelSize(0.05)
+            if doRatio: frame.GetXaxis().SetLabelOffset(999)
             frame.GetYaxis().SetLabelSize(0.05)
 
             CMS_lumi.cmsText = 'CMS'
             CMS_lumi.writeExtraText = isprelim
             CMS_lumi.extraText = 'Preliminary'
             CMS_lumi.lumi_13TeV = "%0.1f fb^{-1}" % (35.9)
-            CMS_lumi.CMS_lumi(canvas,4,11)
+            CMS_lumi.CMS_lumi(mainpad,4,11)
 
 
-            legend = ROOT.TLegend(0.4,0.6,0.92,0.92)
+            legend = ROOT.TLegend(0.4,0.65,0.92,0.92)
             legend.SetTextFont(42)
             legend.SetBorderSize(0)
             legend.SetFillColor(0)
@@ -182,7 +275,7 @@ def plot(h,a):
             foundBkg = False
             foundObs = False
             toAdd = {}
-            for prim in canvas.GetListOfPrimitives():
+            for prim in mainpad.GetListOfPrimitives():
                 if 'h_{}'.format(ds.GetName()) in prim.GetName():
                     if foundObs: continue
                     foundObs = True
@@ -207,6 +300,47 @@ def plot(h,a):
 
             legend.Draw()
 
+            if doRatio:
+                hdata = toAdd['obs'][0]
+                #hdata = ds.createHistogram('h_{}{}{}{}'.format(ds.GetName(),x.GetName(),h,a), x, ROOT.RooFit.Binning(config[x.GetName()]['binning']))
+                #hdata = ds.createHistogram(x.GetName(), config[x.GetName()]['binning'])
+                dp = dpdf.generateBinned(xargs,0,True)
+                hpdf  = dp.createHistogram('h_{}{}{}{}'.format(ds.GetName(),x.GetName(),h,a), x, ROOT.RooFit.Binning(config[x.GetName()]['binning']))
+                #hpdf  = dp.createHistogram(x.GetName(), config[x.GetName()]['binning'])
+                ratio = getRatioError(hdata,hpdf)
+
+                ratiopad.cd()
+                if 'xrange' in config[x.GetName()]:
+                    theRange = config[x.GetName()]['xrange']
+                else:
+                    theRange = [frame.GetXaxis().GetXmin(),frame.GetXaxis().GetXmax()]
+                
+                raxes = ROOT.TH1D('h','h',1,*theRange)
+                raxes.Draw()
+                raxes.GetXaxis().SetTitle(config[x.GetName()]['xlabel'])
+                raxes.GetYaxis().SetTitle('Obs / Exp')
+                raxes.GetXaxis().SetRangeUser(*theRange)
+                raxes.GetXaxis().SetLabelSize(0.19)
+                raxes.GetXaxis().SetLabelOffset(0.03)
+                raxes.GetXaxis().SetTitleSize(0.21)
+                raxes.GetXaxis().SetTitleOffset(1.00)
+                raxes.SetMinimum(0.5)
+                raxes.SetMaximum(1.5)
+                raxes.GetYaxis().SetLabelSize(0.19)
+                raxes.GetYaxis().SetLabelOffset(0.006)
+                raxes.GetYaxis().SetTitleSize(0.21)
+                raxes.GetYaxis().SetTitleOffset(0.35)
+                raxes.GetYaxis().SetNdivisions(503)
+
+                unityargs = [theRange[0],1,theRange[1],1]
+                ratiounity = ROOT.TLine(*unityargs)
+                ratiounity.SetLineStyle(2)
+                ratiounity.Draw('same')
+                
+                ratio.Draw('0P same')
+                canvas.cd()
+
+
             canvas.Print('rooplot_haa_{}_{}_{}_{}.png'.format(ds.GetName(),x.GetName(),h,a))
             canvas.Print('rooplot_haa_{}_{}_{}_{}.pdf'.format(ds.GetName(),x.GetName(),h,a))
 
@@ -214,5 +348,5 @@ def plot(h,a):
             
 
 for h in [125,300,750]:
-    for a in [7,11,15]:
+    for a in [7,9,11,15]:
         plot(h,a)
