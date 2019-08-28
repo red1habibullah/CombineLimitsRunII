@@ -74,7 +74,7 @@ class HaaLimits2D(HaaLimits):
         yVar = kwargs.pop('yVar',self.YVAR)
         tag = kwargs.pop('tag',region)
 
-        doDouble = True
+        doDouble = False
 
         # h
         if self.YRANGE[1]>100:
@@ -394,11 +394,12 @@ class HaaLimits2D(HaaLimits):
         xVar = kwargs.pop('xVar',self.XVAR)
         yVar = kwargs.pop('yVar',self.YVAR)
 
-        doPoly = True
+        doPoly = False
+        doPolyExpo = False
 
         # the 2D model
         if self.YCORRELATION:
-            if self.XRANGE[0]<4 and not doPoly:
+            if self.XRANGE[0]<4 and not (doPoly or doPolyExpo):
                 cont1 = Models.Prod('cont1',
                     'bg_{}_y|{}'.format(region,xVar),
                     'cont1_{}_x'.format(region),
@@ -460,7 +461,7 @@ class HaaLimits2D(HaaLimits):
                 'bg_{}_x'.format(region),
             )
         else:
-            if self.XRANGE[0]<4 and not doPoly: 
+            if self.XRANGE[0]<4 and not (doPoly or doPolyExpo): 
                 cont1 = Models.Prod('cont1',
                     'cont1_{}_x'.format(region),
                     'bg_{}_y'.format(region),

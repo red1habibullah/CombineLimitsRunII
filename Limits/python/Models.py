@@ -1031,6 +1031,39 @@ class PolynomialExpr(Model):
         ws.factory(expr)
         self.params = params
 
+class ExpoPoly(Model):
+    
+    def __init__(self,name,**kwargs):
+        super(ExpoPoly,self).__init__(name,**kwargs)
+
+    def build(self,ws,label):
+        logging.debug('Building {}'.format(label))
+        order = self.kwargs.get('order',1)
+        ranges = [self.kwargs.get('p{}'.format(o),[0,-1,1]) for o in range(order+1)]
+        params = []
+        for i in range(order+1):
+            if isinstance(ranges[i],str):
+                params += [ranges[i]]
+            else:
+                name = 'p{}_{}'.format(i,label)
+                params += [name]
+                ws.factory('{}[{}, {}, {}]'.format(name,*ranges[i]))
+        # build model
+        expr = "EXPR::{0}('TMath::Exp(".format(label)
+        for i in range(order+1):
+            if i>1:
+                expr += " + {1}*TMath::Power({0},{2})".format(self.x,params[i],i)
+            elif i==1:
+                expr += " + {1}*{0}".format(self.x,params[i])
+            else:
+                expr += "{0}".format(params[i])
+        expr += ")', {0}".format(self.x)
+        for i in range(order+1):
+            expr += ", {0}".format(params[i])
+        expr += ")"
+        ws.factory(expr)
+        self.params = params
+
 class Erf(Model):
 
     def __init__(self,name,**kwargs):

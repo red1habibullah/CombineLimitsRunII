@@ -107,27 +107,27 @@ def plot(h,a):
             'xlabel' : 'm(#mu#mu) (GeV)',
         }
     }
-    if a < 8.5:
+    if a < 8:
         mode = 'lowmass'
-        config['CMS_haa_x']['binning'] = 26
+        config['CMS_haa_x']['binning'] = int((8.5-2.5)/0.25)
         config['CMS_haa_x']['ylabel'] = 'Events / 0.25 GeV'
-        config['CMS_haa_x_control']['binning'] = 65
+        config['CMS_haa_x_control']['binning'] = int((8.5-2.5)/0.1)
         config['CMS_haa_x_control']['ylabel'] = 'Events / 0.1 GeV'
     elif a < 11.5:
         mode = 'upsilon'
-        config['CMS_haa_x']['binning'] = 20
+        config['CMS_haa_x']['binning'] = int((14-6)/0.2)
         config['CMS_haa_x']['ylabel'] = 'Events / 0.2 GeV'
-        config['CMS_haa_x_control']['binning'] = 40
+        config['CMS_haa_x_control']['binning'] = int((14-6)/0.1)
         config['CMS_haa_x_control']['ylabel'] = 'Events / 0.1 GeV'
     else:
         mode = 'highmass'
-        config['CMS_haa_x']['binning'] = 14
+        config['CMS_haa_x']['binning'] = int((25-11)/1)
         config['CMS_haa_x']['ylabel'] = 'Events / 1 GeV'
-        config['CMS_haa_x_control']['binning'] = 140
-        config['CMS_haa_x_control']['ylabel'] = 'Events / 0.1 GeV'
+        config['CMS_haa_x_control']['binning'] = int((25-11)/0.2)
+        config['CMS_haa_x_control']['ylabel'] = 'Events / 0.2 GeV'
 
     wsName = 'temp_fitDiagnostics/{h}_{a}/ws_mm_h_unbinned_{mode}With1DFits_{h}_{a}.root'.format(h=h,a=a,mode=mode)
-    fdName = 'temp_fitDiagnostics/{h}_{a}/fitDiagnostics.Test.root'.format(h=h,a=a)
+    fdName = 'temp_fitDiagnostics/{h}_{a}/fitDiagnostics{mode}With1DFits.root'.format(h=h,a=a)
 
     wsFile = ROOT.TFile.Open(wsName)
     ws = wsFile.Get('w')
@@ -232,12 +232,13 @@ def plot(h,a):
             if 'xrange' in config[x.GetName()]:
                 frame.GetXaxis().SetRangeUser(*config[x.GetName()]['xrange'])
 
+            ROOT.TGaxis().SetMaxDigits(5)
             if x.GetName()=='CMS_haa_x':
-                if a<8.5:
+                if a<=8:
                     frame.SetMinimum(1)
                     frame.SetMaximum(2000)
                     mainpad.SetLogy()
-                if a>8.5 and a<11.5:
+                if a>8 and a<11.5:
                     frame.SetMaximum(60 if 'PP' in ds.GetName() else 120)
                 if a>11.5:
                     frame.SetMaximum(50 if 'PP' in ds.GetName() else 100)
@@ -246,14 +247,15 @@ def plot(h,a):
                 frame.SetMinimum(0.1)
                 mainpad.SetLogy()
             else:
-                if a<8.5:
+                if a<=8:
                     frame.SetMaximum(8e5)
                     frame.SetMinimum(1e4)
                     mainpad.SetLogy()
-                if a>8.5 and a<11.5:
+                if a>8 and a<11.5:
                     frame.SetMaximum(1.5e5)
                 if a>11.5:
                     frame.SetMaximum(2e4)
+                ROOT.TGaxis().SetMaxDigits(4)
 
             frame.GetXaxis().SetLabelSize(0.05)
             if doRatio: frame.GetXaxis().SetLabelOffset(999)
@@ -324,8 +326,8 @@ def plot(h,a):
                 raxes.GetXaxis().SetLabelOffset(0.03)
                 raxes.GetXaxis().SetTitleSize(0.21)
                 raxes.GetXaxis().SetTitleOffset(1.00)
-                raxes.SetMinimum(0.5)
-                raxes.SetMaximum(1.5)
+                raxes.SetMinimum(0.9 if 'control' in x.GetName() else 0.0)
+                raxes.SetMaximum(1.1 if 'control' in x.GetName() else 2.0)
                 raxes.GetYaxis().SetLabelSize(0.19)
                 raxes.GetYaxis().SetLabelOffset(0.006)
                 raxes.GetYaxis().SetTitleSize(0.21)

@@ -349,7 +349,8 @@ class HaaLimits(Limits):
         #resonant = Models.Sum(nameR, **resonant)
         #resonant.build(workspace,nameR)
 
-        doPoly = True
+        doPoly = False
+        doPolyExpo = False
 
         # continuum background
         if doPoly:
@@ -361,6 +362,14 @@ class HaaLimits(Limits):
             cont = Models.Chebychev(nameC,
                 x = xVar,
                 order = order,
+            )
+            cont.build(workspace,nameC)
+
+        elif doPolyExpo:
+            nameC = 'cont{}'.format('_'+tag if tag else '')
+            cont = Models.ExpoPoly(nameC,
+                x = xVar,
+                order = 3,
             )
             cont.build(workspace,nameC)
 
