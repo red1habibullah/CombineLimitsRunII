@@ -1,28 +1,60 @@
 import os
 import logging
+import errno
+import subprocess
+import argparse
+
 import ROOT
 
 ROOT.gROOT.SetBatch()
 
-from DevTools.Utilities.utilities import python_mkdir, runCommand
+
+# helper functions
+def python_mkdir(dir):
+    '''A function to make a unix directory as well as subdirectories'''
+    try:
+        os.makedirs(dir)
+    except OSError as exc:
+        if exc.errno == errno.EEXIST and os.path.isdir(dir):
+            pass
+        else: raise
+
+def runCommand(command):
+    return subprocess.Popen(command,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT).communicate()[0]
+
 
 logging.basicConfig(format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 
-hdfs = '/hdfs/store/user/dntaylor'
+
+parser = argparse.ArgumentParser(description='Prepare grid submission')
+parser.add_argument('jobname',type=str,help='Job name for submission')
+parser.add_argument('--crab',action='store_true',help='Prepare crab submission (otherwise does condor assuming UW Madison)')
+parser.add_argument('--site',type=str,default='T2_US_Wisconsin',help='Site for storage')
+parser.add_argument('--hmasses',type=int,default=[125,300,750],nargs='+',help='H masses to run')
+parser.add_argument('--moderanges',type=int,default=['lowmass','upsilon','highmass'],choices=['lowmass','upsilon','highmass'],nargs='+',help='A mass ranges to run')
+parser.add_argument('--toys',type=int,default=2000,help='Number of toys')
+parser.add_argument('--testing',action='store_true',help='Number of toys')
+
+args = parser.parse_args()
+
 user = os.environ['USER']
-doCrab = False
+site = args.site
+store = '/store/user/{}'.format(user)
+hdfs = '/hdfs/store/user/{}'.format(user)
+doCrab = args.crab
 version = 1
-testing = False
+testing = args.testing
 reduced = False
 
-jobname = '2019-10-24_MuMuTauTauLimits_HybridNew_v{v}'.format(v=version)
+#jobname = '2019-10-24_MuMuTauTauLimits_HybridNew_v{v}'.format(v=version)
+jobname = args.jobname
 if doCrab:
     jobname = 'crab_' + jobname
 if testing:
     jobname = 'test_' + jobname
 
 
-hmasses = [750,300,125]
+hmasses = args.hmasses
 amasses = [x*.1 for x in range(36,210,1)] + [21.0]
 lowmass_amasses = amasses
 upsilon_amasses = amasses
@@ -33,15 +65,19 @@ if reduced:
     upsilon_amasses = [6,6.5,7,7.5] + [x*.1 for x in range(80,121,1)] + [12.5,13,13.5,14]
     highmass_amasses = [x*.1 for x in range(110,255,5)]
 if testing:
-    amasses = [7.0,10.0,15.0]
+    amasses = [7.0,9.0,15.0]
+    lowmass_amasses = [7.0]
+    upsilon_amasses = [9.0]
+    highmass_amasses = [15.0]
 
 
 #mode = 'mmmt_mm_h_parametric_unbinned_with1DFits'
-mode = 'mmmt_mm_h_parametric_unbinned_{moderange}With1DFits'
-toys = 5000 # reasonable amount for all points is 100 per job, longest right now is upsilon 125, 12 hours
-toys = 1000 # cut it by 5 for initial population
+#mode = 'mmmt_mm_h_parametric_unbinned_{moderange}With1DFits'
+mode = 'mmmt_mm_h_parametric_unbinned_{moderange}With1DFitsDoubleExpo'
+#toys = 5000 # reasonable amount for all points is 100 per job, longest right now is upsilon 125, 12 hours
+toys = args.toys
 
-moderanges = ['lowmass','upsilon','highmass']
+moderanges = args.moderanges
 rangeMap = {
     'lowmass': [2.5,8.5],
     'upsilon': [6,14],
@@ -62,9 +98,10 @@ drMap = {
 }
 
 if doCrab:
-    scratchdir = '/nfs_scratch/dntaylor/crab_projects'
+    #scratchdir = '/nfs_scratch/{}/crab_projects'.format(user)
+    scratchdir = 'crab_projects'
 else:
-    scratchdir = '/nfs_scratch/dntaylor/condor_projects'
+    scratchdir = '/nfs_scratch/{}/condor_projects'.format(user)
 
 def submit_condor(ws,quartiles,mode,h,a):
     sample_dir = '{}/{}/{}/{}/{}'.format(scratchdir,jobname,mode,h,a)
@@ -135,30 +172,34 @@ def submit_condor(ws,quartiles,mode,h,a):
 
 def submit_crab(ws,quartiles,mode,h,a):
     if quartiles:
-        low = min(quartiles[:5])*0.5
-        high = max(quartiles[:5])*1.2
-        exp = quartiles[2]
-        obs = quartiles[5]
+        rmin = min(quartiles[:5])*0.5
+        rmax = max(quartiles[:5])*1.2
     else:
-        low = rMap[h][0]
-        high = rMap[h][1]
-        exp = (high-low)/2
-    pointsString = '{:.2}:{:.2}:{:.2},{:.2}:{:.2}:{:.2}'.format(low,exp,(exp-low)/50,exp,high,(high-exp)/30)
+        rmin = rMap[h][0]
+        rmax = rMap[h][1]
+    num_points = int((rmax-rmin)/drMap[h])
+    points_per_job = 1
+    toys_per_job = 100
+    jobs_per_point = int(toys/toys_per_job)
+    if jobs_per_point<1: jobs_per_point = 1
+    pointsString = '{:.3}:{:.3}:{:.3}'.format(rmin,drMap[h],rmax)
 
     crab = 'custom_crab_{h}_{a}.py'.format(h=h,a=a)
 
-    crabString = '''
+    for i in range(jobs_per_point):
+        crabString = '''
 def custom_crab(config):
-    config.General.workArea = '/nfs_scratch/{user}/crab_projects/{jobname}/{tag}/{h}/{a}'
+    config.General.workArea = '{scratchdir}/{jobname}/{tag}/{h}/{a}/{i}'
     config.Data.outLFNDirBase = '/store/user/{user}/{jobname}/{tag}/{h}/{a}'
-    config.Site.storageSite = 'T2_US_Wisconsin'
-'''.format(user=user, jobname=jobname, tag=mode, h=h, a=a)
+    config.Site.storageSite = '{site}'
+'''.format(scratchdir=scratchdir, user=user, jobname=jobname, tag=mode, h=h, a=a, site=site, i=i)
 
-    with open('{temp}/custom_crab_{h}_{a}.py'.format(temp=temp,h=h,a=a),'w') as f:
-        f.write(crabString)
+        temp = 'temp_HybridNew_{h}'.format(h=h)
+        with open('{temp}/custom_crab_{h}_{a}_{i}.py'.format(temp=temp,h=h,a=a,i=i),'w') as f:
+            f.write(crabString)
 
-    command = 'combineTool.py -M HybridNew -v -1 -d {ws} -m {h} --setParameters MA={a} --freezeParameters=MA --LHCmode LHC-limits --singlePoint {points} --saveToys --saveHybridResult -T {toys} -s -1 --clsAcc 0 --job-mode crab3 --task-name {jobname} --custom-crab custom_crab_{h}_{a}.py'.format(ws=ws,h=h,a=a,points=pointsString,toys=toys,jobname=jobname)
-    print command
+        command = 'combineTool.py -M HybridNew -v -1 -d {ws} -m {h} --setParameters MA={a} --freezeParameters=MA --LHCmode LHC-limits --singlePoint {points} --saveToys --saveHybridResult -T {toys} -s -1 --clsAcc 0 --job-mode crab3 --task-name {jobname} --custom-crab custom_crab_{h}_{a}_{i}.py'.format(ws=ws,h=h,a=a,points=pointsString,toys=toys,jobname=jobname,i=i)
+        print command
 
 
 
