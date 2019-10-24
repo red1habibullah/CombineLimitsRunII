@@ -179,7 +179,7 @@ def submit_crab(ws,quartiles,mode,h,a):
         rmax = rMap[h][1]
     num_points = int((rmax-rmin)/drMap[h])
     points_per_job = 1
-    toys_per_job = 100
+    toys_per_job = 10 # for crab it will do all r values in a job and 10 toys per r value
     jobs_per_point = int(toys/toys_per_job)
     if jobs_per_point<1: jobs_per_point = 1
     pointsString = '{:.3}:{:.3}:{:.3}'.format(rmin,drMap[h],rmax)
@@ -192,13 +192,14 @@ def custom_crab(config):
     config.General.workArea = '{scratchdir}/{jobname}/{tag}/{h}/{a}/{i}'
     config.Data.outLFNDirBase = '/store/user/{user}/{jobname}/{tag}/{h}/{a}'
     config.Site.storageSite = '{site}'
+    config.JobType.allowUndistributedCMSSW = True
 '''.format(scratchdir=scratchdir, user=user, jobname=jobname, tag=mode, h=h, a=a, site=site, i=i)
 
         temp = 'temp_HybridNew_{h}'.format(h=h)
         with open('{temp}/custom_crab_{h}_{a}_{i}.py'.format(temp=temp,h=h,a=a,i=i),'w') as f:
             f.write(crabString)
 
-        command = 'combineTool.py -M HybridNew -v -1 -d {ws} -m {h} --setParameters MA={a} --freezeParameters=MA --LHCmode LHC-limits --singlePoint {points} --saveToys --saveHybridResult -T {toys} -s -1 --clsAcc 0 --job-mode crab3 --task-name {jobname} --custom-crab custom_crab_{h}_{a}_{i}.py'.format(ws=ws,h=h,a=a,points=pointsString,toys=toys,jobname=jobname,i=i)
+        command = 'combineTool.py -M HybridNew -v -1 -d {ws} -m {h} --setParameters MA={a} --freezeParameters=MA --LHCmode LHC-limits --singlePoint {points} --saveToys --saveHybridResult -T {toys} -s -1 --clsAcc 0 --job-mode crab3 --task-name {jobname} --custom-crab custom_crab_{h}_{a}_{i}.py'.format(ws=ws,h=h,a=a,points=pointsString,toys=toys_per_job,jobname=jobname,i=i)
         print command
 
 
