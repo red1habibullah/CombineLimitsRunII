@@ -33,6 +33,9 @@ class HaaLimits2D(HaaLimits):
     YLABEL = 'm_{#mu#mu#tau_{#mu}#tau_{h}}'
     YVAR = 'CMS_haa_y'
     YCORRELATION = False
+    SPLITY = False
+    DOUBLEEXPO = False
+    NUMEXPO = 1
 
     def __init__(self,histMap,tag='',do2DInterpolation=False,doParamFit=False):
         '''
@@ -74,13 +77,102 @@ class HaaLimits2D(HaaLimits):
         yVar = kwargs.pop('yVar',self.YVAR)
         tag = kwargs.pop('tag',region)
 
-        doDouble = False
 
         # h
-        if self.YRANGE[1]>100:
+        if self.YRANGE[1]>100 and self.SPLITY:
+            resonances = []
+            if self.XRANGE[0]<4:
+                resonances += ['jpsi']
+            if self.XRANGE[0] and self.XRANGE[1]>11:
+                resonances += ['upsilon']
+            continuums = ['cont1']
+            if self.XRANGE[0]<4:
+                continuums += ['cont2']
+            erfs = {}
+            conts = {}
+            bgs = {}
+            for rname in resonances+continuums:
+                nameE = 'erf_{}{}'.format(rname,'_'+tag if tag else '')
+                if rname=='cont1' and self.YCORRELATION:
+                    # build the correlation model for the y variable parameters
+                    erfShiftName = kwargs.pop('erfShift_{}'.format(nameE),'erfShift_{}'.format(nameE))
+                    erfShiftA0Name = 'erfShiftA0{}'.format('_'+tag if tag else '')
+                    erfShiftA0 = kwargs.pop(erfShiftA0Name,[47,10,200])
+                    if isinstance(erfShiftA0,str): erfShiftA0Name = erfShiftA0
+                    erfShiftA1Name = 'erfShiftA1{}'.format('_'+tag if tag else '')
+                    erfShiftA1 = kwargs.pop(erfShiftA1Name,[1.0])
+                    if isinstance(erfShiftA1,str): erfShiftA1Name = erfShiftA1
+                    erfShiftExpr = Models.Expression(erfShiftName,
+                        expr = '{x}*{a1}+{a0}'.format(x=xVar,a0=erfShiftA0Name,a1=erfShiftA1Name),
+                        variables = [xVar,erfShiftA1Name,erfShiftA0Name],
+                        **{
+                            xVar: xVar,
+                            erfShiftA1Name: erfShiftA1,
+                            erfShiftA0Name: erfShiftA0,
+                        }
+                    )
+                    erfShiftExpr.build(workspace,erfShiftName)
+
+                    #erfScaleName = kwargs.pop('erfScale_{}'.format(nameE),'erfScale_{}'.format(nameE))
+                    #erfScaleA0Name = 'erfScaleA0{}'.format('_'+tag if tag else '')
+                    #erfScaleA0 = kwargs.pop(erfScaleA0Name,[0.06,0.005,5])
+                    #if isinstance(erfScaleA0,str): erfScaleA0Name = erfScaleA0
+                    #erfScaleA1Name = 'erfScaleA1{}'.format('_'+tag if tag else '')
+                    #erfScaleA1 = kwargs.pop(erfScaleA1Name,[0,-0.01,0.01])
+                    #if isinstance(erfScaleA1,str): erfScaleA1Name = erfScaleA1
+                    #erfScaleExpr = Models.Expression(erfScaleName,
+                    #    expr = '{x}*{a1}+{a0}'.format(x=xVar,a0=erfScaleA0Name,a1=erfScaleA1Name),
+                    #    variables = [xVar,erfScaleA1Name,erfScaleA0Name],
+                    #    **{
+                    #        xVar: xVar,
+                    #        erfScaleA1Name: erfScaleA1,
+                    #        erfScaleA0Name: erfScaleA0,
+                    #    }
+                    #)
+                    #erfScaleExpr.build(workspace,erfScaleName)
+
+
+                    erf = Models.Erf('erf1',
+                        x = yVar,
+                        #erfScale = erfScaleName,
+                        erfScale = kwargs.pop('erfScale_{}'.format(nameE), [0.06,0,10]),
+                        erfShift = erfShiftName,
+                        #erfShift = kwargs.pop('erfShift_{}'.format(nameE), [65,10,200]),
+                    )
+                    erf.build(workspace,nameE)
+                    erfs[rname] = erf
+                else:
+                    erf = Models.Erf('erf1',
+                        x = yVar,
+                        erfScale = kwargs.pop('erfScale_{}'.format(nameE), [0.05,0,10]),
+                        erfShift = kwargs.pop('erfShift_{}'.format(nameE), [70,10,200]),
+                    )
+                    erf.build(workspace,nameE)
+                    erfs[rname] = erf
+
+                nameC = 'conty_{}{}'.format(rname,'_'+tag if tag else '')
+                cont = Models.Exponential('conty',
+                    x = yVar,
+                    lamb = kwargs.pop('lambda_{}'.format(nameC), [-0.05,-1,0]),
+                )
+                cont.build(workspace,nameC)
+                conts[rname] = cont
+
+                bg = Models.Prod('bg',
+                    nameE,
+                    nameC,
+                )
+                name = 'bg_{}_{}'.format(rname,region)
+                bg.build(workspace,name)
+                bgs[rname] = bg
+
+            return
+
+                
+        elif self.YRANGE[1]>100:
             nameE = 'erf{}'.format('_'+tag if tag else '')
 
-            if not doDouble:
+            if not self.DOUBLEEXPO:
                 if self.YCORRELATION:
                     # build the correlation model for the y variable parameters
                     erfShiftName = kwargs.pop('erfShift_{}'.format(nameE),'erfShift_{}'.format(nameE))
@@ -88,7 +180,8 @@ class HaaLimits2D(HaaLimits):
                     erfShiftA0 = kwargs.pop(erfShiftA0Name,[47,10,200])
                     if isinstance(erfShiftA0,str): erfShiftA0Name = erfShiftA0
                     erfShiftA1Name = 'erfShiftA1{}'.format('_'+tag if tag else '')
-                    erfShiftA1 = kwargs.pop(erfShiftA1Name,[0.7,0,2])
+                    #erfShiftA1 = kwargs.pop(erfShiftA1Name,[0.7,0,2])
+                    erfShiftA1 = kwargs.pop(erfShiftA1Name,[1.0])
                     if isinstance(erfShiftA1,str): erfShiftA1Name = erfShiftA1
                     erfShiftExpr = Models.Expression(erfShiftName,
                         expr = '{x}*{a1}+{a0}'.format(x=xVar,a0=erfShiftA0Name,a1=erfShiftA1Name),
@@ -176,7 +269,7 @@ class HaaLimits2D(HaaLimits):
                     nameC,
                 )
 
-            if doDouble:
+            if self.DOUBLEEXPO:
                 # Double exponential
                 nameE1 = 'erf1{}'.format('_'+tag if tag else '')
                 erf1 = Models.Erf('erf1',
@@ -189,7 +282,7 @@ class HaaLimits2D(HaaLimits):
                 nameC1 = 'conty1{}'.format('_'+tag if tag else '')
                 cont1 = Models.Exponential('conty1',
                     x = yVar,
-                    lamb = kwargs.pop('lambda_{}'.format(nameC1), [-0.01,-1,0]),
+                    lamb = kwargs.pop('lambda_{}'.format(nameC1), [-0.01,-0.2,0]),
                 )
                 cont1.build(workspace,nameC1)
 
@@ -213,7 +306,7 @@ class HaaLimits2D(HaaLimits):
                 nameC2 = 'conty2{}'.format('_'+tag if tag else '')
                 cont2 = Models.Exponential('conty2',
                     x = yVar,
-                    lamb = kwargs.pop('lambda_{}'.format(nameC2), [-0.025,-1,0]),
+                    lamb = kwargs.pop('lambda_{}'.format(nameC2), [-0.025,-0.2,0]),
                 )
                 cont2.build(workspace,nameC2)
 
@@ -398,63 +491,191 @@ class HaaLimits2D(HaaLimits):
         doPolyExpo = False
 
         # the 2D model
-        if self.YCORRELATION:
+        if self.SPLITY:
+            if self.XRANGE[0]<4 and not (doPoly or doPolyExpo):
+                if self.YCORRELATION:
+                    cont1 = Models.Prod('cont1',
+                        'bg_cont1_{}_y|{}'.format(region,xVar),
+                        'cont1_{}_x'.format(region),
+                    )
+                else:
+                    cont1 = Models.Prod('cont1',
+                        'bg_cont1_{}_y'.format(region),
+                        'cont1_{}_x'.format(region),
+                    )
+                nameC1 = 'cont1_{}_xy'.format(region)
+                cont1.build(workspace,nameC1)
+
+                cont2 = Models.Prod('cont2',
+                    'bg_cont2_{}_y'.format(region),
+                    'cont2_{}_x'.format(region),
+                )
+                nameC2 = 'cont2_{}_xy'.format(region)
+                cont2.build(workspace,nameC2)
+            else:
+                if self.YCORRELATION:
+                    cont1 = Models.Prod('cont1',
+                        'bg_cont1_{}_y|{}'.format(region,xVar),
+                        'cont1_{}_x'.format(region),
+                    )
+                else:
+                    cont1 = Models.Prod('cont1',
+                        'bg_cont1_{}_y'.format(region),
+                        'cont1_{}_x'.format(region),
+                    )
+                nameC1 = 'cont1_{}_xy'.format(region)
+                cont1.build(workspace,nameC1)
+
+            jpsi1S = Models.Prod('jpsi1S',
+                'bg_jpsi_{}_y'.format(region),
+                'jpsi1S_{}_x'.format(region),
+            )
+            nameJ1 = 'jpsi1S_{}_xy'.format(region)
+            jpsi1S.build(workspace,nameJ1)
+  
+            jpsi2S = Models.Prod('jpsi2S',
+                'bg_jpsi_{}_y'.format(region),
+                'jpsi2S_{}_x'.format(region),
+            )
+            nameJ2 = 'jpsi2S_{}_xy'.format(region)
+            jpsi2S.build(workspace,nameJ2)
+
+            upsilon1S = Models.Prod('upsilon1S',
+                'bg_upsilon_{}_y'.format(region),
+                'upsilon1S_{}_x'.format(region),
+            )
+            nameU1 = 'upsilon1S_{}_xy'.format(region)
+            upsilon1S.build(workspace,nameU1)
+
+            upsilon2S = Models.Prod('upsilon2S',
+                'bg_upsilon_{}_y'.format(region),
+                'upsilon2S_{}_x'.format(region),
+            )
+            nameU2 = 'upsilon2S_{}_xy'.format(region)
+            upsilon2S.build(workspace,nameU2)
+
+            upsilon3S = Models.Prod('upsilon3S',
+                'bg_upsilon_{}_y'.format(region),
+                'upsilon3S_{}_x'.format(region),
+            )
+            nameU3 = 'upsilon3S_{}_xy'.format(region)
+            upsilon3S.build(workspace,nameU3)
+
+            nameU23 = 'upsilon23_{}_xy'.format(region)
+            workspace.factory('{0}_frac[{1},{2},{3}]'.format('upsilon2S',*[0.5,0,1]))
+            workspace.factory('{0}_frac[{1},{2},{3}]'.format('upsilon3S',*[0.5,0,1]))
+            upsilon23 = {'recursive': True}
+            upsilon23[nameU2] = '{}_frac'.format('upsilon2S')
+            upsilon23[nameU3] = '{}_frac'.format('upsilon3S')
+            upsilon23 = Models.Sum(nameU23, **upsilon23)
+            upsilon23.build(workspace,nameU23)
+
+            nameU = 'upsilon_{}_xy'.format(region)
+            workspace.factory('{0}_frac[{1},{2},{3}]'.format('upsilon1S',*[0.75,0,1]))
+            workspace.factory('{0}_frac[{1},{2},{3}]'.format('upsilon23',*[0.5,0,1]))
+            upsilon = {'recursive': True}
+            upsilon[nameU1]  = '{}_frac'.format('upsilon1S')
+            upsilon[nameU23] = '{}_frac'.format('upsilon23')
+            upsilon = Models.Sum(nameU, **upsilon)
+            upsilon.build(workspace,nameU)
+
+            nameJ = 'jpsi_{}_xy'.format(region)
+            workspace.factory('{0}_frac[{1},{2},{3}]'.format('jpsi1S',*[0.9,0,1]))
+            workspace.factory('{0}_frac[{1},{2},{3}]'.format('jpsi2S',*[0.1,0,1]))
+            jpsi = {'recursive': True}
+            jpsi[nameJ1] = '{}_frac'.format('jpsi1S')
+            jpsi[nameJ2] = '{}_frac'.format('jpsi2S')
+            jpsi = Models.Sum('jpsi', **jpsi)
+            jpsi.build(workspace,nameJ)
+
+            if self.XRANGE[0]<4:
+                nameC = 'cont_{}_xy'.format(region)
+                #cont = {'extended': True}
+                cont = {'recursive': True}
+                cont[nameC1] = [0.75,0,1]
+                cont[nameC2] = [0.5,0,1]
+                cont = Models.Sum(nameC, **cont)
+                cont.build(workspace,nameC)
+            else:
+                nameC = 'cont1_{}_xy'.format(region)
+
+            bgs = {'recursive': True}
+            # continuum background
+            # TODO, this was bugged, need to fix
+            #bgs[nameC1] = [0.5,0,1]
+            #bgs[nameC2] = [0.5,0,1]
+            bgs[nameC] = [0.5,0,1]
+            if self.XRANGE[0]<4 and self.XRANGE[1]>=11:
+                bgs[nameJ] = [0.9,0,1]
+                bgs[nameU] = [0.9,0,1]
+            else:
+                # jpsi
+                if self.XRANGE[0]<3.3:
+                    bgs[nameJ] = [0.9,0,1]
+                elif self.XRANGE[0]<4:
+                    bgs[nameJ2] = [0.9,0,1]
+                # upsilon
+                elif self.XRANGE[0]<=9 and self.XRANGE[1]>=11:
+                    bgs[nameU] = [0.9,0,1]
+
+            bg = Models.Sum('bg', **bgs)
+        elif self.YCORRELATION:
             if self.XRANGE[0]<4 and not (doPoly or doPolyExpo):
                 cont1 = Models.Prod('cont1',
                     'bg_{}_y|{}'.format(region,xVar),
                     'cont1_{}_x'.format(region),
                 )
-                name = 'cont1_{}_xy'.format(region)
-                cont1.build(workspace,name)
+                nameC1 = 'cont1_{}_xy'.format(region)
+                cont1.build(workspace,nameC1)
 
                 cont2 = Models.Prod('cont2',
                     'bg_{}_y|{}'.format(region,xVar),
                     'cont2_{}_x'.format(region),
                 )
-                name = 'cont2_{}_xy'.format(region)
-                cont2.build(workspace,name)
+                nameC2 = 'cont2_{}_xy'.format(region)
+                cont2.build(workspace,nameC2)
             else:
-                cont = Models.Prod('cont',
+                cont1 = Models.Prod('cont1',
                     'bg_{}_y|{}'.format(region,xVar),
-                    'cont_{}_x'.format(region),
+                    'cont1_{}_x'.format(region),
                 )
-                name = 'cont_{}_xy'.format(region)
-                cont.build(workspace,name)
+                nameC1 = 'cont1_{}_xy'.format(region)
+                cont1.build(workspace,nameC1)
 
             jpsi1S = Models.Prod('jpsi1S',
                 'bg_{}_y|{}'.format(region,xVar),
                 'jpsi1S_{}_x'.format(region),
             )
-            name = 'jpsi1S_{}_xy'.format(region)
-            jpsi1S.build(workspace,name)
+            nameJ1 = 'jpsi1S_{}_xy'.format(region)
+            jpsi1S.build(workspace,nameJ1)
   
             jpsi2S = Models.Prod('jpsi2S',
                 'bg_{}_y|{}'.format(region,xVar),
                 'jpsi2S_{}_x'.format(region),
             )
-            name = 'jpsi2S_{}_xy'.format(region)
-            jpsi2S.build(workspace,name)
+            nameJ2 = 'jpsi2S_{}_xy'.format(region)
+            jpsi2S.build(workspace,nameJ2)
 
             upsilon1S = Models.Prod('upsilon1S',
                 'bg_{}_y|{}'.format(region,xVar),
                 'upsilon1S_{}_x'.format(region),
             )
-            name = 'upsilon1S_{}_xy'.format(region)
-            upsilon1S.build(workspace,name)
+            nameU1 = 'upsilon1S_{}_xy'.format(region)
+            upsilon1S.build(workspace,nameU1)
 
             upsilon2S = Models.Prod('upsilon2S',
                 'bg_{}_y|{}'.format(region,xVar),
                 'upsilon2S_{}_x'.format(region),
             )
-            name = 'upsilon2S_{}_xy'.format(region)
-            upsilon2S.build(workspace,name)
+            nameU2 = 'upsilon2S_{}_xy'.format(region)
+            upsilon2S.build(workspace,nameU2)
 
             upsilon3S = Models.Prod('upsilon3S',
                 'bg_{}_y|{}'.format(region,xVar),
                 'upsilon3S_{}_x'.format(region),
             )
-            name = 'upsilon3S_{}_xy'.format(region)
-            upsilon3S.build(workspace,name)
+            nameU3 = 'upsilon3S_{}_xy'.format(region)
+            upsilon3S.build(workspace,nameU3)
 
             bg = Models.Prod('bg',
                 'bg_{}_y|{}'.format(region,xVar),
@@ -476,12 +697,12 @@ class HaaLimits2D(HaaLimits):
                 name = 'cont2_{}_xy'.format(region)
                 cont2.build(workspace,name)
             else:
-                cont = Models.Prod('cont',
-                    'cont_{}_x'.format(region),
+                cont1 = Models.Prod('cont',
+                    'cont1_{}_x'.format(region),
                     'bg_{}_y'.format(region),
                 )
-                name = 'cont_{}_xy'.format(region)
-                cont.build(workspace,name)
+                name = 'cont1_{}_xy'.format(region)
+                cont1.build(workspace,name)
 
             jpsi1S = Models.Prod('jpsi1S',
                 'jpsi1S_{}_x'.format(region),
@@ -1574,22 +1795,26 @@ class HaaLimits2D(HaaLimits):
         else:
             yFrame = workspace.var(yVar).frame()
         data.plotOn(yFrame)
-        # continuum
-        model.plotOn(yFrame,ROOT.RooFit.Components('conty_{}_y'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
-        model.plotOn(yFrame,ROOT.RooFit.Components('conty1_{}_y'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
-        model.plotOn(yFrame,ROOT.RooFit.Components('conty2_{}_y'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
-        # combined model
-        model.plotOn(yFrame)
+        if not self.SKIPPLOTS:
+            # continuum
+            model.plotOn(yFrame,ROOT.RooFit.Components('conty_{}_y'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+            model.plotOn(yFrame,ROOT.RooFit.Components('conty1_{}_y'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+            model.plotOn(yFrame,ROOT.RooFit.Components('conty2_{}_y'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+            model.plotOn(yFrame,ROOT.RooFit.Components('conty3_{}_y'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+            model.plotOn(yFrame,ROOT.RooFit.Components('conty4_{}_y'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+            # combined model
+            model.plotOn(yFrame)
         model.paramOn(yFrame,ROOT.RooFit.Layout(0.72,0.98,0.90))
 
-        resid = yFrame.residHist()
-        pull = yFrame.pullHist()
+        if not self.SKIPPLOTS:
+            resid = yFrame.residHist()
+            pull = yFrame.pullHist()
 
         if yRange:
             yFrame2 = workspace.var(yVar).frame(ROOT.RooFit.Range(*yRange))
         else:
             yFrame2 = workspace.var(yVar).frame()
-        yFrame2.addPlotable(pull,'P')
+        if not self.SKIPPLOTS: yFrame2.addPlotable(pull,'P')
 
         canvas = ROOT.TCanvas('c','c',1200,800)
         ROOT.SetOwnership(canvas,False)
@@ -1732,6 +1957,8 @@ class HaaLimits2D(HaaLimits):
             self.addVar(xVar, *self.XRANGE, unit='GeV', label=self.XLABEL, workspace=workspace)
             self.addVar(yVar, *self.YRANGE, unit='GeV', label=self.XLABEL, workspace=workspace)
             self.buildModel(region=region,workspace=workspace,xVar=xVar,yVar=yVar,**prebuiltParams)
+            self.fixXLambda(workspace=self.workspace)
+            self.fixCorrelation(workspace=self.workspace)
             self.loadBackgroundFit(region,workspace=workspace)
 
             x = workspace.var(xVar)
@@ -1877,6 +2104,8 @@ class HaaLimits2D(HaaLimits):
             integrals[region] = {}
             integralerrs[region] = {}
             self.buildModel(region=region, workspace=workspace)
+            self.fixXLambda(workspace=workspace)
+            self.fixCorrelation(workspace=self.workspace)
             for shift in ['']+self.BACKGROUNDSHIFTS:
                 if shift=='':
                     if load:
@@ -2480,6 +2709,9 @@ class HaaLimits2D(HaaLimits):
         if self.YRANGE[1] > 100: self._addHModelSystematic()
 
     def _addHModelSystematic(self):
+        
+        #if self.DOUBLEEXPO: return
+        return
 
         syst = {}
         if 125 in self.HMASSES: syst[((self.SPLINENAME.format(h=125),), tuple(self.REGIONS))] = 1.0
@@ -2487,11 +2719,50 @@ class HaaLimits2D(HaaLimits):
         if 750 in self.HMASSES: syst[((self.SPLINENAME.format(h=750),), tuple(self.REGIONS))] = 2.3
         self.addSystematic('CMS_haa_model_bias','lnN',systematics=syst)
 
+    def fixXLambda(self,**kwargs):
+        return
+        workspace = kwargs.get('workspace',self.workspace)
+        print 'WARNING: Fixing x lambda in continuum to b-only fit value'
+        lambdaFP1 = workspace.var('lambda_cont1_FP_x')
+        if lambdaFP1:
+            lambdaFP1.setVal(-0.1021)
+            lambdaFP1.setConstant(True)
+        #intFP1 = workspace.var('integral_cont1_FP')
+        #if lambdaFP1:
+        #    intFP1.setConstant(True)
+
+    def fixCorrelation(self,**kwargs):
+        return
+        workspace = kwargs.get('workspace',self.workspace)
+        print 'WARNING: Fixing correlation parameters'
+        erfShiftA0PP = workspace.var('erfShiftA0_PP_y')
+        erfShiftA1PP = workspace.var('erfShiftA1_PP_y')
+        erfShiftA0FP = workspace.var('erfShiftA0_FP_y')
+        erfShiftA1FP = workspace.var('erfShiftA1_FP_y')
+        if erfShiftA0PP:
+            erfShiftA0PP.setVal(46.2)
+            erfShiftA0PP.setConstant(True)
+        if erfShiftA1PP:
+            erfShiftA1PP.setVal(1.01)
+            erfShiftA1PP.setConstant(True)
+        if erfShiftA0FP:
+            erfShiftA0FP.setVal(46.2)
+            erfShiftA0FP.setConstant(True)
+        if erfShiftA1FP:
+            erfShiftA1FP.setVal(1.01)
+            erfShiftA1FP.setConstant(True)
+
+
 
     ###################################
     ### Save workspace and datacard ###
     ###################################
     def save(self,name='mmmt', subdirectory=''):
+
+        self.fixXLambda(workspace=self.workspace)
+        self.fixCorrelation(workspace=self.workspace)
+
+
         processes = {}
         bgs = self.getComponentFractions(self.workspace.pdf('bg_{}_x'.format(self.REGIONS[0])))
         bgs = [self.rstrip(b,'_x') for b in bgs]

@@ -46,6 +46,7 @@ class HaaLimits(Limits):
     ABINNING = 0.1 # GeV
 
     SPLITBGS = True # False doesnt work!
+    SKIPPLOTS = False
 
     XVAR = 'CMS_haa_x'
 
@@ -399,7 +400,7 @@ class HaaLimits(Limits):
                 cont = Models.Sum(nameC, **cont)
                 cont.build(workspace,nameC)
             else:
-                nameC = 'cont{}'.format('_'+tag if tag else '')
+                nameC = 'cont1{}'.format('_'+tag if tag else '')
                 #nameC = 'cont'
                 cont = Models.Exponential(nameC,
                     x = xVar,
@@ -926,39 +927,41 @@ class HaaLimits(Limits):
         else:
             xFrame = workspace.var(xVar).frame()
         data.plotOn(xFrame)
-        model.plotOn(xFrame,ROOT.RooFit.Components('cont_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
-        model.plotOn(xFrame,ROOT.RooFit.Components('cont1_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
-        model.plotOn(xFrame,ROOT.RooFit.Components('cont2_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
-        model.plotOn(xFrame,ROOT.RooFit.Components('cont_{}_x'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
-        model.plotOn(xFrame,ROOT.RooFit.Components('cont1_{}_x'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
-        model.plotOn(xFrame,ROOT.RooFit.Components('cont2_{}_x'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
-        model.plotOn(xFrame,ROOT.RooFit.Components('cont'),ROOT.RooFit.LineStyle(ROOT.kDashed))
-        model.plotOn(xFrame,ROOT.RooFit.Components('cont1'),ROOT.RooFit.LineStyle(ROOT.kDashed))
-        model.plotOn(xFrame,ROOT.RooFit.Components('cont2'),ROOT.RooFit.LineStyle(ROOT.kDashed))
-        if self.XRANGE[0]<4:
-            # jpsi
-            model.plotOn(xFrame,ROOT.RooFit.Components('jpsi1S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
-            model.plotOn(xFrame,ROOT.RooFit.Components('jpsi2S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
-            model.plotOn(xFrame,ROOT.RooFit.Components('jpsi1S'),ROOT.RooFit.LineColor(ROOT.kRed))
-            model.plotOn(xFrame,ROOT.RooFit.Components('jpsi2S'),ROOT.RooFit.LineColor(ROOT.kRed))
-        model.plotOn(xFrame,ROOT.RooFit.Components('upsilon1S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
-        model.plotOn(xFrame,ROOT.RooFit.Components('upsilon2S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
-        model.plotOn(xFrame,ROOT.RooFit.Components('upsilon3S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
-        model.plotOn(xFrame,ROOT.RooFit.Components('upsilon1S'),ROOT.RooFit.LineColor(ROOT.kRed))
-        model.plotOn(xFrame,ROOT.RooFit.Components('upsilon2S'),ROOT.RooFit.LineColor(ROOT.kRed))
-        model.plotOn(xFrame,ROOT.RooFit.Components('upsilon3S'),ROOT.RooFit.LineColor(ROOT.kRed))
-        # combined model
-        model.plotOn(xFrame)
+        if not self.SKIPPLOTS:
+            model.plotOn(xFrame,ROOT.RooFit.Components('cont_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+            model.plotOn(xFrame,ROOT.RooFit.Components('cont1_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+            model.plotOn(xFrame,ROOT.RooFit.Components('cont2_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+            model.plotOn(xFrame,ROOT.RooFit.Components('cont_{}_x'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+            model.plotOn(xFrame,ROOT.RooFit.Components('cont1_{}_x'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+            model.plotOn(xFrame,ROOT.RooFit.Components('cont2_{}_x'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+            model.plotOn(xFrame,ROOT.RooFit.Components('cont'),ROOT.RooFit.LineStyle(ROOT.kDashed))
+            model.plotOn(xFrame,ROOT.RooFit.Components('cont1'),ROOT.RooFit.LineStyle(ROOT.kDashed))
+            model.plotOn(xFrame,ROOT.RooFit.Components('cont2'),ROOT.RooFit.LineStyle(ROOT.kDashed))
+            if self.XRANGE[0]<4:
+                # jpsi
+                model.plotOn(xFrame,ROOT.RooFit.Components('jpsi1S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
+                model.plotOn(xFrame,ROOT.RooFit.Components('jpsi2S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
+                model.plotOn(xFrame,ROOT.RooFit.Components('jpsi1S'),ROOT.RooFit.LineColor(ROOT.kRed))
+                model.plotOn(xFrame,ROOT.RooFit.Components('jpsi2S'),ROOT.RooFit.LineColor(ROOT.kRed))
+            model.plotOn(xFrame,ROOT.RooFit.Components('upsilon1S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
+            model.plotOn(xFrame,ROOT.RooFit.Components('upsilon2S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
+            model.plotOn(xFrame,ROOT.RooFit.Components('upsilon3S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
+            model.plotOn(xFrame,ROOT.RooFit.Components('upsilon1S'),ROOT.RooFit.LineColor(ROOT.kRed))
+            model.plotOn(xFrame,ROOT.RooFit.Components('upsilon2S'),ROOT.RooFit.LineColor(ROOT.kRed))
+            model.plotOn(xFrame,ROOT.RooFit.Components('upsilon3S'),ROOT.RooFit.LineColor(ROOT.kRed))
+            # combined model
+            model.plotOn(xFrame)
         model.paramOn(xFrame,ROOT.RooFit.Layout(0.82,0.98,0.90))
 
-        resid = xFrame.residHist()
-        pull = xFrame.pullHist()
+        if not self.SKIPPLOTS:
+            resid = xFrame.residHist()
+            pull = xFrame.pullHist()
 
         if xRange:
             xFrame2 = workspace.var(xVar).frame(ROOT.RooFit.Range(*xRange))
         else:
             xFrame2 = workspace.var(xVar).frame()
-        xFrame2.addPlotable(pull,'P')
+        if not self.SKIPPLOTS: xFrame2.addPlotable(pull,'P')
 
         canvas = ROOT.TCanvas('c','c',1200,800)
         ROOT.SetOwnership(canvas,False)

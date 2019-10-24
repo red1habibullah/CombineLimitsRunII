@@ -28,7 +28,15 @@ ROOT.TGaxis.SetMaxDigits(3)
 #ROOT.gStyle.SetPalette(nb)
 
 #ROOT.gStyle.SetPalette(ROOT.kBird)
-ROOT.gStyle.SetPalette(ROOT.kDeepSea)
+#ROOT.gStyle.SetPalette(ROOT.kDeepSea)
+
+# Manually reimplement DeepSea with a white bit at the top
+stops = array('d',[ 0.0000, 0.1250, 0.2500, 0.3750, 0.5000, 0.6250, 0.7500, 0.8750, 0.998, 0.999, 1.0000,])
+red   = array('d',[  0./255.,  9./255., 13./255., 17./255., 24./255.,  32./255.,  27./255.,  25./255.,  29./255., 255./255., 255./255.])
+green = array('d',[  0./255.,  0./255.,  0./255.,  2./255., 37./255.,  74./255., 113./255., 160./255., 221./255., 255./255., 255./255.])
+blue  = array('d',[ 28./255., 42./255., 59./255., 78./255., 98./255., 129./255., 154./255., 184./255., 221./255., 255./255., 255./255.])
+nb = ROOT.TColor.CreateGradientColorTable(11, stops, red, green, blue, 255, 1)
+ROOT.gStyle.SetPalette(nb)
 
 ROOT.gStyle.SetNumberContours(255)
 
@@ -76,25 +84,21 @@ class LimitPlotter(PlotterBase):
             if not all(limits[xvals[i]]):
                 print i, xvals[i], limits[xvals[i]]
                 continue
-            scale = 1
-            if scales and modelkey:
-                scale = scales[xvals[i]][modelkey].Eval(y)
-                if scale<=0: scale = 1e-10
-            twoSigma.SetPoint(     i,   xvals[i],     limits[xvals[i]][0]*scale) # 0.025
-            oneSigma.SetPoint(     i,   xvals[i],     limits[xvals[i]][1]*scale) # 0.16
-            expected.SetPoint(     i,   xvals[i],     limits[xvals[i]][2]*scale) # 0.5
-            oneSigma.SetPoint(2*n-i-1,  xvals[i],     limits[xvals[i]][3]*scale) # 0.84
-            twoSigma.SetPoint(2*n-i-1,  xvals[i],     limits[xvals[i]][4]*scale) # 0.975
-            observed.SetPoint(     i,   xvals[i],     limits[xvals[i]][5]*scale) # obs
-            twoSigma_high.SetPoint(i,   xvals[i],     limits[xvals[i]][0]*scale) # 0.025
-            oneSigma_high.SetPoint(i,   xvals[i],     limits[xvals[i]][1]*scale) # 0.16
-            oneSigma_low.SetPoint(n-i-1,xvals[i],     limits[xvals[i]][3]*scale) # 0.84
-            twoSigma_low.SetPoint(n-i-1,xvals[i],     limits[xvals[i]][4]*scale) # 0.975
-            twoSigmaForSmoothing_high.SetPoint(i, xvals[i],     math.log(limits[xvals[i]][0])*scale) # 0.025
-            oneSigmaForSmoothing_high.SetPoint(i, xvals[i],     math.log(limits[xvals[i]][1])*scale) # 0.16
-            oneSigmaForSmoothing_low.SetPoint(n-i-1, xvals[i],  math.log(limits[xvals[i]][3])*scale) # 0.84
-            twoSigmaForSmoothing_low.SetPoint(n-i-1, xvals[i],  math.log(limits[xvals[i]][4])*scale) # 0.975
-            expectedForSmoothing.SetPoint(     i, xvals[i],     math.log(limits[xvals[i]][2])*scale) # 0.5
+            twoSigma.SetPoint(     i,   xvals[i],     limits[xvals[i]][0]) # 0.025
+            oneSigma.SetPoint(     i,   xvals[i],     limits[xvals[i]][1]) # 0.16
+            expected.SetPoint(     i,   xvals[i],     limits[xvals[i]][2]) # 0.5
+            oneSigma.SetPoint(2*n-i-1,  xvals[i],     limits[xvals[i]][3]) # 0.84
+            twoSigma.SetPoint(2*n-i-1,  xvals[i],     limits[xvals[i]][4]) # 0.975
+            observed.SetPoint(     i,   xvals[i],     limits[xvals[i]][5]) # obs
+            twoSigma_high.SetPoint(i,   xvals[i],     limits[xvals[i]][0]) # 0.025
+            oneSigma_high.SetPoint(i,   xvals[i],     limits[xvals[i]][1]) # 0.16
+            oneSigma_low.SetPoint(n-i-1,xvals[i],     limits[xvals[i]][3]) # 0.84
+            twoSigma_low.SetPoint(n-i-1,xvals[i],     limits[xvals[i]][4]) # 0.975
+            twoSigmaForSmoothing_high.SetPoint(i, xvals[i],     math.log(limits[xvals[i]][0])) # 0.025
+            oneSigmaForSmoothing_high.SetPoint(i, xvals[i],     math.log(limits[xvals[i]][1])) # 0.16
+            oneSigmaForSmoothing_low.SetPoint(n-i-1, xvals[i],  math.log(limits[xvals[i]][3])) # 0.84
+            twoSigmaForSmoothing_low.SetPoint(n-i-1, xvals[i],  math.log(limits[xvals[i]][4])) # 0.975
+            expectedForSmoothing.SetPoint(     i, xvals[i],     math.log(limits[xvals[i]][2])) # 0.5
             if xVar:
                 xVar.setVal(xvals[i])
                 w.setVal(limits[xvals[i]][0])
@@ -182,6 +186,22 @@ class LimitPlotter(PlotterBase):
                 oneSigma.SetPoint(     i+1,   oneSigma_high.GetX()[i+1],    oneSigma_high.GetY()[i+1])
                 oneSigma.SetPoint(     n+i+1, oneSigma_low.GetX()[n-1-i-1], oneSigma_low.GetY()[n-1-i-1])
 
+        # now scale
+        for i in range(len(xvals)):
+            if not all(limits[xvals[i]]):
+                print i, xvals[i], limits[xvals[i]]
+                continue
+            scale = 1
+            if scales and modelkey:
+                scale = scales[xvals[i]][modelkey].Eval(y)
+                if scale<=0: scale = 1e-10
+            twoSigma.SetPoint(     i,   twoSigma.GetX()[i],    twoSigma.GetY()[i]*scale) # 0.025
+            oneSigma.SetPoint(     i,   oneSigma.GetX()[i],    oneSigma.GetY()[i]*scale) # 0.16
+            expected.SetPoint(     i,   expected.GetX()[i],    expected.GetY()[i]*scale) # 0.5
+            oneSigma.SetPoint(2*n-i-1,  oneSigma.GetX()[2*n-i-1],    oneSigma.GetY()[2*n-i-1]*scale) # 0.84
+            twoSigma.SetPoint(2*n-i-1,  twoSigma.GetX()[2*n-i-1],    twoSigma.GetY()[2*n-i-1]*scale) # 0.975
+            observed.SetPoint(     i,   observed.GetX()[i],    observed.GetY()[i]*scale) # obs
+        
         twoSigma.SetFillColor(ROOT.kOrange)
         twoSigma.SetLineColor(ROOT.kOrange)
         twoSigma.SetMarkerStyle(0)
@@ -322,7 +342,8 @@ class LimitPlotter(PlotterBase):
         logging.info('Plotting {0}'.format(savename))
 
         #ROOT.gStyle.SetPalette(ROOT.kBird)
-        ROOT.gStyle.SetPalette(ROOT.kDeepSea)
+        #ROOT.gStyle.SetPalette(ROOT.kDeepSea)
+        ROOT.gStyle.SetPalette(nb)
 
         canvas = ROOT.TCanvas(savename,savename,50,50,600,600)
         canvas.SetLogy(logy)
@@ -491,7 +512,8 @@ class LimitPlotter(PlotterBase):
         logging.info('Plotting {0}'.format(savename))
 
         #ROOT.gStyle.SetPalette(ROOT.kBird)
-        ROOT.gStyle.SetPalette(ROOT.kDeepSea)
+        #ROOT.gStyle.SetPalette(ROOT.kDeepSea)
+        ROOT.gStyle.SetPalette(nb)
 
         canvas = ROOT.TCanvas(savename,savename,50,50,600,600)
         canvas.SetLogy(logy)
@@ -773,6 +795,39 @@ class LimitPlotter(PlotterBase):
                 text.AddText(additionaltext)
             text.Draw()
 
+        ## HACK
+        ## plot 750 GeV FullCLs over
+        #fullcls = {}
+        #fullcls[750] = {}
+        #fullcls[750][4.5] = [ 3.537,3.931,5.088,8.369,17.679,10.839]
+        #fullcls[750][5.0] = [ 2.999,3.611,4.535,7.422,15.703,15.249]
+        #fullcls[750][5.5] = [ 3.366,3.542,4.180,6.882,14.947,15.782]
+        #fullcls[750][6.0] = [ 2.697,3.034,3.915,6.491,14.452,14.306]
+        #fullcls[750][6.5] = [ 2.413,2.883,3.834,6.352,14.150,10.091]
+
+        #if '750_br_smooth' in savename:
+        #    fcls_as = [4.5,5.0,5.5,6.0,6.5]
+        #    fcls_two_low  = ROOT.TGraph(len(fcls_as), array('d',fcls_as), array('d',[fullcls[750][a][0]*1e-3 for a in fcls_as]))
+        #    fcls_one_low  = ROOT.TGraph(len(fcls_as), array('d',fcls_as), array('d',[fullcls[750][a][1]*1e-3 for a in fcls_as]))
+        #    fcls_exp      = ROOT.TGraph(len(fcls_as), array('d',fcls_as), array('d',[fullcls[750][a][2]*1e-3 for a in fcls_as]))
+        #    fcls_one_high = ROOT.TGraph(len(fcls_as), array('d',fcls_as), array('d',[fullcls[750][a][3]*1e-3 for a in fcls_as]))
+        #    fcls_two_high = ROOT.TGraph(len(fcls_as), array('d',fcls_as), array('d',[fullcls[750][a][4]*1e-3 for a in fcls_as]))
+        #    fcls_obs      = ROOT.TGraph(len(fcls_as), array('d',fcls_as), array('d',[fullcls[750][a][5]*1e-3 for a in fcls_as]))
+        #    gs = [fcls_two_low,fcls_one_low,fcls_exp,fcls_one_high,fcls_two_high,fcls_obs]
+        #    cs = [ROOT.kOrange+1,ROOT.kGreen+3,ROOT.kBlue,ROOT.kGreen+3,ROOT.kOrange+1,ROOT.kBlack]
+        #    for g,c in zip(gs,cs):
+        #        g.SetLineWidth(2)
+        #        g.SetLineColor(c)
+        #        g.SetMarkerColor(c)
+        #    mg = ROOT.TMultiGraph()
+        #    mg.Add(fcls_two_low)
+        #    mg.Add(fcls_one_low)
+        #    mg.Add(fcls_exp)
+        #    mg.Add(fcls_one_high)
+        #    mg.Add(fcls_two_high)
+        #    mg.Add(fcls_obs)
+        #    mg.Draw('lp')
+
         # cms lumi styling
         self._setStyle(canvas,position=lumipos,preliminary=isprelim)
 
@@ -806,7 +861,8 @@ class LimitPlotter(PlotterBase):
         logging.info('Plotting {0}'.format(savename))
 
         #ROOT.gStyle.SetPalette(ROOT.kBird)
-        ROOT.gStyle.SetPalette(ROOT.kDeepSea)
+        #ROOT.gStyle.SetPalette(ROOT.kDeepSea)
+        ROOT.gStyle.SetPalette(nb)
 
         canvas = ROOT.TCanvas(savename,savename,50,50,600,600)
         canvas.SetLogz(logz)
@@ -869,7 +925,9 @@ class LimitPlotter(PlotterBase):
                 twoSigmaHighHist.SetBinContent(eb, twoSigma_high.Eval(x))
 
                 oval = observed.Eval(x)
-                if oval<zmin: oval = zmin
+                # TODO: try
+                if oval<zmin: oval = 0
+                if oval>zmax: oval = 999*zmax
                 observedHist.SetBinContent(eb, oval)
 
                 #expected_curr      = expected.Eval(x)
@@ -1190,7 +1248,8 @@ class LimitPlotter(PlotterBase):
         logging.info('Plotting {0}'.format(savename))
 
         #ROOT.gStyle.SetPalette(ROOT.kBird)
-        ROOT.gStyle.SetPalette(ROOT.kDeepSea)
+        #ROOT.gStyle.SetPalette(ROOT.kDeepSea)
+        ROOT.gStyle.SetPalette(nb)
 
         canvas = ROOT.TCanvas(savename,savename,50,50,600,600)
         canvas.SetLogz(logz)
@@ -1260,7 +1319,9 @@ class LimitPlotter(PlotterBase):
                 twoSigmaHighHist.SetBinContent(eb, twoSigma_high[ilim].Eval(x))
 
                 oval = observed[ilim].Eval(x)
-                if oval<zmin: oval = zmin
+                # TODO: try
+                if oval<zmin: oval = 0
+                if oval>zmax: oval = 999*zmax
                 observedHist.SetBinContent(eb, oval)
 
 

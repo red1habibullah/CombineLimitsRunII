@@ -1079,6 +1079,10 @@ class Erf(Model):
         if not isinstance(erfScale,str): ws.factory('{0}[{1}, {2}, {3}]'.format(erfScaleName,*erfScale))
         if not isinstance(erfShift,str): ws.factory('{0}[{1}, {2}, {3}]'.format(erfShiftName,*erfShift))
         # build model
+        # Warning, doesnt speed up and current integral is broken.
+        #erfPdf = ROOT.RooErf(label, label, ws.arg(self.x), ws.arg(erfShiftName), ws.arg(erfScaleName))
+        #self.wsimport(ws, erfPdf)
+        #ws.importClassCode(label)
         ws.factory("EXPR::{0}('0.5*(TMath::Erf({2}*({1}-{3}))+1)', {1}, {2}, {3})".format(
             label,self.x,erfScaleName,erfShiftName)
         )

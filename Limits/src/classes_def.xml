@@ -2,4 +2,5 @@
     <class name="DoubleCrystalBall" />
     <class name="DoubleSidedGaussian" />
     <class name="DoubleSidedVoigtian" />
+    <class name="RooErf" />
 </lcgdict>

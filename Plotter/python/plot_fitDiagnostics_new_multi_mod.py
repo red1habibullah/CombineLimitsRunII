@@ -104,6 +104,8 @@ def load(h,a,mode=''):
     wsName = 'temp_fitDiagnostics/{h}_{a}/ws_mm_h_unbinned_{mode}_{h}_{a}.root'.format(h=h,a=a,mode=mode+'With1DFits' if mode else 'with1DFits')
     fdName = 'temp_fitDiagnostics/{h}_{a}/fitDiagnostics{mode}.root'.format(h=h,a=a,mode=mode+'With1DFits' if mode else 'with1DFits')
 
+    print 'loading', h, a, mode, fdName
+
 
     wsFile = ROOT.TFile.Open(wsName)
     fdFile = ROOT.TFile.Open(fdName)

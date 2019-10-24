@@ -12,7 +12,7 @@ tdrstyle.setTDRStyle()
 
 isprelim = False
 br = 0.0005
-doUnc = False
+doUnc = True
 doRatio = True
 
 def floatToText(x):
@@ -92,10 +92,17 @@ def getRatioError(num,denom):
     graph.Set(npoints)
     return graph
 
-def plot(h,a):
+def plot(h,a,multi=False):
+
+    thisbr = br
+    if h>125:
+        thisbr = br*10
+
     config = {
         'CMS_haa_x': {
             'xlabel' : 'm(#mu#mu) (GeV)',
+            'binning': int((25-2.5)/0.25),
+            'ylabel' : 'Events / 0.25 GeV',
         },
         'CMS_haa_y': {
             'binning': 60,
@@ -105,29 +112,39 @@ def plot(h,a):
         },
         'CMS_haa_x_control': {
             'xlabel' : 'm(#mu#mu) (GeV)',
+            'binning': int((25-2.5)/0.1),
+            'ylabel' : 'Events / 0.1 GeV',
         }
     }
-    if a < 8:
-        mode = 'lowmass'
-        config['CMS_haa_x']['binning'] = int((8.5-2.5)/0.25)
-        config['CMS_haa_x']['ylabel'] = 'Events / 0.25 GeV'
-        config['CMS_haa_x_control']['binning'] = int((8.5-2.5)/0.1)
-        config['CMS_haa_x_control']['ylabel'] = 'Events / 0.1 GeV'
-    elif a < 11.5:
-        mode = 'upsilon'
-        config['CMS_haa_x']['binning'] = int((14-6)/0.2)
-        config['CMS_haa_x']['ylabel'] = 'Events / 0.2 GeV'
-        config['CMS_haa_x_control']['binning'] = int((14-6)/0.1)
-        config['CMS_haa_x_control']['ylabel'] = 'Events / 0.1 GeV'
-    else:
-        mode = 'highmass'
-        config['CMS_haa_x']['binning'] = int((25-11)/1)
-        config['CMS_haa_x']['ylabel'] = 'Events / 1 GeV'
-        config['CMS_haa_x_control']['binning'] = int((25-11)/0.2)
-        config['CMS_haa_x_control']['ylabel'] = 'Events / 0.2 GeV'
+    if multi:
+        if a < 8:
+            mode = 'lowmass'
+            config['CMS_haa_x']['binning'] = int((8.5-2.5)/0.25)
+            config['CMS_haa_x']['ylabel'] = 'Events / 0.25 GeV'
+            config['CMS_haa_x_control']['binning'] = int((8.5-2.5)/0.1)
+            config['CMS_haa_x_control']['ylabel'] = 'Events / 0.1 GeV'
+        elif a < 11.5:
+            mode = 'upsilon'
+            config['CMS_haa_x']['binning'] = int((14-6)/0.2)
+            config['CMS_haa_x']['ylabel'] = 'Events / 0.2 GeV'
+            config['CMS_haa_x_control']['binning'] = int((14-6)/0.1)
+            config['CMS_haa_x_control']['ylabel'] = 'Events / 0.1 GeV'
+        else:
+            mode = 'highmass'
+            config['CMS_haa_x']['binning'] = int((25-11)/1)
+            config['CMS_haa_x']['ylabel'] = 'Events / 1 GeV'
+            config['CMS_haa_x_control']['binning'] = int((25-11)/0.2)
+            config['CMS_haa_x_control']['ylabel'] = 'Events / 0.2 GeV'
 
-    wsName = 'temp_fitDiagnostics/{h}_{a}/ws_mm_h_unbinned_{mode}With1DFits_{h}_{a}.root'.format(h=h,a=a,mode=mode)
-    fdName = 'temp_fitDiagnostics/{h}_{a}/fitDiagnostics{mode}With1DFits.root'.format(h=h,a=a)
+        #wsName = 'temp_fitDiagnostics/{h}_{a}/ws_mm_h_unbinned_{mode}With1DFits_{h}_{a}.root'.format(h=h,a=a,mode=mode)
+        #fdName = 'temp_fitDiagnostics/{h}_{a}/fitDiagnostics{mode}With1DFits.root'.format(h=h,a=a,mode=mode)
+        wsName = 'temp_fitDiagnostics_DoubleExpo/{h}_{a}/ws_mm_h_unbinned_{mode}With1DFitsDoubleExpo_{h}_{a}.root'.format(h=h,a=a,mode=mode)
+        fdName = 'temp_fitDiagnostics_DoubleExpo/{h}_{a}/fitDiagnostics{mode}With1DFitsDoubleExpo.root'.format(h=h,a=a,mode=mode)
+    else:
+        #wsName = 'temp_fitDiagnostics/{h}_{a}/ws_mm_h_unbinned_with1DFits_{h}_{a}.root'.format(h=h,a=a)
+        #fdName = 'temp_fitDiagnostics/{h}_{a}/fitDiagnosticswith1DFits.root'.format(h=h,a=a)
+        wsName = 'temp_fitDiagnostics_DoubleExpo/{h}_{a}/ws_mm_h_unbinned_with1DFitsDoubleExpo_{h}_{a}.root'.format(h=h,a=a)
+        fdName = 'temp_fitDiagnostics_DoubleExpo/{h}_{a}/fitDiagnosticswith1DFitsDoubleExpo.root'.format(h=h,a=a)
 
     wsFile = ROOT.TFile.Open(wsName)
     ws = wsFile.Get('w')
@@ -143,9 +160,11 @@ def plot(h,a):
     data = ws.data('data_obs')
 
     fdFile = ROOT.TFile.Open(fdName)
-    fr_s = fdFile.Get('fit_s')
-    fr_b = fdFile.Get('fit_b')
 
+    #fr_s = fdFile.Get('fit_s')
+    #mc = mc_s
+    #fr = fr_s
+    fr_b = fdFile.Get('fit_b')
     mc = mc_b
     fr = fr_b
 
@@ -184,7 +203,7 @@ def plot(h,a):
                 sigPdfs[ds.GetName()].plotOn(frame,
                     ROOT.RooFit.LineColor(ROOT.kRed),
                     ROOT.RooFit.Components('shapeSig*'),
-                    ROOT.RooFit.Normalization(sigInts[ds.GetName()].getVal()*br/1e-3,ROOT.RooAbsReal.NumEvent),
+                    ROOT.RooFit.Normalization(sigInts[ds.GetName()].getVal()*thisbr/1e-3,ROOT.RooAbsReal.NumEvent),
                 )
             dpdf.plotOn(frame,
                 ROOT.RooFit.LineColor(ROOT.kBlue),
@@ -236,19 +255,19 @@ def plot(h,a):
             if x.GetName()=='CMS_haa_x':
                 if a<=8:
                     frame.SetMinimum(1)
-                    frame.SetMaximum(2000)
+                    frame.SetMaximum(5000)
                     mainpad.SetLogy()
                 if a>8 and a<11.5:
                     frame.SetMaximum(60 if 'PP' in ds.GetName() else 120)
                 if a>11.5:
                     frame.SetMaximum(50 if 'PP' in ds.GetName() else 100)
             elif x.GetName()=='CMS_haa_y':
-                frame.SetMaximum(1000)
+                frame.SetMaximum(4000)
                 frame.SetMinimum(0.1)
                 mainpad.SetLogy()
             else:
                 if a<=8:
-                    frame.SetMaximum(8e5)
+                    frame.SetMaximum(2e6)
                     frame.SetMinimum(1e4)
                     mainpad.SetLogy()
                 if a>8 and a<11.5:
@@ -292,7 +311,7 @@ def plot(h,a):
                 elif 'Sig' in prim.GetName():
                     if foundSig: continue
                     foundSig = True
-                    title = '#splitline{{m_{{H}} = {} GeV, m_{{a}} = {} GeV}}{{B(h #rightarrow aa #rightarrow #mu#mu#tau#tau) = {}}}'.format(h,a,floatToText(br))
+                    title = '#splitline{{m_{{H}} = {} GeV, m_{{a}} = {} GeV}}{{B(h #rightarrow aa #rightarrow #mu#mu#tau#tau) = {}}}'.format(h,a,floatToText(thisbr))
                     #title = 'm_{{H}} = {} GeV, m_{{a}} = {} GeV'.format(h,a)
                     toAdd['sig'] = [prim, title, 'l']
 
@@ -301,6 +320,37 @@ def plot(h,a):
                 legend.AddEntry(*toAdd[l])
 
             legend.Draw()
+
+            # addtional text
+            text = ROOT.TPaveText(0.18,0.78,0.35,0.84,'NB NDC')
+            text.SetTextFont(42)
+            text.SetBorderSize(0)
+            text.SetFillColor(0)
+            text.SetTextAlign(11)
+            text.SetTextSize(0.03)
+            if 'PP' in ds.GetName():
+                rtext = 'Signal Region'
+            elif 'FP' in ds.GetName():
+                rtext = 'Sideband'
+            else:
+                rtext = 'Control Region'
+            text.AddText(rtext)
+            text.Draw()
+            if x.GetName()=='CMS_haa_y':
+                text2 = ROOT.TPaveText(0.18,0.74,0.35,0.8,'NB NDC')
+                text2.SetTextFont(42)
+                text2.SetBorderSize(0)
+                text2.SetFillColor(0)
+                text2.SetTextAlign(11)
+                text2.SetTextSize(0.03)
+                if mode=='lowmass':
+                    rtext = '2.5 < m(#mu#mu) < 8.5 GeV'
+                elif mode=='upsilon':
+                    rtext = '6 < m(#mu#mu) < 14 GeV'
+                else:
+                    rtext = '11 < m(#mu#mu) < 25 GeV'
+                text2.AddText(rtext)
+                text2.Draw()
 
             if doRatio:
                 hdata = toAdd['obs'][0]
@@ -343,12 +393,18 @@ def plot(h,a):
                 canvas.cd()
 
 
-            canvas.Print('rooplot_haa_{}_{}_{}_{}.png'.format(ds.GetName(),x.GetName(),h,a))
-            canvas.Print('rooplot_haa_{}_{}_{}_{}.pdf'.format(ds.GetName(),x.GetName(),h,a))
+            #canvas.Print('rooplot_haa_{}_{}_{}_{}.png'.format(ds.GetName(),x.GetName(),h,a))
+            #canvas.Print('rooplot_haa_{}_{}_{}_{}.pdf'.format(ds.GetName(),x.GetName(),h,a))
+            canvas.Print('doubleExpo_rooplot_haa_{}_{}_{}_{}.png'.format(ds.GetName(),x.GetName(),h,a))
+            canvas.Print('doubleExpo_rooplot_haa_{}_{}_{}_{}.pdf'.format(ds.GetName(),x.GetName(),h,a))
 
             x = obsiter.Next()
             
 
 for h in [125,300,750]:
-    for a in [7,9,11,15]:
-        plot(h,a)
+#for h in [125]:
+    for a in [7,9,11,13,15,17,19]:
+        try:
+            plot(h,a,multi=True)
+        except:
+            print 'Error on MH={} MA={}'.format(h,a)

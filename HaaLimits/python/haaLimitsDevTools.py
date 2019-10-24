@@ -10,6 +10,11 @@ import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 ROOT.gROOT.SetBatch()
 
+# Change integration precision
+# BAD!!!
+#ROOT.RooAbsReal.defaultIntegratorConfig().setEpsAbs(1e-6)
+#ROOT.RooAbsReal.defaultIntegratorConfig().setEpsRel(1e-6)
+
 from DevTools.Plotter.NtupleWrapper import NtupleWrapper
 from DevTools.Utilities.utilities import *
 from DevTools.Plotter.haaUtils import *
@@ -33,10 +38,12 @@ testing = False
 detailed = True
 skipSignal = False
 correlation = False
+skipPlots = False
 
 subtractSR = True
 
 xRange = [2.5,25] # with jpsi
+xRangeFull = [2.5,25]
 
 yRange = [0,1200] # h, hkf
 
@@ -684,6 +691,7 @@ def create_datacard(args):
     if args.decayMode: haaLimits.REGIONS = modes
     if 'h' in var:
         haaLimits.YCORRELATION = correlation
+    haaLimits.SKIPPLOTS = skipPlots
     haaLimits.SHIFTS = [systLabels.get(shift,shift) for shift in shiftTypes]
     haaLimits.SIGNALSHIFTS = [systLabels.get(shift,shift) for shift in signalShiftTypes]
     haaLimits.BACKGROUNDSHIFTS = [systLabels.get(shift,shift) for shift in backgroundShiftTypes]
@@ -698,6 +706,7 @@ def create_datacard(args):
         haaLimits.YVAR = yVar
         haaLimits.YRANGE = yRange
         haaLimits.YBINNING = int((yRange[1]-yRange[0])/yBinWidth)
+        haaLimits.DOUBLEEXPO = args.doubleExpo
     if 'tt' in var: haaLimits.YLABEL = 'm_{#tau_{#mu}#tau_{h}}'
     if 'h' in var or 'hkf' in var: haaLimits.YLABEL = 'm_{#mu#mu#tau_{#mu}#tau_{h}}'
     haaLimits.initializeWorkspace()
@@ -746,6 +755,7 @@ def parse_command_line(argv):
     parser.add_argument('--project', action='store_true', help='Project to 1D')
     parser.add_argument('--do2DInterpolation', action='store_true', help='interpolate v MH and MA')
     parser.add_argument('--fitParams', action='store_true', help='fit parameters')
+    parser.add_argument('--doubleExpo', action='store_true', help='Use double expo')
     parser.add_argument('--higgs', type=int, default=125, choices=[125,300,750])
     parser.add_argument('--pseudoscalar', type=int, default=7, choices=[5,7,9,11,13,15,17,19,21])
     parser.add_argument('--yFitFunc', type=str, default='', choices=['G','V','CB','DCB','DG','DV','B','G2','G3','errG','L','MB'])
