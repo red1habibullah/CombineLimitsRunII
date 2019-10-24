@@ -31,7 +31,7 @@ parser.add_argument('jobname',type=str,help='Job name for submission')
 parser.add_argument('--crab',action='store_true',help='Prepare crab submission (otherwise does condor assuming UW Madison)')
 parser.add_argument('--site',type=str,default='T2_US_Wisconsin',help='Site for storage')
 parser.add_argument('--hmasses',type=int,default=[125,300,750],nargs='+',help='H masses to run')
-parser.add_argument('--moderanges',type=int,default=['lowmass','upsilon','highmass'],choices=['lowmass','upsilon','highmass'],nargs='+',help='A mass ranges to run')
+parser.add_argument('--moderanges',type=str,default=['lowmass','upsilon','highmass'],choices=['lowmass','upsilon','highmass'],nargs='+',help='A mass ranges to run')
 parser.add_argument('--toys',type=int,default=2000,help='Number of toys')
 parser.add_argument('--testing',action='store_true',help='Number of toys')
 
@@ -179,10 +179,10 @@ def submit_crab(ws,quartiles,mode,h,a):
         rmax = rMap[h][1]
     num_points = int((rmax-rmin)/drMap[h])
     points_per_job = 1
-    toys_per_job = 10 # for crab it will do all r values in a job and 10 toys per r value
+    toys_per_job = 100
     jobs_per_point = int(toys/toys_per_job)
     if jobs_per_point<1: jobs_per_point = 1
-    pointsString = '{:.3}:{:.3}:{:.3}'.format(rmin,drMap[h],rmax)
+    pointsString = '{:.3}:{:.3}:{:.3}'.format(rmin,rmax,drMap[h])
 
     crab = 'custom_crab_{h}_{a}.py'.format(h=h,a=a)
 
@@ -200,6 +200,7 @@ def custom_crab(config):
             f.write(crabString)
 
         command = 'combineTool.py -M HybridNew -v -1 -d {ws} -m {h} --setParameters MA={a} --freezeParameters=MA --LHCmode LHC-limits --singlePoint {points} --saveToys --saveHybridResult -T {toys} -s -1 --clsAcc 0 --job-mode crab3 --task-name {jobname} --custom-crab custom_crab_{h}_{a}_{i}.py'.format(ws=ws,h=h,a=a,points=pointsString,toys=toys_per_job,jobname=jobname,i=i)
+        #command += ' --dry-run'
         print command
 
 
