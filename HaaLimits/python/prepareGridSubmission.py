@@ -192,7 +192,7 @@ def submit_crab(ws,quartiles,mode,h,a):
 
     # this will create multiple jobs for each point with the specified seed
     seedint = random.randint(1,123456)
-    seeds = '{}:{}:{}'.format(seedint,seedint+jobs_per_point,1)
+    seeds = '{}:{}:{}'.format(seedint,seedint+jobs_per_point-1,1) if jobs_per_point>1 else str(seedint)
     crabString = '''
 def custom_crab(config):
     config.General.workArea = '{scratchdir}/{jobname}/{tag}/{h}/{a}'
