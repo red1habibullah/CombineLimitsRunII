@@ -153,7 +153,7 @@ def submit_condor(ws,quartiles,mode,h,a):
     bashScript += 'read -d "_" -r RVAL < $INPUT\n'
     for i in range(points_per_job):
         dr = i*(rmax-rmin)/points_per_job
-        bashScript += 'combine -M HybridNew -v -1 -d $CMSSW_BASE/{ws} -m {h} --setParameters MA={a} --freezeParameters=MA --LHCmode LHC-limits --singlePoint $(bc -l <<< "$RVAL+{points}") --saveToys --saveHybridResult -T {toys} -s -1 --clsAcc 0\n'.format(ws=drel,h=h,a=a,points=dr,toys=toys_per_job,jobname=jobname)
+        bashScript += 'combine -M HybridNew -v -1 -d $CMSSW_BASE/{ws} -m {h} --setParameters MA={a} --freezeParameters=MA --LHCmode LHC-limits --singlePoint $(bc -l <<< "$RVAL+{points}") --rMax 30 --saveToys --saveHybridResult -T {toys} -s -1 --clsAcc 0\n'.format(ws=drel,h=h,a=a,points=dr,toys=toys_per_job,jobname=jobname)
     if points_per_job>1:
         bashScript += 'hadd $OUTPUT higgsCombine*HybridNew.mH{}*.root\n'.format(h)
         bashScript += 'rm higgsCombine*.root\n'.format(h)
@@ -199,7 +199,7 @@ def custom_crab(config):
         with open('{temp}/custom_crab_{h}_{a}_{i}.py'.format(temp=temp,h=h,a=a,i=i),'w') as f:
             f.write(crabString)
 
-        command = 'combineTool.py -M HybridNew -v -1 -d {ws} -m {h} --setParameters MA={a} --freezeParameters=MA --LHCmode LHC-limits --singlePoint {points} --saveToys --saveHybridResult -T {toys} -s -1 --clsAcc 0 --job-mode crab3 --task-name {jobname} --custom-crab custom_crab_{h}_{a}_{i}.py'.format(ws=ws,h=h,a=a,points=pointsString,toys=toys_per_job,jobname=jobname,i=i)
+        command = 'combineTool.py -M HybridNew -v -1 -d {ws} -m {h} --setParameters MA={a} --freezeParameters=MA --LHCmode LHC-limits --singlePoint {points} --rMax 30 --saveToys --saveHybridResult -T {toys} -s -1 --clsAcc 0 --job-mode crab3 --task-name {jobname} --custom-crab custom_crab_{h}_{a}_{i}.py'.format(ws=ws,h=h,a=a,points=pointsString,toys=toys_per_job,jobname=jobname,i=i)
         #command += ' --dry-run'
         print command
 
