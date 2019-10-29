@@ -1,5 +1,6 @@
 import os
 import logging
+import random
 import errno
 import subprocess
 import argparse
@@ -182,26 +183,31 @@ def submit_crab(ws,quartiles,mode,h,a):
     toys_per_job = 100
     jobs_per_point = int(toys/toys_per_job)
     if jobs_per_point<1: jobs_per_point = 1
+
+    # this will do multiple r values in a regular grid
     pointsString = '{:.3}:{:.3}:{:.3}'.format(rmin,rmax,drMap[h])
 
     crab = 'custom_crab_{h}_{a}.py'.format(h=h,a=a)
 
-    for i in range(jobs_per_point):
-        crabString = '''
+    # this will create multiple jobs for each point with the specified seed
+    seedint = random.randint(1,123456)
+    seeds = '{}:{}:{}'.format(seedint,seedint+jobs_per_point,1)
+    crabString = '''
 def custom_crab(config):
-    config.General.workArea = '{scratchdir}/{jobname}/{tag}/{h}/{a}/{i}'
+    config.General.workArea = '{scratchdir}/{jobname}/{tag}/{h}/{a}'
     config.Data.outLFNDirBase = '/store/user/{user}/{jobname}/{tag}/{h}/{a}'
     config.Site.storageSite = '{site}'
     config.JobType.allowUndistributedCMSSW = True
-'''.format(scratchdir=scratchdir, user=user, jobname=jobname, tag=mode, h=h, a=a, site=site, i=i)
+'''.format(scratchdir=scratchdir, user=user, jobname=jobname, tag=mode, h=h, a=a, site=site)
 
-        temp = 'temp_HybridNew_{h}'.format(h=h)
-        with open('{temp}/custom_crab_{h}_{a}_{i}.py'.format(temp=temp,h=h,a=a,i=i),'w') as f:
-            f.write(crabString)
+    temp = 'temp_HybridNew_{h}'.format(h=h)
+    with open('{temp}/{crab}'.format(temp=temp,crab=crab),'w') as f:
+        f.write(crabString)
 
-        command = 'combineTool.py -M HybridNew -v -1 -d {ws} -m {h} --setParameters MA={a} --freezeParameters=MA --LHCmode LHC-limits --singlePoint {points} --rMax 30 --saveToys --saveHybridResult -T {toys} -s -1 --clsAcc 0 --job-mode crab3 --task-name {jobname} --custom-crab custom_crab_{h}_{a}_{i}.py'.format(ws=ws,h=h,a=a,points=pointsString,toys=toys_per_job,jobname=jobname,i=i)
-        #command += ' --dry-run'
-        print command
+    command = 'combineTool.py -M HybridNew -v -1 -d {ws} -m {h} --setParameters MA={a} --freezeParameters=MA --LHCmode LHC-limits --singlePoint {points} --rMax 30 --saveToys --saveHybridResult -T {toys} -s {seeds} --clsAcc 0 --job-mode crab3 --task-name {jobname} --custom-crab {crab}'.format(ws=ws,h=h,a=a,points=pointsString,toys=toys_per_job,jobname=jobname,seeds=seeds,crab=crab)
+    #command += ' --dry-run'
+    print command
+
 
 
 
