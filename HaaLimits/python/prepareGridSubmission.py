@@ -34,7 +34,8 @@ parser.add_argument('--site',type=str,default='T2_US_Wisconsin',help='Site for s
 parser.add_argument('--hmasses',type=int,default=[125,300,750],nargs='+',help='H masses to run')
 parser.add_argument('--moderanges',type=str,default=['lowmass','upsilon','highmass'],choices=['lowmass','upsilon','highmass'],nargs='+',help='A mass ranges to run')
 parser.add_argument('--toys',type=int,default=2000,help='Number of toys')
-parser.add_argument('--testing',action='store_true',help='Number of toys')
+parser.add_argument('--toysPerJob',type=int,default=100,help='Number of toys per job')
+parser.add_argument('--testing',action='store_true',help='Test does one point per mode')
 
 args = parser.parse_args()
 
@@ -127,7 +128,7 @@ def submit_condor(ws,quartiles,mode,h,a):
         rmax = rMap[h][1]
     num_points = int((rmax-rmin)/drMap[h])
     points_per_job = 1
-    toys_per_job = 100
+    toys_per_job = args.toysPerJob
     jobs_per_point = int(toys/toys_per_job)
     if jobs_per_point<1: jobs_per_point = 1
 
@@ -180,7 +181,7 @@ def submit_crab(ws,quartiles,mode,h,a):
         rmax = rMap[h][1]
     num_points = int((rmax-rmin)/drMap[h])
     points_per_job = 1
-    toys_per_job = 100
+    toys_per_job = args.toysPerJob
     jobs_per_point = int(toys/toys_per_job)
     if jobs_per_point<1: jobs_per_point = 1
 
