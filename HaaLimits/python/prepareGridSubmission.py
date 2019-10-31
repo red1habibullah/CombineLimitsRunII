@@ -194,14 +194,14 @@ def submit_crab(ws,quartiles,mode,h,a):
     seedint = random.randint(1,123456)
     seeds = '{}:{}:{}'.format(seedint,seedint+jobs_per_point-1,1) if jobs_per_point>1 else str(seedint)
 
-    # note: blacklist set Oct 30, 2019
+    # note: blacklist set Oct 31, 2019
     crabString = '''
 def custom_crab(config):
     config.General.workArea = '{scratchdir}/{jobname}/{tag}/{h}/{a}'
     config.Data.outLFNDirBase = '/store/user/{user}/{jobname}/{tag}/{h}/{a}'
     config.Site.storageSite = '{site}'
     config.JobType.allowUndistributedCMSSW = True
-    config.Site.blacklist = ['T3_KR_KNU', 'T3_FR_IPNL', 'T2_TR_METU', 'T2_TW_NCHC']
+    config.Site.blacklist = ['T3_KR_KNU', 'T3_FR_IPNL', 'T2_TR_METU', 'T2_TW_NCHC', 'T2_BE_IIHE']
 '''.format(scratchdir=scratchdir, user=user, jobname=jobname, tag=mode, h=h, a=a, site=site)
 
     temp = 'temp_HybridNew_{h}'.format(h=h)
