@@ -36,6 +36,7 @@ parser.add_argument('--moderanges',type=str,default=['lowmass','upsilon','highma
 parser.add_argument('--toys',type=int,default=2000,help='Number of toys')
 parser.add_argument('--toysPerJob',type=int,default=100,help='Number of toys per job')
 parser.add_argument('--testing',action='store_true',help='Test does one point per mode')
+parser.add_argument('--convert',action='store_true',help='Only convert')
 
 args = parser.parse_args()
 
@@ -46,6 +47,7 @@ hdfs = '/hdfs/store/user/{}'.format(user)
 doCrab = args.crab
 version = 1
 testing = args.testing
+convertOnly = args.convert
 reduced = False
 
 #jobname = '2019-10-24_MuMuTauTauLimits_HybridNew_v{v}'.format(v=version)
@@ -233,6 +235,7 @@ for moderange in moderanges:
         if moderange=='highmass':
             thisamasses = highmass_amasses
         for a in thisamasses:
+            if convertOnly: continue
             if a<rangeMap[moderange][0]: continue
             if a>rangeMap[moderange][1]: continue
             if a % 1 < 1e-10: astr = '{0:.0f}'.format(a)

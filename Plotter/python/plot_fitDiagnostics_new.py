@@ -12,7 +12,7 @@ tdrstyle.setTDRStyle()
 
 isprelim = False
 br = 0.0005
-doUnc = True
+doUnc = False
 doRatio = True
 
 def floatToText(x):
