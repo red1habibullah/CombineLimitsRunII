@@ -188,7 +188,7 @@ def submit_crab(ws,quartiles,mode,h,a):
     # this will do multiple r values in a regular grid
     pointsString = '{:.3}:{:.3}:{:.3}'.format(rmin,rmax,drMap[h])
 
-    crab = 'custom_crab_{h}_{a}.py'.format(h=h,a=a)
+    crab = 'custom_crab_{mode}_{h}_{a}.py'.format(mode=mode,h=h,a=a)
 
     # this will create multiple jobs for each point with the specified seed
     seedint = random.randint(1,123456)
@@ -201,7 +201,7 @@ def custom_crab(config):
     config.Data.outLFNDirBase = '/store/user/{user}/{jobname}/{tag}/{h}/{a}'
     config.Site.storageSite = '{site}'
     config.JobType.allowUndistributedCMSSW = True
-    config.Site.blacklist = ['T3_KR_KNU', 'T3_FR_IPNL', 'T2_TR_METU', 'T2_TW_NCHC', 'T2_BE_IIHE']
+    config.Site.blacklist = ['T3_KR_KNU', 'T3_FR_IPNL', 'T2_TR_METU', 'T2_TW_NCHC', 'T2_BE_IIHE', 'T3_US_Baylor']
 '''.format(scratchdir=scratchdir, user=user, jobname=jobname, tag=mode, h=h, a=a, site=site)
 
     temp = 'temp_HybridNew_{h}'.format(h=h)
