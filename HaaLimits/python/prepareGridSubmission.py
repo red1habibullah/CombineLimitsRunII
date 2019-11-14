@@ -138,9 +138,10 @@ def submit_condor(ws,quartiles,mode,h,a):
         rmin = 0.5*min(quartiles)
         rmax = 1.2*max(quartiles)
     else:
-        rmin = rMap[h][0]
+        rmin = rMap[h][0] if a<8 else altRMap[h][0]
         rmax = rMap[h][1] if a<8 else altRMap[h][1]
-    num_points = int((rmax-rmin)/drMap[h])
+    dr = drMap[h] if a<8 else altDRMap[h]
+    num_points = int((rmax-rmin)/dr)
     points_per_job = 1
     toys_per_job = args.toysPerJob
     jobs_per_point = int(toys/toys_per_job)
@@ -191,16 +192,17 @@ def submit_crab(ws,quartiles,mode,h,a):
         rmin = min(quartiles[:5])*0.5
         rmax = max(quartiles[:5])*1.2
     else:
-        rmin = rMap[h][0]
+        rmin = rMap[h][0] if a<8 else altRMap[h][0]
         rmax = rMap[h][1] if a<8 else altRMap[h][1]
-    num_points = int((rmax-rmin)/drMap[h])
+    dr = drMap[h] if a<8 else altDRMap[h]
+    num_points = int((rmax-rmin)/dr)
     points_per_job = 1
     toys_per_job = args.toysPerJob
     jobs_per_point = int(toys/toys_per_job)
     if jobs_per_point<1: jobs_per_point = 1
 
     # this will do multiple r values in a regular grid
-    pointsString = '{:.3}:{:.3}:{:.3}'.format(rmin,rmax,drMap[h])
+    pointsString = '{:.3}:{:.3}:{:.3}'.format(rmin,rmax,dr)
 
     crab = 'custom_crab_{mode}_{h}_{a}.py'.format(mode=mode,h=h,a=a)
 
