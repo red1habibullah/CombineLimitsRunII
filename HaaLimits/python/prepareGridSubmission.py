@@ -36,7 +36,9 @@ parser.add_argument('--moderanges',type=str,default=['lowmass','upsilon','highma
 parser.add_argument('--toys',type=int,default=2000,help='Number of toys')
 parser.add_argument('--toysPerJob',type=int,default=100,help='Number of toys per job')
 parser.add_argument('--testing',action='store_true',help='Test does one point per mode')
+parser.add_argument('--verbose',action='store_true',help='Run combine with verbose')
 parser.add_argument('--convert',action='store_true',help='Only convert')
+parser.add_argument('--reduced',action='store_true',help='Reduced h/a grid for large statistics')
 
 args = parser.parse_args()
 
@@ -45,12 +47,11 @@ site = args.site
 store = '/store/user/{}'.format(user)
 hdfs = '/hdfs/store/user/{}'.format(user)
 doCrab = args.crab
-version = 1
 testing = args.testing
 convertOnly = args.convert
-reduced = False
+reduced = args.reduced
+verbose = args.verbose
 
-#jobname = '2019-10-24_MuMuTauTauLimits_HybridNew_v{v}'.format(v=version)
 jobname = args.jobname
 if doCrab:
     jobname = 'crab_' + jobname
@@ -64,10 +65,9 @@ lowmass_amasses = amasses
 upsilon_amasses = amasses
 highmass_amasses = amasses
 if reduced:
-    amasses = [3.6] + [x*.1 for x in range(40,210,5)] + [21.0]
-    lowmass_amasses = [x*.1 for x in range(36,46,1)] + [x*.1 for x in range(50,90,5)]
-    upsilon_amasses = [6,6.5,7,7.5] + [x*.1 for x in range(80,121,1)] + [12.5,13,13.5,14]
-    highmass_amasses = [x*.1 for x in range(110,255,5)]
+    lowmass_amasses = [x*.1 for x in range(36,42,2)] + [x*.1 for x in range(45,90,5)]
+    upsilon_amasses = [x*.1 for x in range(80,115,2)] + [11.5]
+    highmass_amasses = [11.0, 11.5] + [x*.1 for x in range(120,220,10)]
 if testing:
     amasses = [7.0,9.0,15.0]
     lowmass_amasses = [7.0]
@@ -84,7 +84,7 @@ toys = args.toys
 moderanges = args.moderanges
 rangeMap = {
     'lowmass': [2.5,8.5],
-    'upsilon': [6,14],
+    'upsilon': [7.5,12],
     'highmass': [11,25],
 }
 
@@ -95,9 +95,21 @@ rMap = {
     750: [0.500,25.0],
 }
 
+altRMap = {
+    125: [0.100,1.00],
+    300: [0.100,1.00],
+    750: [1.000,6.0],
+}
+
 drMap = {
     125: 0.025,
     300: 0.05,
+    750: 0.5,
+}
+
+altDRMap = {
+    125: 0.05,
+    300: 0.1,
     750: 0.5,
 }
 
@@ -127,7 +139,7 @@ def submit_condor(ws,quartiles,mode,h,a):
         rmax = 1.2*max(quartiles)
     else:
         rmin = rMap[h][0]
-        rmax = rMap[h][1]
+        rmax = rMap[h][1] if a<8 else altRMap[h][1]
     num_points = int((rmax-rmin)/drMap[h])
     points_per_job = 1
     toys_per_job = args.toysPerJob
@@ -157,7 +169,7 @@ def submit_condor(ws,quartiles,mode,h,a):
     bashScript += 'read -d "_" -r RVAL < $INPUT\n'
     for i in range(points_per_job):
         dr = i*(rmax-rmin)/points_per_job
-        bashScript += 'combine -M HybridNew -v -1 -d $CMSSW_BASE/{ws} -m {h} --setParameters MA={a} --freezeParameters=MA --LHCmode LHC-limits --singlePoint $(bc -l <<< "$RVAL+{points}") --rMax 30 --saveToys --saveHybridResult -T {toys} -s -1 --clsAcc 0\n'.format(ws=drel,h=h,a=a,points=dr,toys=toys_per_job,jobname=jobname)
+        bashScript += 'combine -M HybridNew -v {verbosity} -d $CMSSW_BASE/{ws} -m {h} --setParameters MA={a} --freezeParameters=MA --LHCmode LHC-limits --singlePoint $(bc -l <<< "$RVAL+{points}") --rMax 30 --saveToys --saveHybridResult -T {toys} -s -1 --clsAcc 0\n'.format(ws=drel,h=h,a=a,points=dr,toys=toys_per_job,jobname=jobname,verbosity=2 if verbose else -1)
     if points_per_job>1:
         bashScript += 'hadd $OUTPUT higgsCombine*HybridNew.mH{}*.root\n'.format(h)
         bashScript += 'rm higgsCombine*.root\n'.format(h)
@@ -180,7 +192,7 @@ def submit_crab(ws,quartiles,mode,h,a):
         rmax = max(quartiles[:5])*1.2
     else:
         rmin = rMap[h][0]
-        rmax = rMap[h][1]
+        rmax = rMap[h][1] if a<8 else altRMap[h][1]
     num_points = int((rmax-rmin)/drMap[h])
     points_per_job = 1
     toys_per_job = args.toysPerJob
@@ -210,7 +222,8 @@ def custom_crab(config):
     with open('{temp}/{crab}'.format(temp=temp,crab=crab),'w') as f:
         f.write(crabString)
 
-    command = 'combineTool.py -M HybridNew -v -1 -d {ws} -m {h} --setParameters MA={a} --freezeParameters=MA --LHCmode LHC-limits --singlePoint {points} --rMax 30 --saveToys --saveHybridResult -T {toys} -s {seeds} --clsAcc 0 --job-mode crab3 --task-name {jobname} --custom-crab {crab}'.format(ws=ws,h=h,a=a,points=pointsString,toys=toys_per_job,jobname=jobname,seeds=seeds,crab=crab)
+    command = 'combineTool.py -M HybridNew -v {verbosity} -d {ws} -m {h} --setParameters MA={a} --freezeParameters=MA --LHCmode LHC-limits --singlePoint {points} --rMax 30 --saveToys --saveHybridResult -T {toys} -s {seeds} --clsAcc 0 --job-mode crab3 --task-name {jobname} --custom-crab {crab}'.format(ws=ws,h=h,a=a,points=pointsString,toys=toys_per_job,jobname=jobname,seeds=seeds,crab=crab,verbosity=2 if verbose else -1)
+    #command += ' --fullBToys'
     #command += ' --dry-run'
     print command
 
