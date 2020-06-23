@@ -86,7 +86,7 @@ class Model(object):
             plotpad.Draw()
             ratiopad = ROOT.TPad("ratiopad", "bottom pad", 0.0, 0.0, 1.0, 0.21)
             ROOT.SetOwnership(ratiopad,False)
-            ratiopad.SetTopMargin(0.00)
+            ratiopad.SetTopMargin(0.0)
             ratiopad.SetRightMargin(0.2)
             ratiopad.SetBottomMargin(0.5)
             ratiopad.SetLeftMargin(0.16)
@@ -107,21 +107,26 @@ class Model(object):
             #    xFrame.SetMinimum(0.1)
             ratiopad.cd()
             xFrame2.Draw()
+            #xFrame2.GetYaxis().SetRangeUser(-5,5)
+            #xFrame2.GetYaxis().SetNdivisions(505)
+            #xFrame2.GetYaxis().SetTitleSize(0.05)
             prims = ratiopad.GetListOfPrimitives()
+            #print "==========Look Here============"
             for prim in prims:
+                print prim
                 if 'frame' in prim.GetName():
-                    prim.GetXaxis().SetLabelSize(0.19)
+                    prim.GetXaxis().SetLabelSize(0.09)
                     prim.GetXaxis().SetTitleSize(0.21)
                     prim.GetXaxis().SetTitleOffset(1.0)
                     prim.GetXaxis().SetLabelOffset(0.03)
-                    prim.GetYaxis().SetLabelSize(0.19)
+                    prim.GetYaxis().SetLabelSize(0.09)
                     prim.GetYaxis().SetLabelOffset(0.006)
                     prim.GetYaxis().SetTitleSize(0.21)
-                    prim.GetYaxis().SetTitleOffset(0.35)
-                    prim.GetYaxis().SetNdivisions(503)
+                    prim.GetYaxis().SetTitleOffset(0.30)
+                    prim.GetYaxis().SetNdivisions(505)
                     prim.GetYaxis().SetTitle('Pull')
-                    prim.GetYaxis().SetRangeUser(-3,3)
-                    continue
+                    prim.GetYaxis().SetRangeUser(-5,5)
+                    #continue
             canvas.cd()
 
             canvas.Print('{0}.png'.format(savename))
@@ -188,7 +193,7 @@ class Model(object):
             plotpad.Draw()
             ratiopad = ROOT.TPad("ratiopad", "bottom pad", 0.0, 0.0, 1.0, 0.21)
             ROOT.SetOwnership(ratiopad,False)
-            ratiopad.SetTopMargin(0.00)
+            ratiopad.SetTopMargin(0.0)
             ratiopad.SetRightMargin(0.2)
             ratiopad.SetBottomMargin(0.5)
             ratiopad.SetLeftMargin(0.16)
@@ -209,21 +214,28 @@ class Model(object):
             #    xFrame.SetMinimum(0.1)
             ratiopad.cd()
             xFrame2.Draw()
+            #xFrame2.GetYaxis().SetRangeUser(-5,5)
+            #xFrame2.GetYaxis().SetNdivisions(505)
+            #xFrame2.GetYaxis().SetTitleSize(0.05)
             prims = ratiopad.GetListOfPrimitives()
+            
+            #print "==========Look Here============"
+            #print prims
             for prim in prims:
+                #print prim
                 if 'frame' in prim.GetName():
-                    prim.GetXaxis().SetLabelSize(0.19)
+                    prim.GetXaxis().SetLabelSize(0.09)
                     prim.GetXaxis().SetTitleSize(0.21)
                     prim.GetXaxis().SetTitleOffset(1.0)
                     prim.GetXaxis().SetLabelOffset(0.03)
-                    prim.GetYaxis().SetLabelSize(0.19)
+                    prim.GetYaxis().SetLabelSize(0.09)
                     prim.GetYaxis().SetLabelOffset(0.006)
                     prim.GetYaxis().SetTitleSize(0.21)
-                    prim.GetYaxis().SetTitleOffset(0.35)
-                    prim.GetYaxis().SetNdivisions(503)
+                    prim.GetYaxis().SetTitleOffset(0.30)
+                    prim.GetYaxis().SetNdivisions(505)
                     prim.GetYaxis().SetTitle('Pull')
-                    prim.GetYaxis().SetRangeUser(-3,3)
-                    continue
+                    prim.GetYaxis().SetRangeUser(-5,5)
+                    #continue
             canvas.cd()
 
             canvas.Print('{0}_xproj.png'.format(savename))
@@ -235,6 +247,7 @@ class Model(object):
                 yFrame = y.frame()
             yFrame.SetTitle('')
             hist.plotOn(yFrame)
+            #hist.Print('v')
             model.plotOn(yFrame)
             chi2Liney = "Chi2: " + str(yFrame.chiSquare()) # Adding chi2 info
             pty = ROOT.TPaveText(.72,.1,.90,.2, "brNDC") # Adding chi2 info            
@@ -261,7 +274,7 @@ class Model(object):
             plotpad.Draw()
             ratiopad = ROOT.TPad("ratiopad", "bottom pad", 0.0, 0.0, 1.0, 0.21)
             ROOT.SetOwnership(ratiopad,False)
-            ratiopad.SetTopMargin(0.00)
+            ratiopad.SetTopMargin(0.0)
             ratiopad.SetRightMargin(0.2)
             ratiopad.SetBottomMargin(0.5)
             ratiopad.SetLeftMargin(0.16)
@@ -283,20 +296,23 @@ class Model(object):
             ratiopad.cd()
             yFrame2.Draw()
             prims = ratiopad.GetListOfPrimitives()
+            #print "==========Look Here============"
+            #print prims
             for prim in prims:
+                #print prim
                 if 'frame' in prim.GetName():
-                    prim.GetXaxis().SetLabelSize(0.19)
+                    prim.GetXaxis().SetLabelSize(0.09)
                     prim.GetXaxis().SetTitleSize(0.21)
                     prim.GetXaxis().SetTitleOffset(1.0)
                     prim.GetXaxis().SetLabelOffset(0.03)
-                    prim.GetYaxis().SetLabelSize(0.19)
+                    prim.GetYaxis().SetLabelSize(0.09)
                     prim.GetYaxis().SetLabelOffset(0.006)
                     prim.GetYaxis().SetTitleSize(0.21)
-                    prim.GetYaxis().SetTitleOffset(0.35)
-                    prim.GetYaxis().SetNdivisions(503)
+                    prim.GetYaxis().SetTitleOffset(0.30)
+                    prim.GetYaxis().SetNdivisions(505)
                     prim.GetYaxis().SetTitle('Pull')
-                    prim.GetYaxis().SetRangeUser(-3,3)
-                    continue
+                    prim.GetYaxis().SetRangeUser(-5,5)
+                    #continue
             canvas.cd()
 
             canvas.Print('{0}_yproj.png'.format(savename))
@@ -1200,11 +1216,14 @@ class BetaConv(Model):
             label,self.x,betaScaleName,betaAName,betaBName)
         )
         g = Gaussian('{}_gaus'.format(label),
-            mean = mean,
-            sigma = sigma,
+                     mean = mean,
+                     sigma = sigma,
         )
+        print "Ploop"
         g.build(ws,'{}_gaus'.format(label))
-        f = ROOT.RooFFTConvPdf(label,label,ws.var(self.x),ws.pdf('{}_beta'.format(label)),ws.pdf('{}_gaus'.format(label))) 
+        print "Pliip"
+        f = ROOT.RooFFTConvPdf(label,label,ws.var(self.x),ws.pdf('{}_beta'.format(label)),ws.pdf('{}_gaus'.format(label)),2) 
+        
         #f = ROOT.RooNumConvPdf(label,label,ws.var(self.x),ws.pdf('{}_beta'.format(label)),ws.pdf('{}_gaus'.format(label))) 
         getattr(ws,'import')(f)
         self.params = [betaScaleName,betaAName,betaBName,meanName,sigmaName]
