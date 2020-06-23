@@ -31,7 +31,7 @@ class HaaLimits2D(HaaLimits):
     YRANGE = [50,1000]
     YBINNING = 950
     YLABEL = 'm_{#mu#mu#tau_{#mu}#tau_{h}}'
-    YVAR = 'CMS_haa_y'
+    YVAR = 'visFourbodyMass'
     YCORRELATION = False
     SPLITY = False
     DOUBLEEXPO = False
@@ -761,8 +761,10 @@ class HaaLimits2D(HaaLimits):
             if yFitFunc == "DCB_Fix": initialMeans = self.GetInitialDCBMean()
             if "DCB" in yFitFunc: initialValuesDCB = self.GetInitialValuesDCB(isKinFit=isKinFit)
             elif yFitFunc == "DG": initialValuesDG = self.GetInitialValuesDG(region=region)
-        elif yFitFunc == "L": initialValuesL = self.GetInitialValuesDitau(isLandau=True)
-        elif yFitFunc == "V": initialValuesV = self.GetInitialValuesDitau(isLandau=False)
+            elif yFitFunc == "L": initialValuesL = self.GetInitialValuesDitau(isLandau=True)
+            elif yFitFunc == "V": initialValuesV = self.GetInitialValuesDitau(isLandau=False)
+            elif yFitFunc == "BC": initialValuesBC =self.GetInitialValuesBC(region=region)
+            elif yFitFunc == "DV": initialValuesDV =self.GetInitialValuesDV(region=region)
 
         aval = self.aToFloat(a)
         thisxrange = [0.8*aval, 1.2*aval]
@@ -779,11 +781,16 @@ class HaaLimits2D(HaaLimits):
         ws.var(self.YVAR).setPlotLabel(self.YLABEL)
         ws.var(self.YVAR).SetTitle(self.YLABEL)
         modelx = Models.Voigtian('sigx',
-            x = self.XVAR,
-            mean  = [aval,0,30],
-            width = [0.01*aval,0.001,5],
-            sigma = [0.01*aval,0.001,5],
-        )
+           x = self.XVAR,
+            mean  = [aval,0.9975*aval,1.0025*aval],#.9975,1.0025
+            width = [0.0065*aval,0.001,1],#0.01*aval
+            sigma = [0.0070*aval,0.001,1],#0.01*aval
+        # modelx=Models.Gaussian('sigx',
+        #                        x=self.XVAR,
+        #                        mean=[aval,0.90*aval,1.1*aval],
+        #                        sigma=[0.04*aval,0.0001,1]
+                               
+                               )
         modelx.build(ws, 'sigx')
         if self.YRANGE[1]>100: # y variable is h mass
             if yFitFunc == "G": 
@@ -835,19 +842,24 @@ class HaaLimits2D(HaaLimits):
                     #mean  = [h,0,1.25*h],
                     #sigma1 = [0.1*h,0.05*h,0.5*h],
                     #sigma2 = [0.2*h,0.05*h,0.5*h],
-                    mean    = [initialValuesDG["h"+str(h)+"a"+str(a)]["mean"],0,1.1*h],
-                    sigma1  = [initialValuesDG["h"+str(h)+"a"+str(a)]["sigma1"],0.05*h,0.5*h],
-                    sigma2  = [initialValuesDG["h"+str(h)+"a"+str(a)]["sigma2"],0.05*h,0.5*h],
+                    mean    = [initialValuesDG["h"+str(h)+"a"+str(a)]["mean"],0.68*h,0.78*h],
+                    sigma1  = [initialValuesDG["h"+str(h)+"a"+str(a)]["sigma1"],0.06*h,0.13*h],
+                    sigma2  = [initialValuesDG["h"+str(h)+"a"+str(a)]["sigma2"],0.06*h,0.1*h],
                     yMax = self.YRANGE[1],
                 )
             elif yFitFunc == "DV":
                 modely = Models.DoubleSidedVoigtian('sigy',
                     x = self.YVAR,
-                    mean  = [h,0,1.25*h],
-                    sigma1 = [0.1*h,0.01,0.5*h],
-                    sigma2 = [0.2*h,0.01,0.5*h],
-                    width1 = [1.0,0.01,10.0],
-                    width2 = [2.0,0.01,10.0],
+                    # mean  = [0.7*h,0.64*h,0.76*h],
+                    # sigma1 = [0.1*h,0.08*h,0.16*h],
+                    # sigma2 = [0.125*h,0.09*h,0.18*h],
+                    # width1 = [1.0,0.01,10.0],
+                    # width2 = [1.0,0.01,10.0],
+                    mean    = [initialValuesDV["h"+str(h)+"a"+str(a)]["mean"],0.68*h,0.76*h],
+                    sigma1  = [initialValuesDV["h"+str(h)+"a"+str(a)]["sigma1"],0.06*h,0.16*h],
+                    sigma2  = [initialValuesDV["h"+str(h)+"a"+str(a)]["sigma2"],0.06*h,0.14*h],
+                    width1  = [initialValuesDV["h"+str(h)+"a"+str(a)]["width1"],0.01,5.0],
+                    width2  = [initialValuesDV["h"+str(h)+"a"+str(a)]["width2"],0.01,5.0],
                     yMax = self.YRANGE[1],
                 )
             elif yFitFunc == "MB":
@@ -862,6 +874,15 @@ class HaaLimits2D(HaaLimits):
                     betaA = [5,0,20],
                     betaB = [2,0,10],
                 )
+            elif yFitFunc == "BC":
+                modely = Models.BetaConv('sigy',
+                    x = self.YVAR,
+                    betaScale = [initialValuesBC["h"+str(h)+"a"+str(a)]["betaScale"],0,1],
+                    betaA =  [initialValuesBC["h"+str(h)+"a"+str(a)]["betaA"],0,20],
+                    betaB = [initialValuesBC["h"+str(h)+"a"+str(a)]["betaB"],0,10],
+                    mean = [initialValuesBC["h"+str(h)+"a"+str(a)]["mean"],0.6*h,h],
+                    sigma = [initialValuesBC["h"+str(h)+"a"+str(a)]["sigma"],0,h],
+                 )
             elif yFitFunc == "G2":
                 g1 = Models.Gaussian('g1',
                     x = self.YVAR,
@@ -1176,6 +1197,7 @@ class HaaLimits2D(HaaLimits):
         elif yFitFunc == "DV"  : yparams = ['mean_sigy', 'sigma1_sigy', 'sigma2_sigy','width1_sigy','width2_sigy']
         elif yFitFunc == "MB"  : yparams = ['scale_sigy']
         elif yFitFunc == "B"   : yparams = ['betaScale_sigy','betaA_sigy','betaB_sigy']
+        elif yFitFunc == "BC"  : yparams = ['betaScale_sigy','betaA_sigy','betaB_sigy','mean_sigy','sigma_sigy']
         elif yFitFunc == "errG": yparams = ['mean_ttgaus', 'sigma_ttgaus','erfShift_tterf','erfScale_tterf']
         elif yFitFunc == "L"   : yparams = ['mean_ttgaus', 'sigma_ttgaus','mu_ttland','sigma_ttland']
         elif yFitFunc == "G2"  : yparams = ['mean_g1', 'sigma_g1','mean_g2','sigma_g2','g1_frac']
@@ -1270,14 +1292,15 @@ class HaaLimits2D(HaaLimits):
                     'sigma_g3'      : ROOT.TF1('sigma_g3_h{}_{}'.format(h,tag),        '[0]+[1]*x+[2]*x*x', *self.ARANGE),
                     'g1_frac'       : ROOT.TF1('g1_frac_h{}_{}'.format(h,tag),         '[0]+[1]*x+[2]*x*x', *self.ARANGE),
                     'g2_frac'       : ROOT.TF1('g2_frac_h{}_{}'.format(h,tag),         '[0]+[1]*x+[2]*x*x', *self.ARANGE),
-                    'integral'      : ROOT.TF1('integral_h{}_{}'.format(h,tag),  '[0]+TMath::Erf([1]+[2]*x)*TMath::Erfc([3]+[4]*x)', *self.ARANGE),
-                }
+                    #'integral'      : ROOT.TF1('integral_h{}_{}'.format(h,tag),  '[0]+TMath::Erf([1]+[2]*x)*TMath::Erfc([3]+[4]*x)', *self.ARANGE),
+                    'integral'      : ROOT.TF1('integral_h{}_{}'.format(h,tag),  '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    }
                 # set initial values
                 fitFuncs[h]['integral'].SetParameter(1,-0.005)
                 fitFuncs[h]['integral'].SetParameter(2,0.02)
                 fitFuncs[h]['integral'].SetParameter(3,-0.5)
                 fitFuncs[h]['integral'].SetParameter(4,0.08)
-
+                
         xparams, yparams = self.getParams(yFitFunc)
 
         for param in xparams+yparams+['integral']:
@@ -1290,6 +1313,8 @@ class HaaLimits2D(HaaLimits):
             yerrs = [0] * len(yvals)
             if param=='integral':
                 zvals = [integrals[h][a] for h in Hs for a in As[h]]
+                print "Here comes the integral"
+                print zvals
                 zerrs = [integralerrs[h][a] for h in Hs for a in As[h]]
             else:
                 zvals = [results[h][a][param] for h in Hs for a in As[h]]
@@ -1316,7 +1341,7 @@ class HaaLimits2D(HaaLimits):
             legend.SetFillColor(0)
             legend.SetNColumns(len(self.HMASSES))
 
-            for h in [125,300,750]:
+            for h in [125]: #,300,750]:
                 xs = [yvals[i] for i in range(len(xvals)) if xvals[i]==h]
                 ys = [zvals[i] for i in range(len(xvals)) if xvals[i]==h]
 
@@ -1346,7 +1371,7 @@ class HaaLimits2D(HaaLimits):
                 fg.SetMarkerColor(self.COLORS[h])
                 fmg.Add(fg)
 
-            canvas.DrawFrame(self.ARANGE[0],min(zvals)*0.9,self.ARANGE[1],max(zvals)*1.1)
+            canvas.DrawFrame(self.ARANGE[0],min(zvals)*0.5,self.ARANGE[1],max(zvals)*2)
             if self.doParamFit:
                 mg.Draw('p0')
             else:
@@ -1469,6 +1494,7 @@ class HaaLimits2D(HaaLimits):
         elif yFitFunc == "DV"  : ym = Models.DoubleSidedVoigtian
         elif yFitFunc == "MB"  : ym = Models.MaxwellBoltzmann
         elif yFitFunc == "B"   : ym = Models.Beta
+        elif yFitFunc == "BC"  : ym = Models.BetaConv
         elif yFitFunc != "L" and yFitFunc != "errG" and yFitFunc != "G3" and yFitFunc != "G2": raise
 
 
@@ -1849,17 +1875,17 @@ class HaaLimits2D(HaaLimits):
         prims = ratiopad.GetListOfPrimitives()
         for prim in prims:
             if 'frame' in prim.GetName():
-                prim.GetXaxis().SetLabelSize(0.19)
+                prim.GetXaxis().SetLabelSize(0.09)
                 prim.GetXaxis().SetTitleSize(0.21)
                 prim.GetXaxis().SetTitleOffset(1.0)
                 prim.GetXaxis().SetLabelOffset(0.03)
-                prim.GetYaxis().SetLabelSize(0.19)
+                prim.GetYaxis().SetLabelSize(0.09)
                 prim.GetYaxis().SetLabelOffset(0.006)
                 prim.GetYaxis().SetTitleSize(0.21)
                 prim.GetYaxis().SetTitleOffset(0.35)
-                prim.GetYaxis().SetNdivisions(503)
+                prim.GetYaxis().SetNdivisions(505)
                 prim.GetYaxis().SetTitle('Pull')
-                prim.GetYaxis().SetRangeUser(-3,3)
+                prim.GetYaxis().SetRangeUser(-5,5)
                 continue
         canvas.cd()
         python_mkdir(self.plotDir)
@@ -2319,12 +2345,18 @@ class HaaLimits2D(HaaLimits):
               "h125a5"  : { "mean_ttgaus": 0.01, "sigma_ttgaus": 2.02, "mu_ttland": 2.37, "sigma_ttland": 0.56},
               "h125a6"  : { "mean_ttgaus": 0.01, "sigma_ttgaus": 1.93, "mu_ttland": 3.90, "sigma_ttland": 1.10},
               "h125a7"  : { "mean_ttgaus": 0.01, "sigma_ttgaus": 2.10, "mu_ttland": 6.00, "sigma_ttland": 1.60},
+              "h125a8"  : { "mean_ttgaus": 0.01, "sigma_ttgaus": 2.22, "mu_ttland": 6.50, "sigma_ttland": 1.70},#Rough
               "h125a9"  : { "mean_ttgaus": 5.60, "sigma_ttgaus": 1.46, "mu_ttland": 1.80, "sigma_ttland": 0.45},
+              "h125a10" : { "mean_ttgaus": 5.70, "sigma_ttgaus": 1.76, "mu_ttland": 1.95, "sigma_ttland": 0.55},#Rough
               "h125a11" : { "mean_ttgaus": 6.83, "sigma_ttgaus": 1.82, "mu_ttland": 2.35, "sigma_ttland": 0.67},
+              "h125a12" : { "mean_ttgaus": 6.93, "sigma_ttgaus": 1.92, "mu_ttland": 2.45, "sigma_ttland": 0.77},#Rough
               "h125a13" : { "mean_ttgaus": 7.97, "sigma_ttgaus": 2.17, "mu_ttland": 2.90, "sigma_ttland": 0.90},
+              "h125a14" : { "mean_ttgaus": 8.17, "sigma_ttgaus": 2.27, "mu_ttland": 3.20, "sigma_ttland": 1.05},#Rough
               "h125a15" : { "mean_ttgaus": 8.99, "sigma_ttgaus": 2.59, "mu_ttland": 3.60, "sigma_ttland": 1.20},
               "h125a17" : { "mean_ttgaus": 9.90, "sigma_ttgaus": 2.90, "mu_ttland": 4.40, "sigma_ttland": 1.60},
+              "h125a18" : { "mean_ttgaus": 10.2, "sigma_ttgaus": 3.20, "mu_ttland": 5.20, "sigma_ttland": 1.80},#Rough
               "h125a19" : { "mean_ttgaus": 11.0, "sigma_ttgaus": 3.80, "mu_ttland": 6.00, "sigma_ttland": 2.00},
+              "h125a20" : { "mean_ttgaus": 11.5, "sigma_ttgaus": 3.80, "mu_ttland": 6.00, "sigma_ttland": 1.99},#Rough
               "h125a21" : { "mean_ttgaus": 12.0, "sigma_ttgaus": 3.80, "mu_ttland": 6.00, "sigma_ttland": 1.90},
               "h200a5"  : { "mean_ttgaus": 3.01, "sigma_ttgaus": 1.00, "mu_ttland": 1.10, "sigma_ttland": 0.20},# Can Be improved 
               "h200a9"  : { "mean_ttgaus": 3.01, "sigma_ttgaus": 1.00, "mu_ttland": 1.10, "sigma_ttland": 0.20},# Can Be improved 
@@ -2367,12 +2399,18 @@ class HaaLimits2D(HaaLimits):
               "h125a5"  : { "mean_sigy": 2.26, "sigma_sigy": 0.59, "width_sigy": 0.54},
               "h125a6"  : { "mean_sigy": 2.86, "sigma_sigy": 0.86, "width_sigy": 0.44},
               "h125a7"  : { "mean_sigy": 3.41, "sigma_sigy": 1.11, "width_sigy": 0.24},
+              "h125a8"  : { "mean_sigy": 4.31, "sigma_sigy": 1.21, "width_sigy": 0.34},#Rough
               "h125a9"  : { "mean_sigy": 4.52, "sigma_sigy": 1.49, "width_sigy": 0.40},
+              "h125a10" : { "mean_sigy": 4.65, "sigma_sigy": 1.59, "width_sigy": 0.45},#Rough
               "h125a11" : { "mean_sigy": 5.50, "sigma_sigy": 1.89, "width_sigy": 0.10},
+              "h125a12" : { "mean_sigy": 5.60, "sigma_sigy": 1.99, "width_sigy": 0.13},#Rough
               "h125a13" : { "mean_sigy": 6.65, "sigma_sigy": 2.23, "width_sigy": 0.10},
+              "h125a14" : { "mean_sigy": 6.75, "sigma_sigy": 2.33, "width_sigy": 0.15},#Rough
               "h125a15" : { "mean_sigy": 7.53, "sigma_sigy": 2.44, "width_sigy": 0.20},
               "h125a17" : { "mean_sigy": 8.51, "sigma_sigy": 3.16, "width_sigy": 0.10},
+              "h125a18" : { "mean_sigy": 8.61, "sigma_sigy": 3.26, "width_sigy": 0.15},#Rough
               "h125a19" : { "mean_sigy": 8.78, "sigma_sigy": 3.35, "width_sigy": 0.01},
+              "h125a20" : { "mean_sigy": 8.98, "sigma_sigy": 3.55, "width_sigy": 0.01},#Rough 
               "h125a21" : { "mean_sigy": 9.94, "sigma_sigy": 3.93, "width_sigy": 0.01},
               "h200a5"  : { "mean_sigy": 2.21, "sigma_sigy": 0.58, "width_sigy": 0.50},
               "h200a9"  : { "mean_sigy": 2.21, "sigma_sigy": 0.58, "width_sigy": 0.50},
@@ -2419,12 +2457,18 @@ class HaaLimits2D(HaaLimits):
               "h125a5"  : { "a1": 5.0, "a2": 0.92, "n1": 6.0, "n2": 9.0, "sigma": 14.02},
               "h125a6"  : { "a1": 5.0, "a2": 1.10, "n1": 5.4, "n2": 9.4, "sigma": 14.18},
               "h125a7"  : { "a1": 5.0, "a2": 1.69, "n1": 3.9, "n2": 3.7, "sigma": 14.29},
+              "h125a8"  : { "a1": 5.1, "a2": 1.65, "n1": 3.5, "n2": 3.6, "sigma": 14.19},#Rough
               "h125a9"  : { "a1": 5.2, "a2": 1.07, "n1": 2.8, "n2": 9.0, "sigma": 10.58},
+              "h125a10" : { "a1": 5.1, "a2": 1.17, "n1": 2.9, "n2": 9.2, "sigma": 10.48},#Rough
               "h125a11" : { "a1": 1.8, "a2": 1.55, "n1": 6.0, "n2": 4.1, "sigma": 9.770},
+              "h125a12" : { "a1": 1.9, "a2": 1.65, "n1": 6.0, "n2": 4.2, "sigma": 9.980},#Rough
               "h125a13" : { "a1": 2.0, "a2": 2.66, "n1": 6.0, "n2": 1.4, "sigma": 10.04},
+              "h125a14" : { "a1": 2.0, "a2": 2.77, "n1": 6.0, "n2": 1.5, "sigma": 10.14},#Rough
               "h125a15" : { "a1": 1.3, "a2": 2.19, "n1": 6.0, "n2": 1.9, "sigma": 7.840},
               "h125a17" : { "a1": 1.5, "a2": 2.08, "n1": 6.0, "n2": 1.8, "sigma": 6.990},
+              "h125a18" : { "a1": 1.5, "a2": 2.06, "n1": 6.0, "n2": 1.8, "sigma": 6.770},#Rough
               "h125a19" : { "a1": 1.6, "a2": 3.34, "n1": 6.0, "n2": 0.6, "sigma": 6.220},
+              "h125a20" : { "a1": 1.6, "a2": 3.24, "n1": 6.0, "n2": 0.7, "sigma": 6.320},#Rough
               "h125a21" : { "a1": 1.2, "a2": 1.78, "n1": 6.0, "n2": 2.0, "sigma": 5.339},
               "125" : {"a1" : 5.0, "a2": 1.5, "n1": 6.0, "n2": 1.5, "sigma": 10.0},
               "h300a5"  : { "a1": 2.5, "a2": 1.28, "n1": 6.0, "n2": 8.6, "sigma": 37.95},
@@ -2455,12 +2499,18 @@ class HaaLimits2D(HaaLimits):
               "h125a5"  : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 13.5},
               "h125a6"  : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0},
               "h125a7"  : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0},
+              "h125a8"  : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0},#Rough
               "h125a9"  : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0},
+              "h125a10" : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0},#Rough
               "h125a11" : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0},
+              "h125a12" : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0},#Rough
               "h125a13" : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0},
+              "h125a14" : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0},#Rough
               "h125a15" : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0},
               "h125a17" : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0},
+              "h125a18" : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0},#Rough
               "h125a19" : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0},
+              "h125a20" : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0},#Rough
               "h125a21" : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0},
               "125" : {"a1" : 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0},
               "h300a5"  : { "a1": 3.5, "a2": 3.5, "n1": 17.0, "n2": 5.0, "sigma": 35.0},
@@ -2527,12 +2577,18 @@ class HaaLimits2D(HaaLimits):
               "h125a5"  : { "mean": 100},
               "h125a6"  : { "mean": 100},
               "h125a7"  : { "mean": 100},
+              "h125a8"  : { "mean": 100},#Rough
               "h125a9"  : { "mean": 100},
+              "h125a10" : { "mean": 98},#Rough
               "h125a11" : { "mean": 95},
+              "h125a12" : { "mean": 95},#Rough
               "h125a13" : { "mean": 95},
               "h125a15" : { "mean": 90},
+              "h125a14" : { "mean": 90},#Rough
               "h125a17" : { "mean": 90},
+              "h125a18" : { "mean": 90},#Rough
               "h125a19" : { "mean": 90},
+              "h125a20" : { "mean": 90},#Rough
               "h125a21" : { "mean": 85},
               "h300a5"  : { "mean": 225},
               "h300a7"  : { "mean": 220},
@@ -2560,12 +2616,18 @@ class HaaLimits2D(HaaLimits):
               "h125a5"  : { "mean": 100},
               "h125a6"  : { "mean": 96},
               "h125a7"  : { "mean": 100},
+              "h125a8"  : { "mean": 98},#Rough
               "h125a9"  : { "mean": 95},
+              "h125a10" : { "mean": 95},#Rough
               "h125a11" : { "mean": 90},
+              "h125a12" : { "mean": 92},#Rough
               "h125a13" : { "mean": 97},
+              "h125a14" : { "mean": 97},#Rough
               "h125a15" : { "mean": 95},
               "h125a17" : { "mean": 97},
+              "h125a18" : { "mean": 98},#Rough
               "h125a19" : { "mean": 93},
+              "h125a20" : { "mean": 93},#Rough
               "h125a21" : { "mean": 97},
               "h300a5"  : { "mean": 225},
               "h300a7"  : { "mean": 225},
@@ -2592,16 +2654,22 @@ class HaaLimits2D(HaaLimits):
         if 'PP' in region: 
             initialValues = {
                 "h125a3p6": { "mean": 93.5, "sigma1": 14.2, "sigma2": 10.1},
-                "h125a4"  : { "mean": 93.7, "sigma1": 15.9, "sigma2": 10.4},
+                "h125a4"  : { "mean": 90.1, "sigma1": 15.1, "sigma2": 10.1}, #89.5 15.6 12.5 2.07
                 "h125a5"  : { "mean": 94.2, "sigma1": 17.0, "sigma2": 10.0},
                 "h125a6"  : { "mean": 93.1, "sigma1": 15.6, "sigma2": 11.9},
                 "h125a7"  : { "mean": 93.3, "sigma1": 16.5, "sigma2": 11.7},
-                "h125a9"  : { "mean": 92.2, "sigma1": 16.2, "sigma2": 12.1},
-                "h125a11" : { "mean": 92.2, "sigma1": 16.0, "sigma2": 12.5},
+                "h125a8"  : { "mean": 92.5, "sigma1": 16.2, "sigma2": 12.1},#Rough
+                "h125a9"  : { "mean": 91.2, "sigma1": 16.2, "sigma2": 12.1},#Change 1
+                "h125a10" : { "mean": 89.5, "sigma1": 15.5, "sigma2": 11.5},#Change 1 88.5 15.1 11.1 2.14 89.5 15.5 11.5 2.09 
+                "h125a11" : { "mean": 93.2, "sigma1": 16.0, "sigma2": 15.5},#Change 1
+                "h125a12" : { "mean": 92.1, "sigma1": 16.0, "sigma2": 12.4},#Rough
                 "h125a13" : { "mean": 91.8, "sigma1": 15.9, "sigma2": 12.5},
-                "h125a15" : { "mean": 91.2, "sigma1": 15.5, "sigma2": 12.9},
+                "h125a14" : { "mean": 94.5, "sigma1": 16.8, "sigma2": 11.6},#Change 1
+                "h125a15" : { "mean": 91.2, "sigma1": 15.5, "sigma2": 11.9},#Change 1
                 "h125a17" : { "mean": 91.1, "sigma1": 15.2, "sigma2": 12.2},
+                "h125a18" : { "mean": 91.0, "sigma1": 15.3, "sigma2": 12.3},#Rough
                 "h125a19" : { "mean": 90.7, "sigma1": 15.4, "sigma2": 12.4},
+                "h125a20" : { "mean": 89.5, "sigma1": 15.5, "sigma2": 11.6},#Rough
                 "h125a21" : { "mean": 91.3, "sigma1": 14.5, "sigma2": 12.3},
                 "h200a5"  : { "mean": 140, "sigma1": 27.0, "sigma2": 20.0},
                 "h200a9"  : { "mean": 140, "sigma1": 26.2, "sigma2": 22.1},
@@ -2640,17 +2708,23 @@ class HaaLimits2D(HaaLimits):
         elif 'FP' in region: 
             initialValues = {
                 "h125a3p6": { "mean": 93.4, "sigma1": 13.5, "sigma2": 13.0},
-                "h125a4"  : { "mean": 95.8, "sigma1": 15.8, "sigma2": 12.2},
-                "h125a5"  : { "mean": 96.1, "sigma1": 16.4, "sigma2": 12.1},
+                "h125a4"  : { "mean": 89.5, "sigma1": 15.5, "sigma2": 10.1},#Change 1 86.5 15.5 10.1 1.58 | 89.5 15.5 10.1 1.409 
+                "h125a5"  : { "mean": 91.1, "sigma1": 15.5, "sigma2": 11.5},#Change 1 89.1 15.5 11.5 1.94 | 91.1 15.5 11.5 1.79 
                 "h125a6"  : { "mean": 94.9, "sigma1": 15.9, "sigma2": 12.8},
-                "h125a7"  : { "mean": 94.5, "sigma1": 17.2, "sigma2": 12.4},
-                "h125a9"  : { "mean": 93.6, "sigma1": 17.2, "sigma2": 12.2},
-                "h125a11" : { "mean": 93.4, "sigma1": 15.8, "sigma2": 13.8},
-                "h125a13" : { "mean": 94.0, "sigma1": 15.8, "sigma2": 12.3},
-                "h125a15" : { "mean": 93.3, "sigma1": 14.3, "sigma2": 13.8},
-                "h125a17" : { "mean": 93.5, "sigma1": 15.6, "sigma2": 13.9},
-                "h125a19" : { "mean": 91.0, "sigma1": 13.9, "sigma2": 15.5},
-                "h125a21" : { "mean": 93.2, "sigma1": 14.5, "sigma2": 15.8},
+                "h125a7"  : { "mean": 89.4, "sigma1": 15.3, "sigma2": 12.1},#Change 1 87.4 15.3 12.1 1.71 | 89.4 15.3 12.1 1.38
+                "h125a8"  : { "mean": 91.5, "sigma1": 15.5, "sigma2": 12.1},#Change 1 89.3 15.1 12.2 2.24 90.2 15.3 12.1 2.15
+                "h125a9"  : { "mean": 92.5, "sigma1": 11.5, "sigma2": 18.5},#Change 1                1.06(Bad Fit)
+                "h125a10" : { "mean": 88.5, "sigma1": 15.5, "sigma2": 10.1},#Change 1 87.5 15.5 11.9 1.98 88.5 15.5 11.9 1.92
+                "h125a11" : { "mean": 89.5, "sigma1": 14.9, "sigma2": 15.9},#Change 1 89.5 14.9 15.9 1.38
+                "h125a12" : { "mean": 92.5, "sigma1": 11.5, "sigma2": 18.5},#Change 1 90.9 12.1 10.1 3.18 | 83.9 15.5 10.1 3.24 
+                "h125a13" : { "mean": 94.5, "sigma1": 11.1, "sigma2": 16.5},#Change 1 97.1 13.1 12.1 4.11 | 97.1 11.1 12.1 4.11
+                "h125a14" : { "mean": 88.3, "sigma1": 15.5, "sigma2": 11.5},#Change 1 87.3 15.2 11.5 1.85/1.76 88.3 15.5 11.5 1.63
+                "h125a15" : { "mean": 90.8, "sigma1": 18.5, "sigma2": 11.5}, #Change 1 88.8 15.5 11.5 2.54  90.8 9.1 10.5 2.477
+                "h125a17" : { "mean": 90.9, "sigma1": 18.5, "sigma2": 11.5}, #Change 1 88.9 15.5 11.1 2.42  90.9 14.5 9.1 2.42
+                "h125a18" : { "mean": 86.1, "sigma1": 15.5, "sigma2": 11.5},#Change 1`86.1 15.5 11.5 1.62
+                "h125a19" : { "mean": 90.1, "sigma1": 14.1, "sigma2": 15.1},#Change 1 89.0 15.2 11.1 2.12
+                "h125a20" : { "mean": 89.2, "sigma1": 15.1, "sigma2": 10.1},#Change F 88.6 14.1 15.5 1.01   
+                "h125a21" : { "mean": 87.7, "sigma1": 15.5, "sigma2": 12.4},#Change F 86.7 15.5 12.4 1.17 89.7 16.5 11.1 1.21 
                 "h200a5"  : { "mean": 140, "sigma1": 27.0, "sigma2": 20.0},
                 "h200a9"  : { "mean": 140, "sigma1": 26.2, "sigma2": 22.1},
                 "h200a15" : { "mean": 140, "sigma1": 25.5, "sigma2": 22.9},
@@ -2687,7 +2761,73 @@ class HaaLimits2D(HaaLimits):
             }
 
         return initialValues
+    
+    def GetInitialValuesBC(self, region="FP"):
+        if 'PP' in region:
+            initialValues = {
+                "h125a4": { "betaScale": 1/125, "betaA": 5, "betaB": 2, "mean":89.5 , "sigma": 12},
+                "h125a10": { "betaScale": 1/125, "betaA": 5, "betaB": 2, "mean":89.5 , "sigma": 12},
+                "h125a20": { "betaScale": 1/125, "betaA": 5, "betaB": 2, "mean":89.5 , "sigma": 12},
+                
+                }
+        elif 'FP' in region:
+             initialValues = {
+                 "h125a4": { "betaScale": 1/125, "betaA": 5, "betaB": 2, "mean":89.5 , "sigma": 12},
+                 "h125a10": { "betaScale": 1/125, "betaA": 5, "betaB": 2, "mean":89.5 , "sigma": 12},
+                 "h125a20": { "betaScale": 1/125, "betaA": 5, "betaB": 2, "mean":89.5 , "sigma": 12},
+                 
+                 }
+             
+        return initialValues
+    # mean  = [0.7*h,0.64*h,0.76*h],
+    # sigma1 = [0.1*h,0.08*h,0.16*h],
+    # sigma2 = [0.125*h,0.09*h,0.18*h],
+    # width1 = [1.0,0.01,10.0],
+    # width2 = [1.0,0.01,10.0],
+    def GetInitialValuesDV(self, region="FP"):
+         if 'PP' in region:
+            initialValues = {
+                "h125a4": { "mean": 92.1,"sigma1": 15.1, "sigma2": 11.1, "width1":1.15 , "width2": 1.00 },
+                "h125a5": { "mean": 89.1,"sigma1": 15.1, "sigma2": 11.1, "width1":1.50 , "width2": 1.25 },
+                "h125a7": { "mean": 89.1,"sigma1": 15.1, "sigma2": 11.1, "width1":1.50 , "width2": 1.20 },
+                "h125a8": { "mean": 89.1,"sigma1": 15.1, "sigma2": 11.1, "width1":1.50 , "width2": 1.15 },
+                "h125a9": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.75 , "width2": 1.25},
+                "h125a10": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.75 , "width2": 1.25},
+                "h125a11": { "mean": 92.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.50 , "width2": 1.25},
+                "h125a12": { "mean": 91.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.50 , "width2": 1.15},
+                "h125a13": { "mean": 90.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.50 , "width2": 1.15},
+                "h125a14": { "mean": 90.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.75 , "width2": 1.20},
+                "h125a15": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.55 , "width2": 1.25},
+                "h125a17": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.60 , "width2": 1.20},
+                "h125a18": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.50 , "width2": 1.15},
+                "h125a19": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.50 , "width2": 1.10},
+                "h125a20": { "mean": 88.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.50 , "width2": 1.15},
+                "h125a21": { "mean": 88.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.5 , "width2": 1.25}
+                }
+         elif 'FP' in region:
+             initialValues = {
+                 "h125a4": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.5 , "width2": 1.0},
+                 "h125a5": { "mean": 92.5, "sigma1": 15.1, "sigma2": 10.5, "width1":1.60 , "width2": 1.00},
+                 "h125a7": { "mean": 89.5,"sigma1": 15.1, "sigma2": 11.1, "width1":1.55 , "width2": 1.20 },
+                 "h125a8": { "mean": 89.5,"sigma1": 15.1, "sigma2": 11.1, "width1":1.50 , "width2": 1.15 },
+                 "h125a9": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.50 , "width2": 1.10},
+                 "h125a10": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.50 , "width2": 1.25},
+                 "h125a11": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.75 , "width2": 1.25},
+                 "h125a12": { "mean": 90.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.50 , "width2": 1.15},
+                 "h125a13": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.50 , "width2": 1.15},
+                 "h125a14": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.75 , "width2": 1.20},
+                 "h125a15": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.55 , "width2": 1.20},
+                 "h125a17": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.75 , "width2": 1.00},
+                 "h125a18": { "mean": 89.5, "sigma1": 15.1, "sigma2": 12.1, "width1":2.20, "width2": 1.10},
+                 "h125a19": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.85, "width2": 1.00},
+                 "h125a20": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.50, "width2": 1.20},
+                 "h125a21": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.50, "width2": 1.20}
+                 }
+         return initialValues
 
+
+         
+         
     ###################
     ### Systematics ###
     ###################
@@ -2710,7 +2850,7 @@ class HaaLimits2D(HaaLimits):
 
     def _addHModelSystematic(self):
         
-        #if self.DOUBLEEXPO: return
+        #if selfDOUBLEEXPO: return
         return
 
         syst = {}

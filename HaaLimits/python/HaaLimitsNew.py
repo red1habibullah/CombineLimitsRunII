@@ -29,10 +29,10 @@ class HaaLimits(Limits):
     '''
 
     # permanent parameters
-    HMASSES = [125,200,250,300,400,500,750,1000]
-    AMASSES = ['3p6',4,5,6,7,9,11,13,15,17,19,21]
+    HMASSES = [125] #,200,250,300,400,500,750,1000]
+    AMASSES = [4,5,7,8,9,10,11,12,13,14,15,17,18,19,20,21]
     HAMAP = {
-        125 : ['3p6',4,5,6,7,9,11,13,15,17,19,21],
+        125 : [4,5,7,8,9,10,11,12,13,14,15,17,18,19,20,21],
         200 : [5,9,15],
         250 : [5,9,15],
         300 : [5,7,9,11,13,15,17,19,21],
@@ -165,15 +165,15 @@ class HaaLimits(Limits):
 
         bgRes = Models.Voigtian
         #bgRes = Models.BreitWigner
-        #bgRes = Models.CrystalBall
+        #bgResCB = Models.CrystalBall
         #bgRes = Models.DoubleCrystalBall
-        bgResDCB = Models.DoubleCrystalBall
+        #bgResDCB = Models.DoubleCrystalBall
 
         # jpsi
         nameJ1b = 'jpsi1S'
         workspace.factory('{0}[{1}, {2}, {3}]'.format('mean_{}'.format(nameJ1b), *[3.1,2.9,3.2]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('sigma_{}'.format(nameJ1b),*[0.04,0.001,0.5]))
-        workspace.factory('{0}[{1}, {2}, {3}]'.format('width_{}'.format(nameJ1b),*[0.01,0.001,0.5]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('sigma_{}'.format(nameJ1b),*[0.035,0.001,0.5]))
+        workspace.factory('{0}[{1}, {2}, {3}]'.format('width_{}'.format(nameJ1b),*[0.035,0.001,0.5]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('a_{}'.format( nameJ1b),*[1.9,0.001,10]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('n_{}'.format( nameJ1b),*[1.7,0.001,20]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('a1_{}'.format(nameJ1b),*[1.9,0.001,10]))
@@ -388,7 +388,7 @@ class HaaLimits(Limits):
                 #nameC2 = 'cont2'
                 cont2 = Models.Exponential(nameC2,
                     x = xVar,
-                    lamb = kwargs.pop('lambda_{}'.format(nameC2),[-0.75,-5,0]),
+                    lamb = kwargs.pop('lambda_{}'.format(nameC2),[-0.6,-5,0]),
                 )
                 cont2.build(workspace,nameC2)
 
@@ -396,7 +396,7 @@ class HaaLimits(Limits):
                 #cont = {'extended': True}
                 cont = {'recursive': True}
                 cont[nameC1] = [0.75,0,1]
-                cont[nameC2] = [0.5,0,1]
+                cont[nameC2] = [0.50,0,1]
                 cont = Models.Sum(nameC, **cont)
                 cont.build(workspace,nameC)
             else:
@@ -973,7 +973,7 @@ class HaaLimits(Limits):
         plotpad.Draw()
         ratiopad = ROOT.TPad("ratiopad", "bottom pad", 0.0, 0.0, 1.0, 0.21)
         ROOT.SetOwnership(ratiopad,False)
-        ratiopad.SetTopMargin(0.00)
+        ratiopad.SetTopMargin(0.05)
         ratiopad.SetRightMargin(0.2)
         ratiopad.SetBottomMargin(0.5)
         ratiopad.SetLeftMargin(0.16)
@@ -996,17 +996,17 @@ class HaaLimits(Limits):
         prims = ratiopad.GetListOfPrimitives()
         for prim in prims:
             if 'frame' in prim.GetName():
-                prim.GetXaxis().SetLabelSize(0.19)
+                prim.GetXaxis().SetLabelSize(0.09)
                 prim.GetXaxis().SetTitleSize(0.21)
                 prim.GetXaxis().SetTitleOffset(1.0)
                 prim.GetXaxis().SetLabelOffset(0.03)
-                prim.GetYaxis().SetLabelSize(0.19)
+                prim.GetYaxis().SetLabelSize(0.08)
                 prim.GetYaxis().SetLabelOffset(0.006)
                 prim.GetYaxis().SetTitleSize(0.21)
                 prim.GetYaxis().SetTitleOffset(0.35)
-                prim.GetYaxis().SetNdivisions(503)
+                prim.GetYaxis().SetNdivisions(508)
                 prim.GetYaxis().SetTitle('Pull')
-                prim.GetYaxis().SetRangeUser(-3,3)
+                prim.GetYaxis().SetRangeUser(-6,6)
                 continue
         canvas.cd()
         python_mkdir(self.plotDir)
@@ -1760,7 +1760,7 @@ class HaaLimits(Limits):
 
     def addCrossSection(self):
         # add higgs cross section
-        tfile = ROOT.TFile.Open('CombineLimits/Limits/data/Higgs_YR4_BSM_13TeV.root')
+        tfile = ROOT.TFile.Open('/uscms_data/d3/rhabibul/CombineRun2_v2/CMSSW_8_1_0/src/CombineLimits/Limits/data/Higgs_YR4_BSM_13TeV.root')
         ws = tfile.Get('YR4_BSM_13TeV')
         ggF = ws.function('xsec_ggF_N3LO')
         vbf = ws.function('xsec_VBF')
@@ -1769,7 +1769,7 @@ class HaaLimits(Limits):
         vbf_pdfalpha = ws.function('pdfalpha_err_VBF')
 
         # add gg+VBF/gg acceptance correction
-        accfile = ROOT.TFile.Open('CombineLimits/HaaLimits/data/acceptance.root')
+        accfile = ROOT.TFile.Open('/uscms_data/d3/rhabibul/CombineRun2_v2/CMSSW_8_1_0/src/CombineLimits/HaaLimits/data/acceptance.root')
         acc = accfile.Get('acceptance')
         accgraph = accfile.Get('acceptance_graph')
         accgraph.Fit(acc)
@@ -1795,7 +1795,7 @@ class HaaLimits(Limits):
                 self.addRateParam(name,region,proc)
 
         # alternative SM xsec
-        tfile = ROOT.TFile.Open('CombineLimits/Limits/data/Higgs_YR4_SM_13TeV.root')
+        tfile = ROOT.TFile.Open('/uscms_data/d3/rhabibul/CombineRun2_v2/CMSSW_8_1_0/src/CombineLimits/Limits/data/Higgs_YR4_SM_13TeV.root')
         ws = tfile.Get('YR4_SM_13TeV')
         ggF = ws.function('xsec_ggF_N3LO')
         vbf = ws.function('xsec_VBF')
