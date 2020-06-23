@@ -14,12 +14,12 @@ import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 ROOT.gROOT.SetBatch()
 
-import CombineLimits.Limits.Models as Models
-from CombineLimits.Limits.Limits import Limits
-from CombineLimits.Limits.utilities import *
+import CombineLimitsRunII.Limits.Models as Models
+from CombineLimitsRunII.Limits.Limits import Limits
+from CombineLimitsRunII.Limits.utilities import *
 
-import CombineLimits.Plotter.CMS_lumi as CMS_lumi
-import CombineLimits.Plotter.tdrstyle as tdrstyle
+import CombineLimitsRunII.Plotter.CMS_lumi as CMS_lumi
+import CombineLimitsRunII.Plotter.tdrstyle as tdrstyle
 
 tdrstyle.setTDRStyle()
 
@@ -1773,7 +1773,7 @@ class HaaLimits(Limits):
         acc = accfile.Get('acceptance')
         accgraph = accfile.Get('acceptance_graph')
         accgraph.Fit(acc)
-        from CombineLimits.Limits.Models import buildSpline
+        from CombineLimitsRunII.Limits.Models import buildSpline
         accspline = buildSpline(self.workspace, 'ggF_VBF_acceptance', ['MH','MA'], None, acc)
 
         self.workspace.factory('pdf_gg[0,-10,10]')

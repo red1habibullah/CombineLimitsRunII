@@ -13,13 +13,13 @@ import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 ROOT.gROOT.SetBatch()
 
-import CombineLimits.Limits.Models as Models
-from CombineLimits.Limits.Limits import Limits
-from CombineLimits.HaaLimits.HaaLimitsNew import HaaLimits
-from CombineLimits.Limits.utilities import *
+import CombineLimitsRunII.Limits.Models as Models
+from CombineLimitsRunII.Limits.Limits import Limits
+from CombineLimitsRunII.HaaLimits.HaaLimitsNew import HaaLimits
+from CombineLimitsRunII.Limits.utilities import *
 
-import CombineLimits.Plotter.CMS_lumi as CMS_lumi
-import CombineLimits.Plotter.tdrstyle as tdrstyle
+import CombineLimitsRunII.Plotter.CMS_lumi as CMS_lumi
+import CombineLimitsRunII.Plotter.tdrstyle as tdrstyle
 
 tdrstyle.setTDRStyle()
 

@@ -21,11 +21,11 @@ ROOT.gROOT.SetBatch()
 #from DevTools.Plotter.xsec import getXsec
 #from CombineLimits.HaaLimits.HaaLimits import HaaLimits
 #from CombineLimits.HaaLimits.HaaLimits2D import HaaLimits2D
-from CombineLimits.HaaLimits.HaaLimitsNew import HaaLimits
-from CombineLimits.HaaLimits.HaaLimits2DNew import HaaLimits2D
+from CombineLimitsRunII.HaaLimits.HaaLimitsNew import HaaLimits
+from CombineLimitsRunII.HaaLimits.HaaLimits2DNew import HaaLimits2D
 
-import CombineLimits.Plotter.CMS_lumi as CMS_lumi
-import CombineLimits.Plotter.tdrstyle as tdrstyle
+import CombineLimitsRunII.Plotter.CMS_lumi as CMS_lumi
+import CombineLimitsRunII.Plotter.tdrstyle as tdrstyle
 
 from RunIISampleMaps import *
 from RunIIDatasetUtils import *
