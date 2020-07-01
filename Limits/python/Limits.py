@@ -5,7 +5,7 @@ import numbers
 
 import ROOT
 
-from CombineLimits.Limits.Models import Model, ModelSpline
+from CombineLimitsRunII.Limits.Models import Model, ModelSpline
 from utilities import *
 
 class Limits(object):

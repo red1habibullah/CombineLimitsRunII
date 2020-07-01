@@ -248,20 +248,20 @@ def getControlHist(proc,**kwargs):
     #plotname = 'deltaR_iso/default/{}'.format(plot)
     #if doUnbinned:
     #    plotname += '_dataset'
-    if doUnbinned:
-        hists = [getControlDataset(s) for s in SampleMap2017[proc]]
-        if len(hists) >1:
-            hist = sumDatasets(proc,*hists)
-        else:
-            hist = hists[0].Clone(proc)
+    # if doUnbinned:
+    #     hists = [getControlDataset(s) for s in SampleMap2017[proc]]
+    #     if len(hists) >1:
+    #         hist = sumDatasets(proc,*hists)
+    #     else:
+    #         hist = hists[0].Clone(proc)
 
-    else:
+    #else:
     # Takes far too long to do this unbinned
-        hists = [getHistControl(s,Binning=xBins) for s in SampleMap2017[proc]]
-        if len(hists) >1:
-            hist = sumHists(proc,*hists)
-        else:
-            hist = hists[0].Clone(proc)
+    hists = [getHistControl(s,Binning=xBins) for s in SampleMap2017[proc]]
+    if len(hists) >1:
+        hist = sumHists(proc,*hists)
+    else:
+        hist = hists[0].Clone(proc)
         #hist.Rebin(0.5)
     return hist
 
@@ -610,9 +610,10 @@ def create_datacard(args):
         vbf = getXsec(proc,'vbf')
         # divide out H cross section from sample
         # it was gg only, we will scale to gg+vbf with acceptance correction in the HaaLimits class
-        scale = 1./gg
+        scale = 1./1.
+        #scale= 1./gg
         scales[proc] = scale
-        print proc, gg,scale #vbf
+        #print proc, gg,scale #vbf
 
 
     # before doing anything print out integrals to make sure things are okay

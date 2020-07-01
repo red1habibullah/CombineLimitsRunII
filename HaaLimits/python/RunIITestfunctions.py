@@ -1,6 +1,8 @@
 from RunIISampleMaps import *
 from RunIIDatasetUtils import *
 
+import glob,os
+
 SampleMap2017=getSampleMap2017()
 
 #print SampleMap2017['HToAAH125A9']
@@ -38,10 +40,12 @@ selDatasets = {
 
 signal=[signame.format(h='125',a=a) for a in hamap[125]]
 
-f='/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017/LimitDataSets/2017MCSignal_RooDataSets_CorrectWeight/TauMuTauHad_HaaMC_am21_B.root'
+#f='/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017/LimitDataSets/2017MCSignal_RooDataSets_CorrectWeight/TauMuTauHad_HaaMC_am21_B.root'
+
+
 #hist=getHist2D(f,selection=' && '.join([selDatasets['invMassMuMu'],selDatasets['visFourbodyMass']]))
-hist=getHistControl(f,selection=selDatasets['invMassMuMu'])
-print type(hist)
+#hist=getHistControl(f,selection=selDatasets['invMassMuMu'])
+#print type(hist)
 # print signal
 # for s in signal:
 #     print s
@@ -101,4 +105,16 @@ print type(hist)
 # ds=file.Get('dataColl')
 # ds.Print("v")
 # args=ds.get()
+
+filedir='/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017/LimitDataSets/2017MCSignal_RooDataSets_CorrectScale/'
+os.chdir(filedir)
+
+
+for file in glob.glob('TauMuTauHad*.root'):
+    print file
+    f=ROOT.TFile.Open(file)
+    ds=f.Get('dataColl')
+    ds.Print("v")
+    args=ds.get()
+    
 

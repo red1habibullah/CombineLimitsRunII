@@ -3,7 +3,7 @@ import logging
 from array import array
 
 import ROOT
-from CombineLimits.Limits.utilities import *
+from CombineLimitsRunII.Limits.utilities import *
 
 class Model(object):
 

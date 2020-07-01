@@ -34,7 +34,7 @@ for a in amasses:
     SampleMap2017[signame.format(h='125',a=a)]=[]
     for c in channels:
         for r in regions:
-            SampleMap2017[signame.format(h='125',a=a)].append('/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017/LimitDataSets/2017MCSignal_RooDataSets_CorrectWeight/{c}_HaaMC_am{a}_{r}.root'.format(c=c,a=a,r=r))
+            SampleMap2017[signame.format(h='125',a=a)].append('/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017/LimitDataSets/2017MCSignal_RooDataSets_CorrectScale/{c}_HaaMC_am{a}_{r}.root'.format(c=c,a=a,r=r))
 
 ################### Calling Function ################################
 def getSampleMap2017():
