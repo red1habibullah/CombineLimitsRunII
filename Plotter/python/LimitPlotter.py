@@ -7,10 +7,10 @@ from collections import OrderedDict
 
 import ROOT
 
-from CombineLimits.Plotter.PlotterBase import PlotterBase
-from CombineLimits.Utilities.utilities import python_mkdir
-import CombineLimits.Plotter.CMS_lumi as CMS_lumi
-import CombineLimits.Plotter.tdrstyle as tdrstyle
+from CombineLimitsRunII.Plotter.PlotterBase import PlotterBase
+from CombineLimitsRunII.Utilities.utilities import python_mkdir
+import CombineLimitsRunII.Plotter.CMS_lumi as CMS_lumi
+import CombineLimitsRunII.Plotter.tdrstyle as tdrstyle
 
 ROOT.gROOT.SetBatch(ROOT.kTRUE)
 ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 1001;")
@@ -783,11 +783,11 @@ class LimitPlotter(PlotterBase):
 
         if additionaltext:
             nlines = 1 if isinstance(additionaltext,str) else len(additionaltext)
-            text = ROOT.TPaveText(0.20,0.90-nlines*0.04,0.45,0.92,'NB NDC')
+            text = ROOT.TPaveText(0.22,0.90-nlines*0.04,0.42,0.92,'NB NDC')
             text.SetTextFont(42)
             text.SetBorderSize(0)
             text.SetFillColor(0)
-            text.SetTextAlign(11)
+            text.SetTextAlign(33)
             if isinstance(additionaltext,list):
                 for addt in additionaltext:
                     text.AddText(addt)

@@ -8,9 +8,9 @@ import tempfile
 
 import ROOT
 
-from CombineLimits.Utilities.utilities import python_mkdir, getLumi
-import CombineLimits.Plotter.CMS_lumi as CMS_lumi
-import CombineLimits.Plotter.tdrstyle as tdrstyle
+from CombineLimitsRunII.Utilities.utilities import python_mkdir, getLumi
+import CombineLimitsRunII.Plotter.CMS_lumi as CMS_lumi
+import CombineLimitsRunII.Plotter.tdrstyle as tdrstyle
 
 ROOT.gROOT.SetBatch(ROOT.kTRUE)
 ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 2001;")
@@ -69,8 +69,8 @@ class PlotterBase(object):
                 xstart = 0.19
                 xend = xstart+width
             elif position / 10 == 2: # middle
-                xstart = 0.57-width/2
-                xend = 0.57+width/2
+                xstart = 0.59-width/2
+                xend = 0.59+width/2
             else:                    # right
                 xend = 0.95
                 xstart = xend-width
