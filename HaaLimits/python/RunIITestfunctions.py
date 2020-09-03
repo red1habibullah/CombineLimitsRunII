@@ -8,9 +8,10 @@ SampleMap2017=getSampleMap2017()
 #print SampleMap2017['HToAAH125A9']
 #print len(SampleMap2017['HToAAH125A9'])
 
+channelsDeep=['TauMuTauHad','TauETauHad'] 
 signame = 'HToAAH{h}A{a}'
 hamap = {
-    125 : [4,5,7,8,9,10,11,12,13,14,15,17,18,19,20,21],
+    125 : [4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21],
     200 : [5,9,15],
     250 : [5,9,15],
     300 : [5,7,9,11,13,15,17,19,21],
@@ -20,10 +21,12 @@ hamap = {
     1000: [5,9,15],
 }
 hmasses = [125,200,250,300,400,500,750,1000]
-amasses = [4,5,7,8,9,10,11,12,13,14,15,17,18,19,20,21]
+amasses = [4,5,6,7,8,9,10,11,12,13,14,15,17,18,19,20,21]
 
 #2017MCSignal_RooDataSets_CorrectWeight/
-xRange = [2.5,25] # with jpsi                                                                                                                                                                                                                                                  
+xRange = [2.5,25] # with jpsi                                                                                                                                                                                                                                                 
+regionsnew=['sideBand','signalRegion']
+ 
 xRangeFull = [2.5,25]
 
 yRange = [0,1000] # h, hkf                                                                                                                                                                                                                                                     
@@ -40,6 +43,15 @@ selDatasets = {
 
 signal=[signame.format(h='125',a=a) for a in hamap[125]]
 
+
+print SampleMap2017['datadriven']
+
+discriminators=['vvlooseDeepVSjet','vlooseDeepVSjet','looseDeepVSjet','mediumDeepVSjet','tightDeepVSjet','vtightDeepVSjet','vvtightDeepVSjet']
+print discriminators[3]
+hists=[]
+hists=[s for s in SampleMap2017 if '_'+regionsnew[0] in s and  channelsDeep[1] in s and discriminators[3] in s]
+print hists
+#print signal
 #f='/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017/LimitDataSets/2017MCSignal_RooDataSets_CorrectWeight/TauMuTauHad_HaaMC_am21_B.root'
 
 
@@ -47,9 +59,14 @@ signal=[signame.format(h='125',a=a) for a in hamap[125]]
 #hist=getHistControl(f,selection=selDatasets['invMassMuMu'])
 #print type(hist)
 # print signal
+# list=[]
 # for s in signal:
-#     print s
-    #print SampleMap2017[s]
+#     list.append(SampleMap2017[s])
+# vallist=[]
+# for log in list:
+#     for l in log:
+#         vallist.append(l)
+# print len(vallist)
     
 #list=[a for a in SampleMap2017[signal[0]] if '_' +'A' in a and 'TauMuTauHad' in a]
 # list=[a for a in SampleMap2017['control']]
@@ -106,15 +123,15 @@ signal=[signame.format(h='125',a=a) for a in hamap[125]]
 # ds.Print("v")
 # args=ds.get()
 
-filedir='/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017/LimitDataSets/2017MCSignal_RooDataSets_CorrectScale/'
-os.chdir(filedir)
+# filedir='/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017/LimitDataSets/2017MCSignal_RooDataSets_CorrectScale/'
+# os.chdir(filedir)
 
 
-for file in glob.glob('TauMuTauHad*.root'):
-    print file
-    f=ROOT.TFile.Open(file)
-    ds=f.Get('dataColl')
-    ds.Print("v")
-    args=ds.get()
+# for file in glob.glob('TauMuTauHad*.root'):
+#     print file
+#     f=ROOT.TFile.Open(file)
+#     ds=f.Get('dataColl')
+#     ds.Print("v")
+#     args=ds.get()
     
 

@@ -9,7 +9,7 @@ ROOT.gROOT.SetBatch()
 logging.basicConfig(format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 
 doSig = False
-blind = False
+blind = True
 doMatrix = False
 doGrid = False #True
 doDouble = False #True
@@ -80,7 +80,8 @@ amasses_full = [x*.1 for x in range(36,210,1)] + [21.0]
 #hdfs_dir = '/hdfs/store/user/dntaylor/2019-08-26_MuMuTauTauLimits_v1' # back to expos, wider upsilon
 #hdfs_dir = '/hdfs/store/user/dntaylor/2019-08-27_MuMuTauTauLimits_v1' # lower lowmass top edge to 8.5
 #hdfs_dir = '/hdfs/store/user/dntaylor/2019-09-18_MuMuTauTauLimits_v1' # to fixed slope
-hdfs_dir='/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017/Limits/TauMuTauHad'
+#hdfs_dir='/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017/Limits/TauETauHad'
+hdfs_dir='/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017Deep/TauMuTauHad/Limits/mediumDeepVSjet/'
 # this is the double expo test
 if doDouble:
     #hdfs_dir = '/hdfs/store/user/dntaylor/2019-10-18_MuMuTauTauLimits_DoubleExpo_v1' # test
@@ -106,10 +107,11 @@ grid_dir = '/hdfs/store/user/dntaylor/2019-12-10_MuMuTauTauLimits_MergedGridPack
 #hs_grid_dir = '/hdfs/store/user/dntaylor/2019-11-26_MuMuTauTauLimits_MergedGridPacks_HighStat_v1' # current high stat for better sigma bands
 #hs_grid_dir = '/hdfs/store/user/dntaylor/2019-11-26_MuMuTauTauLimits_MergedGridPacks_HighStat_v2' # current high stat for better sigma bands --fullGrid
 hs_grid_dir = '/hdfs/store/user/dntaylor/2019-11-27_MuMuTauTauLimits_MergedGridPacks_HighStat_v1' # current high stat for better sigma bands --fullGrid, rMax
+#higgsCombineHtoAAH125A20_mm_h_parametric_highmassWith1DFitsDVteth.AsymptoticLimits.mH125.root 
 
 #tag = 'with1DFits'
-tag = 'REGIONWith1DFits1ExpoDV'
-if doDouble: tag = 'REGIONWith1DFitsDoubleExpo'
+tag = 'REGIONWith1DFits1ExpoDVmediumDeepVSjet'
+if doDouble: tag = 'REGIONWith1DFitsDoubleExpoDVmediumDeepVSjet'
 if doDM: 
     tag += 'DM'
 elif doDM0and1:
@@ -283,9 +285,9 @@ def load_br():
 # overwrite tanbs for use with quarkonia
 tanbs = tanbsq
 
-label = 'H #rightarrow aa #rightarrow #mu#mu#tau_{#mu}#tau_{h} (pb)'
-labelbr = '#frac{#sigma_{H}}{#sigma_{SM}}B(H #rightarrow aa #rightarrow #mu#mu#tau_{#mu}#tau_{h})'
-labelbrbsm = '#frac{#sigma_{H}}{#sigma_{SM}}B(H #rightarrow aa #rightarrow #mu#mu#tau_{#mu}#tau_{h})'
+label = 'H #rightarrow aa #rightarrow #mu#mu#tau#tau (pb)'
+labelbr = '#frac{#sigma_{H}}{#sigma_{SM}}B(H #rightarrow aa #rightarrow #mu#mu#tau#tau)'
+labelbrbsm = '#frac{#sigma_{H}}{#sigma_{SM}}B(H #rightarrow aa #rightarrow #mu#mu#tau#tau)'
 
 
 def get_model_br(a,model,tanb):
@@ -383,7 +385,7 @@ def readQs(mode,h,a):
         if 'parametric' in mode:
             #tfile = ROOT.TFile.Open('{hdfs}/{m}/{h}/higgsCombineHToAAH{h}A{a:.1f}_{m}.AsymptoticLimits.mH{h}.root'.format(hdfs=hdfs_dir,h=h,a=a,m=mode,astr=astr))
             #/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017/Limits/TauMuTauHad/highmass/125/
-            tfile = ROOT.TFile.Open('{hdfs}/{m}/{h}/{a}/higgsCombineHtoAAH125AX_mm_h_parametric_{m}With1DFits1ExpoDV.AsymptoticLimits.mH{h}.root'.format(hdfs=hdfs_dir,h=h,a=a,m=mode.split('_')[-1].split('W')[0]))
+            tfile = ROOT.TFile.Open('{hdfs}/{m}/{h}/{a}/higgsCombineHtoAAH125AX_mm_h_parametric_{m}With1DFits1ExpoDVmediumDeepVSjet.AsymptoticLimits.mH{h}.root'.format(hdfs=hdfs_dir,h=h,a=a,m=mode.split('_')[-1].split('W')[0]))
             
         else:
             tfile = ROOT.TFile.Open('{hdfs}/{m}/{h}/higgsCombineHToAAH{h}A{a}_{m}.AsymptoticLimits.mH{h}.root'.format(hdfs=hdfs_dir,h=h,a=a,m=mode))

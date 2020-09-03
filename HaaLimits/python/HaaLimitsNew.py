@@ -355,14 +355,14 @@ class HaaLimits(Limits):
 
         # continuum background
         if doPoly:
-            if self.XRANGE[0]<4 and 'control' in region:
+            if self.XRANGE[0]<4 and  'control' in region:
                 order = 5
             else:
                 order = 3
             nameC = 'cont{}'.format('_'+tag if tag else '')
             cont = Models.Chebychev(nameC,
-                x = xVar,
-                order = order,
+                                    x = xVar,
+                                    order = 5,
             )
             cont.build(workspace,nameC)
 
@@ -380,23 +380,28 @@ class HaaLimits(Limits):
                 #nameC1 = 'cont1'
                 cont1 = Models.Exponential(nameC1,
                     x = xVar,
-                    lamb = kwargs.pop('lambda_{}'.format(nameC1),[-2,-4,0]),
+                    lamb = kwargs.pop('lambda_{}'.format(nameC1),[-2,-4,0]), #-2,-3,-1
                 )
                 cont1.build(workspace,nameC1)
 
-                nameC2 = 'cont2{}'.format('_'+tag if tag else '')
+                nameC2 = 'cont_poly{}'.format('_'+tag if tag else '')
                 #nameC2 = 'cont2'
                 cont2 = Models.Exponential(nameC2,
                     x = xVar,
-                    lamb = kwargs.pop('lambda_{}'.format(nameC2),[-0.6,-5,0]),
+                    lamb = kwargs.pop('lambda_{}'.format(nameC2),[-0.6,-2,0]), #-5
                 )
+                
+                # cont_poly = Models.Chebychev(nameC2,
+                #                     x = xVar,
+                #                     order = 7,
+                #                     )
                 cont2.build(workspace,nameC2)
 
                 nameC = 'cont{}'.format('_'+tag if tag else '')
                 #cont = {'extended': True}
                 cont = {'recursive': True}
-                cont[nameC1] = [0.75,0,1]
-                cont[nameC2] = [0.50,0,1]
+                cont[nameC1] = [0.70,0,1]
+                cont[nameC2] = [0.20,0,1]
                 cont = Models.Sum(nameC, **cont)
                 cont.build(workspace,nameC)
             else:
@@ -562,6 +567,7 @@ class HaaLimits(Limits):
                     'sigma':    ROOT.TF1('sigma_h{}_{}'.format(h,tag),    '[0]+[1]*x+[2]*x*x', *self.ARANGE), 
                     #'integral': ROOT.TF1('integral_h{}_{}'.format(h,tag), '[0]+[1]*x+[2]*x*x+[3]*x*x*x+[4]*x*x*x*x', *self.ARANGE),
                     'integral': ROOT.TF1('integral_h{}_{}'.format(h,tag), '[0]+TMath::Erf([1]+[2]*x)*TMath::Erfc([3]+[4]*x)', *self.ARANGE),
+                    #'integral'      : ROOT.TF1('integral_h{}_{}'.format(h,tag),  '[0]+[1]*x+[2]*x*x', *self.ARANGE),
                 }
                 # set initial values
                 fitFuncs[h]['integral'].SetParameter(1,-0.005)
@@ -604,7 +610,7 @@ class HaaLimits(Limits):
             legend.SetFillColor(0)
             legend.SetNColumns(len(self.HMASSES))
 
-            for h in [125,300,750]:
+            for h in [125]: #,300,750]:
                 xs = [yvals[i] for i in range(len(xvals)) if xvals[i]==h]
                 ys = [zvals[i] for i in range(len(xvals)) if xvals[i]==h]
 

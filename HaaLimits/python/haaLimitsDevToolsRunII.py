@@ -83,6 +83,9 @@ hamap = {
     
 channels=['TauETauHad','TauMuTauHad']
 regions=['A','B','C','D']
+regionsnew=['sideBand','signalRegion']
+discriminators=['vvlooseDeepVSjet','vlooseDeepVSjet','looseDeepVSjet','mediumDeepVSjet','tightDeepVSjet','vtightDeepVSjet','vvtightDeepVSjet']
+
 signame = 'HToAAH{h}A{a}'
 # ggsigname = 'ggHToAAH{h}A{a}'
 # vbfsigname = 'vbfHToAAH{h}A{a}'
@@ -90,6 +93,7 @@ signame = 'HToAAH{h}A{a}'
 xVar='invMassMuMu'
 yVar='visFourbodyMass'
 xbnwdth=0.001
+
 #ybnwdth=10
 xBins=[int((xRange[1]-xRange[0])/xbnwdth),xRange[0],xRange[1]]
 print xBins
@@ -230,6 +234,7 @@ def getDataset(File,type):
         dataset =getRooDataset(File,selection=' && '.join([selDatasets['invMassMuMu'],selDatasets['visFourbodyMass']]),xRange=thisxrange,weight='eventWeight',yRange=thisyrange,project='',xVar=xVar,yVar=yVar)
     # else:
     #      dataset =getRooDataset(File,selection=selDatasets['invMassMuMu'],xRange=thisxrange,weight='w',xVar=xVar)  
+    
     global j
     j+=1
     return dataset.Clone('hist'+str(j))
@@ -295,10 +300,15 @@ def getHist(proc,**kwargs):
     #    plotnames = [plotname]
     if doUnbinned:
         hists = []
-       # for plotname in plotnames:
-        #    hists = [getDataset(wrappers[s+shift],plotname) for s in sampleMap[proc]]
-        hists=[getDataset(s,proc) for s in SampleMap2017[proc] if '_'+region in s and  channels[1] in s]
+        histsname=[]
+        #hists=[getDataset(s,proc) for s in SampleMap2017[proc] if '_'+region in s and  channels[0] in s]
+        #hists=[getDataset(s,proc) for s in SampleMap2017[proc] if '_'+region in s and  channels[1] in s and '_'+discriminators[6] in s]
+        hists=[getDataset(s,proc) for s in SampleMap2017[proc] if '_'+region in s and  channels[1] in s and '_'+discriminators[5] in s]
+        #histsname=[s for s in SampleMap2017[proc] if '_'+region in s and  channels[1] in s and '_'+discriminators[6] in s]
+        #print hists
+        #print histsname
         #hist = sumDatasets(name,*hists)
+    
         if len(hists)>1:
             hist = sumDatasets(name,*hists) 
         else:
@@ -309,7 +319,8 @@ def getHist(proc,**kwargs):
         #for plotname in plotnames:
         if do2D:
             #hists = [wrappers[s+shift].getHist2D(plotname) for s in sampleMap[proc]]
-            hists = [getHist2D(s,selection=' && '.join([selHists['invMassMuMu'],selHists['visFourbodyMass']])) for s in SampleMap2017[proc] if '_'+region in s and channel[1] in s]
+            #hists = [getHist2D(s,selection=' && '.join([selHists['invMassMuMu'],selHists['visFourbodyMass']])) for s in SampleMap2017[proc] if '_'+region in s and channel[0] in s]
+            hists = [getHist2D(s,selection=' && '.join([selHists['invMassMuMu'],selHists['visFourbodyMass']])) for s in SampleMap2017[proc] if '_'+region in s and channel[1] in s and '_'+ discriminators[5] in s]  
             if len(hists)>1:
                 hist = sumHists(name,*hists)
             else:
@@ -322,7 +333,7 @@ def getHist(proc,**kwargs):
         #hist.Scale(scale)
     return hist
 
-def getDatadrivenHist(**kwargs):
+def getDatadrivenHist(proc,**kwargs):
     shift = kwargs.pop('shift','')
     source = kwargs.pop('source','B')
     region = kwargs.pop('region','A')
@@ -350,8 +361,15 @@ def getDatadrivenHist(**kwargs):
     #    plotnames = [plotname]
     if doUnbinned:
         hists = []
+        histsname=[]
         #for plotname in plotnames:
-        hists=[getDataset(s,'data') for s in SampleMap2017['datadriven'] if '_'+region in s and channels[1] in s]
+        #hists=[getDataset(s,'data') for s in SampleMap2017['datadriven'] if '_'+region in s and channels[0] in s]
+        #hists=[getDataset(s,'data') for s in SampleMap2017['datadriven'] if '_'+region in s and channels[1] in s and '_'+discriminators[6] in s]
+        ### Loading with fakaRate?? ###
+        hists=[getDataset(s,proc) for s in SampleMap2017['datadriven'] if '_'+region in s and channels[1] in s and '_'+discriminators[5] in s]
+
+        #histsname=[s for s in SampleMap2017['datadriven'] if '_'+region in s and  channels[1] in s and '_'+discriminators[6] in s]
+        #print histsname
         if len(hists) >1:
             hist = sumDatasets(name,*hists)
         else:
@@ -360,10 +378,11 @@ def getDatadrivenHist(**kwargs):
         hists = []
         #for plotname in plotnames:
         if do2D:
-            hists = [getHist2D(s,selection=' && '.join([selHists['invMassMuMu'],selHists['visFourbodyMass']])) for s in SampleMap2017[proc] if '_'+region in s and channel[1] in s]
+            #hists = [getHist2D(s,selection=' && '.join([selHists['invMassMuMu'],selHists['visFourbodyMass']])) for s in SampleMap2017[proc] if '_'+region in s and channel[0] in s]
+            hists = [getHist2D(s,selection=' && '.join([selHists['invMassMuMu'],selHists['visFourbodyMass']])) for s in SampleMap2017[proc] if '_'+region in s and channel[1] in s and '_'+discriminators[5] in s]
             #hists += [wrappers[s+shift].getHist2D(plotname) for s in sampleMap['datadriven'] if '_'+region in s and channels[1] in s]
         else:
-            hists += [wrappers[s+shift].getHist(plotname) for s in sampleMap['datadriven'] if '_'+region in s and channels[1] in s] 
+            hists += [wrappers[s+shift].getHist(plotname) for s in sampleMap['datadriven'] if '_'+region in s and channels[3] in s] 
         hist = sumHists(name,*hists)
     return hist
 
@@ -484,8 +503,11 @@ def create_datacard(args):
     # The definitons of which regions match to which arguments
     # PP can take a fake rate datadriven estimate from FP, but FP can only take the observed values
     regionArgs = {
-        'PP': {'region':'A','fakeRegion':'B','source':'B','sources':['A','C'],'fakeSources':['B','D'],},
-        'FP': {'region':'B','sources':['B','D'],},
+        #TODO Decide a common naming scenario on which everyone agrees upor
+        # 'PP': {'region':'A','fakeRegion':'B','source':'B','sources':['A','C'],'fakeSources':['B','D'],},
+        # 'FP': {'region':'B','sources':['B','D'],},
+        'PP': {'region':'signalRegion','fakeRegion':'B','source':'B','sources':['A','C'],'fakeSources':['B','D'],},
+        'FP': {'region':'sideBand','sources':['B','D'],},
     }
     modes = ['PP','FP']
     thesesamples = backgrounds
@@ -503,13 +525,16 @@ def create_datacard(args):
                            # histMap[mode][shiftLabel][proc] = getMatrixDatadrivenHist(doUnbinned=True,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
                         #else:
                         #histMap[mode][shift][proc] = getDatadrivenHist(doUnbinned=True,var=var,shift=shift,**regionArgs[mode])
-                        histMap[mode][shift][proc] = getDatadrivenHist(doUnbinned=True,var=var,shift=shift,do2D=do2D,**regionArgs[mode])
+                        histMap[mode][shift][proc] = getDatadrivenHist(proc,doUnbinned=True,var=var,shift=shift,do2D=do2D,**regionArgs[mode])
 
                     else:
                         # if doMatrix:
                         #     histMap[mode][shiftLabel][proc] = getMatrixHist('data',doUnbinned=True,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode]
                                                                             
-                        histMap[mode][shift][proc] = getHist('data',doUnbinned=True,var=var,shift=shift,do2D=do2D,**regionArgs[mode])                                                            
+                        #histMap[mode][shift][proc] = getHist('data',doUnbinned=True,var=var,shift=shift,do2D=do2D,**regionArgs[mode])
+                        ### As datadriven so try to load appropriate RooDatasets ###
+                        histMap[mode][shift][proc] = getHist('data',doUnbinned=True,var=var,shift=shift,do2D=do2D,**regionArgs[mode])
+
                        # histMap[mode][shift][proc] = getHist('data',doUnbinned=True,var=var,shift=shift,**regionArgs[mode])
                 else:
                     if proc in signals:
@@ -610,8 +635,8 @@ def create_datacard(args):
         vbf = getXsec(proc,'vbf')
         # divide out H cross section from sample
         # it was gg only, we will scale to gg+vbf with acceptance correction in the HaaLimits class
-        scale = 1./1.
-        #scale= 1./gg
+        #scale = 1./1.
+        scale= 1./gg
         scales[proc] = scale
         #print proc, gg,scale #vbf
 

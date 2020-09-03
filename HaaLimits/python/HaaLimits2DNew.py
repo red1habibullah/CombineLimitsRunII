@@ -844,7 +844,7 @@ class HaaLimits2D(HaaLimits):
                     #sigma2 = [0.2*h,0.05*h,0.5*h],
                     mean    = [initialValuesDG["h"+str(h)+"a"+str(a)]["mean"],0.68*h,0.78*h],
                     sigma1  = [initialValuesDG["h"+str(h)+"a"+str(a)]["sigma1"],0.06*h,0.13*h],
-                    sigma2  = [initialValuesDG["h"+str(h)+"a"+str(a)]["sigma2"],0.06*h,0.1*h],
+                    sigma2  = [initialValuesDG["h"+str(h)+"a"+str(a)]["sigma2"],0.06*h,0.13*h],
                     yMax = self.YRANGE[1],
                 )
             elif yFitFunc == "DV":
@@ -858,8 +858,8 @@ class HaaLimits2D(HaaLimits):
                     mean    = [initialValuesDV["h"+str(h)+"a"+str(a)]["mean"],0.68*h,0.76*h],
                     sigma1  = [initialValuesDV["h"+str(h)+"a"+str(a)]["sigma1"],0.06*h,0.16*h],
                     sigma2  = [initialValuesDV["h"+str(h)+"a"+str(a)]["sigma2"],0.06*h,0.14*h],
-                    width1  = [initialValuesDV["h"+str(h)+"a"+str(a)]["width1"],0.01,5.0],
-                    width2  = [initialValuesDV["h"+str(h)+"a"+str(a)]["width2"],0.01,5.0],
+                    width1  = [initialValuesDV["h"+str(h)+"a"+str(a)]["width1"],0.01,10.0],
+                    width2  = [initialValuesDV["h"+str(h)+"a"+str(a)]["width2"],0.01,10.0],
                     yMax = self.YRANGE[1],
                 )
             elif yFitFunc == "MB":
@@ -1371,7 +1371,7 @@ class HaaLimits2D(HaaLimits):
                 fg.SetMarkerColor(self.COLORS[h])
                 fmg.Add(fg)
 
-            canvas.DrawFrame(self.ARANGE[0],min(zvals)*0.5,self.ARANGE[1],max(zvals)*2)
+            canvas.DrawFrame(self.ARANGE[0],min(zvals)*0.8,self.ARANGE[1],max(zvals)*1.2)
             if self.doParamFit:
                 mg.Draw('p0')
             else:
@@ -2713,10 +2713,10 @@ class HaaLimits2D(HaaLimits):
                 "h125a6"  : { "mean": 94.9, "sigma1": 15.9, "sigma2": 12.8},
                 "h125a7"  : { "mean": 89.4, "sigma1": 15.3, "sigma2": 12.1},#Change 1 87.4 15.3 12.1 1.71 | 89.4 15.3 12.1 1.38
                 "h125a8"  : { "mean": 91.5, "sigma1": 15.5, "sigma2": 12.1},#Change 1 89.3 15.1 12.2 2.24 90.2 15.3 12.1 2.15
-                "h125a9"  : { "mean": 92.5, "sigma1": 11.5, "sigma2": 18.5},#Change 1                1.06(Bad Fit)
+                "h125a9"  : { "mean": 92.5, "sigma1": 15.5, "sigma2": 11.5},#Change 1                1.06(Bad Fit)
                 "h125a10" : { "mean": 88.5, "sigma1": 15.5, "sigma2": 10.1},#Change 1 87.5 15.5 11.9 1.98 88.5 15.5 11.9 1.92
                 "h125a11" : { "mean": 89.5, "sigma1": 14.9, "sigma2": 15.9},#Change 1 89.5 14.9 15.9 1.38
-                "h125a12" : { "mean": 92.5, "sigma1": 11.5, "sigma2": 18.5},#Change 1 90.9 12.1 10.1 3.18 | 83.9 15.5 10.1 3.24 
+                "h125a12" : { "mean": 92.5, "sigma1": 15.5, "sigma2": 11.5},#Change 1 90.9 12.1 10.1 3.18 | 83.9 15.5 10.1 3.24 
                 "h125a13" : { "mean": 94.5, "sigma1": 11.1, "sigma2": 16.5},#Change 1 97.1 13.1 12.1 4.11 | 97.1 11.1 12.1 4.11
                 "h125a14" : { "mean": 88.3, "sigma1": 15.5, "sigma2": 11.5},#Change 1 87.3 15.2 11.5 1.85/1.76 88.3 15.5 11.5 1.63
                 "h125a15" : { "mean": 90.8, "sigma1": 18.5, "sigma2": 11.5}, #Change 1 88.8 15.5 11.5 2.54  90.8 9.1 10.5 2.477
@@ -2787,7 +2787,7 @@ class HaaLimits2D(HaaLimits):
     def GetInitialValuesDV(self, region="FP"):
          if 'PP' in region:
             initialValues = {
-                "h125a4": { "mean": 92.1,"sigma1": 15.1, "sigma2": 11.1, "width1":1.15 , "width2": 1.00 },
+                "h125a4": { "mean": 92.1,"sigma1": 15.1, "sigma2": 11.1, "width1":1.15 , "width2": 4.00 }, #1.00
                 "h125a5": { "mean": 89.1,"sigma1": 15.1, "sigma2": 11.1, "width1":1.50 , "width2": 1.25 },
                 "h125a7": { "mean": 89.1,"sigma1": 15.1, "sigma2": 11.1, "width1":1.50 , "width2": 1.20 },
                 "h125a8": { "mean": 89.1,"sigma1": 15.1, "sigma2": 11.1, "width1":1.50 , "width2": 1.15 },
@@ -2796,7 +2796,7 @@ class HaaLimits2D(HaaLimits):
                 "h125a11": { "mean": 92.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.50 , "width2": 1.25},
                 "h125a12": { "mean": 91.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.50 , "width2": 1.15},
                 "h125a13": { "mean": 90.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.50 , "width2": 1.15},
-                "h125a14": { "mean": 90.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.75 , "width2": 1.20},
+                "h125a14": { "mean": 90.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.75 , "width2": 4.20}, #1.20
                 "h125a15": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.55 , "width2": 1.25},
                 "h125a17": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.60 , "width2": 1.20},
                 "h125a18": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.50 , "width2": 1.15},

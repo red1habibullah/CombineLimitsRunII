@@ -6,38 +6,93 @@ import logging
 logging.basicConfig(level=logging.INFO, stream=sys.stderr, format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 #######################################################################
 ################################ Sample Map 2017 ######################
-SampleMap2017={}
+SampleMap2017MVA={}
 channels=['TauETauHad','TauMuTauHad']
-amasses=[4,5,7,8,9,10,11,12,13,14,15,17,18,19,20,21]
+amasses=[4,5,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21]
 regions=['A','B','C','D']
 signame = 'HToAAH{h}A{a}'
 
 #########Data and DataDriven##########################################
-SampleMap2017['data']=[]
+SampleMap2017MVA['data']=[]
 for c in channels:
     for r in regions:
-        SampleMap2017['data'].append('/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017/LimitDataSets/2017Data_RooDatasets/{c}_{r}.root'.format(c=c,r=r))
+        SampleMap2017MVA['data'].append('/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017/LimitDataSets/2017Data_RooDatasets/{c}_{r}.root'.format(c=c,r=r))
 
-SampleMap2017['datadriven']=[]
+SampleMap2017MVA['datadriven']=[]
 for c in channels:
     for r in regions:
-        SampleMap2017['datadriven'].append('/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017/LimitDataSets/2017DataDriven_RooDatasets/{c}_{r}.root'.format(c=c,r=r))
+        SampleMap2017MVA['datadriven'].append('/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017/LimitDataSets/2017DataDriven_RooDatasets/{c}_{r}.root'.format(c=c,r=r))
 
 ###################### Control and DataDriven Control################
+SampleMap2017MVA['control']=['/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017/LimitDataSets/2017Data_RooDatasets/rooDatasets_controlRegion.root']
+
+SampleMap2017MVA['datadriven-control']=['/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017/LimitDataSets/2017Data_RooDatasets/rooDatasets_controlRegion.root']
+
+
+####################### MC Samples #################################
+for a in amasses:
+    SampleMap2017MVA[signame.format(h='125',a=a)]=[]
+    for c in channels:
+        for r in regions:
+            SampleMap2017MVA[signame.format(h='125',a=a)].append('/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017/LimitDataSets/2017MCSignal_RooDataSets_CorrectScale/{c}_HaaMC_am{a}_{r}.root'.format(c=c,a=a,r=r))
+
+################### Calling Function ################################
+def getSampleMap2017MVA():
+    return SampleMap2017MVA
+#####################Sample Map 2017 ################################
+#####################################################################
+
+
+
+
+#####################################################################
+#################### Sample Map Deep 2017 ###########################
+SampleMap2017={}
+channelsDeep=['TauMuTauHad','TauETauHad']
+amassesDeep=[4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21]
+regionsnew=['sideBand','signalRegion']
+discriminators=['vvlooseDeepVSjet','vlooseDeepVSjet','looseDeepVSjet','mediumDeepVSjet','tightDeepVSjet','vtightDeepVSjet','vvtightDeepVSjet']
+
+#########Data and DataDriven######################################### 
+
+SampleMap2017['data']=[]
+
+SampleMap2017['datadriven']=[]
+
+for c in channelsDeep:
+    for d in discriminators:
+        for r in regionsnew:
+            SampleMap2017['datadriven'].append('/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017Deep/{c}/RooDataSets/DataDriven/{c}_{r}_{d}.root'.format(c=c,r=r,d=d))
+
+for c in channelsDeep:
+    for d in discriminators:
+        for r in regionsnew:
+            SampleMap2017['data'].append('/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017Deep/{c}/RooDataSets/Data/{c}_{r}_{d}.root'.format(c=c,r=r,d=d))
+
+
+
+#TauMuTauHad_sideBand_vtightDeepVSjet.root            
+
+
+###################### Control and DataDriven Control################                                                                 
 SampleMap2017['control']=['/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017/LimitDataSets/2017Data_RooDatasets/rooDatasets_controlRegion.root']
 
 SampleMap2017['datadriven-control']=['/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017/LimitDataSets/2017Data_RooDatasets/rooDatasets_controlRegion.root']
 
 
-####################### MC Samples #################################
-for a in amasses:
+######################## MC Samples ################################
+for a in amassesDeep:
     SampleMap2017[signame.format(h='125',a=a)]=[]
-    for c in channels:
-        for r in regions:
-            SampleMap2017[signame.format(h='125',a=a)].append('/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017/LimitDataSets/2017MCSignal_RooDataSets_CorrectScale/{c}_HaaMC_am{a}_{r}.root'.format(c=c,a=a,r=r))
+    for c in channelsDeep:
+        for r in regionsnew:
+            for d in discriminators:
+                 SampleMap2017[signame.format(h='125',a=a)].append('/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017Deep/{c}/RooDataSets/SignalMC/{c}_HaaMC_am{a}_{d}_{r}.root'.format(c=c,a=a,d=d,r=r))
+                
 
-################### Calling Function ################################
+
+#######################Calling Function ############################
 def getSampleMap2017():
-    return SampleMap2017
-#####################Sample Map 2017 ################################
+    return SampleMap2017 
+
+########################## Sample Map Deep 2017 #####################
 #####################################################################
