@@ -303,7 +303,7 @@ def getHist(proc,**kwargs):
         histsname=[]
         #hists=[getDataset(s,proc) for s in SampleMap2017[proc] if '_'+region in s and  channels[0] in s]
         #hists=[getDataset(s,proc) for s in SampleMap2017[proc] if '_'+region in s and  channels[1] in s and '_'+discriminators[6] in s]
-        hists=[getDataset(s,proc) for s in SampleMap2017[proc] if '_'+region in s and  channels[1] in s and '_'+discriminators[5] in s]
+        hists=[getDataset(s,proc) for s in SampleMap2017[proc] if '_'+region in s and  channels[0] in s and '_'+discriminators[6] in s]
         #histsname=[s for s in SampleMap2017[proc] if '_'+region in s and  channels[1] in s and '_'+discriminators[6] in s]
         #print hists
         #print histsname
@@ -320,7 +320,7 @@ def getHist(proc,**kwargs):
         if do2D:
             #hists = [wrappers[s+shift].getHist2D(plotname) for s in sampleMap[proc]]
             #hists = [getHist2D(s,selection=' && '.join([selHists['invMassMuMu'],selHists['visFourbodyMass']])) for s in SampleMap2017[proc] if '_'+region in s and channel[0] in s]
-            hists = [getHist2D(s,selection=' && '.join([selHists['invMassMuMu'],selHists['visFourbodyMass']])) for s in SampleMap2017[proc] if '_'+region in s and channel[1] in s and '_'+ discriminators[5] in s]  
+            hists = [getHist2D(s,selection=' && '.join([selHists['invMassMuMu'],selHists['visFourbodyMass']])) for s in SampleMap2017[proc] if '_'+region in s and channel[0] in s and '_'+ discriminators[6] in s]  
             if len(hists)>1:
                 hist = sumHists(name,*hists)
             else:
@@ -366,7 +366,7 @@ def getDatadrivenHist(proc,**kwargs):
         #hists=[getDataset(s,'data') for s in SampleMap2017['datadriven'] if '_'+region in s and channels[0] in s]
         #hists=[getDataset(s,'data') for s in SampleMap2017['datadriven'] if '_'+region in s and channels[1] in s and '_'+discriminators[6] in s]
         ### Loading with fakaRate?? ###
-        hists=[getDataset(s,proc) for s in SampleMap2017['datadriven'] if '_'+region in s and channels[1] in s and '_'+discriminators[5] in s]
+        hists=[getDataset(s,proc) for s in SampleMap2017['datadriven'] if '_'+region in s and channels[0] in s and '_'+discriminators[6] in s]
 
         #histsname=[s for s in SampleMap2017['datadriven'] if '_'+region in s and  channels[1] in s and '_'+discriminators[6] in s]
         #print histsname
@@ -379,7 +379,7 @@ def getDatadrivenHist(proc,**kwargs):
         #for plotname in plotnames:
         if do2D:
             #hists = [getHist2D(s,selection=' && '.join([selHists['invMassMuMu'],selHists['visFourbodyMass']])) for s in SampleMap2017[proc] if '_'+region in s and channel[0] in s]
-            hists = [getHist2D(s,selection=' && '.join([selHists['invMassMuMu'],selHists['visFourbodyMass']])) for s in SampleMap2017[proc] if '_'+region in s and channel[1] in s and '_'+discriminators[5] in s]
+            hists = [getHist2D(s,selection=' && '.join([selHists['invMassMuMu'],selHists['visFourbodyMass']])) for s in SampleMap2017[proc] if '_'+region in s and channel[0] in s and '_'+discriminators[6] in s]
             #hists += [wrappers[s+shift].getHist2D(plotname) for s in sampleMap['datadriven'] if '_'+region in s and channels[1] in s]
         else:
             hists += [wrappers[s+shift].getHist(plotname) for s in sampleMap['datadriven'] if '_'+region in s and channels[3] in s] 
