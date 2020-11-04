@@ -1766,7 +1766,7 @@ class HaaLimits(Limits):
 
     def addCrossSection(self):
         # add higgs cross section
-        tfile = ROOT.TFile.Open('/uscms_data/d3/rhabibul/CombineRun2_v2/CMSSW_8_1_0/src/CombineLimits/Limits/data/Higgs_YR4_BSM_13TeV.root')
+        tfile = ROOT.TFile.Open('/uscms_data/d3/rhabibul/CombineRunII/CMSSW_10_2_13/src/CombineLimitsRunII/Limits/data/Higgs_YR4_BSM_13TeV.root')
         ws = tfile.Get('YR4_BSM_13TeV')
         ggF = ws.function('xsec_ggF_N3LO')
         vbf = ws.function('xsec_VBF')
@@ -1775,7 +1775,7 @@ class HaaLimits(Limits):
         vbf_pdfalpha = ws.function('pdfalpha_err_VBF')
 
         # add gg+VBF/gg acceptance correction
-        accfile = ROOT.TFile.Open('/uscms_data/d3/rhabibul/CombineRun2_v2/CMSSW_8_1_0/src/CombineLimits/HaaLimits/data/acceptance.root')
+        accfile = ROOT.TFile.Open('/uscms_data/d3/rhabibul/CombineRunII/CMSSW_10_2_13/src/CombineLimitsRunII/HaaLimits/data/acceptance.root')
         acc = accfile.Get('acceptance')
         accgraph = accfile.Get('acceptance_graph')
         accgraph.Fit(acc)
@@ -1801,7 +1801,7 @@ class HaaLimits(Limits):
                 self.addRateParam(name,region,proc)
 
         # alternative SM xsec
-        tfile = ROOT.TFile.Open('/uscms_data/d3/rhabibul/CombineRun2_v2/CMSSW_8_1_0/src/CombineLimits/Limits/data/Higgs_YR4_SM_13TeV.root')
+        tfile = ROOT.TFile.Open('/uscms_data/d3/rhabibul/CombineRunII/CMSSW_10_2_13/src/CombineLimitsRunII/Limits/data/Higgs_YR4_SM_13TeV.root')
         ws = tfile.Get('YR4_SM_13TeV')
         ggF = ws.function('xsec_ggF_N3LO')
         vbf = ws.function('xsec_VBF')

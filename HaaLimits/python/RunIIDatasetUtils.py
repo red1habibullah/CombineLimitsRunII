@@ -59,3 +59,18 @@ def getHistControl(f,selection='1',xVar='invMassMuMu',Binning='1'):
     hist=ROOT.RooAbsData.createHistogram(ds,ds.GetName(),ds.get().find(xVar),ROOT.RooFit.Binning(int(Binning[0]),float(Binning[1]),float(Binning[2])))
     hist.SetDirectory(ROOT.gROOT)
     return hist
+def getHisto(f,xVar='invMassMuMu',process=''):
+    ''' Get 1D Histogram directly from file '''
+    
+    if process == "data":
+        xVarnew=xVar+"3P1F1Only"
+    elif process =="datadriven":
+        xVarnew=xVar+"3P1F1"
+    else:
+        xVarnew=xVar
+    file=ROOT.TFile.Open(f)
+    histo=file.Get(xVarnew)
+    histo.SetDirectory(ROOT.gROOT)
+    #print hist
+    return histo
+    

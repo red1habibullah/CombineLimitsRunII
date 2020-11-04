@@ -43,14 +43,22 @@ selDatasets = {
 
 signal=[signame.format(h='125',a=a) for a in hamap[125]]
 
-
-print SampleMap2017['datadriven']
+print signal
+#print SampleMap2017['datadriven']
 
 discriminators=['vvlooseDeepVSjet','vlooseDeepVSjet','looseDeepVSjet','mediumDeepVSjet','tightDeepVSjet','vtightDeepVSjet','vvtightDeepVSjet']
 print discriminators[3]
 hists=[]
 hists=[s for s in SampleMap2017 if '_'+regionsnew[0] in s and  channelsDeep[1] in s and discriminators[3] in s]
-print hists
+
+SampleMapNew2017=getSampleMapNew2017()
+
+#print SampleMapNew2017['data']
+print SampleMapNew2017['data']
+#print SampleMapNew2017['datadriven']
+
+#getHisto(SampleMapNew2017['data'][0],process='data')
+#print hists
 #print signal
 #f='/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017/LimitDataSets/2017MCSignal_RooDataSets_CorrectWeight/TauMuTauHad_HaaMC_am21_B.root'
 

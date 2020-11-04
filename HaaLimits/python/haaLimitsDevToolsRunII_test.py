@@ -81,15 +81,10 @@ hamap = {
 #     1000: [5,9,15],
 # }
     
-channels=['TauETauHad','TauMuTauHad','TauMuTauE']
+channels=['TauETauHad','TauMuTauHad']
 regions=['A','B','C','D']
 regionsnew=['sideBand','signalRegion']
 discriminators=['vvlooseDeepVSjet','vlooseDeepVSjet','looseDeepVSjet','mediumDeepVSjet','tightDeepVSjet','vtightDeepVSjet','vvtightDeepVSjet']
-muIdList = ["loose", "medium", "tight"]
-muIdLabel = ["looseMuIso", "mediumMuIso", "tightMuIso"]
-eleIdList = ["loose", "medium", "tight"]
-eleIdLabel = ["looseEleId", "mediumEleId", "tightEleId"]
-
 
 signame = 'HToAAH{h}A{a}'
 # ggsigname = 'ggHToAAH{h}A{a}'
@@ -209,7 +204,7 @@ def getControlDataset(File):
     }
     return getRooDataset(File,selection=selDatasets['invMassMuMu'],xRange=xRange,weight='w',xVar=xVar)
 
-def getDataset(File,channel,type):
+def getDataset(File,type):
     thisxrange = xRange
     thisyrange = yRange
     selDatasets = {
@@ -229,30 +224,16 @@ def getDataset(File,channel,type):
             #if 'SUSY' in sample and h==125 and '11' in sample:
             #    integral = dataset.sumEntries('{0}>{1} && {0}<{2}'.format(xVar,*thisxrange))
             #    print sample, plotname, integral
-    if channel=="TauMuTauHad" or channel=="TauETauHad":
-        if project and 'datadriven' in type:
-            dataset =getRooDatasetFake(File,selection=' && '.join([selDatasets['invMassMuMu'],selDatasets['visFourbodyMass']]),xRange=thisxrange,weight='fakeRateEfficiency',yRange=thisyrange,project=xVar,xVar=xVar,yVar=yVar)  
-        elif not project and 'datadriven' in type:
-            dataset =getRooDatasetFake(File,selection=' && '.join([selDatasets['invMassMuMu'],selDatasets['visFourbodyMass']]),xRange=thisxrange,weight='fakeRateEfficiency',yRange=thisyrange,project='',xVar=xVar,yVar=yVar)
-        elif not project and 'data' in type:
-            dataset =getRooDataset(File,selection=' && '.join([selDatasets['invMassMuMu'],selDatasets['visFourbodyMass']]),xRange=thisxrange,weight='',yRange=thisyrange,project='',xVar=xVar,yVar=yVar)
-        else:
-            dataset =getRooDataset(File,selection=' && '.join([selDatasets['invMassMuMu'],selDatasets['visFourbodyMass']]),xRange=thisxrange,weight='eventWeight',yRange=thisyrange,project='',xVar=xVar,yVar=yVar)
+    if project and 'datadriven' in type:
+         dataset =getRooDatasetFake(File,selection=' && '.join([selDatasets['invMassMuMu'],selDatasets['visFourbodyMass']]),xRange=thisxrange,weight='fakeRateEfficiency',yRange=thisyrange,project=xVar,xVar=xVar,yVar=yVar)  
+    elif not project and 'datadriven' in type:
+        dataset =getRooDatasetFake(File,selection=' && '.join([selDatasets['invMassMuMu'],selDatasets['visFourbodyMass']]),xRange=thisxrange,weight='fakeRateEfficiency',yRange=thisyrange,project='',xVar=xVar,yVar=yVar)
+    elif not project and 'data' in type:
+        dataset =getRooDataset(File,selection=' && '.join([selDatasets['invMassMuMu'],selDatasets['visFourbodyMass']]),xRange=thisxrange,weight='',yRange=thisyrange,project='',xVar=xVar,yVar=yVar)
+    else:
+        dataset =getRooDataset(File,selection=' && '.join([selDatasets['invMassMuMu'],selDatasets['visFourbodyMass']]),xRange=thisxrange,weight='eventWeight',yRange=thisyrange,project='',xVar=xVar,yVar=yVar)
     # else:
     #      dataset =getRooDataset(File,selection=selDatasets['invMassMuMu'],xRange=thisxrange,weight='w',xVar=xVar)  
-    elif channel =="TauMuTauE":
-        print File
-        if 'datadriven' in type:
-            print type
-            dataset=getHisto(File,process='datadriven')
-        elif 'data' in type:
-            dataset= getHisto(File,process='data')
-        else:
-            dataset=getHisto(File,process='signal')
-    else:
-        raise ValueError('Channel Unknown in getDataset')
-                
-            
     
     global j
     j+=1
@@ -289,7 +270,7 @@ def getControlHist(proc,**kwargs):
         #hist.Rebin(0.5)
     return hist
 
-def getHist(proc,channel,**kwargs):
+def getHist(proc,**kwargs):
     scale = kwargs.pop('scale',1)
     shift = kwargs.pop('shift','')
     region = kwargs.pop('region','A')
@@ -317,60 +298,42 @@ def getHist(proc,channel,**kwargs):
     #    plotnames = ['dm{}/{}'.format(dm,plotname) for dm in sumDM]
     #else:
     #    plotnames = [plotname]
-    if channel=="TauMuTauHad" or channel=="TauETauHad":
-        if doUnbinned:
-            hists = []
-            histsname=[]
-            #hists=[getDataset(s,proc) for s in SampleMap2017[proc] if '_'+region in s and  channels[0] in s]
-            #hists=[getDataset(s,proc) for s in SampleMap2017[proc] if '_'+region in s and  channels[1] in s and '_'+discriminators[6] in s]
-            hists=[getDataset(s,channel,proc) for s in SampleMap2017[proc] if '_'+region in s and  channels[0] in s and '_'+discriminators[6] in s]
-            #histsname=[s for s in SampleMap2017[proc] if '_'+region in s and  channels[1] in s and '_'+discriminators[6] in s]
-            #print hists
-            #print histsname
-            #hist = sumDatasets(name,*hists)
-            
-            if len(hists)>1:
-                hist = sumDatasets(name,*hists) 
-            else:
-                hist = hists[0].Clone(name)
-
+    if doUnbinned:
+        hists = []
+        histsname=[]
+        #hists=[getDataset(s,proc) for s in SampleMap2017[proc] if '_'+region in s and  channels[0] in s]
+        #hists=[getDataset(s,proc) for s in SampleMap2017[proc] if '_'+region in s and  channels[1] in s and '_'+discriminators[6] in s]
+        hists=[getDataset(s,proc) for s in SampleMap2017[proc] if '_'+region in s and  channels[0] in s and '_'+discriminators[6] in s]
+        #histsname=[s for s in SampleMap2017[proc] if '_'+region in s and  channels[1] in s and '_'+discriminators[6] in s]
+        #print hists
+        #print histsname
+        #hist = sumDatasets(name,*hists)
+    
+        if len(hists)>1:
+            hist = sumDatasets(name,*hists) 
         else:
-            hists = []
-            #for plotname in plotnames:
-            if do2D:
-                #hists = [wrappers[s+shift].getHist2D(plotname) for s in sampleMap[proc]]
-                #hists = [getHist2D(s,selection=' && '.join([selHists['invMassMuMu'],selHists['visFourbodyMass']])) for s in SampleMap2017[proc] if '_'+region in s and channel[0] in s]
-                hists = [getHist2D(s,selection=' && '.join([selHists['invMassMuMu'],selHists['visFourbodyMass']])) for s in SampleMap2017[proc] if '_'+region in s and channel[0] in s and '_'+ discriminators[6] in s]  
-                if len(hists)>1:
-                    hist = sumHists(name,*hists)
-                else:
-                    hist = hists[0].Clone(name)
-            else:
-            #hists = [wrappers[s+shift].getHist(plotname) for s in sampleMap[proc]]
-                hists=[getDataset(s) for s in SampleMap2017[proc] if '_'+region in s and channels[1] in s]
-    elif channel=='TauMuTauE':
-        if proc =='data':
-            print "Channel TauMuTauE"
-            print proc
-            print region
-            hists=[getDataset(s,channel,proc) for s in SampleMapNew2017[proc] if '_'+region in s and channel in s and 'MuIso'+'_'+muIdList[0]+'_'+'EleId'+'_'+eleIdList[0] in s]
-            print "Histogram Loaded"
-            if len(hists)>1:
-                hist = sumHists(name,*hists)
-            else:
-                hist = hists[0].Clone(name)
+            hist = hists[0].Clone(name)
 
-        else:
-            hists=[getDataset(s,channel,proc) for s in SampleMapNew2017[proc] if '_'+region in s and channel in s and muIdLabel[0]+'_'+eleIdLabel[0] in s]
-            if len(hists)>1:
-                hist = sumHists(name,*hists)
-            else:
-                hist = hists[0].Clone(name)
     else:
-        raise ValueError('Channel Unknown in getHist')
+        hists = []
+        #for plotname in plotnames:
+        if do2D:
+            #hists = [wrappers[s+shift].getHist2D(plotname) for s in sampleMap[proc]]
+            #hists = [getHist2D(s,selection=' && '.join([selHists['invMassMuMu'],selHists['visFourbodyMass']])) for s in SampleMap2017[proc] if '_'+region in s and channel[0] in s]
+            hists = [getHist2D(s,selection=' && '.join([selHists['invMassMuMu'],selHists['visFourbodyMass']])) for s in SampleMap2017[proc] if '_'+region in s and channel[0] in s and '_'+ discriminators[6] in s]  
+            if len(hists)>1:
+                hist = sumHists(name,*hists)
+            else:
+                hist = hists[0].Clone(name)
+        else:
+            #hists = [wrappers[s+shift].getHist(plotname) for s in sampleMap[proc]]
+            hists=[getDataset(s) for s in SampleMap2017[proc] if '_'+region in s and channels[1] in s]
+             
+        #hist = sumHists(name,*hists)
+        #hist.Scale(scale)
     return hist
 
-def getDatadrivenHist(proc,channel,**kwargs):
+def getDatadrivenHist(proc,**kwargs):
     shift = kwargs.pop('shift','')
     source = kwargs.pop('source','B')
     region = kwargs.pop('region','A')
@@ -396,45 +359,31 @@ def getDatadrivenHist(proc,channel,**kwargs):
     #    plotnames = ['dm{}/{}'.format(dm,plotname) for dm in sumDM]
     #else:
     #    plotnames = [plotname]
-    if channel=='TauMuTauHad' or channel=='TauETauHad':
-        if doUnbinned:
-            hists = []
-            histsname=[]
-            #for plotname in plotnames:
-            #hists=[getDataset(s,'data') for s in SampleMap2017['datadriven'] if '_'+region in s and channels[0] in s]
-            #hists=[getDataset(s,'data') for s in SampleMap2017['datadriven'] if '_'+region in s and channels[1] in s and '_'+discriminators[6] in s]
-            ### Loading with fakaRate?? ###
-            hists=[getDataset(s,channel,proc) for s in SampleMap2017['datadriven'] if '_'+region in s and channels[0] in s and '_'+discriminators[6] in s]
+    if doUnbinned:
+        hists = []
+        histsname=[]
+        #for plotname in plotnames:
+        #hists=[getDataset(s,'data') for s in SampleMap2017['datadriven'] if '_'+region in s and channels[0] in s]
+        #hists=[getDataset(s,'data') for s in SampleMap2017['datadriven'] if '_'+region in s and channels[1] in s and '_'+discriminators[6] in s]
+        ### Loading with fakaRate?? ###
+        hists=[getDataset(s,proc) for s in SampleMap2017['datadriven'] if '_'+region in s and channels[0] in s and '_'+discriminators[6] in s]
 
-            #histsname=[s for s in SampleMap2017['datadriven'] if '_'+region in s and  channels[1] in s and '_'+discriminators[6] in s]
-            #print histsname
-            if len(hists) >1:
-                hist = sumDatasets(name,*hists)
-            else:
-                hist = hists[0].Clone(name)
-        else:
-            hists = []
-            #for plotname in plotnames:
-            if do2D:
-                #hists = [getHist2D(s,selection=' && '.join([selHists['invMassMuMu'],selHists['visFourbodyMass']])) for s in SampleMap2017[proc] if '_'+region in s and channel[0] in s]
-                hists = [getHist2D(s,selection=' && '.join([selHists['invMassMuMu'],selHists['visFourbodyMass']])) for s in SampleMap2017[proc] if '_'+region in s and channel[0] in s and '_'+discriminators[6] in s]
-                #hists += [wrappers[s+shift].getHist2D(plotname) for s in sampleMap['datadriven'] if '_'+region in s and channels[1] in s]
-            else:
-                hists += [wrappers[s+shift].getHist(plotname) for s in sampleMap['datadriven'] if '_'+region in s and channels[3] in s] 
-                #hist = sumHists(name,*hists)
-    elif channel=='TauMuTauE':
-        print 'here'
-        hists=[getDataset(s,channel,proc) for s in SampleMapNew2017['datadriven'] if '_'+region in s and channel in s and 'MuIso'+'_'+muIdList[0]+'_'+'EleId'+'_'+eleIdList[0] in s]
+        #histsname=[s for s in SampleMap2017['datadriven'] if '_'+region in s and  channels[1] in s and '_'+discriminators[6] in s]
+        #print histsname
         if len(hists) >1:
             hist = sumDatasets(name,*hists)
         else:
             hist = hists[0].Clone(name)
-                
-        
-        #MuIso_loose_EleId_loose
     else:
-        raise ValueError('Channel Unknown in getDatadrivenHist')
-    
+        hists = []
+        #for plotname in plotnames:
+        if do2D:
+            #hists = [getHist2D(s,selection=' && '.join([selHists['invMassMuMu'],selHists['visFourbodyMass']])) for s in SampleMap2017[proc] if '_'+region in s and channel[0] in s]
+            hists = [getHist2D(s,selection=' && '.join([selHists['invMassMuMu'],selHists['visFourbodyMass']])) for s in SampleMap2017[proc] if '_'+region in s and channel[0] in s and '_'+discriminators[6] in s]
+            #hists += [wrappers[s+shift].getHist2D(plotname) for s in sampleMap['datadriven'] if '_'+region in s and channels[1] in s]
+        else:
+            hists += [wrappers[s+shift].getHist(plotname) for s in sampleMap['datadriven'] if '_'+region in s and channels[3] in s] 
+        hist = sumHists(name,*hists)
     return hist
 
 
@@ -486,7 +435,7 @@ def create_datacard(args):
     signalParams = {'h': args.higgs, 'a': args.pseudoscalar}
     wsname = 'w'
     var = args.fitVars
-    channel=args.channel
+    
     if doUnbinned and not doParametric:
         logging.error('Unbinned only supported with parametric option')
         raise
@@ -520,7 +469,6 @@ def create_datacard(args):
     #############
     SampleMap2017 = getSampleMap2017()
     
-    SampleMapNew2017 = getSampleMapNew2017()
     backgrounds = ['datadriven']
     data = ['data']
     
@@ -577,7 +525,7 @@ def create_datacard(args):
                            # histMap[mode][shiftLabel][proc] = getMatrixDatadrivenHist(doUnbinned=True,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
                         #else:
                         #histMap[mode][shift][proc] = getDatadrivenHist(doUnbinned=True,var=var,shift=shift,**regionArgs[mode])
-                        histMap[mode][shift][proc] = getDatadrivenHist(proc,channel,doUnbinned=True,var=var,shift=shift,do2D=do2D,**regionArgs[mode])
+                        histMap[mode][shift][proc] = getDatadrivenHist(proc,doUnbinned=True,var=var,shift=shift,do2D=do2D,**regionArgs[mode])
 
                     else:
                         # if doMatrix:
@@ -585,7 +533,7 @@ def create_datacard(args):
                                                                             
                         #histMap[mode][shift][proc] = getHist('data',doUnbinned=True,var=var,shift=shift,do2D=do2D,**regionArgs[mode])
                         ### As datadriven so try to load appropriate RooDatasets ###
-                        histMap[mode][shift][proc] = getHist('data',channel,doUnbinned=True,var=var,shift=shift,do2D=do2D,**regionArgs[mode])
+                        histMap[mode][shift][proc] = getHist('data',doUnbinned=True,var=var,shift=shift,do2D=do2D,**regionArgs[mode])
 
                        # histMap[mode][shift][proc] = getHist('data',doUnbinned=True,var=var,shift=shift,**regionArgs[mode])
                 else:
@@ -600,7 +548,7 @@ def create_datacard(args):
                     #     histMap[mode][shiftLabel][proc] = getMatrixHist(newproc,doUnbinned=True,var=var,wrappers=wrappers,shift=shift,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
                     # else:
                         #histMap[mode][shift][proc] = getHist(proc,doUnbinned=True,var=var,shift=shift,**regionArgs[mode])
-                        histMap[mode][shift][proc] = getHist(proc,channel,doUnbinned=True,var=var,shift=shift,do2D=do2D,**regionArgs[mode])
+                        histMap[mode][shift][proc] = getHist(proc,doUnbinned=True,var=var,shift=shift,do2D=do2D,**regionArgs[mode])
                         
                     xRange = oldXRange
                 #if do2D or doUnbinned:
@@ -804,7 +752,6 @@ def parse_command_line(argv):
     parser.add_argument('--tag', type=str, default='')
     parser.add_argument('--chi2Mass', type=int, default=0)
     parser.add_argument('--selection', type=str, default='')
-    parser.add_argument('--channel', type=str, default='TauMuTauHad', choices=['TauMuTauE','TauETauHad','TauMuTauHad','TauHadTauHad'])
 
     return parser.parse_args(argv)
 
@@ -819,6 +766,3 @@ def main(argv=None):
 if __name__ == "__main__":
     status = main()
     sys.exit(status)
-#/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017Deep/TauMuTauE/RooDatasets/Data/TauMuTauE_sideBand_MuIso_loose_EleId_loose.root
-#/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017Deep/TauMuTauE/RooDatasets/DataDriven/TauMuTauE_signalRegion_MuIso_loose_EleId_loose.root
-#/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017Deep/TauMuTauE/RooDatasets/SignalMC/TauMuTauE_HaaMC_am9_tightMuIso_tightEleId_signalRegion.root 
