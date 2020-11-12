@@ -1108,8 +1108,9 @@ class HaaLimits(Limits):
             self.loadBackgroundFit(region, workspace=workspace)
 
             x = workspace.var(xVar)
+            print 'Entering workspace with x :',x
             x.setBins(self.XBINNING)
-
+            
             # save binned data
             if doBinned:
 
@@ -1152,15 +1153,22 @@ class HaaLimits(Limits):
                 # generate a toy data observation from the model
                 model = workspace.pdf('bg_{}'.format(region))
                 h = self.histMap[region]['']['dataNoSig']
+                print h
                 if h.InheritsFrom('TH1'):
                     integral = h.Integral(h.FindBin(self.XRANGE[0]),h.FindBin(self.XRANGE[1])) * scale
+                    print "integral: " + str(integral)
                 else:
                     integral = h.sumEntries('{0}>{1} && {0}<{2}'.format(xVar,*self.XRANGE)) * scale
                 if asimov:
+                    print "if asimov"
                     data_obs = model.generateBinned(ROOT.RooArgSet(self.workspace.var(xVar)),integral,1)
+                    print data_obs
                 else:
+                    print "else condition"
                     data_obs = model.generate(ROOT.RooArgSet(self.workspace.var(xVar)),int(integral))
+                    print data_obs
                 if addSignal:
+                    print " addSignal Condition "
                     # TODO, doesn't work with new setup
                     raise NotImplementedError
                     self.workspace.var('MH').setVal(mh)
@@ -1168,16 +1176,21 @@ class HaaLimits(Limits):
                     model = self.workspace.pdf('{}_{}'.format(self.SPLINENAME,region))
                     integral = self.workspace.function('integral_{}_{}'.format(self.SPLINENAME,region)).getVal()
                     if asimov:
+                        print "asimov if condition"
                         sig_obs = model.generate(ROOT.RooArgSet(self.workspace.var(xVar)),integral,1)
+                        print sig_obs
                         data_obs.add(sig_obs)
                     else:
+                        print "else condition"
                         sig_obs = model.generate(ROOT.RooArgSet(self.workspace.var(xVar)),int(integral))
+                        print sig_obs
                         data_obs.append(sig_obs)
                 data_obs.SetName(name)
             else:
                 # use the provided data
                 if hist.InheritsFrom('TH1'):
                     data_obs = ROOT.RooDataHist(name,name,ROOT.RooArgList(self.workspace.var(xVar)),self.histMap[region]['']['data'])
+                    
                 else:
                     # TODO add support for xVar
                     data_obs = hist.Clone(name)

@@ -56,7 +56,8 @@ yRange = [0,1000] # h, hkf
 if testing: hmasses = [125]
 #if testing: hmasses = [300]
 #if testing: hmasses = [750]
-amasses = [4,5,7,8,9,10,11,12,13,14,15,17,18,19,20,21]
+#amasses = [4,5,7,8,9,10,11,12,13,14,15,17,18,19,20,21]
+amasses = [4,5,7,9,10,11,12,13,14,15,17,18,19,20,21]
 #if testing: amasses = ['3p6',5,9,13,17,21]
 #vbfhmasses = [125,300,750]
 #vbfamasses = [5,9,15,21]
@@ -66,7 +67,8 @@ hamap = {
     #125:[4,10,20],
     #125:[10,21],
     #125:[4,5,10,11],
-    125:[4,5,7,8,10,11,12,13,14,15,17,19,20,21]
+    #125:[4,5,7,8,10,11,12,13,14,15,17,19,20,21]
+    125:[4,5,7,9,10,11,12,13,14,15,17,19,20,21]  
     #125:[14,15,17,18,19],
     #125:[9,18],
     } 
@@ -326,7 +328,7 @@ def getHist(proc,channel,**kwargs):
             print "Channel "+channel
             print proc
             print region
-            hists=[getDataset(s,channel,proc) for s in SampleMapNew2017[proc] if '_'+region in s and channel in s and 'MuIso'+'_'+muIdList[0]+'_'+'EleId'+'_'+eleIdList[0] in s]
+            hists=[getDataset(s,channel,proc) for s in SampleMapNew2017[proc] if '_'+region in s and channel in s and 'MuIso'+'_'+muIdList[1]+'_'+'EleId'+'_'+eleIdList[2] in s]
             print "Histogram Loaded"
             if len(hists)>1:
                 hist = sumHists(name,*hists)
@@ -334,7 +336,7 @@ def getHist(proc,channel,**kwargs):
                 hist = hists[0].Clone(name)
 
         else:
-            hists=[getDataset(s,channel,proc) for s in SampleMapNew2017[proc] if '_'+region in s and channel in s and muIdLabel[0]+'_'+eleIdLabel[0] in s]
+            hists=[getDataset(s,channel,proc) for s in SampleMapNew2017[proc] if '_'+region in s and channel in s and muIdLabel[1]+'_'+eleIdLabel[2] in s]
             if len(hists)>1:
                 hist = sumHists(name,*hists)
             else:
@@ -392,8 +394,8 @@ def getDatadrivenHist(proc,channel,**kwargs):
                 hists += [wrappers[s+shift].getHist(plotname) for s in sampleMap['datadriven'] if '_'+region in s and channels[3] in s] 
                 #hist = sumHists(name,*hists)
     elif channel=='TauMuTauE':
-        #print 'here'
-        hists=[getDataset(s,channel,proc) for s in SampleMapNew2017['datadriven'] if '_'+region in s and channel in s and 'MuIso'+'_'+muIdList[0]+'_'+'EleId'+'_'+eleIdList[0] in s]
+        print 'here'
+        hists=[getDataset(s,channel,proc) for s in SampleMapNew2017['datadriven'] if '_'+region in s and channel in s and 'MuIso'+'_'+muIdList[1]+'_'+'EleId'+'_'+eleIdList[2] in s]
         if len(hists) >1:
             hist = sumDatasets(name,*hists)
         else:
