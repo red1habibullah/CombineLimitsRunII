@@ -79,6 +79,7 @@ class HaaLimits2D(HaaLimits):
 
 
         # h
+        print "JINGYU3:", "region", region, "SPLITY", self.SPLITY, "YRANGE", self.YRANGE[1]
         if self.YRANGE[1]>100 and self.SPLITY:
             resonances = []
             if self.XRANGE[0]<4:
@@ -87,12 +88,14 @@ class HaaLimits2D(HaaLimits):
                 resonances += ['upsilon']
             continuums = ['cont1']
             if self.XRANGE[0]<4:
+                print "JINGYUDEBUG"
                 continuums += ['cont2']
             erfs = {}
             conts = {}
             bgs = {}
             for rname in resonances+continuums:
                 nameE = 'erf_{}{}'.format(rname,'_'+tag if tag else '')
+                #print "JINGYU3:", rname, nameE, self.YCORRELATION
                 if rname=='cont1' and self.YCORRELATION:
                     # build the correlation model for the y variable parameters
                     erfShiftName = kwargs.pop('erfShift_{}'.format(nameE),'erfShift_{}'.format(nameE))
@@ -112,25 +115,6 @@ class HaaLimits2D(HaaLimits):
                         }
                     )
                     erfShiftExpr.build(workspace,erfShiftName)
-
-                    #erfScaleName = kwargs.pop('erfScale_{}'.format(nameE),'erfScale_{}'.format(nameE))
-                    #erfScaleA0Name = 'erfScaleA0{}'.format('_'+tag if tag else '')
-                    #erfScaleA0 = kwargs.pop(erfScaleA0Name,[0.06,0.005,5])
-                    #if isinstance(erfScaleA0,str): erfScaleA0Name = erfScaleA0
-                    #erfScaleA1Name = 'erfScaleA1{}'.format('_'+tag if tag else '')
-                    #erfScaleA1 = kwargs.pop(erfScaleA1Name,[0,-0.01,0.01])
-                    #if isinstance(erfScaleA1,str): erfScaleA1Name = erfScaleA1
-                    #erfScaleExpr = Models.Expression(erfScaleName,
-                    #    expr = '{x}*{a1}+{a0}'.format(x=xVar,a0=erfScaleA0Name,a1=erfScaleA1Name),
-                    #    variables = [xVar,erfScaleA1Name,erfScaleA0Name],
-                    #    **{
-                    #        xVar: xVar,
-                    #        erfScaleA1Name: erfScaleA1,
-                    #        erfScaleA0Name: erfScaleA0,
-                    #    }
-                    #)
-                    #erfScaleExpr.build(workspace,erfScaleName)
-
 
                     erf = Models.Erf('erf1',
                         x = yVar,
@@ -171,7 +155,7 @@ class HaaLimits2D(HaaLimits):
                 
         elif self.YRANGE[1]>100:
             nameE = 'erf{}'.format('_'+tag if tag else '')
-
+            print "JINGYU4:", "DOUBLEEXPO", self.DOUBLEEXPO, "YCORRELATION", self.YCORRELATION
             if not self.DOUBLEEXPO:
                 if self.YCORRELATION:
                     # build the correlation model for the y variable parameters
@@ -194,25 +178,6 @@ class HaaLimits2D(HaaLimits):
                     )
                     erfShiftExpr.build(workspace,erfShiftName)
 
-                    #erfScaleName = kwargs.pop('erfScale_{}'.format(nameE),'erfScale_{}'.format(nameE))
-                    #erfScaleA0Name = 'erfScaleA0{}'.format('_'+tag if tag else '')
-                    #erfScaleA0 = kwargs.pop(erfScaleA0Name,[0.06,0.005,5])
-                    #if isinstance(erfScaleA0,str): erfScaleA0Name = erfScaleA0
-                    #erfScaleA1Name = 'erfScaleA1{}'.format('_'+tag if tag else '')
-                    #erfScaleA1 = kwargs.pop(erfScaleA1Name,[0,-0.01,0.01])
-                    #if isinstance(erfScaleA1,str): erfScaleA1Name = erfScaleA1
-                    #erfScaleExpr = Models.Expression(erfScaleName,
-                    #    expr = '{x}*{a1}+{a0}'.format(x=xVar,a0=erfScaleA0Name,a1=erfScaleA1Name),
-                    #    variables = [xVar,erfScaleA1Name,erfScaleA0Name],
-                    #    **{
-                    #        xVar: xVar,
-                    #        erfScaleA1Name: erfScaleA1,
-                    #        erfScaleA0Name: erfScaleA0,
-                    #    }
-                    #)
-                    #erfScaleExpr.build(workspace,erfScaleName)
-
-
                     erf = Models.Erf('erf1',
                         x = yVar,
                         #erfScale = erfScaleName,
@@ -229,27 +194,11 @@ class HaaLimits2D(HaaLimits):
                         erfShift = kwargs.pop('erfShift_{}'.format(nameE), [70,10,200]),
                     )
                     erf.build(workspace,nameE)
+                    print "JINGYU4: nameE", nameE
 
                 nameC = 'conty{}'.format('_'+tag if tag else '')
                 if self.YCORRELATION:
-                    #lambdaName = kwargs.pop('lambda_{}'.format(nameC),'lambda_{}'.format(nameC))
-                    #lambdaA0Name = 'lambdaA0{}'.format('_'+tag if tag else '')
-                    #lambdaA0 = kwargs.pop(lambdaA0Name,[-0.025,-1,-0.001])
-                    #if isinstance(lambdaA0,str): lambdaA0Name = lambdaA0
-                    #lambdaA1Name = 'lambdaA1{}'.format('_'+tag if tag else '')
-                    #lambdaA1 = kwargs.pop(lambdaA1Name,[0,-0.002,0.002])
-                    #if isinstance(lambdaA1,str): lambdaA1Name = lambdaA1
-                    #lambdaExpr = Models.Expression(lambdaName,
-                    #    expr = '{x}*{a1}+{a0}'.format(x=xVar,a0=lambdaA0Name,a1=lambdaA1Name),
-                    #    variables = [xVar,lambdaA1Name,lambdaA0Name],
-                    #    **{
-                    #        xVar: xVar,
-                    #        lambdaA1Name: lambdaA1,
-                    #        lambdaA0Name: lambdaA0,
-                    #    }
-                    #)
-                    #lambdaExpr.build(workspace,lambdaName)
-
+                    
                     cont = Models.Exponential('conty',
                         x = yVar,
                         #lamb = lambdaName,
@@ -262,7 +211,8 @@ class HaaLimits2D(HaaLimits):
                         x = yVar,
                         lamb = kwargs.pop('lambda_{}'.format(nameC), [-0.05,-1,0]),
                     )
-                    cont.build(workspace,nameC)
+                    cont.build(workspace, nameC)
+                    print "JINGYU4: nameC", nameC
 
                 bg = Models.Prod('bg',
                     nameE,
@@ -324,76 +274,8 @@ class HaaLimits2D(HaaLimits):
                     }
                 )
         else:
-            # Landau only
-            #bg = Models.Landau('bg',
-            #    x = yVar,
-            #    mu    = [5,0,20],
-            #    sigma = [1,0,10],
-            #)
-
-            # landau plus gaussian
-            #land1 = Models.Landau('land1',
-            #    x = yVar,
-            #    mu    = [5,0,20],
-            #    sigma = [1,0,10],
-            #)
-            #nameL1 = 'land1{}'.format('_'+tag if tag else '')
-            #land1.build(workspace,nameL1)
-
-            ## add a guassian summed for tt ?
-            #gaus1 = Models.Gaussian('gaus1',
-            #    x = yVar,
-            #    mean = [1.5,0,4],
-            #    sigma = [0.4,0,2],
-            #)
-            #nameG1 = 'gaus1{}'.format('_'+tag if tag else '')
-            #gaus1.build(workspace,nameG1)
-
-            #bg = Models.Sum('bg',
-            #    **{
-            #        nameL1     : [0.9,0,1],
-            #        nameG1     : [0.5,0,1],
-            #        'recursive': True,
-            #    }
-            #)
-
             ## landua plus upsilon gaussian
             nameL1 = 'land1{}'.format('_'+tag if tag else '')
-            #land1 = Models.Landau('land1',
-            #    x = yVar,
-            #    mu    = kwargs.pop('mu_{}'.format(nameL1), [1.5,0,5]),
-            #    sigma = kwargs.pop('sigma_{}'.format(nameL1), [0.4,0,2]),
-            #)
-            #land1.build(workspace,nameL1)
-
-            ## jpsi
-            ##jpsi2 = Models.Voigtian('jpsi2S',
-            ##    x = yVar,
-            ##    mean  = [3.7,3.6,3.8],
-            ##    sigma = [0.1,0.01,0.5],
-            ##    width = [0.1,0.01,0.5],
-            ##)
-            ##nameJ2 = 'jpsi2Stt'
-            ##jpsi2.build(workspace,nameJ2)
-
-
-            ## add a guassian for upsilon
-            #nameU1 = 'upsilontt'
-            #upsilon1 = Models.Gaussian('upsilon1',
-            #    x = yVar,
-            #    mean  = kwargs.pop('mean_{}'.format(nameU1), [6,5,7]),
-            #    sigma = kwargs.pop('sigma_{}'.format(nameU1), [0.02,0,1]),
-            #)
-            #upsilon1.build(workspace,nameU1)
-
-            #bg = Models.Sum('bg',
-            #    **{
-            #        nameL1     : [0.95,0,1],
-            #        #nameJ2     : [0.1,0,1],
-            #        nameU1     : [0.1,0,1],
-            #        'recursive': True,
-            #    }
-            #)
 
             bg = Models.Landau('land1',
                 x = yVar,
@@ -401,75 +283,9 @@ class HaaLimits2D(HaaLimits):
                 sigma = kwargs.pop('sigma_{}'.format(nameL1), [0.4,0,2]),
             )
 
-
-        #cont1 = Models.Exponential('conty1',
-        #    x = yVar,
-        #    #lamb = [-0.20,-1,0], # kinfit
-        #    lamb = [-0.05,-1,0], # visible
-        #)
-        #nameC1 = 'conty1{}'.format('_'+tag if tag else '')
-        #cont1.build(workspace,nameC1)
-
-        ## higgs fit (mmtt)
-        #if self.YRANGE[1]>100:
-        #    erf1 = Models.Erf('erf1',
-        #        x = yVar,
-        #        erfScale = [0.05,0,1],
-        #        erfShift = [70,10,200],
-        #    )
-        #    nameE1 = 'erf1{}'.format('_'+tag if tag else '')
-        #    erf1.build(workspace,nameE1)
-
-        #    bg = Models.Prod('bg',
-        #        nameE1,
-        #        nameC1,
-        #    )
-        ## pseudo fit (tt)
-        #else:
-        #    erf1 = Models.Erf('erf1',
-        #        x = yVar,
-        #        erfScale = [1,0.01,10],
-        #        erfShift = [1,0.1,10],
-        #    )
-        #    nameE1 = 'erf1{}'.format('_'+tag if tag else '')
-        #    erf1.build(workspace,nameE1)
-
-        #    erfc1 = Models.Prod('erfc1',
-        #        nameE1,
-        #        nameC1,
-        #    )
-        #    nameEC1 = 'erfc1{}'.format('_'+tag if tag else '')
-        #    erfc1.build(workspace,nameEC1)
-
-        #    # add an upsilon to tt resonance
-        #    #upsilon = Models.Gaussian('upsilony',
-        #    #    x = yVar,
-        #    #    mean  = [5.5,5,6.5],
-        #    #    sigma = [0.25,0.1,1],
-        #    #)
-        #    #nameU = 'upsilony{}'.format('_'+tag if tag else '')
-        #    #upsilon.build(workspace,nameU)
-
-        #    # add a guassian summed for tt ?
-        #    gaus1 = Models.Gaussian('gaus1',
-        #        x = yVar,
-        #        mean = [1.5,0,4],
-        #        sigma = [0.4,0,2],
-        #    )
-        #    nameG1 = 'gaus1{}'.format('_'+tag if tag else '')
-        #    gaus1.build(workspace,nameG1)
-
-        #    bg = Models.Sum('bg',
-        #        **{ 
-        #            nameEC1    : [0.9,0,1],
-        #            nameG1     : [0.5,0,1],
-        #            #nameU      : [0.5,0,1],
-        #            'recursive': True,
-        #        }
-        #    )
-
         name = 'bg_{}'.format(region)
         bg.build(workspace,name)
+        print "JINGYU5:", bg, self.workspace.pdf('bg_PP_x')
 
     def _buildXModel(self,region,**kwargs):
         super(HaaLimits2D,self).buildModel(region,**kwargs)
@@ -682,7 +498,8 @@ class HaaLimits2D(HaaLimits):
                 'bg_{}_x'.format(region),
             )
         else:
-            if self.XRANGE[0]<4 and not (doPoly or doPolyExpo): 
+            if self.XRANGE[0]<4 and not (doPoly or doPolyExpo):
+                print "JINGYU6:", "doPoly", doPoly, "doPolyExpo", doPolyExpo
                 cont1 = Models.Prod('cont1',
                     'cont1_{}_x'.format(region),
                     'bg_{}_y'.format(region),
@@ -690,12 +507,16 @@ class HaaLimits2D(HaaLimits):
                 name = 'cont1_{}_xy'.format(region)
                 cont1.build(workspace,name)
 
+                print "JINGYU6:", cont1, name
+
                 cont2 = Models.Prod('cont2',
                     'cont2_{}_x'.format(region),
                     'bg_{}_y'.format(region),
                 )
                 name = 'cont2_{}_xy'.format(region)
                 cont2.build(workspace,name)
+
+                print "JINGYU6:", cont2, name
             else:
                 cont1 = Models.Prod('cont',
                     'cont1_{}_x'.format(region),
@@ -745,6 +566,7 @@ class HaaLimits2D(HaaLimits):
             )
         name = 'bg_{}_xy'.format(region)
         bg.build(workspace,name)
+        print 
 
     def fitSignal(self,h,a,region,shift='',**kwargs):
         scale = kwargs.get('scale',1)
@@ -785,12 +607,7 @@ class HaaLimits2D(HaaLimits):
             mean  = [aval,0.9975*aval,1.0025*aval],#.9975,1.0025
             width = [0.0065*aval,0.001,1],#0.01*aval
             sigma = [0.0070*aval,0.001,1],#0.01*aval
-        # modelx=Models.Gaussian('sigx',
-        #                        x=self.XVAR,
-        #                        mean=[aval,0.90*aval,1.1*aval],
-        #                        sigma=[0.04*aval,0.0001,1]
-                               
-                               )
+        )
         modelx.build(ws, 'sigx')
         if self.YRANGE[1]>100: # y variable is h mass
             if yFitFunc == "G": 
@@ -1795,15 +1612,22 @@ class HaaLimits2D(HaaLimits):
         workspace = self.buildWorkspace('control')
         self.initializeWorkspace(workspace=workspace)
         super(HaaLimits2D, self).buildModel(region=region, workspace=workspace)
+        print load, skipFit, "JINGYU2"
+        workspace.Print("V")
         if load:
             vals, errs, ints, interrs = self.loadBackgroundFit(region,workspace=workspace)
         if not skipFit:
             vals, errs, ints, interrs = self.fitBackground(region=region, workspace=workspace)
-        
+
+        print "JINGYU2:", vals, errs, ints, interrs
+            
         if load:
             allintegrals, errors = self.loadComponentIntegrals(region)
         if not skipFit:
             allintegrals, errors = self.buildComponentIntegrals(region,vals,errs,ints,interrs, workspace.pdf('bg_control'))
+
+        print "JINGYU2:", workspace.Print("V")
+        print "JINGYU2:", allintegrals, errors
 
         self.control_vals = vals
         self.control_errs = errs
@@ -1899,6 +1723,8 @@ class HaaLimits2D(HaaLimits):
     def fitBackground(self,region,shift='',**kwargs):
         scale = kwargs.pop('scale',1)
 
+        print "JINGYU9:", region
+
         if region=='control':
             return super(HaaLimits2D, self).fitBackground(region=region, shift=shift, **kwargs)
 
@@ -1906,6 +1732,7 @@ class HaaLimits2D(HaaLimits):
         xVar = kwargs.pop('xVar',self.XVAR)
         yVar = kwargs.pop('yVar',self.YVAR)
 
+        print "JINGYU8:", region, workspace.Print("V")
         model = workspace.pdf('bg_{}_xy'.format(region))
         name = 'data_prefit_{}{}'.format(region,'_'+shift if shift else '')
         hist = self.histMap[region][shift]['dataNoSig']

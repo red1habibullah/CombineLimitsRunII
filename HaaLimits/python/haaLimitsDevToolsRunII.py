@@ -21,7 +21,7 @@ ROOT.gROOT.SetBatch()
 #from DevTools.Plotter.xsec import getXsec
 #from CombineLimits.HaaLimits.HaaLimits import HaaLimits
 #from CombineLimits.HaaLimits.HaaLimits2D import HaaLimits2D
-from CombineLimitsRunII.HaaLimits.HaaLimitsNew import HaaLimits
+#from CombineLimitsRunII.HaaLimits.HaaLimitsNew import HaaLimits
 from CombineLimitsRunII.HaaLimits.HaaLimits2DNew import HaaLimits2D
 
 import CombineLimitsRunII.Plotter.CMS_lumi as CMS_lumi
@@ -90,6 +90,8 @@ muIdLabel = ["looseMuIso", "mediumMuIso", "tightMuIso"]
 eleIdList = ["loose", "medium", "tight"]
 eleIdLabel = ["looseEleId", "mediumEleId", "tightEleId"]
 
+discriminator = discriminators[3]
+
 
 signame = 'HToAAH{h}A{a}'
 # ggsigname = 'ggHToAAH{h}A{a}'
@@ -101,11 +103,8 @@ xbnwdth=0.001
 
 #ybnwdth=10
 xBins=[int((xRange[1]-xRange[0])/xbnwdth),xRange[0],xRange[1]]
-print xBins
+#print xBins
 #yBins= int((yRange[1]-yRange[0])/ybnwdth)
-
-
-
 
 j=0
 
@@ -179,8 +178,9 @@ project = False
 hCut = '1'
 
 #xsec splines
-smtfile  = ROOT.TFile.Open('/uscms_data/d3/rhabibul/CombineRunII/CMSSW_10_2_13/src/CombineLimitsRunII/Limits/data/Higgs_YR4_SM_13TeV.root')
-bsmtfile = ROOT.TFile.Open('/uscms_data/d3/rhabibul/CombineRunII/CMSSW_10_2_13/src/CombineLimitsRunII/Limits/data/Higgs_YR4_BSM_13TeV.root')
+smtfile  = ROOT.TFile.Open('/uscms/home/jingyu/nobackup/Haa/HaaLimits/CMSSW_10_2_13/src/CombineLimits/Limits/data/Higgs_YR4_SM_13TeV.root')
+bsmtfile = ROOT.TFile.Open('/uscms/home/jingyu/nobackup/Haa/HaaLimits/CMSSW_10_2_13/src/CombineLimits/Limits/data/Higgs_YR4_BSM_13TeV.root')
+
 smws = smtfile.Get('YR4_SM_13TeV')
 bsmws = bsmtfile.Get('YR4_BSM_13TeV')
 
@@ -216,19 +216,7 @@ def getDataset(File,channel,type):
         'invMassMuMu' : '{0}>{1} && {0}<{2}'.format(xVar,*thisxrange),
         'visFourbodyMass' : '{0}>{1} && {0}<{2}'.format(yVar,*thisyrange),
     }
-    # if project:
-    #     if 'hMass' in plotname:
-    #         dataset = wrapper.getDataset(plotname,selection=' && '.join([selDatasets['x'],selDatasets['y'],hCut]),xRange=thisxrange,weight='w',yRange=thisyrange,project=xVar,xVar=xVar,yVar=yVar)
-    #     elif 'attMass' in plotname:
-    #         dataset = wrapper.getDataset(plotname,selection=' && '.join([selDatasets['x'],selDatasets['y']]),xRange=thisxrange,weight='w',yRange=thisyrange,project=xVar,xVar=xVar,yVar=yVar)
-    # else:
-    #     if 'hMass' in plotname or 'attMass' in plotname:
-    #         dataset = wrapper.getDataset(plotname,selection=' && '.join([selDatasets['x'],selDatasets['y']]),xRange=thisxrange,weight='w',yRange=thisyrange,xVar=xVar,yVarOB=yVar)
-    #     else:
-    #         dataset = wrapper.getDataset(plotname,selection=selDatasets['x'],xRange=thisxrange,weight='w',xVar=xVar)
-            #if 'SUSY' in sample and h==125 and '11' in sample:
-            #    integral = dataset.sumEntries('{0}>{1} && {0}<{2}'.format(xVar,*thisxrange))
-            #    print sample, plotname, integral
+
     if channel=="TauMuTauHad" or channel=="TauETauHad":
         if project and 'datadriven' in type:
             dataset =getRooDatasetFake(File,selection=' && '.join([selDatasets['invMassMuMu'],selDatasets['visFourbodyMass']]),xRange=thisxrange,weight='fakeRateEfficiency',yRange=thisyrange,project=xVar,xVar=xVar,yVar=yVar)  
@@ -238,8 +226,7 @@ def getDataset(File,channel,type):
             dataset =getRooDataset(File,selection=' && '.join([selDatasets['invMassMuMu'],selDatasets['visFourbodyMass']]),xRange=thisxrange,weight='',yRange=thisyrange,project='',xVar=xVar,yVar=yVar)
         else:
             dataset =getRooDataset(File,selection=' && '.join([selDatasets['invMassMuMu'],selDatasets['visFourbodyMass']]),xRange=thisxrange,weight='eventWeight',yRange=thisyrange,project='',xVar=xVar,yVar=yVar)
-    # else:
-    #      dataset =getRooDataset(File,selection=selDatasets['invMassMuMu'],xRange=thisxrange,weight='w',xVar=xVar)  
+    
     elif channel =="TauMuTauE":
         print File
         if 'datadriven' in type:
@@ -297,50 +284,36 @@ def getHist(proc,channel,**kwargs):
     chi2Mass = kwargs.pop('chi2Mass',0)
     doUnbinned = kwargs.pop('doUnbinned',False)
     var = kwargs.pop('var',['mm'])
-    #wrappers = kwargs.pop('wrappers',{})
-    #dm = kwargs.pop('dm',-1)
-    #sumDM = kwargs.pop('sumDecayModes',[])
     name = proc+region+shift
-    #if dm>=0: name += str(dm)
-    #def getHist2D(f,selection='1',xVar='invMassMuMu',yVar='visFourbodyMass',xBinning='1',yBinning='10')
+    
     if do2D:
         plot = '{}_{}'.format(*[varHists[v] for v in var])
-     #hist=ds.createHistogram(ds.get().find(xVar),ds.get().find(yVar),int(xBinning),int(yBinning),selection,ds.GetName())
     else:
         plot = varHists[var[0]]
     if doUnbinned:
         plot += '_dataset'
         plotname = 'region{}/{}'.format(region,plot)
-    #if chi2Mass: plotname = 'chi2_{}/{}'.format(chi2Mass,plotname)
-    #if dm>=0: plotname = 'dm{}/{}'.format(dm,plotname)
-    #if sumDM:
-    #    plotnames = ['dm{}/{}'.format(dm,plotname) for dm in sumDM]
-    #else:
-    #    plotnames = [plotname]
+
     if channel=="TauMuTauHad" or channel=="TauETauHad":
         if doUnbinned:
             hists = []
             histsname=[]
-            #hists=[getDataset(s,proc) for s in SampleMap2017[proc] if '_'+region in s and  channels[0] in s]
-            #hists=[getDataset(s,proc) for s in SampleMap2017[proc] if '_'+region in s and  channels[1] in s and '_'+discriminators[6] in s]
-            hists=[getDataset(s,channel,proc) for s in SampleMap2017[proc] if '_'+region in s and  channels[0] in s and '_'+discriminators[6] in s]
-            #histsname=[s for s in SampleMap2017[proc] if '_'+region in s and  channels[1] in s and '_'+discriminators[6] in s]
-            #print hists
-            #print histsname
-            #hist = sumDatasets(name,*hists)
+            #print "SampleMap2017", proc, SampleMap2017[proc]
+            #print "JINGYU0:", channel, region
+            hists=[getDataset(s,channel,proc) for s in SampleMap2017[proc] if '_'+region in s and channel in s and '_'+discriminator in s]
             
             if len(hists)>1:
                 hist = sumDatasets(name,*hists) 
             else:
                 hist = hists[0].Clone(name)
 
+            #print "hists:", hists
+
         else:
             hists = []
             #for plotname in plotnames:
             if do2D:
-                #hists = [wrappers[s+shift].getHist2D(plotname) for s in sampleMap[proc]]
-                #hists = [getHist2D(s,selection=' && '.join([selHists['invMassMuMu'],selHists['visFourbodyMass']])) for s in SampleMap2017[proc] if '_'+region in s and channel[0] in s]
-                hists = [getHist2D(s,selection=' && '.join([selHists['invMassMuMu'],selHists['visFourbodyMass']])) for s in SampleMap2017[proc] if '_'+region in s and channel[0] in s and '_'+ discriminators[6] in s]  
+                hists = [getHist2D(s,selection=' && '.join([selHists['invMassMuMu'],selHists['visFourbodyMass']])) for s in SampleMap2017[proc] if '_'+region in s and channel in s and '_'+ discriminator in s]  
                 if len(hists)>1:
                     hist = sumHists(name,*hists)
                 else:
@@ -350,7 +323,7 @@ def getHist(proc,channel,**kwargs):
                 hists=[getDataset(s) for s in SampleMap2017[proc] if '_'+region in s and channels[1] in s]
     elif channel=='TauMuTauE':
         if proc =='data':
-            print "Channel TauMuTauE"
+            print "Channel "+channel
             print proc
             print region
             hists=[getDataset(s,channel,proc) for s in SampleMapNew2017[proc] if '_'+region in s and channel in s and 'MuIso'+'_'+muIdList[0]+'_'+'EleId'+'_'+eleIdList[0] in s]
@@ -400,13 +373,9 @@ def getDatadrivenHist(proc,channel,**kwargs):
         if doUnbinned:
             hists = []
             histsname=[]
-            #for plotname in plotnames:
-            #hists=[getDataset(s,'data') for s in SampleMap2017['datadriven'] if '_'+region in s and channels[0] in s]
-            #hists=[getDataset(s,'data') for s in SampleMap2017['datadriven'] if '_'+region in s and channels[1] in s and '_'+discriminators[6] in s]
             ### Loading with fakaRate?? ###
-            hists=[getDataset(s,channel,proc) for s in SampleMap2017['datadriven'] if '_'+region in s and channels[0] in s and '_'+discriminators[6] in s]
+            hists=[getDataset(s,channel,proc) for s in SampleMap2017['datadriven'] if '_'+region in s and channel in s and '_' + discriminator in s]
 
-            #histsname=[s for s in SampleMap2017['datadriven'] if '_'+region in s and  channels[1] in s and '_'+discriminators[6] in s]
             #print histsname
             if len(hists) >1:
                 hist = sumDatasets(name,*hists)
@@ -417,13 +386,13 @@ def getDatadrivenHist(proc,channel,**kwargs):
             #for plotname in plotnames:
             if do2D:
                 #hists = [getHist2D(s,selection=' && '.join([selHists['invMassMuMu'],selHists['visFourbodyMass']])) for s in SampleMap2017[proc] if '_'+region in s and channel[0] in s]
-                hists = [getHist2D(s,selection=' && '.join([selHists['invMassMuMu'],selHists['visFourbodyMass']])) for s in SampleMap2017[proc] if '_'+region in s and channel[0] in s and '_'+discriminators[6] in s]
+                hists = [getHist2D(s,selection=' && '.join([selHists['invMassMuMu'],selHists['visFourbodyMass']])) for s in SampleMap2017[proc] if '_'+region in s and channel in s and '_'+discriminator in s]
                 #hists += [wrappers[s+shift].getHist2D(plotname) for s in sampleMap['datadriven'] if '_'+region in s and channels[1] in s]
             else:
                 hists += [wrappers[s+shift].getHist(plotname) for s in sampleMap['datadriven'] if '_'+region in s and channels[3] in s] 
                 #hist = sumHists(name,*hists)
     elif channel=='TauMuTauE':
-        print 'here'
+        #print 'here'
         hists=[getDataset(s,channel,proc) for s in SampleMapNew2017['datadriven'] if '_'+region in s and channel in s and 'MuIso'+'_'+muIdList[0]+'_'+'EleId'+'_'+eleIdList[0] in s]
         if len(hists) >1:
             hist = sumDatasets(name,*hists)
@@ -638,6 +607,8 @@ def create_datacard(args):
             else:
                 #hist = getHist('data',doUnbinned=True,var=var,wrappers=wrappers,do2D=do2D,chi2Mass=chi2Mass,**regionArgs[mode])
                 #histMap[mode][shift][proc] = getHist(proc,doUnbinned=True,var=var,shift=shift,**regionArgs[mode])
+
+                print mode, shift, proc
                 histMap[mode][shift][proc] = getHist(proc,doUnbinned=True,var=var,shift=shift,do2D=do2D,**regionArgs[mode])
 
                 j+=1
@@ -692,24 +663,6 @@ def create_datacard(args):
         scales[proc] = scale
         #print proc, gg,scale #vbf
 
-
-    # before doing anything print out integrals to make sure things are okay
-    #h=125
-    #a=10
-    #SIGNAME = 'HToAAH{h}A{a}'
-    #for s in ['']+[systLabels.get(shift,shift) for shift in shiftTypes]:
-    #    if s:
-    #        integral = histMap['PP'][s+'Up'][SIGNAME.format(h=h,a=a)].sumEntries('{0}>{1} && {0}<{2}'.format(xVar,*xRange))
-    #        print s, 'Up', integral
-    #        integral = histMap['PP'][s+'Down'][SIGNAME.format(h=h,a=a)].sumEntries('{0}>{1} && {0}<{2}'.format(xVar,*xRange))
-    #        print s, 'Down', integral
-    #    else:
-    # integral = histMap['FP'][''][SIGNAME.format(h=h,a=a)].sumEntries('{0}>{1} && {0}<{2}'.format(xVar,*xRange))
-    # print 'central X:', integral
-    # integralY = histMap['FP'][''][SIGNAME.format(h=h,a=a)].sumEntries('{0}>{1} && {0}<{2}'.format(yVar,*yRange))
-    # print 'central Y:', integralY
-    # #return
-    # print 'RooDataset', (histMap['FP'][''][SIGNAME.format(h=h,a=a)]).Print('v')
     
     name = []
     if args.unbinned: name += ['unbinned']
@@ -719,15 +672,16 @@ def create_datacard(args):
     if args.tag: name += [args.tag]
     if args.addSignal: name += ['wSig']
     name = n+'/'+'_'.join(name) if n else '_'.join(name)
-    if var == ['mm']:
-        haaLimits = HaaLimits(histMap,name,do2DInterpolation=args.do2DInterpolation,doParamFit=args.fitParams)
-    elif do2D and project:
-        haaLimits = HaaLimits(histMap,name,do2DInterpolation=args.do2DInterpolation,doParamFit=args.fitParams)
-    elif do2D:
-        haaLimits = HaaLimits2D(histMap,name,do2DInterpolation=args.do2DInterpolation,doParamFit=args.fitParams)
-    else:
-        logging.error('Unsupported fit vars: ',var)
-        raise
+    #if var == ['mm']:
+    #    haaLimits = HaaLimits(histMap,name,do2DInterpolation=args.do2DInterpolation,doParamFit=args.fitParams)
+    #elif do2D and project:
+    #    haaLimits = HaaLimits(histMap,name,do2DInterpolation=args.do2DInterpolation,doParamFit=args.fitParams)
+    #elif do2D:
+        #print "JINGYU1", args.do2DInterpolation, args.fitParams
+    haaLimits = HaaLimits2D(histMap,name,do2DInterpolation=args.do2DInterpolation,doParamFit=args.fitParams)
+    #else:
+    #    logging.error('Unsupported fit vars: ',var)
+    #    raise
     if args.decayMode: haaLimits.REGIONS = modes
     if 'h' in var:
         haaLimits.YCORRELATION = correlation
@@ -747,6 +701,7 @@ def create_datacard(args):
         haaLimits.YRANGE = yRange
         haaLimits.YBINNING = int((yRange[1]-yRange[0])/yBinWidth)
         haaLimits.DOUBLEEXPO = args.doubleExpo
+    print xRange, xVar, yRange, yVar, args.doubleExpo
     if 'tt' in var: haaLimits.YLABEL = 'm_{#tau_{#mu}#tau_{h}}'
     if 'h' in var or 'hkf' in var: haaLimits.YLABEL = 'm_{#mu#mu#tau_{#mu}#tau_{h}}'
     haaLimits.initializeWorkspace()
