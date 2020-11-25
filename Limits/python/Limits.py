@@ -31,6 +31,7 @@ class Limits(object):
         #self.rates = {}
         self.shapes = {}
         self.name = name
+        self.channels = []
         self.workspace = self.buildWorkspace(self.name)
 
     def buildWorkspace(self,name):
@@ -92,6 +93,10 @@ class Limits(object):
 
     def __checkProcesses(self,processes):
         return self.__check(processes,self.processes,name='Process')
+
+    def setChannels(self,c):
+        '''Add channel'''
+        self.channels = c
 
     def addBin(self,b):
         '''Add bin to analysis'''
@@ -156,8 +161,8 @@ class Limits(object):
                 goodToAdd = True
                 for syst in systematics:
                     processes,bins = syst
-                    goodToAdd = goodToAdd and self.__checkProcesses(processes)
-                    goodToAdd = goodToAdd and self.__checkBins(bins)
+                    #goodToAdd = goodToAdd and self.__checkProcesses(processes)
+                    #goodToAdd = goodToAdd and self.__checkBins(bins)
                 if goodToAdd:
                     self.systematics[systname] = {
                         'mode'  : mode,
@@ -207,6 +212,7 @@ class Limits(object):
             if fullSystName != systname: continue
             # check if there is a systematic value for this combination
             for syst_vals in self.systematics[syst]['values']:
+                #print "DEBUG3:", syst_vals
                 s_processes, s_bins = syst_vals
                 if process not in s_processes and 'all' not in s_processes: continue
                 if bin not in s_bins and 'all' not in s_bins: continue
@@ -301,15 +307,17 @@ class Limits(object):
     def setExpected(self,process,bin,value):
         '''Set the expected value for a given process,bin.'''
         goodToAdd = True
-        goodToAdd = goodToAdd and self.__checkProcesses([process])
-        goodToAdd = goodToAdd and self.__checkBins([bin])
+        #goodToAdd = goodToAdd and self.__checkProcesses([process])
+        #goodToAdd = goodToAdd and self.__checkBins([bin])
         if goodToAdd:
             logging.debug('Adding expected {} {} {}'.format(process,bin,value))
             self.expected[(process,bin)] = value
 
     def getExpected(self,process,bin):
+        #print "expected:", self.expected
         '''Get the expected value.'''
         key = (process,bin)
+        #print key
         val = self.expected[key] if key in self.expected else 0.
         if isinstance(val,ROOT.TH2):
             val = self.__unwrap(val)
@@ -324,7 +332,7 @@ class Limits(object):
         '''
 
         shapes = self._printMultipleCards(filename,bins,processes,blind,addSignal,saveWorkspace,suffix)
-
+        
         # shape file
         if saveWorkspace or shapes:
             outname = filename+'.root'
@@ -349,9 +357,8 @@ class Limits(object):
                 shapes += self._printMultipleCards(filename,bins,v,blind,addSignal,saveWorkspace,'{0}_{1}'.format(suffix,k))
         else:
             shapes += self._printSingleCard(filename,bins,processes,blind,addSignal,saveWorkspace,suffix)
-            
-        return shapes
 
+        return shapes
 
 
 
@@ -361,12 +368,23 @@ class Limits(object):
         goodToPrint = goodToPrint and self.__checkBins(bins)
         if not goodToPrint: return
 
+        channels = self.channels
+
+        backgroundsOrig = self.backgrounds
+        
         if bins==['all']: bins = self.bins
-        if processes==['all']: processes = self.processes.keys()
-        signals = [x for x in self.signals if x in processes]
-        backgrounds = [x for x in self.backgrounds if x in processes]
+        #if processes==['all']: processes = self.processes.keys()
+        signals = [x+'_'+y for x in self.signals for y in channels]
+        backgrounds = [x+'_'+y for x in self.backgrounds for y in channels]
+        control = [x.split('_')[0]+'_'+'control' for x in self.backgrounds]
         shapes = []
 
+        #print "DEBUG0", signals
+        #print "DEBUG0", backgroundsOrig
+
+        nsignals=len(self.signals)
+        nbackgrounds=len(self.backgrounds)
+        
         # setup bins
         binRows = ['bin']
         observations = ['observation']
@@ -397,8 +415,9 @@ class Limits(object):
         # setup processes
         jmax = len(processes)-1
 
-        totalColumns = len(bins)*len(processes)
-        processesOrdered = signals + backgrounds
+        #totalColumns = len(bins)*len(processes)
+        totalColumns = len(bins)*(nsignals+nbackgrounds)
+        processesOrdered = signals + backgrounds + control
         binsForRates = ['bin','']+['']*totalColumns
         processNames = ['process','']+['']*totalColumns
         processNumbers = ['process','']+['']*totalColumns
@@ -406,16 +425,51 @@ class Limits(object):
         norms = []
         colpos = 2
         toSkip = []
+
+
+        #processesOrderedNew=[]
+        #for b in bins:
+        #    for p in processesOrdered:
+        #        process = p+'_'+bin.split('_')[-1]
+        #        if "control" in b: processesOrderedNew += [p]
+        #        elif process.split('_')[-1] == b.split('_')[0]:
+        #            processOrderedNew += [process]
+
+        #processesOrdered = processesOrderedNew
+                    
+        #print "DEBUG1",processesOrdered
+        
         for bin in bins:
+            #print "----------------"
+            #print "bin:", bin
             for process in processesOrdered:
-                exp = self.getExpected(process,bin)
-                if not exp: 
-                    toSkip += [(bin,process)]
-                    logging.warning('Skipping {} {}'.format(process,bin))
+                if bin == 'control':
+                    processText = process
+                else:                    
+                    processText = process+'_'+bin.split('_')[-1]
+                exp = self.getExpected(processText,bin)
+                #print "exp",processText,bin, exp
+                if not exp:
+                    #print "DEBUG***"
+                    toSkip += [(bin,processText)]
+                    logging.warning('Skipping {} {}'.format(processText,bin))
                     continue
                 binsForRates[colpos] = binName.format(bin=bin)
-                processNames[colpos] = process
-                processNumbers[colpos] = '{0:<10}'.format(processesOrdered.index(process)-len(signals)+1)
+                #print "colpos:", colpos, "process:", processText, "binsForRates[colpos]:", binsForRates[colpos]
+                
+                #if binsForRates[colpos] == 'control':
+                #    processNames[colpos] = process.split('_')[0]
+                #else:
+                #    processNames[colpos] = process
+                processNames[colpos] = processText
+                #print colpos, backgroundsOrig.index(process.split('_')[0])+1, len(signals)
+                if 'haa' in process:
+                    processNumbers[colpos] = '{0:<10}'.format(0)
+                    #print "processNumbers[colpos]", colpos, processNumbers[colpos]
+                else:
+                    processNumbers[colpos] = '{0:<10}'.format(backgroundsOrig.index(process.split('_')[0])+1)
+                    #print "processNumbers[colpos]", colpos, processNumbers[colpos]
+                #processNumbers[colpos] = '{0:<10}'.format(processesOrdered.index(process)-len(signals)+1)
                 label = '{0}_{1}'.format(processNames[colpos],binsForRates[colpos])
                 if isinstance(exp,ROOT.TH1): # it is a histogram (for shape analysis)
                     logging.debug('{0}: {1}'.format(label,exp.Integral()))
@@ -436,14 +490,17 @@ class Limits(object):
                     logging.debug('{0}: {1}'.format(label,exp))
                 else:
                     logging.error('Failed to understand: {} {}'.format(bin,process))
-                    print exp
+                    #print exp
                     raise
                 rates[colpos] = '{0:<10.4g}'.format(exp)
                 # TODO: unbinned handling
                 colpos += 1
 
+        #print "DEBUG2",processesOrdered
         # other rateParams
+        #print "rates:", self.rates
         for rate in self.rates:
+            #print "rate:", rate
             n = rate['name']
             b = rate['bin']
             p = rate['process']
@@ -454,11 +511,24 @@ class Limits(object):
             #p = self.rates[rate]['process']
             #f = self.rates[rate].get('filename',filename+'.root')
             #w = self.rates[rate].get('workspace',self.name)
-            if b in bins and p in processes:
-                norms += [[n,'rateParam',b,p,'{}:{}'.format(f,w)]]
+            #if b in bins and p in processes:
+            #    if b=='control':
+            #        p=p.split('_')[0]
+            #        n=n.replace('_TauETauHad','').replace('_TauMuTauHad','').replace('_TauETauMu','').replace('_TauHadTauHad','')
+            norms += [[n,'rateParam',b,p,'{}:{}'.format(f,w)]]
 
+        #print "SYSTS..."
+        #print "systematics:", self.systematics
         # setup nuissances
         logging.debug('Systs available: {0}'.format([str(x) for x in sorted(self.systematics.keys())]))
+
+        processes=[]
+        for b in bins:
+            if b == 'control': continue
+            for proc in processesOrdered:
+                if 'control' in proc: continue
+                processes += [proc+'_'+b.split('_')[-1]]
+        
         systs = {}
         keys = []
         for bin in bins:
@@ -469,19 +539,30 @@ class Limits(object):
                 systs[key].update(self.__getSystematicRows(syst,processes,bin))
 
 
+        #print "systs:", systs
         combinedSysts = self.__combineSystematics(*[systs[key] for key in systs])
+        #print "combinedSysts", combinedSysts
         logging.debug('Systs to add: {0}'.format([str(x) for x in sorted(combinedSysts.keys())]))
         systRows = []
         for syst in sorted(combinedSysts.keys()):
+            #print "syst:", syst
             thisRow = [syst,combinedSysts[syst]['mode']]
             keep = False
+            #print "thisRow:",thisRow
             for bin in bins:
                 for process in processesOrdered:
-                    key = (bin,process)
+                    if bin == 'control':
+                        processText = process
+                    else:                    
+                        processText = process+'_'+bin.split('_')[-1]
+                    key = (bin,processText)
+                    #print "key:", key
                     if key in toSkip: continue
                     s = '-'
+                    #print "---:", combinedSysts[syst]['systs']
                     if key in combinedSysts[syst]['systs']:
                         s = combinedSysts[syst]['systs'][key]
+                        #print s
                         if s==1:
                             s = '-'
                         elif isinstance(s,ROOT.TH1):
@@ -532,7 +613,9 @@ class Limits(object):
                             s = '{0:<10.4g}'.format(s)
                             keep = True
                     thisRow += [s]
+                    #print thisRow
             if keep: systRows += [thisRow]
+            #print "sysRows:", sysRows
 
         logging.debug('Params systs to add: {0}'.format([str(x) for x in sorted(self.param_systematics.keys())]))
         paramRows = []
@@ -583,15 +666,24 @@ class Limits(object):
             # shape information
             if saveWorkspace or shapes:
                 for b in binRows[1:]:
-                    procString = '$PROCESS_{0}'.format(b)
+                    #print "***b", b, "processes", processesOrdered
+                    #print "self.shapes", self.shapes
+                    if 'control' in b:
+                        procString = '$PROCESS'
+                    else:
+                        procString = '$PROCESS_{0}'.format(b)
                     if saveWorkspace: procString = '{0}:{1}'.format(self.name,procString)
                     f.write('shapes * {0} {1}.root {2} {2}_$SYSTEMATIC\n'.format(b,filename,procString))
+                    #print 'shapes * {0} {1}.root {2} {2}_$SYSTEMATIC\n'.format(b,filename,procString)
                     for proc in processesOrdered:
-                        key = (b,proc)
+                        procText = proc+'_'+b.split('_')[-1]
+                        key = (b,procText)
+                        #print key
                         if key in self.shapes:
                             procString = self.shapes[key]
                             if saveWorkspace: procString = '{}:{}'.format(self.name,procString)
-                            f.write('shapes {0} {1} {2}.root {3} {3}_$SYSTEMATIC\n'.format(proc,b,filename,procString))
+                            f.write('shapes {0} {1} {2}.root {3} {3}_$SYSTEMATIC\n'.format(procText,b,filename,procString))
+                            #print 'shapes {0} {1} {2}.root {3} {3}_$SYSTEMATIC\n'.format(procText,b,filename,procString)
 
             else:
                 f.write('shapes * * FAKE\n')
@@ -604,6 +696,9 @@ class Limits(object):
 
             # process definition
             logging.debug('Bins: {0}'.format([str(x) for x in binsForRates]))
+            #print "binsForRates:", binsForRates
+            #print "binsForRates:", processNames
+            #print "binsForRates:", processNumbers
             f.write(getline(binsForRates))
             f.write(getline(processNames))
             f.write(getline(processNumbers))
@@ -630,5 +725,7 @@ class Limits(object):
             # nuissance categories
             for group in self.groups:
                 f.write('{0} group = {1}'.format(group,' '.join(self.groups[group])))
+
+            f.write('pdf_gg param 0 1')
 
         return shapes

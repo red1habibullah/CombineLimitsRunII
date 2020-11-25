@@ -38,6 +38,7 @@ for a in amasses:
 
 ################### Calling Function ################################
 def getSampleMap2017MVA():
+    #print "Got SampleMap2017MVA:", SampleMap2017MVA
     return SampleMap2017MVA
 #####################Sample Map 2017 ################################
 #####################################################################
@@ -97,6 +98,7 @@ for a in amassesDeep:
 
 #######################Calling Function ############################
 def getSampleMap2017():
+    #print "Got SampleMap2017:",SampleMap2017
     return SampleMap2017 
 
 ########################## Sample Map Deep 2017 #####################
@@ -140,6 +142,7 @@ for c in channelsNew:
 
 ####################### Calling Function ###############
 def getSampleMapNew2017():
+    #print "Got SampleMapNew2017:", SampleMapNew2017
     return SampleMapNew2017
 #/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017Deep/TauMuTauE/RooDatasets/Data/TauMuTauE_sideBand_MuIso_loose_EleId_loose.root 
 #TauMuTauE_sideBand_MuIso_medium_EleId_loose.root
