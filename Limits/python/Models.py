@@ -146,8 +146,10 @@ class Model(object):
         #ws.var('x').setRange('xRange', xFitRange[0], xFitRange[1])
         #ws.var('y').setRange('yRange', yFitRange[0], yFitRange[1])
         #print ("X_FIT_RANGE=", xFitRange, "\tY_FIT_RANGE=", yFitRange)
+        #print "DEBUG1:", model, hist, ROOT.RooFit.Save()
         fr = model.fitTo(hist,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True),ROOT.RooFit.PrintLevel(-1))
         #fr = model.fitTo(hist,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True),ROOT.RooFit.Minos(True))
+        #print "DEBUG2:", fr
         pars = fr.floatParsFinal()
         vals = {}
         errs = {}
@@ -459,6 +461,7 @@ class Spline(object):
         masses = self.kwargs.get('masses', [])
         values = self.kwargs.get('values', [])
         shifts = self.kwargs.get('shifts', {})
+        channel = self.kwargs.get('channel', '')
         uncertainty = self.kwargs.get('uncertainty',0.000)
         splineName = label
         if shifts:
@@ -480,7 +483,8 @@ class Spline(object):
                         splineUp   = buildSpline(ws,upName,  self.mh,masses,up)
                         splineDown = buildSpline(ws,downName,self.mh,masses,down)
                         shiftFormula += ' + TMath::Max(0,@{shift})*@{up} + TMath::Min(0,@{shift})*@{down}'.format(shift=len(args),up=len(args)+1,down=len(args)+2)
-                        args.Add(ws.var(shift))
+                        shiftText = channel+'_'+shift
+                        args.Add(ws.var(shiftText))
                         args.Add(splineUp)
                         args.Add(splineDown)
                 arglist = ROOT.RooArgList(args)

@@ -62,8 +62,8 @@ class HaaLimits(Limits):
     XLABEL = 'm_{#mu#mu}'
     UPSILONRANGE = [7, 12]
 
+    CHANNELS = ''
     REGIONS = ['PP','FP']
-    #REGIONS = ['PP']
     SHIFTS = []
     BACKGROUNDSHIFTS = []
     SIGNALSHIFTS = []
@@ -171,6 +171,7 @@ class HaaLimits(Limits):
 
         # jpsi
         nameJ1b = 'jpsi1S'
+        
         workspace.factory('{0}[{1}, {2}, {3}]'.format('mean_{}'.format(nameJ1b), *[3.1,2.9,3.2]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('sigma_{}'.format(nameJ1b),*[0.035,0.001,0.5]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('width_{}'.format(nameJ1b),*[0.035,0.001,0.5]))
@@ -384,17 +385,18 @@ class HaaLimits(Limits):
                 )
                 cont1.build(workspace,nameC1)
 
-                nameC2 = 'cont_poly{}'.format('_'+tag if tag else '')
-                #nameC2 = 'cont2'
+                nameC2 = 'cont2{}'.format('_'+tag if tag else '')
                 cont2 = Models.Exponential(nameC2,
                     x = xVar,
                     lamb = kwargs.pop('lambda_{}'.format(nameC2),[-0.6,-2,0]), #-5
                 )
-                
+
+                #nameC2 = 'cont_poly{}'.format('_'+tag if tag else '')
                 # cont_poly = Models.Chebychev(nameC2,
                 #                     x = xVar,
                 #                     order = 7,
                 #                     )
+                
                 cont2.build(workspace,nameC2)
 
                 nameC = 'cont{}'.format('_'+tag if tag else '')
@@ -934,30 +936,34 @@ class HaaLimits(Limits):
             xFrame = workspace.var(xVar).frame()
         data.plotOn(xFrame)
         if not self.SKIPPLOTS:
-            model.plotOn(xFrame,ROOT.RooFit.Components('cont_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
-            model.plotOn(xFrame,ROOT.RooFit.Components('cont1_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
-            model.plotOn(xFrame,ROOT.RooFit.Components('cont2_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
-            model.plotOn(xFrame,ROOT.RooFit.Components('cont_{}_x'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
-            model.plotOn(xFrame,ROOT.RooFit.Components('cont1_{}_x'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
-            model.plotOn(xFrame,ROOT.RooFit.Components('cont2_{}_x'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
-            model.plotOn(xFrame,ROOT.RooFit.Components('cont'),ROOT.RooFit.LineStyle(ROOT.kDashed))
-            model.plotOn(xFrame,ROOT.RooFit.Components('cont1'),ROOT.RooFit.LineStyle(ROOT.kDashed))
-            model.plotOn(xFrame,ROOT.RooFit.Components('cont2'),ROOT.RooFit.LineStyle(ROOT.kDashed))
-            if self.XRANGE[0]<4:
+            if region == 'control':
+                model.plotOn(xFrame,ROOT.RooFit.Components('cont_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+                model.plotOn(xFrame,ROOT.RooFit.Components('cont1_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+                model.plotOn(xFrame,ROOT.RooFit.Components('cont2_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+            else:
+                model.plotOn(xFrame,ROOT.RooFit.Components('cont_{}_x'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+                model.plotOn(xFrame,ROOT.RooFit.Components('cont1_{}_x'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+                model.plotOn(xFrame,ROOT.RooFit.Components('cont2_{}_x'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+            #model.plotOn(xFrame,ROOT.RooFit.Components('cont'),ROOT.RooFit.LineStyle(ROOT.kDashed))
+            #model.plotOn(xFrame,ROOT.RooFit.Components('cont1'),ROOT.RooFit.LineStyle(ROOT.kDashed))
+            #model.plotOn(xFrame,ROOT.RooFit.Components('cont2'),ROOT.RooFit.LineStyle(ROOT.kDashed))
+            if self.XRANGE[0]<4 and region=='control':
                 # jpsi
                 model.plotOn(xFrame,ROOT.RooFit.Components('jpsi1S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
                 model.plotOn(xFrame,ROOT.RooFit.Components('jpsi2S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
-                model.plotOn(xFrame,ROOT.RooFit.Components('jpsi1S'),ROOT.RooFit.LineColor(ROOT.kRed))
-                model.plotOn(xFrame,ROOT.RooFit.Components('jpsi2S'),ROOT.RooFit.LineColor(ROOT.kRed))
-            model.plotOn(xFrame,ROOT.RooFit.Components('upsilon1S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
-            model.plotOn(xFrame,ROOT.RooFit.Components('upsilon2S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
-            model.plotOn(xFrame,ROOT.RooFit.Components('upsilon3S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
-            model.plotOn(xFrame,ROOT.RooFit.Components('upsilon1S'),ROOT.RooFit.LineColor(ROOT.kRed))
-            model.plotOn(xFrame,ROOT.RooFit.Components('upsilon2S'),ROOT.RooFit.LineColor(ROOT.kRed))
-            model.plotOn(xFrame,ROOT.RooFit.Components('upsilon3S'),ROOT.RooFit.LineColor(ROOT.kRed))
+                #model.plotOn(xFrame,ROOT.RooFit.Components('jpsi1S'),ROOT.RooFit.LineColor(ROOT.kRed))
+                #model.plotOn(xFrame,ROOT.RooFit.Components('jpsi2S'),ROOT.RooFit.LineColor(ROOT.kRed))
+            elif self.XRANGE[0]<11 and region=='control':    
+                model.plotOn(xFrame,ROOT.RooFit.Components('upsilon1S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
+                model.plotOn(xFrame,ROOT.RooFit.Components('upsilon2S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
+                model.plotOn(xFrame,ROOT.RooFit.Components('upsilon3S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
+            #model.plotOn(xFrame,ROOT.RooFit.Components('upsilon1S'),ROOT.RooFit.LineColor(ROOT.kRed))
+            #model.plotOn(xFrame,ROOT.RooFit.Components('upsilon2S'),ROOT.RooFit.LineColor(ROOT.kRed))
+            #model.plotOn(xFrame,ROOT.RooFit.Components('upsilon3S'),ROOT.RooFit.LineColor(ROOT.kRed))
             # combined model
             model.plotOn(xFrame)
-        model.paramOn(xFrame,ROOT.RooFit.Layout(0.82,0.98,0.90))
+        model.paramOn(xFrame,ROOT.RooFit.Layout(0.7,0.9,0.95))
+        xFrame.getAttFill().SetFillStyle(0)
 
         if not self.SKIPPLOTS:
             resid = xFrame.residHist()
@@ -991,8 +997,15 @@ class HaaLimits(Limits):
         #prims = canvas.GetListOfPrimitives()
         prims = plotpad.GetListOfPrimitives()
         for prim in prims:
+            #print "paramBox:", prim.GetName(), prim
             if 'paramBox' in prim.GetName():
                 prim.SetTextSize(0.02)
+                #print prim.GetX1NDC(), prim.GetX2NDC(), prim.GetY1NDC(), prim.GetY2NDC()
+                prim.SetX1NDC(0.5)
+                prim.SetX2NDC(0.9)
+                prim.SetY1NDC(0.6)
+                prim.SetY2NDC(0.9)
+                print prim.GetX1NDC(), prim.GetX2NDC(), prim.GetY1NDC(), prim.GetY2NDC()
         mi = xFrame.GetMinimum()
         ma = xFrame.GetMaximum()
         if mi<0:
@@ -1042,10 +1055,13 @@ class HaaLimits(Limits):
 
         workspace.var(xVar).setBins(self.XBINNING)
 
-        self.plotModelX(workspace,xVar,data,model,region,shift)
+        #self.plotModelX(workspace,xVar,data,model,region,shift)
         if region=='control':
-            self.plotModelX(workspace,xVar,data,model,region,shift,xRange=[2.5,5],postfix='jpsi')
-            self.plotModelX(workspace,xVar,data,model,region,shift,xRange=[8,12],postfix='upsilon')
+            if self.XRANGE[0]<4:
+                self.plotModelX(workspace,xVar,data,model,region,shift,xRange=[2.5,5],postfix='jpsi')
+            elif self.XRANGE[0]<11: 
+                self.plotModelX(workspace,xVar,data,model,region,shift,xRange=[8,12],postfix='upsilon')
+            
 
         pars = fr.floatParsFinal()
         vals = {}
@@ -1229,23 +1245,30 @@ class HaaLimits(Limits):
     def getComponentFractions(self,model):
         logging.debug('getComponentFractions')
         logging.debug(model)
+        #print "model", model
         if not model:
             print model
             raise
         if not isinstance(model,ROOT.RooAddPdf): 
             return {model.GetTitle(): []}
         pdfs = model.pdfList()
+        #print "pdfs", pdfs
         coefs = model.coefList()
+        #print "coefs", coefs
         result = {}
         for i in range(len(pdfs)):
             subresult = self.getComponentFractions(pdfs.at(i))
+            #print "pdf:", pdfs.at(i)
             for res in subresult:
+                #print "coefs:", [coefs.at(i)]
                 subresult[res] += [coefs.at(i)]
             result.update(subresult)
+        #print "result:", result
         logging.debug('returning')
         logging.debug(str(result))
         return result
 
+    ### add constraints on the parameters
     def buildParams(self,region,vals,errs,integrals,integralerrs,**kwargs):
         logging.debug('buildParams')
         logging.debug(', '.join([region,str(vals),str(errs),str(integrals),str(integralerrs),str(kwargs)]))
@@ -1255,12 +1278,14 @@ class HaaLimits(Limits):
         fpRegion = region.replace('PP','FP')
         for param in vals[region]['']:
             if 'frac' in param: continue
+            print "Building params...", region, param, self.FIXFP
+            channel = region.split("_")[0]
             paramValue = vals[region][''][param]
             paramShifts = {}
             for shift in self.BACKGROUNDSHIFTS:
                 shiftValueUp   = vals[region][shift+'Up'  ][param] - paramValue
                 shiftValueDown = paramValue - vals[region][shift+'Down'][param]
-                paramShifts[shift] = {'up': shiftValueUp, 'down': shiftValueDown}
+                paramShifts[channel+"_"+shift] = {'up': shiftValueUp, 'down': shiftValueDown}
             if self.FIXFP:
                 paramModel = Models.Param(param,
                     value  = paramValue,
@@ -1276,6 +1301,7 @@ class HaaLimits(Limits):
                     workspace.factory('{}[{},{},{}]'.format(param,fpValue,fpValue-10*fpErr,fpValue+10*fpErr))
                     paramModel = None
                 else:
+                    print param, paramShifts, [param.replace(region,fpRegion)], scale
                     paramModel = Models.Param(param,
                         value  = '({})*@0'.format(scale),
                         valueArgs = [param.replace(region,fpRegion)],
@@ -1283,12 +1309,13 @@ class HaaLimits(Limits):
                     )
                     paramModel.build(workspace, param)
             params[param] = paramModel
-            #workspace.Print()
+
         logging.debug('returning')
         logging.debug(str(params))
+        #print "params:", params
         return params
 
-
+    ### add constraints on the integrals
     def buildComponentIntegrals(self,region,vals,errs,integrals,integralerrs, pdf,**kwargs):
         logging.debug('buildComponentIntegrals')
         logging.debug(', '.join([region,str(vals),str(errs),str(integrals),str(integralerrs),str(pdf),str(kwargs)]))
@@ -1308,10 +1335,13 @@ class HaaLimits(Limits):
         allintegrals = {}
         integral_params = []
         for component in components:
+            print "Building component integrals...", region, component
+            channel = region.split("_")[0]
             subint = 1.
             suberr2 = 0.
             # TODO: errors are way larger than they should be, need to look into this
             # dont use these uncertainties
+            #print fracMap.get(component,[])
             for frac in fracMap.get(component,[]):
                 key = frac.GetTitle()
                 if isinstance(frac,ROOT.RooRecursiveFraction):
@@ -1326,13 +1356,15 @@ class HaaLimits(Limits):
             component = self.rstrip(component,'_'+region)
             allerrors[component] = suberr
 
+            print "subint integrals:",subint, integrals
+
             if isinstance(integrals,dict):
                 paramValue = subint*integrals['']
                 paramShifts = {}
                 for shift in self.BACKGROUNDSHIFTS:
                     shiftValueUp   = subint*integrals[shift+'Up'  ] - paramValue
                     shiftValueDown = paramValue - subint*integrals[shift+'Down']
-                    paramShifts[shift] = {'up': shiftValueUp, 'down': shiftValueDown}
+                    paramShifts[channel+"_"+shift] = {'up': shiftValueUp, 'down': shiftValueDown}
             else:
                 paramValue = subint*integrals
             allintegrals[component] = paramValue
@@ -1361,31 +1393,7 @@ class HaaLimits(Limits):
                     fpValue = subint*regInts[fpRegion]['']
                     ppValue = subint*regInts[ppRegion]['']
                     scale   = ppValue/fpValue if fpValue else ppValue
-                    #if 'upsilon2S' in name:
-                    #    relName = 'CMS_haa_relNormUnc_upsilon2S'
-                    #    workspace.factory('{}[0,-10,10]'.format(relName))
-                    #    param = Models.Param(name,
-                    #        value  = '({})*@0*(1+0.05*@1)'.format(scale), # 5% uncertainty
-                    #        valueArgs = [name.replace(region,fpRegion),relName],
-                    #        shifts = paramShifts,
-                    #    )
-                    #elif 'upsilon3S' in name:
-                    #    relName = 'CMS_haa_relNormUnc_upsilon3S'
-                    #    workspace.factory('{}[0,-10,10]'.format(relName))
-                    #    param = Models.Param(name,
-                    #        value  = '({})*@0*(1+0.10*@1)'.format(scale), # 10% uncertainty
-                    #        valueArgs = [name.replace(region,fpRegion),relName],
-                    #        shifts = paramShifts,
-                    #    )
-                    #elif 'jpsi2S' in name:
-                    #    relName = 'CMS_haa_relNormUnc_jpsi2S'
-                    #    workspace.factory('{}[0,-10,10]'.format(relName))
-                    #    param = Models.Param(name,
-                    #        value  = '({})*@0*(1+0.20*@1)'.format(scale), # 20% uncertainty
-                    #        valueArgs = [name.replace(region,fpRegion),relName],
-                    #        shifts = paramShifts,
-                    #    )
-                    #else:
+                    print name, paramShifts, [name.replace(region,fpRegion)], scale
                     param = Models.Param(name,
                         value  = '({})*@0'.format(scale),
                         valueArgs = [name.replace(region,fpRegion)],
@@ -1779,7 +1787,7 @@ class HaaLimits(Limits):
 
     def addCrossSection(self):
         # add higgs cross section
-        tfile = ROOT.TFile.Open('/uscms_data/d3/rhabibul/CombineRunII/CMSSW_10_2_13/src/CombineLimitsRunII/Limits/data/Higgs_YR4_BSM_13TeV.root')
+        tfile = ROOT.TFile.Open('/uscms/home/jingyu/nobackup/Haa/HaaLimits/CMSSW_10_2_13/src/CombineLimits/Limits/data/Higgs_YR4_BSM_13TeV.root')
         ws = tfile.Get('YR4_BSM_13TeV')
         ggF = ws.function('xsec_ggF_N3LO')
         vbf = ws.function('xsec_VBF')
@@ -1788,33 +1796,35 @@ class HaaLimits(Limits):
         vbf_pdfalpha = ws.function('pdfalpha_err_VBF')
 
         # add gg+VBF/gg acceptance correction
-        accfile = ROOT.TFile.Open('/uscms_data/d3/rhabibul/CombineRunII/CMSSW_10_2_13/src/CombineLimitsRunII/HaaLimits/data/acceptance.root')
+        accfile = ROOT.TFile.Open('/uscms/home/jingyu/nobackup/Haa/HaaLimits/CMSSW_10_2_13/src/CombineLimitsRunII/HaaLimits/data/acceptance.root')
         acc = accfile.Get('acceptance')
         accgraph = accfile.Get('acceptance_graph')
         accgraph.Fit(acc)
         from CombineLimitsRunII.Limits.Models import buildSpline
         accspline = buildSpline(self.workspace, 'ggF_VBF_acceptance', ['MH','MA'], None, acc)
-
         self.workspace.factory('pdf_gg[0,-10,10]')
-        for region in self.REGIONS:
-            for proc in self.sigs:
-                formula = '(@0*(1+@4*@2*0.01) + @1*(1+@4*@3*0.01))*@5*@6'
-                #formula = '(@0 + @1)*@2'
-                args = ROOT.RooArgList()
-                args.add(ggF)
-                args.add(vbf)
-                args.add(ggF_pdfalpha)
-                args.add(vbf_pdfalpha)
-                args.add(self.workspace.var('pdf_gg'))
-                args.add(accspline)
-                args.add(self.workspace.function('integral_{}_{}'.format(proc,region)))
-                name = 'fullIntegral_{}_{}'.format(proc,region)
-                spline = ROOT.RooFormulaVar(name,name,formula,args)
-                getattr(self.workspace,'import')(spline, ROOT.RooFit.RecycleConflictNodes())
-                self.addRateParam(name,region,proc)
+        for channel in self.CHANNELS:
+            for region in self.REGIONS:
+                regionText = channel+'_'+region
+                for proc in self.sigs:
+                    formula = '(@0*(1+@4*@2*0.01) + @1*(1+@4*@3*0.01))*@5*@6'
+                    #formula = '(@0 + @1)*@2'
+                    args = ROOT.RooArgList()
+                    args.add(ggF)
+                    args.add(vbf)
+                    args.add(ggF_pdfalpha)
+                    args.add(vbf_pdfalpha)
+                    args.add(self.workspace.var('pdf_gg'))
+                    args.add(accspline)
+                    args.add(self.workspace.function('integral_{}_{}'.format(proc,regionText)))
+                    name = 'fullIntegral_{}_{}'.format(proc,regionText)
+                    spline = ROOT.RooFormulaVar(name,name,formula,args)
+                    getattr(self.workspace,'import')(spline, ROOT.RooFit.RecycleConflictNodes())
+                    print "Adding rateParam", name,regionText,proc+'_'+regionText
+                    self.addRateParam(name,regionText,proc+'_'+regionText)
 
         # alternative SM xsec
-        tfile = ROOT.TFile.Open('/uscms_data/d3/rhabibul/CombineRunII/CMSSW_10_2_13/src/CombineLimitsRunII/Limits/data/Higgs_YR4_SM_13TeV.root')
+        tfile = ROOT.TFile.Open('/uscms/home/jingyu/nobackup/Haa/HaaLimits/CMSSW_10_2_13/src/CombineLimits/Limits/data/Higgs_YR4_SM_13TeV.root')
         ws = tfile.Get('YR4_SM_13TeV')
         ggF = ws.function('xsec_ggF_N3LO')
         vbf = ws.function('xsec_VBF')
@@ -1822,22 +1832,24 @@ class HaaLimits(Limits):
         ggF_pdfalpha = ws.function('pdfalpha_err_ggF_N3LO')
         vbf_pdfalpha = ws.function('pdfalpha_err_VBF')
 
-        for region in self.REGIONS:
-            for proc in self.sigs:
-                formula = '(@0*(1+@4*@2*0.01) + @1*(1+@4*@3*0.01))*@5*@6'
-                #formula = '(@0 + @1)*@2'
-                args = ROOT.RooArgList()
-                args.add(ggF)
-                args.add(vbf)
-                args.add(ggF_pdfalpha)
-                args.add(vbf_pdfalpha)
-                args.add(self.workspace.var('pdf_gg'))
-                args.add(accspline)
-                args.add(self.workspace.function('integral_{}_{}'.format(proc,region)))
-                name = 'fullIntegral_SM_{}_{}'.format(proc,region)
-                spline = ROOT.RooFormulaVar(name,name,formula,args)
-                getattr(self.workspace,'import')(spline, ROOT.RooFit.RecycleConflictNodes())
-                #self.addRateParam(name,region,proc)
+        for channel in self.CHANNELS:
+            for region in self.REGIONS:
+                region = channel+'_'+region
+                for proc in self.sigs:
+                    formula = '(@0*(1+@4*@2*0.01) + @1*(1+@4*@3*0.01))*@5*@6'
+                    #formula = '(@0 + @1)*@2'
+                    args = ROOT.RooArgList()
+                    args.add(ggF)
+                    args.add(vbf)
+                    args.add(ggF_pdfalpha)
+                    args.add(vbf_pdfalpha)
+                    args.add(self.workspace.var('pdf_gg'))
+                    args.add(accspline)
+                    args.add(self.workspace.function('integral_{}_{}'.format(proc,region)))
+                    name = 'fullIntegral_SM_{}_{}'.format(proc,region)
+                    spline = ROOT.RooFormulaVar(name,name,formula,args)
+                    getattr(self.workspace,'import')(spline, ROOT.RooFit.RecycleConflictNodes())
+                    #self.addRateParam(name,region,proc)
 
 
     ###################
@@ -1920,38 +1932,45 @@ class HaaLimits(Limits):
 
 
     def _addShapeSystematic(self,doBinned=False):
-        for shift in self.SHIFTS+['QCDscale_ggH']:
-            if shift=='QCDscale_ggH' and not self.QCDSHIFTS: continue
-            if shift in self.BACKGROUNDSHIFTS and doBinned:
-                syst = {}
-                for proc in self.bgProcesses:
-                    for region in self.REGIONS:
-                        basename = '{}_{}_{}'.format(proc,region,shift)
-                        syst[((proc,),(region,))] = (basename+'Up', basename+'Down')
-                self.addSystematic(shift,'shape',systematics=syst)
-            else:
-                if self.workspace.var(shift): self.addSystematic(shift, 'param', systematics=[0,1])
+        #for shift in self.SHIFTS+['QCDscale_ggH']:
+        print "shifts:", self.SHIFTS, "doBinned:", doBinned, self.CHANNELS
+        for shift in self.SHIFTS:
+            for channel in self.CHANNELS:
+                #print self.workspace.var(shift)
+                if shift=='QCDscale_ggH' and not self.QCDSHIFTS: continue
+                if shift in self.BACKGROUNDSHIFTS and doBinned:
+                    syst = {}
+                    for proc in self.bgProcesses:
+                        for region in self.REGIONS:
+                            basename = '{}_{}_{}'.format(proc,region,shift)
+                            syst[((proc,),(region,))] = (basename+'Up', basename+'Down')
+                            #print "basename:", basename
+                    self.addSystematic(shift,'shape',systematics=syst)
+                else:
+                    if self.workspace.var(channel+'_'+shift): self.addSystematic(channel+'_'+shift, 'param', systematics=[0,1])
     
     def _addAcceptanceSystematic(self):
         accproc = self.sigProcesses
         accsyst = {
-            (accproc,tuple(self.REGIONS)) : 1.005,
+            (accproc,tuple(c+'_'+r for r in self.REGIONS for c in self.CHANNELS)) : 1.005,
         }
+        #print accsyst
         self.addSystematic('CMS_haa_acc','lnN',systematics=accsyst)
 
     def _addLumiSystematic(self):
         # lumi: 2.5% 2016
         lumiproc = self.sigProcesses
         lumisyst = {
-            (lumiproc,tuple(self.REGIONS)) : 1.025,
+            (lumiproc,tuple(c+'_'+r for r in self.REGIONS for c in self.CHANNELS)) : 1.025,
         }
+        #print "lumisyst", lumisyst
         self.addSystematic('lumi_13TeV','lnN',systematics=lumisyst)
 
-    def _addMuonSystematic(self):
+    def _addMuonSystematic(self, **kwargs):
         # from z: 1 % + 0.5 % + 0.5 % per muon for id + iso + trig (pt>20)
         muproc = self.sigProcesses
         musyst = {
-            (muproc,tuple(self.REGIONS)) : 1+math.sqrt(sum([0.01**2,0.005**2]*2+[0.01**2]+[0.005**2])), # 2 lead have iso, tau_mu doesnt, plus iso
+            (muproc,tuple(c+'_'+r for r in self.REGIONS for c in self.CHANNELS)) : 1+math.sqrt(sum([0.01**2,0.005**2]*2+[0.01**2]+[0.005**2])), # 2 lead have iso, tau_mu doesnt, plus iso
         }
         self.addSystematic('CMS_eff_m','lnN',systematics=musyst)
         
