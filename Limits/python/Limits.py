@@ -726,6 +726,6 @@ class Limits(object):
             for group in self.groups:
                 f.write('{0} group = {1}'.format(group,' '.join(self.groups[group])))
 
-            f.write('pdf_gg param 0 1')
+            #f.write('pdf_gg param 0 1')
 
         return shapes

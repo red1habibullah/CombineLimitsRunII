@@ -962,7 +962,8 @@ class HaaLimits(Limits):
             #model.plotOn(xFrame,ROOT.RooFit.Components('upsilon3S'),ROOT.RooFit.LineColor(ROOT.kRed))
             # combined model
             model.plotOn(xFrame)
-        model.paramOn(xFrame,ROOT.RooFit.Layout(0.82,0.98,0.90))
+        model.paramOn(xFrame,ROOT.RooFit.Layout(0.7,0.9,0.95))
+        xFrame.getAttFill().SetFillStyle(0)
 
         if not self.SKIPPLOTS:
             resid = xFrame.residHist()
@@ -996,8 +997,15 @@ class HaaLimits(Limits):
         #prims = canvas.GetListOfPrimitives()
         prims = plotpad.GetListOfPrimitives()
         for prim in prims:
+            #print "paramBox:", prim.GetName(), prim
             if 'paramBox' in prim.GetName():
                 prim.SetTextSize(0.02)
+                #print prim.GetX1NDC(), prim.GetX2NDC(), prim.GetY1NDC(), prim.GetY2NDC()
+                prim.SetX1NDC(0.5)
+                prim.SetX2NDC(0.9)
+                prim.SetY1NDC(0.6)
+                prim.SetY2NDC(0.9)
+                print prim.GetX1NDC(), prim.GetX2NDC(), prim.GetY1NDC(), prim.GetY2NDC()
         mi = xFrame.GetMinimum()
         ma = xFrame.GetMaximum()
         if mi<0:
@@ -1260,7 +1268,7 @@ class HaaLimits(Limits):
         logging.debug(str(result))
         return result
 
-    ### adding shape undertainties
+    ### add constraints on the parameters
     def buildParams(self,region,vals,errs,integrals,integralerrs,**kwargs):
         logging.debug('buildParams')
         logging.debug(', '.join([region,str(vals),str(errs),str(integrals),str(integralerrs),str(kwargs)]))
@@ -1270,13 +1278,14 @@ class HaaLimits(Limits):
         fpRegion = region.replace('PP','FP')
         for param in vals[region]['']:
             if 'frac' in param: continue
-            print "Building params...", param
+            print "Building params...", region, param, self.FIXFP
+            channel = region.split("_")[0]
             paramValue = vals[region][''][param]
             paramShifts = {}
             for shift in self.BACKGROUNDSHIFTS:
                 shiftValueUp   = vals[region][shift+'Up'  ][param] - paramValue
                 shiftValueDown = paramValue - vals[region][shift+'Down'][param]
-                paramShifts[shift] = {'up': shiftValueUp, 'down': shiftValueDown}
+                paramShifts[channel+"_"+shift] = {'up': shiftValueUp, 'down': shiftValueDown}
             if self.FIXFP:
                 paramModel = Models.Param(param,
                     value  = paramValue,
@@ -1292,6 +1301,7 @@ class HaaLimits(Limits):
                     workspace.factory('{}[{},{},{}]'.format(param,fpValue,fpValue-10*fpErr,fpValue+10*fpErr))
                     paramModel = None
                 else:
+                    print param, paramShifts, [param.replace(region,fpRegion)], scale
                     paramModel = Models.Param(param,
                         value  = '({})*@0'.format(scale),
                         valueArgs = [param.replace(region,fpRegion)],
@@ -1302,10 +1312,10 @@ class HaaLimits(Limits):
 
         logging.debug('returning')
         logging.debug(str(params))
-        print "params:", params
+        #print "params:", params
         return params
 
-    ### add constraints on the parameters
+    ### add constraints on the integrals
     def buildComponentIntegrals(self,region,vals,errs,integrals,integralerrs, pdf,**kwargs):
         logging.debug('buildComponentIntegrals')
         logging.debug(', '.join([region,str(vals),str(errs),str(integrals),str(integralerrs),str(pdf),str(kwargs)]))
@@ -1325,7 +1335,8 @@ class HaaLimits(Limits):
         allintegrals = {}
         integral_params = []
         for component in components:
-            print "Building component integrals...",component
+            print "Building component integrals...", region, component
+            channel = region.split("_")[0]
             subint = 1.
             suberr2 = 0.
             # TODO: errors are way larger than they should be, need to look into this
@@ -1345,13 +1356,15 @@ class HaaLimits(Limits):
             component = self.rstrip(component,'_'+region)
             allerrors[component] = suberr
 
+            print "subint integrals:",subint, integrals
+
             if isinstance(integrals,dict):
                 paramValue = subint*integrals['']
                 paramShifts = {}
                 for shift in self.BACKGROUNDSHIFTS:
                     shiftValueUp   = subint*integrals[shift+'Up'  ] - paramValue
                     shiftValueDown = paramValue - subint*integrals[shift+'Down']
-                    paramShifts[shift] = {'up': shiftValueUp, 'down': shiftValueDown}
+                    paramShifts[channel+"_"+shift] = {'up': shiftValueUp, 'down': shiftValueDown}
             else:
                 paramValue = subint*integrals
             allintegrals[component] = paramValue
@@ -1380,31 +1393,7 @@ class HaaLimits(Limits):
                     fpValue = subint*regInts[fpRegion]['']
                     ppValue = subint*regInts[ppRegion]['']
                     scale   = ppValue/fpValue if fpValue else ppValue
-                    #if 'upsilon2S' in name:
-                    #    relName = 'CMS_haa_relNormUnc_upsilon2S'
-                    #    workspace.factory('{}[0,-10,10]'.format(relName))
-                    #    param = Models.Param(name,
-                    #        value  = '({})*@0*(1+0.05*@1)'.format(scale), # 5% uncertainty
-                    #        valueArgs = [name.replace(region,fpRegion),relName],
-                    #        shifts = paramShifts,
-                    #    )
-                    #elif 'upsilon3S' in name:
-                    #    relName = 'CMS_haa_relNormUnc_upsilon3S'
-                    #    workspace.factory('{}[0,-10,10]'.format(relName))
-                    #    param = Models.Param(name,
-                    #        value  = '({})*@0*(1+0.10*@1)'.format(scale), # 10% uncertainty
-                    #        valueArgs = [name.replace(region,fpRegion),relName],
-                    #        shifts = paramShifts,
-                    #    )
-                    #elif 'jpsi2S' in name:
-                    #    relName = 'CMS_haa_relNormUnc_jpsi2S'
-                    #    workspace.factory('{}[0,-10,10]'.format(relName))
-                    #    param = Models.Param(name,
-                    #        value  = '({})*@0*(1+0.20*@1)'.format(scale), # 20% uncertainty
-                    #        valueArgs = [name.replace(region,fpRegion),relName],
-                    #        shifts = paramShifts,
-                    #    )
-                    #else:
+                    print name, paramShifts, [name.replace(region,fpRegion)], scale
                     param = Models.Param(name,
                         value  = '({})*@0'.format(scale),
                         valueArgs = [name.replace(region,fpRegion)],
@@ -1943,17 +1932,22 @@ class HaaLimits(Limits):
 
 
     def _addShapeSystematic(self,doBinned=False):
-        for shift in self.SHIFTS+['QCDscale_ggH']:
-            if shift=='QCDscale_ggH' and not self.QCDSHIFTS: continue
-            if shift in self.BACKGROUNDSHIFTS and doBinned:
-                syst = {}
-                for proc in self.bgProcesses:
-                    for region in self.REGIONS:
-                        basename = '{}_{}_{}'.format(proc,region,shift)
-                        syst[((proc,),(region,))] = (basename+'Up', basename+'Down')
-                self.addSystematic(shift,'shape',systematics=syst)
-            else:
-                if self.workspace.var(shift): self.addSystematic(shift, 'param', systematics=[0,1])
+        #for shift in self.SHIFTS+['QCDscale_ggH']:
+        print "shifts:", self.SHIFTS, "doBinned:", doBinned, self.CHANNELS
+        for shift in self.SHIFTS:
+            for channel in self.CHANNELS:
+                #print self.workspace.var(shift)
+                if shift=='QCDscale_ggH' and not self.QCDSHIFTS: continue
+                if shift in self.BACKGROUNDSHIFTS and doBinned:
+                    syst = {}
+                    for proc in self.bgProcesses:
+                        for region in self.REGIONS:
+                            basename = '{}_{}_{}'.format(proc,region,shift)
+                            syst[((proc,),(region,))] = (basename+'Up', basename+'Down')
+                            #print "basename:", basename
+                    self.addSystematic(shift,'shape',systematics=syst)
+                else:
+                    if self.workspace.var(channel+'_'+shift): self.addSystematic(channel+'_'+shift, 'param', systematics=[0,1])
     
     def _addAcceptanceSystematic(self):
         accproc = self.sigProcesses
