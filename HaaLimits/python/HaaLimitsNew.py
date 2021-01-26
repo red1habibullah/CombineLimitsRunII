@@ -358,11 +358,11 @@ class HaaLimits(Limits):
             if self.XRANGE[0]<4 and  'control' in region:
                 order = 5
             else:
-                order = 3
+                order = 1
             nameC = 'cont{}'.format('_'+tag if tag else '')
             cont = Models.Chebychev(nameC,
                                     x = xVar,
-                                    order = 5,
+                                    order = order,
             )
             cont.build(workspace,nameC)
 
