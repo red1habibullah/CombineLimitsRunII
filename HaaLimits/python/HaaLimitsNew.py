@@ -1277,7 +1277,7 @@ class HaaLimits(Limits):
         ppRegion = region.replace('FP','PP')
         fpRegion = region.replace('PP','FP')
         for param in vals[region]['']:
-            if 'frac' in param: continue
+            if 'frac' in param and not param == "bg1_"+region+"_y_frac" : continue
             print "Building params...", region, param, self.FIXFP
             channel = region.split("_")[0]
             paramValue = vals[region][''][param]

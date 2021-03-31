@@ -137,19 +137,21 @@ class Model(object):
 
     def fit2D(self,ws,hist,name,save=False,doErrors=False,saveDir='', xFitRange=[0,30], yFitRange=[0,30], logy=False, xRange=[], yRange=[]):
         '''Fit the model to a histogram and return the fit values'''
-
+        
         if isinstance(hist,ROOT.TH1):
             dhname = 'dh_{0}'.format(name)
             hist = ROOT.RooDataHist(dhname, dhname, ROOT.RooArgList(ws.var(self.x),ws.var(self.y)), hist)
+
         #self.build(ws,name)
         model = ws.pdf(name)
         #ws.var('x').setRange('xRange', xFitRange[0], xFitRange[1])
         #ws.var('y').setRange('yRange', yFitRange[0], yFitRange[1])
         #print ("X_FIT_RANGE=", xFitRange, "\tY_FIT_RANGE=", yFitRange)
-        #print "DEBUG1:", model, hist, ROOT.RooFit.Save()
-        fr = model.fitTo(hist,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True),ROOT.RooFit.PrintLevel(-1))
+
+        fr = model.fitTo(hist,ROOT.RooFit.Minimizer("Minuit2", "Minos"), ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True),ROOT.RooFit.PrintLevel(-1))
+        #fr = model.fitTo(hist,ROOT.RooFit.Minimizer("GSLMultiMin", "conjugatefr"), ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True),ROOT.RooFit.PrintLevel(3))
+        
         #fr = model.fitTo(hist,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True),ROOT.RooFit.Minos(True))
-        #print "DEBUG2:", fr
         pars = fr.floatParsFinal()
         vals = {}
         errs = {}
@@ -159,6 +161,7 @@ class Model(object):
             #errs[pars.at(p).GetName()] = (pars.at(p).getAsymErrorHi(), pars.at(p).getAsymErrorLo())
             #print pars.at(p).GetName(), pars.at(p).getValV(), pars.at(p).getError(), pars.at(p).getVal(), pars.at(p).getAsymErrorHi(), pars.at(p).getAsymErrorLo()
 
+        #print "xRange:", xRange
         if save:
             if saveDir: python_mkdir(saveDir)
             savename = '{}/{}_{}'.format(saveDir,self.name,name) if saveDir else '{}_{}'.format(self.name,name)
@@ -243,6 +246,7 @@ class Model(object):
             canvas.Print('{0}_xproj.png'.format(savename))
 
             y = ws.var(self.y)
+            #yRange = [18.75, 180]
             if yRange:
                 yFrame = y.frame(ROOT.RooFit.Range(*yRange))
             else:
@@ -1012,7 +1016,7 @@ class Exponential(Model):
         # variables
         if not isinstance(lamb,str): ws.factory('{0}[{1}, {2}, {3}]'.format(lambdaName,*lamb))
         # build model
-        ws.factory("Exponential::{0}({1}, {2})".format(label,self.x,lambdaName))
+        ws.factory("RooExponential::{0}({1}, {2})".format(label,self.x,lambdaName))
         self.params = [lambdaName]
 
 class PolynomialExpr(Model):

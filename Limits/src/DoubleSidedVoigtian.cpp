@@ -71,18 +71,21 @@ Double_t DoubleSidedVoigtian::evaluate() const
   std::complex<Double_t> voigt(0.) ;
   std::complex<Double_t> Z1_at_mean(0,A1) ;
   std::complex<Double_t> Z2_at_mean(0,A2) ;
-  std::complex<Double_t> voigt1_at_mean = RooMath::faddeeva_fast(Z1);
-  std::complex<Double_t> voigt2_at_mean = RooMath::faddeeva_fast(Z2);
+  std::complex<Double_t> voigt1_at_mean = RooMath::faddeeva(Z1_at_mean);
+  std::complex<Double_t> voigt2_at_mean = RooMath::faddeeva(Z2_at_mean);
+  //std::complex<Double_t> voigt1_at_mean = RooMath::faddeeva(Z1);
+  //std::complex<Double_t> voigt2_at_mean = RooMath::faddeeva(Z2);
   double scale_factor = (voigt1_at_mean.real() / voigt2_at_mean.real()) * (sig2/sig1);
   double total_integral = .5 * (1+scale_factor);
+  
   if ( x < mean)
   {
-    voigt = RooMath::faddeeva_fast(Z1);
+    voigt = RooMath::faddeeva(Z1);
     return 0.5 * C1 * voigt.real() / TMath::Power(TMath::Pi(), 0.5) / total_integral;
   }//if
   else
   {
-    voigt = RooMath::faddeeva_fast(Z2);
+    voigt = RooMath::faddeeva(Z2);
     return 0.5 * C2 * voigt.real() / TMath::Power(TMath::Pi(), 0.5) * scale_factor / total_integral;
   }//else
 

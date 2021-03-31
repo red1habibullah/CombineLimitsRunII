@@ -66,6 +66,7 @@ shifts = [u+s for u in sysType for s in ['Up','Down']]
 hmasses = [125]
 
 amasses = [4,5,7,9,10,11,12,13,14,15,17,18,19,20,21]
+#amasses = [5, 7, 18, 20]
 hamap = {
     125:amasses
     } 
@@ -124,7 +125,7 @@ def parse_command_line(argv):
     parser.add_argument('--doubleExpo', action='store_true', help='Use double expo')
     parser.add_argument('--higgs', type=int, default=125, choices=[125,300,750])
     parser.add_argument('--pseudoscalar', type=int, default=7, choices=[5,7,9,11,13,15,17,19,21])
-    parser.add_argument('--yFitFunc', type=str, default='', choices=['G','V','CB','DCB','DG','DV','B','G2','G3','errG','L','MB'])
+    parser.add_argument('--yFitFunc', type=str, default='', choices=['G','V','CB','DCB','DG','DV','DVh','B','G2','G3','errG','L','MB'])
     parser.add_argument('--xRange', type=float, nargs='*', default=[2.5,25])
     parser.add_argument('--yRange', type=float, nargs='*', default=[0,1000])
     parser.add_argument('--tag', type=str, default='')
@@ -261,19 +262,6 @@ if __name__ == "__main__":
         for shift in ['']:
             #shiftLabel = systLabels.get(shift,shift)
             histMap[mode][shift] = {}
-            #for proc in backgrounds:
-                #logging.info('Getting {} {} {}'.format(mode, proc,shift))
-            #    print 'Getting {} {} {}'.format(mode,proc,shift)
-            #    if proc=='datadriven':
-                    #hist = getControlHist('datadriven-control',doUnbinned=doUnbinned,var=var)
-            #        hist = getControlHist('control',doUnbinned=doUnbinned,var=var)
-                    # if subtractSR:
-                    #     # subtract off the signal region and sideband from the control region
-                    #     for mode2 in modes:
-                    #         histsub = getHist('data',doUnbinned=False,var=var,wrappers=wrappers,do2D=False,chi2Mass=chi2Mass,**regionArgs[mode2])
-                    #         histsub.Rebin(histsub.GetNbinsX()/hist.GetNbinsX())
-                    #         hist.Add(histsub,-1)
-                    # histMap[mode][shiftLabel][proc] = hist
             if shift: continue
             
             logging.info('Getting {} observed'.format(mode))
@@ -348,6 +336,7 @@ if __name__ == "__main__":
     haaLimits.initializeWorkspace()
     haaLimits.addControlModels()
     haaLimits.addBackgroundModels(fixAfterControl=True)
+    #sys.exit()
     if not skipSignal:
         haaLimits.XRANGE = [0,30] # override for signal splines
         if project:
@@ -365,7 +354,7 @@ if __name__ == "__main__":
         else:
             haaLimits.addSignalModels(scale=scales)
         haaLimits.XRANGE = xRange
-        
+    #sys.exit()
     if args.addControl: haaLimits.addControlData()
     haaLimits.addData(blind=blind,asimov=args.asimov,addSignal=args.addSignal,doBinned=not doUnbinned,**signalParams) # this will generate a dataset based on the fitted model
     haaLimits.setupDatacard(addControl=args.addControl,doBinned=not doUnbinned)
@@ -376,8 +365,6 @@ if __name__ == "__main__":
     if args.addSignal: name += '_wSig'
     haaLimits.save(name=name)
     print "DONE!!!"
-    sys.exit()
-
     
     #status = main()
     #sys.exit(status)
