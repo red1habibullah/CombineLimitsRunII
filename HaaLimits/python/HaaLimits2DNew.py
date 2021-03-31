@@ -221,7 +221,7 @@ class HaaLimits2D(HaaLimits):
                 erf1 = Models.Erf('erf1',
                     x = yVar,
                     erfScale = kwargs.pop('erfScale_{}'.format(nameE1), [0.05,0,10]),
-                    erfShift = kwargs.pop('erfShift_{}'.format(nameE1), [70,10,200]),
+                    erfShift = kwargs.pop('erfShift_{}'.format(nameE1), [90,10,200]),
                 )
                 erf1.build(workspace,nameE1)
 
@@ -243,7 +243,7 @@ class HaaLimits2D(HaaLimits):
                 erf2 = Models.Erf('erf2',
                     x = yVar,
                     #erfScale = kwargs.pop('erfScale_{}'.format(nameE2), [0.05,0,10]),
-                    #erfShift = kwargs.pop('erfShift_{}'.format(nameE2), [70,10,200]),
+                    #erfShift = kwargs.pop('erfShift_{}'.format(nameE2), [50,10,200]),
                     erfScale = kwargs.pop('erfScale_{}'.format(nameE1),'erfScale_{}'.format(nameE1)),
                     erfShift = kwargs.pop('erfShift_{}'.format(nameE1),'erfShift_{}'.format(nameE1)),
                 )
@@ -267,6 +267,7 @@ class HaaLimits2D(HaaLimits):
                     **{
                         nameB1: [0.95,0,1],
                         nameB2: [0.05,0,1],
+                        'recursive': True,
                     }
                 )
         else:
@@ -281,7 +282,6 @@ class HaaLimits2D(HaaLimits):
 
         name = 'bg_{}'.format(region)
         bg.build(workspace,name)
-        #print "JINGYU5:", bg, self.workspace.pdf('bg_PP_x')
 
     def _buildXModel(self,region,**kwargs):
         super(HaaLimits2D,self).buildModel(region,**kwargs)
@@ -577,20 +577,30 @@ class HaaLimits2D(HaaLimits):
         histMap = self.histMap[region][shift]
         #print "histMap:", histMap, "scale:", scale
 
+        print isKinFit, region
         if self.YRANGE[1] > 100: 
             if yFitFunc == "DCB_Fix": initialMeans = self.GetInitialDCBMean()
-            if "DCB" in yFitFunc: initialValuesDCB = self.GetInitialValuesDCB(isKinFit=isKinFit)
+            if "DCB" in yFitFunc and 'PP' in region:
+                initialValuesDCB = self.GetInitialValuesDCB(isKinFit=True)
+            elif "DCB" in yFitFunc and 'FP' in region:
+                initialValuesDCB = self.GetInitialValuesDCB(isKinFit=False)
             elif yFitFunc == "DG": initialValuesDG = self.GetInitialValuesDG(region=region)
             elif yFitFunc == "L": initialValuesL = self.GetInitialValuesDitau(isLandau=True)
             elif yFitFunc == "V": initialValuesV = self.GetInitialValuesDitau(isLandau=False)
             elif yFitFunc == "BC": initialValuesBC =self.GetInitialValuesBC(region=region)
             elif yFitFunc == "DV": initialValuesDV =self.GetInitialValuesDV(region=region)
+            elif yFitFunc == "DVh": initialValuesDVh = self.GetInitialValuesDVh(region=region)
 
+        #print initialValuesDCB
         aval = self.aToFloat(a)
         thisxrange = [0.8*aval, 1.2*aval]
-        thisyrange = [0.15*h, 1.2*h] if self.YRANGE[1]>100 else [self.YRANGE[0], 1.2*aval]
+        thisyrange = [0.2*h, 1.2*h] if self.YRANGE[1]>100 else [self.YRANGE[0], 1.2*aval]
         if self.YRANGE[1]>100:
-            thisyrange = [0.15*h, 1.2*h]
+            if "TauHadTauHad" in region:
+                thisyrange = [1, 300]
+            else:
+                thisyrange = [20, 180]
+        #print "yRange:", thisyrange
         ws = ROOT.RooWorkspace('sig')
         ws.factory('{0}[{1}, {2}]'.format(self.XVAR,*thisxrange)) 
         ws.var(self.XVAR).setUnit('GeV')
@@ -605,20 +615,24 @@ class HaaLimits2D(HaaLimits):
             mean  = [aval,0.9975*aval,1.0025*aval],#.9975,1.0025
             width = [0.0065*aval,0.001,1],#0.01*aval
             sigma = [0.0070*aval,0.001,1],#0.01*aval
+            #mean = [17.9755, 17.9755, 17.9755],
+            #width = [0.145201, 0.145201, 0.145201],
+            #sigma = [0.186729, 0.186729, 0.186729],
         )
         modelx.build(ws, 'sigx')
         if self.YRANGE[1]>100: # y variable is h mass
             if yFitFunc == "G": 
                 modely = Models.Gaussian('sigy',
                     x = self.YVAR,
-                    mean  = [h,0,1.25*h],
-                    sigma = [0.1*h,0.01,0.5*h],
+                    mean  = [90,60,120],
+                    sigma = [0.1*h,0.01,0.8*h],
                 )
             elif yFitFunc == "V":
                 modely = Models.Voigtian('sigy',
                     x = self.YVAR,
                     mean  = [0.75*h,0,1.25*h],
-                    width = [0.1*h,0.01,0.5*h],
+                    width = [0.1
+                             *h,0.01,0.5*h],
                     sigma = [0.1*h,0.01,0.5*h],
                 )
             elif yFitFunc == "CB":
@@ -630,14 +644,30 @@ class HaaLimits2D(HaaLimits):
                     n = [0.5,.1,10],
                 )
             elif yFitFunc == "DCB":
+                m = initialValuesDCB["h"+str(h)+"a"+str(a)]["mean"]
+                sig = initialValuesDCB["h"+str(h)+"a"+str(a)]["sigma"]
+                A1 = initialValuesDCB["h"+str(h)+"a"+str(a)]["a1"]
+                A2 = initialValuesDCB["h"+str(h)+"a"+str(a)]["a2"]
+                N1 = initialValuesDCB["h"+str(h)+"a"+str(a)]["n1"]
+                N2 = initialValuesDCB["h"+str(h)+"a"+str(a)]["n2"]
+                if N1 > 100:
+                    N1_low = 100
+                    N1_high = 200
+                    N2_low = 0.
+                    N2_high = 1.
+                else:
+                    N1_low = 0.
+                    N1_high = 1.
+                    N2_low = 100
+                    N2_high = 200
                 modely = Models.DoubleCrystalBall('sigy',
                     x = self.YVAR,
-                    mean  = [h,0,1.25*h],
-                    sigma = [initialValuesDCB["h"+str(h)+"a"+str(a)]["sigma"],0.05*h,0.5*h],
-                    a1    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["a1"],0.1,10],
-                    n1    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["n1"],0.,100],
-                    a2    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["a2"],0.1,10],
-                    n2    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["n2"],0.,100],
+                    mean  = [m,   m-10,   m+10],
+                    sigma = [sig, sig-5,  sig+5],
+                    a1    = [A1,  0.5*A1, 2*A1],
+                    n1    = [N1,  N1_low, N1_high],
+                    a2    = [A2,  0.5*A2, 2*A2],
+                    n2    = [N2,  N2_low, N2_high],
                 )
             elif yFitFunc == "DCB_Fix":
                 MEAN = initialMeans["h"+str(h)+"a"+str(a)]["mean"]
@@ -654,9 +684,9 @@ class HaaLimits2D(HaaLimits):
             elif yFitFunc == "DG":
                 modely = Models.DoubleSidedGaussian('sigy',
                     x = self.YVAR,
-                    #mean  = [h,0,1.25*h],
-                    #sigma1 = [0.1*h,0.05*h,0.5*h],
-                    #sigma2 = [0.2*h,0.05*h,0.5*h],
+                    #mean  =  [93 ,80, 110],
+                    #sigma1 = [15, 10, 30],
+                    #sigma2 = [25, 10, 30],
                     mean    = [initialValuesDG["h"+str(h)+"a"+str(a)]["mean"],0.68*h,0.78*h],
                     sigma1  = [initialValuesDG["h"+str(h)+"a"+str(a)]["sigma1"],0.06*h,0.13*h],
                     sigma2  = [initialValuesDG["h"+str(h)+"a"+str(a)]["sigma2"],0.06*h,0.13*h],
@@ -665,21 +695,33 @@ class HaaLimits2D(HaaLimits):
             elif yFitFunc == "DV":
                 modely = Models.DoubleSidedVoigtian('sigy',
                     x = self.YVAR,
-                    # mean  = [0.7*h,0.64*h,0.76*h],
-                    # sigma1 = [0.1*h,0.08*h,0.16*h],
-                    # sigma2 = [0.125*h,0.09*h,0.18*h],
-                    # width1 = [1.0,0.01,10.0],
-                    # width2 = [1.0,0.01,10.0],
+                    #mean  =  [90,  80,  95],
+                    #sigma1 = [10,  1,   20],
+                    #sigma2 = [20,  10,  30],
+                    #width1 = [0.01, 0.0001,1.0],
+                    #width2 = [1, 0.1,10],
                     mean    = [initialValuesDV["h"+str(h)+"a"+str(a)]["mean"],0.68*h,0.9*h],
                     sigma1  = [initialValuesDV["h"+str(h)+"a"+str(a)]["sigma1"],0.06*h,0.16*h],
                     sigma2  = [initialValuesDV["h"+str(h)+"a"+str(a)]["sigma2"],0.06*h,0.14*h],
                     width1  = [initialValuesDV["h"+str(h)+"a"+str(a)]["width1"],0.01,10.0],
-                    width2  = [initialValuesDV["h"+str(h)+"a"+str(a)]["width2"],0.01,10.0],
-                    #mean    = [initialValuesDV["h"+str(h)+"a"+str(a)]["mean"],0.68*h,0.9*h],
-                    #sigma1  = [initialValuesDV["h"+str(h)+"a"+str(a)]["sigma1"],0.,10],
-                    #sigma2  = [initialValuesDV["h"+str(h)+"a"+str(a)]["sigma2"],0.06*h,50],
-                    #width1  = [initialValuesDV["h"+str(h)+"a"+str(a)]["width1"],0.01,500],
-                    #width2  = [initialValuesDV["h"+str(h)+"a"+str(a)]["width2"],0.01,50.0],                                
+                    width2  = [initialValuesDV["h"+str(h)+"a"+str(a)]["width2"],0.01,10.0],                 
+                    yMax = self.YRANGE[1],
+                )
+            elif yFitFunc == "DVh":
+                signal = "h"+str(h)+"a"+str(a)
+                init = initialValuesDVh[signal]
+                modely = Models.DoubleSidedVoigtian('sigy',
+                    x = self.YVAR,
+                    mean    = [init["mean"][0],init["mean"][1],init["mean"][2]],
+                    sigma1  = [init["sigma1"][0],init["sigma1"][1],init["sigma1"][2]],
+                    sigma2  = [init["sigma2"][0],init["sigma2"][1],init["sigma2"][2]],
+                    width1  = [init["width1"][0],init["width1"][1],init["width1"][2]],
+                    width2  = [init["width2"][0],init["width2"][1],init["width2"][2]],
+                    #mean = [init["mean"][0]],
+                    #sigma1  = [init["sigma1"][0]],
+                    #sigma2  = [init["sigma2"][0]],
+                    #width1  = [init["width1"][0]],
+                    #width2  = [init["width2"][0]],
                     yMax = self.YRANGE[1],
                 )
             elif yFitFunc == "MB":
@@ -1019,6 +1061,7 @@ class HaaLimits2D(HaaLimits):
         elif yFitFunc == "DCB" : yparams = ['mean_sigy', 'sigma_sigy', 'a1_sigy', 'n1_sigy', 'a2_sigy', 'n2_sigy']
         elif yFitFunc == "DG"  : yparams = ['mean_sigy', 'sigma1_sigy', 'sigma2_sigy']
         elif yFitFunc == "DV"  : yparams = ['mean_sigy', 'sigma1_sigy', 'sigma2_sigy','width1_sigy','width2_sigy']
+        elif yFitFunc == "DVh" : yparams = ['mean_sigy', 'sigma1_sigy', 'sigma2_sigy','width1_sigy','width2_sigy']
         elif yFitFunc == "MB"  : yparams = ['scale_sigy']
         elif yFitFunc == "B"   : yparams = ['betaScale_sigy','betaA_sigy','betaB_sigy']
         elif yFitFunc == "BC"  : yparams = ['betaScale_sigy','betaA_sigy','betaB_sigy','mean_sigy','sigma_sigy']
@@ -1316,6 +1359,7 @@ class HaaLimits2D(HaaLimits):
         elif yFitFunc == "DCB" : ym = Models.DoubleCrystalBall
         elif yFitFunc == "DG"  : ym = Models.DoubleSidedGaussian
         elif yFitFunc == "DV"  : ym = Models.DoubleSidedVoigtian
+        elif yFitFunc == "DVh" : ym = Models.DoubleSidedVoigtian
         elif yFitFunc == "MB"  : ym = Models.MaxwellBoltzmann
         elif yFitFunc == "B"   : ym = Models.Beta
         elif yFitFunc == "BC"  : ym = Models.BetaConv
@@ -1767,7 +1811,7 @@ class HaaLimits2D(HaaLimits):
             integral = hist.sumEntries('{0}>{2} && {0}<{3} && {1}>{4} && {1}<{5}'.format(xVar,yVar,*self.XRANGE+self.YRANGE)) * scale
             integralerr = getDatasetIntegralError(hist,'{0}>{2} && {0}<{3} && {1}>{4} && {1}<{5}'.format(xVar,yVar,*self.XRANGE+self.YRANGE)) * scale
 
-        fr = model.fitTo(data,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
+        fr = model.fitTo(data,ROOT.RooFit.Minimizer("Minuit2"),ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(3))
 
         workspace.var(xVar).setBins(self.XBINNING)
         workspace.var(yVar).setBins(self.YBINNING)
@@ -2335,24 +2379,24 @@ class HaaLimits2D(HaaLimits):
     def GetInitialValuesDCB(self, isKinFit=False):
         if isKinFit:
             initialValues = {
-              "h125a3p6": { "a1": 6.0, "a2": 1.22, "n1": 5.9, "n2": 9.0, "sigma": 16.22},
-              "h125a4"  : { "a1": 5.4, "a2": 0.99, "n1": 5.9, "n2": 9.0, "sigma": 14.78},
-              "h125a5"  : { "a1": 5.0, "a2": 0.92, "n1": 6.0, "n2": 9.0, "sigma": 14.02},
-              "h125a6"  : { "a1": 5.0, "a2": 1.10, "n1": 5.4, "n2": 9.4, "sigma": 14.18},
-              "h125a7"  : { "a1": 5.0, "a2": 1.69, "n1": 3.9, "n2": 3.7, "sigma": 14.29},
-              "h125a8"  : { "a1": 5.1, "a2": 1.65, "n1": 3.5, "n2": 3.6, "sigma": 14.19},#Rough
-              "h125a9"  : { "a1": 5.2, "a2": 1.07, "n1": 2.8, "n2": 9.0, "sigma": 10.58},
-              "h125a10" : { "a1": 5.1, "a2": 1.17, "n1": 2.9, "n2": 9.2, "sigma": 10.48},#Rough
-              "h125a11" : { "a1": 1.8, "a2": 1.55, "n1": 6.0, "n2": 4.1, "sigma": 9.770},
-              "h125a12" : { "a1": 1.9, "a2": 1.65, "n1": 6.0, "n2": 4.2, "sigma": 9.980},#Rough
-              "h125a13" : { "a1": 2.0, "a2": 2.66, "n1": 6.0, "n2": 1.4, "sigma": 10.04},
-              "h125a14" : { "a1": 2.0, "a2": 2.77, "n1": 6.0, "n2": 1.5, "sigma": 10.14},#Rough
-              "h125a15" : { "a1": 1.3, "a2": 2.19, "n1": 6.0, "n2": 1.9, "sigma": 7.840},
-              "h125a17" : { "a1": 1.5, "a2": 2.08, "n1": 6.0, "n2": 1.8, "sigma": 6.990},
-              "h125a18" : { "a1": 1.5, "a2": 2.06, "n1": 6.0, "n2": 1.8, "sigma": 6.770},#Rough
-              "h125a19" : { "a1": 1.6, "a2": 3.34, "n1": 6.0, "n2": 0.6, "sigma": 6.220},
-              "h125a20" : { "a1": 1.6, "a2": 3.24, "n1": 6.0, "n2": 0.7, "sigma": 6.320},#Rough
-              "h125a21" : { "a1": 1.2, "a2": 1.78, "n1": 6.0, "n2": 2.0, "sigma": 5.339},
+              "h125a3p6": { "a1": 6.0, "a2": 1.22, "n1": 5.9, "n2": 9.0, "sigma": 16.22, "mean": 93},
+              "h125a4"  : { "a1": 1.0, "a2": 2.20, "n1": 125, "n2": 0.01, "sigma": 18.45, "mean": 105},
+              "h125a5"  : { "a1": 1.0, "a2": 3.00, "n1": 125, "n2": 0.1, "sigma": 18.45, "mean": 105},
+              "h125a6"  : { "a1": 5.0, "a2": 1.10, "n1": 5.4, "n2": 9.4, "sigma": 14.18, "mean": 93},
+              "h125a7"  : { "a1": 5.0, "a2": 1.69, "n1": 3.9, "n2": 3.7, "sigma": 14.29, "mean": 93},
+              "h125a8"  : { "a1": 5.1, "a2": 1.65, "n1": 3.5, "n2": 3.6, "sigma": 14.19, "mean": 93},#Rough
+              "h125a9"  : { "a1": 5.2, "a2": 1.07, "n1": 2.8, "n2": 9.0, "sigma": 10.58, "mean": 93},
+              "h125a10" : { "a1": 5.1, "a2": 1.17, "n1": 2.9, "n2": 9.2, "sigma": 10.48, "mean": 93},#Rough
+              "h125a11" : { "a1": 1.8, "a2": 1.55, "n1": 6.0, "n2": 4.1, "sigma": 9.770, "mean": 93},
+              "h125a12" : { "a1": 1.9, "a2": 1.65, "n1": 6.0, "n2": 4.2, "sigma": 9.980, "mean": 93},#Rough
+              "h125a13" : { "a1": 2.0, "a2": 2.66, "n1": 6.0, "n2": 1.4, "sigma": 10.04, "mean": 93},
+              "h125a14" : { "a1": 2.0, "a2": 2.77, "n1": 6.0, "n2": 1.5, "sigma": 10.14, "mean": 93},#Rough
+              "h125a15" : { "a1": 1.3, "a2": 2.19, "n1": 6.0, "n2": 1.9, "sigma": 7.840, "mean": 93},
+              "h125a17" : { "a1": 1.5, "a2": 2.08, "n1": 6.0, "n2": 1.8, "sigma": 6.990, "mean": 93},
+              "h125a18" : { "a1": 7.5, "a2": 0.90, "n1": 0.001, "n2": 125, "sigma": 17, "mean": 93},#Rough
+              "h125a19" : { "a1": 1.6, "a2": 3.34, "n1": 6.0, "n2": 0.6, "sigma": 6.220, "mean": 93},
+              "h125a20" : { "a1": 1.6, "a2": 3.24, "n1": 6.0, "n2": 0.7, "sigma": 6.320, "mean": 93},#Rough
+              "h125a21" : { "a1": 1.2, "a2": 1.78, "n1": 6.0, "n2": 2.0, "sigma": 5.339, "mean": 93},
               "125" : {"a1" : 5.0, "a2": 1.5, "n1": 6.0, "n2": 1.5, "sigma": 10.0},
               "h300a5"  : { "a1": 2.5, "a2": 1.28, "n1": 6.0, "n2": 8.6, "sigma": 37.95},
               "h300a7"  : { "a1": 2.6, "a2": 1.19, "n1": 3.1, "n2": 9.0, "sigma": 35.05},
@@ -2377,24 +2421,24 @@ class HaaLimits2D(HaaLimits):
             }
         else:
             initialValues = {
-              "h125a3p6": { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 12.0},
-              "h125a4"  : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 12.5},
-              "h125a5"  : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 13.5},
-              "h125a6"  : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0},
-              "h125a7"  : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0},
-              "h125a8"  : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0},#Rough
-              "h125a9"  : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0},
-              "h125a10" : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0},#Rough
-              "h125a11" : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0},
-              "h125a12" : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0},#Rough
-              "h125a13" : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0},
-              "h125a14" : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0},#Rough
-              "h125a15" : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0},
-              "h125a17" : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0},
-              "h125a18" : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0},#Rough
-              "h125a19" : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0},
-              "h125a20" : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0},#Rough
-              "h125a21" : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0},
+              "h125a3p6": { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 12.0, "mean": 90},
+              "h125a4"  : { "a1": 0.5, "a2": 1.5, "n1": 125., "n2": 0.01, "sigma": 20.8, "mean": 106.9},
+              "h125a5"  : { "a1": 0.6, "a2": 1.6, "n1": 125., "n2": 10, "sigma": 20.8, "mean": 106.9},
+              "h125a6"  : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0, "mean": 90},
+              "h125a7"  : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0, "mean": 90},
+              "h125a8"  : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0, "mean": 90},#Rough
+              "h125a9"  : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0, "mean": 90},
+              "h125a10" : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0, "mean": 90},#Rough
+              "h125a11" : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0, "mean": 90},
+              "h125a12" : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0, "mean": 90},#Rough
+              "h125a13" : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0, "mean": 90},
+              "h125a14" : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0, "mean": 90},#Rough
+              "h125a15" : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0, "mean": 90},
+              "h125a17" : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0, "mean": 90},
+              "h125a18" : { "a1": 4.0, "a2": 0.5, "n1": 0.001, "n2": 125, "sigma": 18.0, "mean": 90},#Rough
+              "h125a19" : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0, "mean": 90},
+              "h125a20" : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0, "mean": 90},#Rough
+              "h125a21" : { "a1": 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0, "mean": 90},
               "125" : {"a1" : 3.5, "a2": 3.5, "n1": 18.0, "n2": 1.3, "sigma": 14.0},
               "h300a5"  : { "a1": 3.5, "a2": 3.5, "n1": 17.0, "n2": 5.0, "sigma": 35.0},
               "h300a7"  : { "a1": 3.5, "a2": 3.5, "n1": 17.0, "n2": 5.0, "sigma": 36.0},
@@ -2707,6 +2751,47 @@ class HaaLimits2D(HaaLimits):
                  "h125a21": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.50, "width2": 1.20}
                  }
          return initialValues
+
+    def GetInitialValuesDVh(self, region="FP"):
+        if 'PP' in region:
+            initialValues = {
+                "h125a4": { "mean": 92.1,"sigma1": 15.1, "sigma2": 11.1, "width1":1.15 , "width2": 4.00 }, #1.00
+                "h125a5": { "mean": [112, 90, 120], "sigma1": [22, 15, 30], "sigma2": [6.7, 6.0, 7], "width1":[8.0, 7, 9] , "width2": [19, 15, 25] },
+                "h125a7": { "mean": [112, 90, 120], "sigma1": [22, 15, 30], "sigma2": [1, 0., 10], "width1":[8.0, 5, 12] , "width2": [20, 15, 25] },
+                "h125a8": { "mean": 89.1,"sigma1": 15.1, "sigma2": 11.1, "width1":1.50 , "width2": 1.15 },
+                "h125a9": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.75 , "width2": 1.25},
+                "h125a10": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.75 , "width2": 1.25},
+                "h125a11": { "mean": 92.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.50 , "width2": 1.25},
+                "h125a12": { "mean": 91.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.50 , "width2": 1.15},
+                "h125a13": { "mean": 90.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.50 , "width2": 1.15},
+                "h125a14": { "mean": 90.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.75 , "width2": 4.20}, #1.20
+                "h125a15": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.55 , "width2": 1.25},
+                "h125a17": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.60 , "width2": 1.20},
+                "h125a18": { "mean": [90.2, 85, 95], "sigma1": [14.3, 10, 20], "sigma2": [16.5, 10, 20], "width1":[1.6, 0., 5.] , "width2": [20, 18, 30]},
+                "h125a19": { "mean": [90.2, 85, 95], "sigma1": [14.3, 10, 20], "sigma2": [16.5, 10, 20], "width1":[1.65, 0., 5.] , "width2": [20, 18, 30]},
+                "h125a20": { "mean": [90.2, 85, 95], "sigma1": [14.3, 10, 20], "sigma2": [16.5, 10, 20], "width1":[1.65, 0., 5.] , "width2": [20, 18, 30]},
+                "h125a21": { "mean": [90.2, 85, 95], "sigma1": [14.3, 10, 20], "sigma2": [16.5, 10, 20], "width1":[1.65, 0., 5.] , "width2": [20, 18, 30]}
+                }
+        elif 'FP' in region:
+            initialValues = {
+                "h125a4": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.5 , "width2": 1.0},
+                "h125a5": { "mean": [106, 100, 110], "sigma1": [22, 15, 35], "sigma2": [0.1, 0, 1], "width1": [37, 0.1, 50] , "width2": [55, 10, 100] },
+                "h125a7": { "mean": [106, 100, 110], "sigma1": [22, 15, 35], "sigma2": [0.1, 0, 1], "width1": [37, 0.1, 50] , "width2": [55, 10, 100] },
+                "h125a8": { "mean": 89.5,"sigma1": 15.1, "sigma2": 11.1, "width1":1.50 , "width2": 1.15 },
+                "h125a9": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.50 , "width2": 1.10},
+                "h125a10": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.50 , "width2": 1.25},
+                "h125a11": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.75 , "width2": 1.25},
+                "h125a12": { "mean": 90.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.50 , "width2": 1.15},
+                "h125a13": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.50 , "width2": 1.15},
+                "h125a14": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.75 , "width2": 1.20},
+                "h125a15": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.55 , "width2": 1.20},
+                "h125a17": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.75 , "width2": 1.00},
+                "h125a18": { "mean": [85, 80, 100], "sigma1": [8, 5, 15], "sigma2": [0.1, 0, 1], "width1":[20, 10, 50], "width2": [80, 50, 200] },
+                "h125a19": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.85, "width2": 1.00},
+                "h125a20": { "mean": [85, 80, 100], "sigma1": [8, 5, 15], "sigma2": [0.1, 0, 1], "width1":[20, 10, 50], "width2": [80, 50, 200] },
+                "h125a21": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.50, "width2": 1.20}
+            }
+        return initialValues
 
 
          

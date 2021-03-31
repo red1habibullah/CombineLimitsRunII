@@ -107,7 +107,7 @@ def getDataset(File,channel,type,shift,xVar='invMassMuMu',yVar='visFourbodyMass'
     }
 
     print "getDataset:", type
-    #print File
+    print File
     if channel=="TauMuTauHad" or channel=="TauETauHad" or channel=="TauHadTauHad":
         if project and 'datadriven' in type:
             dataset =getRooDatasetFake(File,selection=' && '.join([selDatasets['invMassMuMu'],selDatasets['visFourbodyMass']]),xRange=thisxrange,weight='fakeRateEfficiency',yRange=thisyrange,project=xVar,xVar=xVar,yVar=yVar)  
@@ -201,7 +201,9 @@ def getSignalHist(proc,channel,**kwargs):
         if doUnbinned:
             hists = []
             histsname=[]
-            sampleDir = baseDir+channel+'/RooDatasets/SignalMCSystematics/'
+            sampleDir = baseDir+channel+'/RooDataSets/SignalMCSystematics/'
+            if channel == "TauHadTauHad":
+                sampleDir = baseDir+channel+'/RooDatasets/SignalMCSystematics/'
             #print SampleMap2017[proc]
             if proc[-2]=='A': aMass=proc[-1]
             elif proc[-3]=='A': aMass=proc[-2]+proc[-1] 
@@ -263,7 +265,9 @@ def getDatadrivenHist(proc,channel,**kwargs):
     #else:
     #    plot = varHists[var[0]]
     if channel=='TauMuTauHad' or channel=='TauETauHad' or channel=='TauHadTauHad':
-        sampleDir = baseDir+channel+'/RooDatasets/DataDrivenSystematics/'
+        sampleDir = baseDir+channel+'/RooDataSets/DataDrivenSystematics/'
+        if channel == 'TauHadTauHad':
+            sampleDir = baseDir+channel+'/RooDatasets/DataDrivenSystematics/'
         #samples = glob.glob(samples)
         if doUnbinned:
             hists = []

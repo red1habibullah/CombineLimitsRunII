@@ -81,7 +81,9 @@ amasses_full = [x*.1 for x in range(36,210,1)] + [21.0]
 #hdfs_dir = '/hdfs/store/user/dntaylor/2019-08-27_MuMuTauTauLimits_v1' # lower lowmass top edge to 8.5
 #hdfs_dir = '/hdfs/store/user/dntaylor/2019-09-18_MuMuTauTauLimits_v1' # to fixed slope
 #hdfs_dir='/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017/Limits/TauETauHad'
-hdfs_dir='/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017Deep/TauMuTauHad/Limits/mediumDeepVSjet/'
+#hdfs_dir='/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017Deep/TauMuTauHad/Limits/mediumDeepVSjet/'
+hdfs_dir='root://cmseos.fnal.gov//eos/uscms/store/user/zhangj/HaaLimits/'
+
 # this is the double expo test
 if doDouble:
     #hdfs_dir = '/hdfs/store/user/dntaylor/2019-10-18_MuMuTauTauLimits_DoubleExpo_v1' # test
@@ -110,7 +112,7 @@ hs_grid_dir = '/hdfs/store/user/dntaylor/2019-11-27_MuMuTauTauLimits_MergedGridP
 #higgsCombineHtoAAH125A20_mm_h_parametric_highmassWith1DFitsDVteth.AsymptoticLimits.mH125.root 
 
 #tag = 'with1DFits'
-tag = 'REGIONWith1DFits1ExpoDVmediumDeepVSjet'
+tag = 'REGIONWith1DFits_TauHadTauHad_DoubleExpo_DV_0p3'
 if doDouble: tag = 'REGIONWith1DFitsDoubleExpoDVmediumDeepVSjet'
 if doDM: 
     tag += 'DM'
@@ -382,11 +384,14 @@ def readQs(mode,h,a):
 
     else:
 
+        
         if 'parametric' in mode:
             #tfile = ROOT.TFile.Open('{hdfs}/{m}/{h}/higgsCombineHToAAH{h}A{a:.1f}_{m}.AsymptoticLimits.mH{h}.root'.format(hdfs=hdfs_dir,h=h,a=a,m=mode,astr=astr))
             #/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017/Limits/TauMuTauHad/highmass/125/
-            tfile = ROOT.TFile.Open('{hdfs}/{m}/{h}/{a}/higgsCombineHtoAAH125AX_mm_h_parametric_{m}With1DFits1ExpoDVmediumDeepVSjet.AsymptoticLimits.mH{h}.root'.format(hdfs=hdfs_dir,h=h,a=a,m=mode.split('_')[-1].split('W')[0]))
-            
+            #tfile = ROOT.TFile.Open('{hdfs}/{m}/{h}/{a}/higgsCombineHtoAAH125AX_mm_h_parametric_{m}With1DFits1ExpoDVmediumDeepVSjet.AsymptoticLimits.mH{h}.root'.format(hdfs=hdfs_dir,h=h,a=a,m=mode.split('_')[-1].split('W')[0]))
+            regionmode = mode.split('_')[5].replace('With1DFits','')
+            tfile = ROOT.TFile.Open('{hdfs}higgsCombinem{h}_ma{a}_{mode}_TauHadTauHad_0p7_DoubleExpo_DV.AsymptoticLimits.mH125.root'.format(hdfs=hdfs_dir, h=h, a=a, mode=regionmode))
+            print tfile
         else:
             tfile = ROOT.TFile.Open('{hdfs}/{m}/{h}/higgsCombineHToAAH{h}A{a}_{m}.AsymptoticLimits.mH{h}.root'.format(hdfs=hdfs_dir,h=h,a=a,m=mode))
         try:
@@ -410,6 +415,7 @@ regionXs = {
 }
 
 for m in allModes:
+    print m
     if 'REGION' in m:
         mlow = m.replace('REGION','lowmass')
         dfile = ROOT.TFile.Open('datacards_shape/MuMuTauTau/{m}.root'.format(m=mlow))
@@ -469,11 +475,13 @@ for m in allModes:
 
                 #if 'hkf' in thisMode:
                 #    thisMode = thisMode + '_chi2H{}'.format(h)
-
+                #print "thisMode",thisMode
+                
                 qs, goodqs[rm][h][a] = readQs(thisMode,h,a)
                 if a==thisas[0] or a==thisas[-1]: # override
                     goodqs[rm][h][a] = [True]*6
                 if not qs: continue
+                print qs
                 outline = ':'.join(['{:.3f}'.format(x) for x in qs])
                 logging.info('{0}:{1}: Limits: {2}'.format(h,a,outline))
 
@@ -608,7 +616,7 @@ for m in allModes:
             plotMethod(       goodas[m][h], quartilesxsecsm[m][h],'{pdir}/{m}-limits/{h}_xsec_sm_log_smooth'.format(pdir=pdir,h=h,m=m),  goodqs=goodqs[m][h], xaxis='m_{a} (GeV)', smooth=True, yaxis=label,blind=b,logy=1,ymin=ymin,ymax=ymax,legendpos=lpos,numcol=1,plotunity=False,leftmargin=0.20,legendtitle=legendtitle,additionaltext=additionaltext,isprelim=isprelim)
 
         ymin = 0
-        ymax = 2e-3
+        ymax = 5e-3
         if h==300: ymax = 2e-3
         if h==750: ymax = 2e-2
         plotMethod(       goodas[m][h], quartilesbr[m][h],  '{pdir}/{m}-limits/{h}_br'.format(pdir=pdir,h=h,m=m),               goodqs=goodqs[m][h], xaxis='m_{a} (GeV)',              yaxis=thisbr,blind=b,logy=0,ymin=ymin,ymax=ymax,legendpos=lpos,numcol=1,plotunity=False,leftmargin=0.20,legendtitle=legendtitle,additionaltext=additionaltext,isprelim=isprelim)
@@ -618,7 +626,7 @@ for m in allModes:
             plotMethod(   goodas[m][h], quartilesbr[m][h],  '{pdir}/{m}-limits/comp_{h}_br_smooth'.format(pdir=pdir,h=h,m=m),   goodqs=goodqs[m][h], xaxis='m_{a} (GeV)', smooth=True, yaxis=thisbr,blind=b,logy=0,ymin=ymin,ymax=ymax,legendpos=lpos,numcol=1,plotunity=False,leftmargin=0.20,legendtitle=legendtitle,additionaltext=additionaltext,isprelim=isprelim,addResolved=True)
 
         ymin = 5e-6
-        ymax = 2e-3
+        ymax = 5e-3
         if h==300: ymax = 5e-3
         if h==750: ymax = 5e-2
         plotMethod(       goodas[m][h], quartilesbr[m][h],  '{pdir}/{m}-limits/{h}_br_log'.format(pdir=pdir,h=h,m=m),           goodqs=goodqs[m][h], xaxis='m_{a} (GeV)',              yaxis=thisbr,blind=b,logy=1,ymin=ymin,ymax=ymax,legendpos=lpos,numcol=1,plotunity=False,leftmargin=0.20,legendtitle=legendtitle,additionaltext=additionaltext,isprelim=isprelim)
