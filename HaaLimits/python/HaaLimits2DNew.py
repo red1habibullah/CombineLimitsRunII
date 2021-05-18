@@ -30,7 +30,7 @@ class HaaLimits2D(HaaLimits):
 
     YRANGE = [50,1000]
     YBINNING = 950
-    YLABEL = 'm_{#mu#mu#tau_{#mu}#tau_{h}}'
+    YLABEL = 'm_{#mu#mu#tau#tau}'
     YVAR = 'visFourbodyMass'
     YCORRELATION = False
     SPLITY = False
@@ -565,6 +565,7 @@ class HaaLimits2D(HaaLimits):
 
     def fitSignal(self,h,a,region,shift='',**kwargs):
         scale = kwargs.get('scale',1)
+        #print "scale:", scale
         if isinstance(scale,dict): scale = scale.get(self.SIGNAME.format(h=h,a=a),1)
         ygausOnly = kwargs.get('ygausOnly',False)
         isKinFit = kwargs.get('isKinFit',False)
@@ -982,6 +983,7 @@ class HaaLimits2D(HaaLimits):
             integralerr = getHistogram2DIntegralError(histMap[self.SIGNAME.format(h=h,a=a)]) * scale
         else:
             integral = histMap[self.SIGNAME.format(h=h,a=a)].sumEntries('{0}>{2} && {0}<{3} && {1}>{4} && {1}<{5}'.format(self.XVAR,self.YVAR,*self.XRANGE+self.YRANGE)) * scale
+            print "integral:", h, a, histMap[self.SIGNAME.format(h=h,a=a)].sumEntries('{0}>{2} && {0}<{3} && {1}>{4} && {1}<{5}'.format(self.XVAR,self.YVAR,*self.XRANGE+self.YRANGE))
             #print "hist:", histMap[self.SIGNAME.format(h=h,a=a)], histMap[self.SIGNAME.format(h=h,a=a)].sumEntries('{0}>{2} && {0}<{3} && {1}>{4} && {1}<{5}'.format(self.XVAR,self.YVAR,*self.XRANGE+self.YRANGE))
             #print "integral:", integral, '{0}>{2} && {0}<{3} && {1}>{4} && {1}<{5}'.format(self.XVAR,self.YVAR,*self.XRANGE+self.YRANGE), self.XVAR,self.YVAR,self.XRANGE,self.YRANGE, scale
             integralerr = getDatasetIntegralError(histMap[self.SIGNAME.format(h=h,a=a)],'{0}>{2} && {0}<{3} && {1}>{4} && {1}<{5}'.format(self.XVAR,self.YVAR,*self.XRANGE+self.YRANGE)) * scale
@@ -1684,7 +1686,7 @@ class HaaLimits2D(HaaLimits):
         if load:
             allintegrals, errors = self.loadComponentIntegrals(region)
         if not skipFit:
-            allintegrals, errors = self.buildComponentIntegrals(region,vals,errs,ints,interrs, workspace.pdf('bg_control'))
+            allintegrals, errors = self.buildComponentIntegrals('',region,vals,errs,ints,interrs, workspace.pdf('bg_control'))
 
         print workspace.Print("V")
 
@@ -1799,19 +1801,16 @@ class HaaLimits2D(HaaLimits):
         model = workspace.pdf('bg_{}_xy'.format(region))
         name = 'data_prefit_{}{}'.format(region,'_'+shift if shift else '')
         hist = self.histMap[region][shift]['dataNoSig']
-        #print "name:", name
-        #print "histMap "+region+":", self.histMap[region].keys()
-        #print "hist:", hist, region, shift
         if hist.InheritsFrom('TH1'):
             integral = hist.Integral() * scale # 2D restricted integral?
-            integralerr = getHistogramIntegralError(hist) * scale
+            integralerr = getHistogram2DIntegralError(hist) * scale
             data = ROOT.RooDataHist(name,name,ROOT.RooArgList(workspace.var(xVar),workspace.var(yVar)),hist)
         else:
             data = hist.Clone(name)
             integral = hist.sumEntries('{0}>{2} && {0}<{3} && {1}>{4} && {1}<{5}'.format(xVar,yVar,*self.XRANGE+self.YRANGE)) * scale
             integralerr = getDatasetIntegralError(hist,'{0}>{2} && {0}<{3} && {1}>{4} && {1}<{5}'.format(xVar,yVar,*self.XRANGE+self.YRANGE)) * scale
 
-        fr = model.fitTo(data,ROOT.RooFit.Minimizer("Minuit2"),ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(3))
+        fr = model.fitTo(data,ROOT.RooFit.Minimizer("Minuit2"),ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
 
         workspace.var(xVar).setBins(self.XBINNING)
         workspace.var(yVar).setBins(self.YBINNING)
@@ -2068,8 +2067,8 @@ class HaaLimits2D(HaaLimits):
                 if load:
                     allintegrals[region], errors[region] = self.loadComponentIntegrals(region)
                 if not skipFit:
-                    allparams[region] = self.buildParams(region,vals,errs,integrals,integralerrs)
-                    allintegrals[region], errors[region] = self.buildComponentIntegrals(region,vals,errs,integrals,integralerrs, workspace.pdf('bg_{}_x'.format(region)))
+                    allparams[region] = self.buildParams(channel,region,vals,errs,integrals,integralerrs)
+                    allintegrals[region], errors[region] = self.buildComponentIntegrals(channel,region,vals,errs,integrals,integralerrs, workspace.pdf('bg_{}_x'.format(region)))
 
         if fixAfterControl:
             self.fix(False, workspace=workspace)

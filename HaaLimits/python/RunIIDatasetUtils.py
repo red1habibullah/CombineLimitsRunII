@@ -79,17 +79,23 @@ def getHistControl(f,selection='1',xVar='invMassMuMu',Binning='1'):
     hist.SetDirectory(ROOT.gROOT)
     return hist
 
-def getHisto(f,xVar='invMassMuMu',process=''):
-    ''' Get 1D Histogram directly from file '''
+def getHisto(f,do2D,channel,xVar='invMassMuMu',process=''):
+    ''' Get Histogram directly from file '''
+    if do2D: xVar='invMassMuMuVisMassMuMuTauTau'
     
     if process == "data":
         xVarnew=xVar+"3P1F1Only"
     elif process =="datadriven":
-        xVarnew=xVar+"3P1F1"
+        if channel == "TauMuTauE":
+            xVarnew=xVar+"3P1F1"
+        else:
+            xVarnew=xVar+"3P1F"
     else:
         xVarnew=xVar
     file=ROOT.TFile.Open(f)
+    #print f, xVarnew
     histo=file.Get(xVarnew)
+    #print histo
     histo.SetDirectory(ROOT.gROOT)
     #print hist
     return histo
@@ -98,7 +104,7 @@ def getHisto(f,xVar='invMassMuMu',process=''):
 #################
 ### Utilities ###
 #################
-def getDataset(File,channel,type,shift,xVar='invMassMuMu',yVar='visFourbodyMass'):
+def getDataset(File,channel,type,shift,do2D,xVar='invMassMuMu',yVar='visFourbodyMass'):
     thisxrange = xRange
     thisyrange = yRange
     selDatasets = {
@@ -108,11 +114,13 @@ def getDataset(File,channel,type,shift,xVar='invMassMuMu',yVar='visFourbodyMass'
 
     print "getDataset:", type
     print File
-    if channel=="TauMuTauHad" or channel=="TauETauHad" or channel=="TauHadTauHad":
+    if channel=="TauMuTauHad" or channel=="TauETauHad" or channel=="TauHadTauHad" or channel == "TauHadTauHad_2017" or channel == "TauHadTauHad_2016" or channel == "TauHadTauHad_2018" or channel == "TauMuTauHad_2017" or channel == "TauMuTauHad_2017Cut" or channel == "TauMuTauHad_2017CutV2":
         if project and 'datadriven' in type:
-            dataset =getRooDatasetFake(File,selection=' && '.join([selDatasets['invMassMuMu'],selDatasets['visFourbodyMass']]),xRange=thisxrange,weight='fakeRateEfficiency',yRange=thisyrange,project=xVar,xVar=xVar,yVar=yVar)  
+            dataset =getRooDatasetFake(File,selection=' && '.join([selDatasets['invMassMuMu'],selDatasets['visFourbodyMass']]),xRange=thisxrange,weight='fakeRateEfficiency',yRange=thisyrange,project=xVar,xVar=xVar,yVar=yVar)
+        # For FP region
         elif not project and 'datadriven' in type:
             dataset =getRooDatasetFake(File,selection=' && '.join([selDatasets['invMassMuMu'],selDatasets['visFourbodyMass']]),xRange=thisxrange,weight='fakeRateEfficiency',yRange=thisyrange,project='',xVar=xVar,yVar=yVar)
+        # For PP region
         elif not project and 'data' in type:
             dataset =getRooDataset(File,selection=' && '.join([selDatasets['invMassMuMu'],selDatasets['visFourbodyMass']]),xRange=thisxrange,weight='',yRange=thisyrange,project='',xVar=xVar,yVar=yVar)
         else:
@@ -120,15 +128,15 @@ def getDataset(File,channel,type,shift,xVar='invMassMuMu',yVar='visFourbodyMass'
             # For signal dataset, use a different xRange and selection
             dataset =getRooDataset(File,selection='',xRange=[0,30],weight=weightname,yRange=thisyrange,project='',xVar=xVar,yVar=yVar,shift=shift)
     
-    elif channel =="TauMuTauE":
+    elif channel =="TauMuTauE" or channel == "TauMuTauMu":
         print File
         if 'datadriven' in type:
             print type
-            dataset=getHisto(File,process='datadriven')
+            dataset=getHisto(File,do2D,channel,process='datadriven')
         elif 'data' in type:
-            dataset= getHisto(File,process='data')
+            dataset= getHisto(File,do2D,channel,process='data')
         else:
-            dataset=getHisto(File,process='signal')
+            dataset=getHisto(File,do2D,channel,process='signal')
     else:
         raise ValueError('Channel Unknown in getDataset')
 
@@ -184,62 +192,41 @@ def getSignalHist(proc,channel,**kwargs):
     name = proc+region+shift
     print "name:", name
 
-    #if do2D:
-    #    plot = '{}_{}'.format(*[varHists[v] for v in var])
-    #else:
-    #    plot = varHists[var[0]]
-        
-    #if doUnbinned:
-    #    plot += '_dataset'
-    #    plotname = 'region{}/{}'.format(region,plot)
-        #print "Doing unbinned..."
-        #print "plotname:", plotname
-    #else:
-    #    print "Doing binned..."
+    if proc[-2]=='A': aMass=proc[-1]
+    elif proc[-3]=='A': aMass=proc[-2]+proc[-1]
         
     if channel=="TauMuTauHad" or channel=="TauETauHad" or channel=="TauHadTauHad":
         if doUnbinned:
             hists = []
-            histsname=[]
             sampleDir = baseDir+channel+'/RooDataSets/SignalMCSystematics/'
             if channel == "TauHadTauHad":
                 sampleDir = baseDir+channel+'/RooDatasets/SignalMCSystematics/'
-            #print SampleMap2017[proc]
-            if proc[-2]=='A': aMass=proc[-1]
-            elif proc[-3]=='A': aMass=proc[-2]+proc[-1] 
-            #aMass = proc[-1]
-            #print "aMass:", aMass
             if shift=='':
                 filename = sampleDir+channel+'_HaaMC_am'+aMass+'_'+region+'_'+discriminator+'.root'
             else:
                 filename = sampleDir+channel+'_HaaMC_am'+aMass+'_'+region+'_'+discriminator+'_'+shift+'.root'
             print filename
-            hists=[getDataset(filename,channel,proc,shift)]
-            #hists=[getDataset(s,channel,proc) for s in SampleMap2017[proc] if '_'+region in s and channel in s and '_'+discriminator in s]
-            #print "hists:", hists
-            
-            #if len(hists)>1:
-            #    hist = sumDatasets(name,*hists) 
-            #else:
+            hists=[getDataset(filename,channel,proc,shift,do2D)]
             hist = hists[0].Clone(name)
 
     elif channel=='TauMuTauE':
-        if proc =='data':
-            print "Channel "+channel
-            print proc
-            print region
-            hists=[getDataset(s,channel,proc,shift) for s in SampleMapNew2017[proc] if '_'+region in s and channel in s and 'MuIso'+'_'+muIdList[1]+'_'+'EleId'+'_'+eleIdList[2] in s]
-            print "Histogram Loaded"
-            #if len(hists)>1:
-            #    hist = sumHists(name,*hists)
-            #else:
-            hist = hists[0].Clone(name)
-
-        else:
-            hists=[getDataset(s,channel,proc,shift) for s in SampleMapNew2017[proc] if '_'+region in s and channel in s and muIdLabel[1]+'_'+eleIdLabel[2] in s]
-            #if len(hists)>1:
-            #    hist = sumHists(name,*hists)
-            #else:
+        sampleDir = prefix+baseDirRooDatahists+"SignalMC/"
+        filename = sampleDir+channel+"_HaaMC_am"+aMass+"_"+muId+"MuIso_"+eleId+"EleId_signalRegion.root"
+        hists=[getDataset(filename,channel,proc,shift,do2D)]
+        hist = hists[0].Clone(name)
+    elif channel=='TauMuTauMu':
+        sampleDir = prefix+baseDirRooDatahists+"SignalMC/"
+        filename = sampleDir+channel+"_HaaMC_am"+aMass+"_"+muId+"MuIso_signalRegion.root"
+        hists=[getDataset(filename,channel,proc,shift,do2D)]
+        hist = hists[0].Clone(name)
+    elif channel == "TauHadTauHad_2017" or channel == "TauHadTauHad_2016" or channel == "TauHadTauHad_2018" or channel == "TauMuTauHad_2017" or channel == "TauMuTauHad_2017Cut" or channel == "TauMuTauHad_2017CutV2":
+        sampleDir = baseDir
+        if doUnbinned:
+            if shift=='':
+                filename = sampleDir+'HaaMC_am'+aMass+'_'+channel+'_'+method+'_'+discriminator+'_'+region+'.root'
+            else:
+                filename = sampleDir+'HaaMC_am'+aMass+'_'+channel+'_'+method+'_'+discriminator+'_'+region+'_'+shift+'.root'
+            hists=[getDataset(filename,channel,proc,shift,do2D)]
             hist = hists[0].Clone(name)
     else:
         raise ValueError('Channel Unknown in getHist')
@@ -259,53 +246,47 @@ def getDatadrivenHist(proc,channel,**kwargs):
     #sumDM = kwargs.pop('sumDecayModes',[])
     name = 'datadriven'+region+source+shift
     print "name", name
-    #if dm>=0: name += str(dm)
-    #if do2D:
-    #    plot = '{}_{}'.format(*[varHists[v] for v in var])
-    #else:
-    #    plot = varHists[var[0]]
+    
     if channel=='TauMuTauHad' or channel=='TauETauHad' or channel=='TauHadTauHad':
         sampleDir = baseDir+channel+'/RooDataSets/DataDrivenSystematics/'
         if channel == 'TauHadTauHad':
             sampleDir = baseDir+channel+'/RooDatasets/DataDrivenSystematics/'
-        #samples = glob.glob(samples)
+
         if doUnbinned:
             hists = []
-            histsname=[]
             ### Loading with fakaRate?? ###
             #print SampleMap2017['datadriven']
             if shift=='':
                 filename = sampleDir+channel+'_'+region+'_'+discriminator+'.root'
             else:
                 filename = sampleDir+channel+'_'+region+'_'+discriminator+'_'+shift+'.root'
-            hists=[getDataset(filename,channel,proc,shift)]
-            #hists=[getDataset(s,channel,proc) for s in SampleMap2017['datadriven'] if '_'+region in s and channel in s and '_' + discriminator in s if shift in s]
-            #print "hists:",hists
+            hists=[getDataset(filename,channel,proc,shift, do2D)]
 
-            #print histsname
-            #if len(hists) >1:
-            #    hist = sumDatasets(name,*hists)
-            #else:
             hist = hists[0].Clone(name)
         else:
             hists = []
             print "Doing binned, cannot get datadriven hist!"
             sys.exit()
-            #for plotname in plotnames:
-            #if do2D:
-                #hists = [getHist2D(s,selection=' && '.join([selHists['invMassMuMu'],selHists['visFourbodyMass']])) for s in SampleMap2017[proc] if '_'+region in s and channel in s and '_'+discriminator in s]
-            #else:
-            #hists += [wrappers[s+shift].getHist(plotname) for s in sampleMap['datadriven'] if '_'+region in s and channels[3] in s] 
-                #hist = sumHists(name,*hists)
     elif channel=='TauMuTauE':
-        hists=[getDataset(s,channel,proc) for s in SampleMapNew2017['datadriven'] if '_'+region in s and channel in s and 'MuIso'+'_'+muIdList[1]+'_'+'EleId'+'_'+eleIdList[2] in s]
-        #if len(hists) >1:
-        #    hist = sumDatasets(name,*hists)
-        #else:
+        sampleDir = prefix+baseDirRooDatahists+"DataDriven/"
+        filename = sampleDir+channel+'_'+region+'_MuIso_'+muId+'_EleId_'+eleId+'.root'
+        hists = [getDataset(filename,channel,proc,'', do2D)]
         hist = hists[0].Clone(name)
-                
+    elif channel=='TauMuTauMu':
+        sampleDir = prefix+baseDirRooDatahists+"DataDriven/"
+        filename = sampleDir+channel+'_'+region+'_MuIso_'+muId+".root"
+        hists = [getDataset(filename,channel,proc,'', do2D)]
+        hist = hists[0].Clone(name)
         
-        #MuIso_loose_EleId_loose
+    elif channel == "TauHadTauHad_2017" or channel == "TauHadTauHad_2016" or channel == "TauHadTauHad_2018" or channel == "TauMuTauHad_2017" or channel == "TauMuTauHad_2017Cut" or channel == "TauMuTauHad_2017CutV2":
+        sampleDir = baseDir
+        if doUnbinned:
+            if shift=='':
+                filename = sampleDir+channel+'_'+method+'_'+discriminator+'_'+region+'.root'
+            else:
+                filename = sampleDir+channel+'_'+method+'_'+discriminator+'_'+region+'_'+shift+'.root'
+            hists=[getDataset(filename,channel,proc,shift, do2D)]
+            hist = hists[0].Clone(name)
     else:
         raise ValueError('Channel Unknown in getDatadrivenHist')
 
