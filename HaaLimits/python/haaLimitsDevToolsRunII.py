@@ -22,7 +22,7 @@ ROOT.gROOT.SetBatch()
 #from DevTools.Plotter.xsec import getXsec
 #from CombineLimits.HaaLimits.HaaLimits import HaaLimits
 #from CombineLimits.HaaLimits.HaaLimits2D import HaaLimits2D
-#from CombineLimitsRunII.HaaLimits.HaaLimitsNew import HaaLimits
+from CombineLimitsRunII.HaaLimits.HaaLimitsNew import HaaLimits
 from CombineLimitsRunII.HaaLimits.HaaLimits2DNew import HaaLimits2D
 
 import CombineLimitsRunII.Plotter.CMS_lumi as CMS_lumi
@@ -131,7 +131,8 @@ def parse_command_line(argv):
     parser.add_argument('--tag', type=str, default='')
     parser.add_argument('--chi2Mass', type=int, default=0)
     parser.add_argument('--selection', type=str, default='')
-    parser.add_argument('--channel', type=str, nargs='*', default=['TauMuTauHad'], choices=['TauMuTauE','TauETauHad','TauMuTauHad','TauHadTauHad'])
+    #parser.add_argument('--channel', type=str, nargs='*', default=['TauMuTauHad'], choices=['TauMuTauE','TauETauHad','TauMuTauHad','TauHadTauHad'])
+    parser.add_argument('--channel', type=str, nargs='*', default=['TauMuTauHad'])
 
     return parser.parse_args(argv)
 
@@ -142,13 +143,13 @@ if __name__ == "__main__":
     initUtils(args)
 
     xVar=varHists[sys.argv[1]]
-    yVar=varHists[sys.argv[2]]
     
     do2D = len(args.fitVars)==2
     var = args.fitVars
     
     xBinWidth = 0.05
     if do2D:
+        yVar=varHists[sys.argv[2]]
         yBinWidth = 0.25 if var[1]=='tt' else 10
 
     if do2D and var[1]=='tt': yRange = [0.75,30]
@@ -173,7 +174,7 @@ if __name__ == "__main__":
         logging.error('Trying to use non-kinematic fit with chi2 cut')
         raise
 
-    if var[1]=='tt':
+    if do2D and var[1]=='tt':
         print "Program will not run!"
         sys.exit()
 
@@ -201,13 +202,17 @@ if __name__ == "__main__":
         'PP': {'region':'signalRegion','fakeRegion':'B','source':'B','sources':['A','C'],'fakeSources':['B','D'],},
         'FP': {'region':'sideBand','sources':['B','D'],},
     }
-    modes = ['PP','FP']
+    
     thesesamples = backgrounds
     if not skipSignal: thesesamples = backgrounds + signals
-    print "thesesamples:", thesesamples, "modes:", modes, "shifts:", shifts, "var", var, "**regionArgs[PP]", regionArgs["PP"]
+    print "thesesamples:", thesesamples, "shifts:", shifts, "var", var, "**regionArgs[PP]", regionArgs["PP"]
 
     j=0
     for channel in channels:
+        if channel == 'TauMuTauE' or channel == 'TauMuTauMu':
+            modes = ['PP']
+        else:
+            modes = ['PP','FP']
         for mode in modes:
             modeTag=mode
             mode=channel+'_'+mode
@@ -219,18 +224,14 @@ if __name__ == "__main__":
                     if proc=='datadriven':
                         if 'PP' in mode:
                             histMap[mode][shift][proc] = getDatadrivenHist(proc,channel,doUnbinned=True,var=var,shift=shift,do2D=do2D,**regionArgs[modeTag])
-                        #print histMap[mode][shift][proc]
                         else:
                             ### As datadriven so try to load appropriate RooDatasets ###
                             histMap[mode][shift][proc] = getDatadrivenHist('data',channel,doUnbinned=True,var=var,shift=shift,do2D=do2D,**regionArgs[modeTag])
-                        #    print histMap[mode][shift][proc]
                     else:
                         if proc in signals:
                             oldXRange = xRange
                             xRange = [0,30]
                             histMap[mode][shift][proc] = getSignalHist(proc,channel,doUnbinned=True,var=var,shift=shift,do2D=do2D,**regionArgs[modeTag])
-
-                        #print "histMap", mode, shift, proc, histMap[mode][shift][proc], histMap[mode][shift][proc].sumEntries('invMassMuMu>0 && invMassMuMu<30 && visFourbodyMass>0 && visFourbodyMass<1000')
                             
                         xRange = oldXRange
                     #print proc
@@ -266,12 +267,6 @@ if __name__ == "__main__":
             
             logging.info('Getting {} observed'.format(mode))
             hist = getControlHist('control',doUnbinned=doUnbinned,var=var)
-            # if subtractSR:
-            #     # subtract off the signal region and sideband from the control region
-            #     for mode2 in modes:
-            #         histsub = getHist('data',doUnbinned=False,var=var,wrappers=wrappers,do2D=False,chi2Mass=chi2Mass,**regionArgs[mode2])
-            #         histsub.Rebin(histsub.GetNbinsX()/hist.GetNbinsX())
-            #         hist.Add(histsub,-1)
             j+=1
             histMap[mode][shift]['data'] = hist.Clone('hist'+str(j))
             j+=1
@@ -304,13 +299,19 @@ if __name__ == "__main__":
     #    haaLimits = HaaLimits(histMap,name,do2DInterpolation=args.do2DInterpolation,doParamFit=args.fitParams)
     #elif do2D:
         #print "JINGYU1", args.do2DInterpolation, args.fitParams
-    haaLimits = HaaLimits2D(histMap,name,do2DInterpolation=args.do2DInterpolation,doParamFit=args.fitParams)
+
+    if do2D:
+        haaLimits = HaaLimits2D(histMap,name,do2DInterpolation=args.do2DInterpolation,doParamFit=args.fitParams)
+    else:
+        haaLimits = HaaLimits(histMap,name,do2DInterpolation=args.do2DInterpolation,doParamFit=args.fitParams)
     #else:
     #    logging.error('Unsupported fit vars: ',var)
     #    raise
     
     #print name -> unbinned_h/lowmassWith1DFits_TauETauHad
-    if args.decayMode: haaLimits.REGIONS = modes
+    #if args.decayMode: haaLimits.REGIONS = modes
+    #print "decayMode:", args.decayMode
+    haaLimits.REGIONS = modes
     if 'h' in var:
         haaLimits.YCORRELATION = correlation
     haaLimits.SKIPPLOTS = skipPlots
@@ -330,13 +331,13 @@ if __name__ == "__main__":
         haaLimits.YRANGE = yRange
         haaLimits.YBINNING = int((yRange[1]-yRange[0])/yBinWidth)
         haaLimits.DOUBLEEXPO = args.doubleExpo
-    print "xVar:", xVar, "xRange:", xRange, "yVar:", yVar, "yRange:", yRange
+    #print "xVar:", xVar, "xRange:", xRange, "yVar:", yVar, "yRange:", yRange
     if 'tt' in var: haaLimits.YLABEL = 'm_{#tau_{#mu}#tau_{h}}'
     if 'h' in var or 'hkf' in var: haaLimits.YLABEL = 'm_{#mu#mu#tau_{#mu}#tau_{h}}'
     haaLimits.initializeWorkspace()
     haaLimits.addControlModels()
     haaLimits.addBackgroundModels(fixAfterControl=True)
-    #sys.exit()
+    if skipSignal: sys.exit()
     if not skipSignal:
         haaLimits.XRANGE = [0,30] # override for signal splines
         if project:
