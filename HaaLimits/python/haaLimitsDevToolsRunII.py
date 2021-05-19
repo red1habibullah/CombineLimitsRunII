@@ -298,16 +298,16 @@ if __name__ == "__main__":
     if args.tag: name += [args.tag]
     if args.addSignal: name += ['wSig']
     name = n+'/'+'_'.join(name) if n else '_'.join(name)
-    #if var == ['mm']:
-    #    haaLimits = HaaLimits(histMap,name,do2DInterpolation=args.do2DInterpolation,doParamFit=args.fitParams)
+    if var == ['mm']:
+        haaLimits = HaaLimits(histMap,name,do2DInterpolation=args.do2DInterpolation,doParamFit=args.fitParams)
     #elif do2D and project:
     #    haaLimits = HaaLimits(histMap,name,do2DInterpolation=args.do2DInterpolation,doParamFit=args.fitParams)
-    #elif do2D:
+    elif : #do2D:
         #print "JINGYU1", args.do2DInterpolation, args.fitParams
-    haaLimits = HaaLimits2D(histMap,name,do2DInterpolation=args.do2DInterpolation,doParamFit=args.fitParams)
-    #else:
-    #    logging.error('Unsupported fit vars: ',var)
-    #    raise
+        haaLimits = HaaLimits2D(histMap,name,do2DInterpolation=args.do2DInterpolation,doParamFit=args.fitParams)
+    else:
+        logging.error('Unsupported fit vars: ',var)
+        raise
     
     #print name -> unbinned_h/lowmassWith1DFits_TauETauHad
     if args.decayMode: haaLimits.REGIONS = modes
