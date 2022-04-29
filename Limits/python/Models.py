@@ -146,6 +146,11 @@ class Model(object):
         model = ws.pdf(name)
         #ws.var('x').setRange('xRange', xFitRange[0], xFitRange[1])
         #ws.var('y').setRange('yRange', yFitRange[0], yFitRange[1])
+        #print xRange[0], xRange[1], yRange
+        #ws.Print()
+        #if yRange:
+            #ws.var('invMassMuMu').setRange(xRange[0], xRange[1])
+            #ws.var('visFourbodyMass').setRange(yRange[0], yRange[1])
         #print ("X_FIT_RANGE=", xFitRange, "\tY_FIT_RANGE=", yFitRange)
 
         fr = model.fitTo(hist,ROOT.RooFit.Minimizer("Minuit2", "Minos"), ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True),ROOT.RooFit.PrintLevel(-1))
@@ -372,7 +377,11 @@ def buildSpline(ws,label,MH,masses,values):
                 print 'Masses are not in increasing order for', label
                 print masses
                 raise ValueError
-            spline  = ROOT.RooSpline1D(label,  label,  ws.var(MH), len(masses), array('d',masses), array('d',values))
+            #if "integral" in label:
+            #    print label
+            #    print array('d',masses)
+            #    print array('d',values)
+            spline  = ROOT.RooSpline1D(label,  label,  ws.var(MH), len(masses), array('d',masses), array('d',values), "CSPLINE")
     else: # TFn case
         if not isinstance(MH, list): MH = [MH]
         args = ROOT.RooArgList(*[ws.var(mh) for mh in MH])
@@ -442,12 +451,14 @@ class Param(object):
                 args.Add(av)
         else:
             shiftFormula = '{}'.format(value)
+        #print "DEBUG:", paramName, shifts
         for shift in shifts:
             up = shifts[shift]['up']
             down = shifts[shift]['down']
             if isinstance(value,basestring) or  abs(up/value)>uncertainty or abs(down/value)>uncertainty:
                 ws.factory('{}[0,-10,10]'.format(shift))
                 shiftFormula += ' + TMath::Max(0,@{shift})*({up}) + TMath::Min(0,@{shift})*({down})'.format(shift=len(args),up=up,down=down)
+                #print "shiftFormula:", shiftFormula
                 args.Add(ws.var(shift))
         arglist = ROOT.RooArgList(args)
         param = ROOT.RooFormulaVar(paramName, paramName, shiftFormula, arglist)
@@ -468,6 +479,7 @@ class Spline(object):
         channel = self.kwargs.get('channel', '')
         uncertainty = self.kwargs.get('uncertainty',0.000)
         splineName = label
+        #print "Building splines:", ws.var("tauScale")
         if shifts:
             if isinstance(values,list):
                 args = ROOT.TList()
@@ -483,11 +495,14 @@ class Spline(object):
                     if any([ v == 0 for v in values]):
                         logging.warning('Zero value for {}: {}'.format(splineName, ' '.join(['{}'.format(v) for v in values])))
                     if any([abs(u/v)>uncertainty if v else u for u,v in zip(up,values)]) or any([abs(d/v)>uncertainty if v else d for d,v in zip(down,values)]):
-                        ws.factory('{}[0,-10,10]'.format(shift))
+                        shiftText = channel+'_'+shift
+                        ws.factory('{}[0,-10,10]'.format(shiftText))
+                        #ws.factory('{}[0,-10,10]'.format(shift))
                         splineUp   = buildSpline(ws,upName,  self.mh,masses,up)
                         splineDown = buildSpline(ws,downName,self.mh,masses,down)
                         shiftFormula += ' + TMath::Max(0,@{shift})*@{up} + TMath::Min(0,@{shift})*@{down}'.format(shift=len(args),up=len(args)+1,down=len(args)+2)
-                        shiftText = channel+'_'+shift
+                        
+                        #print "Building splines:", ws.var(shiftText)
                         args.Add(ws.var(shiftText))
                         args.Add(splineUp)
                         args.Add(splineDown)

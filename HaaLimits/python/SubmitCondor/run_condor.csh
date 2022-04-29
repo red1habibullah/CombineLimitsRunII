@@ -25,8 +25,8 @@ echo "  for 4 (name): $4"
 echo "  for 5 (output): $5"
 
 combine -M AsymptoticLimits -m ${1} --setParameters MA=${2} --freezeParameters=MA ${3} -n ${4}
-rm /eos/uscms/store/user/zhangj/HaaLimits/${5}
-xrdcp ${5} root://cmseos.fnal.gov//eos/uscms/store/user/zhangj/HaaLimits/${5}
+rm /eos/uscms/store/user/zhangj/HaaLimits/Limits/${5}
+xrdcp ${5} root://cmseos.fnal.gov//eos/uscms/store/user/zhangj/HaaLimits/Limits/${5}
 
 cd ${_CONDOR_SCRATCH_DIR}
 rm -rf CMSSW_10_2_13

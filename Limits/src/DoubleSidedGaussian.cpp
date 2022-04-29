@@ -45,30 +45,30 @@ DoubleSidedGaussian::DoubleSidedGaussian(const DoubleSidedGaussian& other, const
 
 Double_t DoubleSidedGaussian::evaluate() const 
 { 
-  double result = -1;
-  double sqrt2pi = TMath::Power( 2 * TMath::Pi(), 0.5); 
-  double mode = mean - 2 / sqrt2pi * (sig2 - sig1);
-//  if (mode > yMax) 
-//    mode = yMax;
-//  double A = 2 / sqrt2pi / (sig1 + sig2); 
-  double A1 = 1 / (sig1*sqrt2pi), A2 = 1 / (sig2*sqrt2pi);
-  double scaleFactor = sig2 / sig1;
-  double total_integral = 0.5 * (1 + scaleFactor);
-  if ( x < mode)
-    result = A1 * TMath::Exp(-1 * (x-mode) * (x-mode) / (2 * sig1 * sig1)) / total_integral;
-  else
-    result = A2 * TMath::Exp(-1 * (x-mode) * (x-mode) / (2 * sig2 * sig2)) * scaleFactor / total_integral;
-  return result;
+//   double result = -1;
+//   double sqrt2pi = TMath::Power( 2 * TMath::Pi(), 0.5); 
+//   double mode = mean - 2 / sqrt2pi * (sig2 - sig1);
+// //  if (mode > yMax) 
+// //    mode = yMax;
+// //  double A = 2 / sqrt2pi / (sig1 + sig2); 
+//   double A1 = 1 / (sig1*sqrt2pi), A2 = 1 / (sig2*sqrt2pi);
+//   double scaleFactor = sig2 / sig1;
+//   double total_integral = 0.5 * (1 + scaleFactor);
+//   if ( x < mode)
+//     result = A1 * TMath::Exp(-1 * (x-mode) * (x-mode) / (2 * sig1 * sig1)) / total_integral;
+//   else
+//     result = A2 * TMath::Exp(-1 * (x-mode) * (x-mode) / (2 * sig2 * sig2)) * scaleFactor / total_integral;
+//   return result;
 
-//  // From wikipedia
-//  double result = -1;
-//  double sqrt2OverPi = TMath::Sqrt(2. / TMath::Pi());
-//  double mode = mean; // redefine mean to mode
-//  double A = sqrt2OverPi / (sig2+sig1);
-//  if (x < mode)
-//    result = A * TMath::Exp( -1 * (x-mode)*(x-mode) / (2*sig1*sig1) );
-//  else
-//    result = A * TMath::Exp( -1 * (x-mode)*(x-mode) / (2*sig2*sig2) );
-//  return result;
+  // From wikipedia
+  double result = -1;
+  double sqrt2OverPi = TMath::Sqrt(2. / TMath::Pi());
+  double mode = mean; // redefine mean to mode
+  double A = sqrt2OverPi / (sig2+sig1);
+  if (x < mode)
+    result = A * TMath::Exp( -1 * (x-mode)*(x-mode) / (2*sig1*sig1) );
+  else
+    result = A * TMath::Exp( -1 * (x-mode)*(x-mode) / (2*sig2*sig2) );
+  return result;
 } 
 

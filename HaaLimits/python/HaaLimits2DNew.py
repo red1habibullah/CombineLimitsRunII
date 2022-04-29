@@ -35,6 +35,7 @@ class HaaLimits2D(HaaLimits):
     YCORRELATION = False
     SPLITY = False
     DOUBLEEXPO = False
+    LANDAU = False
     NUMEXPO = 1
 
     def __init__(self,histMap,tag='',do2DInterpolation=False,doParamFit=False):
@@ -86,7 +87,7 @@ class HaaLimits2D(HaaLimits):
         if self.XRANGE[0]<4:
             continuums += ['cont2']
 
-        if self.YRANGE[1]>100 and self.SPLITY:            
+        if self.SPLITY:            
             erfs = {}
             conts = {}
             bgs = {}
@@ -150,9 +151,9 @@ class HaaLimits2D(HaaLimits):
             return
 
                 
-        elif self.YRANGE[1]>100:
+        else:
             nameE = 'erf{}'.format('_'+tag if tag else '')
-            if not self.DOUBLEEXPO:
+            if not self.DOUBLEEXPO and not self.LANDAU and "TauHad" in tag:
                 if self.YCORRELATION:
                     # build the correlation model for the y variable parameters
                     erfShiftName = kwargs.pop('erfShift_{}'.format(nameE),'erfShift_{}'.format(nameE))
@@ -215,7 +216,7 @@ class HaaLimits2D(HaaLimits):
                     nameC,
                 )
 
-            if self.DOUBLEEXPO:
+            elif self.DOUBLEEXPO:
                 # Double exponential
                 nameE1 = 'erf1{}'.format('_'+tag if tag else '')
                 erf1 = Models.Erf('erf1',
@@ -243,7 +244,7 @@ class HaaLimits2D(HaaLimits):
                 erf2 = Models.Erf('erf2',
                     x = yVar,
                     #erfScale = kwargs.pop('erfScale_{}'.format(nameE2), [0.05,0,10]),
-                    #erfShift = kwargs.pop('erfShift_{}'.format(nameE2), [50,10,200]),
+                    #erfShift = kwargs.pop('erfShift_{}'.format(nameE2), [100,80,150]),
                     erfScale = kwargs.pop('erfScale_{}'.format(nameE1),'erfScale_{}'.format(nameE1)),
                     erfShift = kwargs.pop('erfShift_{}'.format(nameE1),'erfShift_{}'.format(nameE1)),
                 )
@@ -270,16 +271,42 @@ class HaaLimits2D(HaaLimits):
                         'recursive': True,
                     }
                 )
-        else:
-            ## landua plus upsilon gaussian
-            nameL1 = 'land1{}'.format('_'+tag if tag else '')
+            elif self.LANDAU:
+                ## landua plus upsilon gaussian
+                nameL1 = 'land{}'.format('_'+tag if tag else '')
 
-            bg = Models.Landau('land1',
-                x = yVar,
-                mu    = kwargs.pop('mu_{}'.format(nameL1), [1.5,0,5]),
-                sigma = kwargs.pop('sigma_{}'.format(nameL1), [0.4,0,2]),
-            )
+                land = Models.Landau('land',
+                                   x = yVar,
+                                   mu    = kwargs.pop('mu_{}'.format(nameL1), [90,40,100]),
+                                   sigma = kwargs.pop('sigma_{}'.format(nameL1), [50,0,100]),
+                )
+                land.build(workspace, nameL1)
 
+                bg = Models.Sum('bg',
+                                **{
+                                    nameL1:[0.5, 0, 1],
+                                    'recursive':True,
+                                }
+                )
+            else:
+                nameDG = 'dg{}'.format('_'+tag if tag else '')
+                
+                dg = Models.DoubleSidedGaussian('dg',
+                    x = yVar,
+                    mean    = kwargs.pop('mu_{}'.format(nameDG), [90,40,100]),
+                    sigma1  = kwargs.pop('sigma1_{}'.format(nameDG), [50,0,100]),
+                    sigma2  = kwargs.pop('sigma2_{}'.format(nameDG), [50,0,100]),
+                )
+                dg.build(workspace, nameDG)
+                
+                bg = Models.Sum('bg',
+                                **{
+                                    nameDG:[0.5, 0, 1],
+                                    'recursive':True,
+                                }
+                )
+
+        #print workspace.Print()
         name = 'bg_{}'.format(region)
         bg.build(workspace,name)
 
@@ -683,16 +710,18 @@ class HaaLimits2D(HaaLimits):
                     n2    = [initialValuesDCB["h"+str(h)+"a"+str(a)]["n2"],0.1,5],
                 )
             elif yFitFunc == "DG":
+                #print "DEBUG !!!"
                 modely = Models.DoubleSidedGaussian('sigy',
                     x = self.YVAR,
                     #mean  =  [93 ,80, 110],
                     #sigma1 = [15, 10, 30],
                     #sigma2 = [25, 10, 30],
-                    mean    = [initialValuesDG["h"+str(h)+"a"+str(a)]["mean"],0.68*h,0.78*h],
-                    sigma1  = [initialValuesDG["h"+str(h)+"a"+str(a)]["sigma1"],0.06*h,0.13*h],
-                    sigma2  = [initialValuesDG["h"+str(h)+"a"+str(a)]["sigma2"],0.06*h,0.13*h],
+                    mean    = [initialValuesDG["h"+str(h)+"a"+str(a)]["mean"],80,120],
+                    sigma1  = [initialValuesDG["h"+str(h)+"a"+str(a)]["sigma1"],10,50],
+                    sigma2  = [initialValuesDG["h"+str(h)+"a"+str(a)]["sigma2"],10,50],
                     yMax = self.YRANGE[1],
                 )
+                #print "YRANGE:", self.YRANGE
             elif yFitFunc == "DV":
                 modely = Models.DoubleSidedVoigtian('sigy',
                     x = self.YVAR,
@@ -976,14 +1005,19 @@ class HaaLimits2D(HaaLimits):
         hist = histMap[self.SIGNAME.format(h=h,a=a)]
         #print "hist:", hist, "self.binned", self.binned
         saveDir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
-        #print "DEBUG:", hist
+        #print "DEBUG:", hist, name
+        #args = hist.get()
+        #print "DEBUG!!!", args.find('visFourbodyMass').getMax(), args.find('visFourbodyMass').getMin()
+        #hist.get().find(xVar).setBins(self.XBINNING)
+        #hist.get().find(self.YVAR).setBins(self.YBINNING)
+        ws.var(self.YVAR).setBins(self.YBINNING)
         results, errors = model.fit2D(ws, hist, name, saveDir=saveDir, save=True, doErrors=True, xRange=[0.9*aval,1.1*aval])
         if self.binned:
             integral = histMap[self.SIGNAME.format(h=h,a=a)].Integral() * scale
             integralerr = getHistogram2DIntegralError(histMap[self.SIGNAME.format(h=h,a=a)]) * scale
         else:
             integral = histMap[self.SIGNAME.format(h=h,a=a)].sumEntries('{0}>{2} && {0}<{3} && {1}>{4} && {1}<{5}'.format(self.XVAR,self.YVAR,*self.XRANGE+self.YRANGE)) * scale
-            print "integral:", h, a, histMap[self.SIGNAME.format(h=h,a=a)].sumEntries('{0}>{2} && {0}<{3} && {1}>{4} && {1}<{5}'.format(self.XVAR,self.YVAR,*self.XRANGE+self.YRANGE))
+            print "integral:", h, a, histMap[self.SIGNAME.format(h=h,a=a)].sumEntries('{0}>{2} && {0}<{3} && {1}>{4} && {1}<{5}'.format(self.XVAR,self.YVAR,*self.XRANGE+self.YRANGE)), scale
             #print "hist:", histMap[self.SIGNAME.format(h=h,a=a)], histMap[self.SIGNAME.format(h=h,a=a)].sumEntries('{0}>{2} && {0}<{3} && {1}>{4} && {1}<{5}'.format(self.XVAR,self.YVAR,*self.XRANGE+self.YRANGE))
             #print "integral:", integral, '{0}>{2} && {0}<{3} && {1}>{4} && {1}<{5}'.format(self.XVAR,self.YVAR,*self.XRANGE+self.YRANGE), self.XVAR,self.YVAR,self.XRANGE,self.YRANGE, scale
             integralerr = getDatasetIntegralError(histMap[self.SIGNAME.format(h=h,a=a)],'{0}>{2} && {0}<{3} && {1}>{4} && {1}<{5}'.format(self.XVAR,self.YVAR,*self.XRANGE+self.YRANGE)) * scale
@@ -1162,7 +1196,7 @@ class HaaLimits2D(HaaLimits):
                     'g1_frac'       : ROOT.TF1('g1_frac_h{}_{}'.format(h,tag),         '[0]+[1]*x+[2]*x*x', *self.ARANGE),
                     'g2_frac'       : ROOT.TF1('g2_frac_h{}_{}'.format(h,tag),         '[0]+[1]*x+[2]*x*x', *self.ARANGE),
                     #'integral'      : ROOT.TF1('integral_h{}_{}'.format(h,tag),  '[0]+TMath::Erf([1]+[2]*x)*TMath::Erfc([3]+[4]*x)', *self.ARANGE),
-                    'integral'      : ROOT.TF1('integral_h{}_{}'.format(h,tag),  '[0]+[1]*x+[2]*x*x', *self.ARANGE),
+                    'integral'      : ROOT.TF1('integral_h{}_{}'.format(h,tag),  '[0]+[1]*x+[2]*x*x+[3]*x*x*x', *self.ARANGE),
                     }
                 # set initial values
                 fitFuncs[h]['integral'].SetParameter(1,-0.005)
@@ -1176,10 +1210,12 @@ class HaaLimits2D(HaaLimits):
             logging.info('Fitting {}'.format(param))
             Hs = sorted(results)
             As = {h: [self.aToStr(a) for a in sorted([self.aToFloat(x) for x in results[h]])] for h in Hs}
+            #print As
             xvals = [h for h in Hs for a in As[h]]
             xerrs = [0] * len(xvals)
             yvals = [self.aToFloat(a) for h in Hs for a in As[h]]
             yerrs = [0] * len(yvals)
+            #print results[125]['4'], As[125]
             if param=='integral':
                 zvals = [integrals[h][a] for h in Hs for a in As[h]]
                 print "Here comes the integral"
@@ -1213,11 +1249,12 @@ class HaaLimits2D(HaaLimits):
             for h in [125]: #,300,750]:
                 xs = [yvals[i] for i in range(len(xvals)) if xvals[i]==h]
                 ys = [zvals[i] for i in range(len(xvals)) if xvals[i]==h]
-
+                errorxs = [0 for i in range(len(xvals)) if xvals[i]==h]
+                errorys = [zerrs[i] for i in range(len(xvals)) if xvals[i]==h]
                 g = ROOT.TGraph(len(xs),array('d',xs),array('d',ys))
                 if not self.do2D:
                     g.Fit(fitFuncs[h][param])
-                    g = ROOT.TGraph(len(xs),array('d',xs),array('d',ys)) # override so we dont plot the fits here
+                    g = ROOT.TGraphErrors(len(xs),array('d',xs),array('d',ys),array('d',errorxs),array('d', errorys)) # override so we dont plot the fits here
                 g.SetLineColor(self.COLORS[h])
                 g.SetMarkerColor(self.COLORS[h])
                 g.SetTitle('H({h})'.format(h=h))
@@ -1250,6 +1287,8 @@ class HaaLimits2D(HaaLimits):
             if self.doParamFit: fmg.Draw('L')
             legend.Draw()
             canvas.Print('{}.png'.format(savename))
+
+            #print 'DEBUG {}.png'.format(savename)
 
             if self.do2D:
                 savename = '{}/{}_Fit_vsH'.format(savedir,name)
@@ -1345,6 +1384,8 @@ class HaaLimits2D(HaaLimits):
             amasses += [a]
             a += self.ABINNING
 
+        #print "amasses:", amasses
+
         hmasses = []
         h = self.HRANGE[0]
         while h<=self.HRANGE[1]:
@@ -1368,8 +1409,11 @@ class HaaLimits2D(HaaLimits):
         elif yFitFunc != "L" and yFitFunc != "errG" and yFitFunc != "G3" and yFitFunc != "G2": raise
 
         print "Building splines..."
-        #print self.SPLINENAME, region, self.do2D, self.doParamFit, xparams, yparams, fitFuncs['']
-        channelText = region.split("_")[0]
+        print self.SPLINENAME, region, self.do2D, self.doParamFit, xparams, yparams
+        #print "fitFuncs:", fitFuncs['']
+        #channelText = region.split("_")[0]
+        channelText = region.replace('_FP','').replace('_PP','')
+        print "channelText:", channelText
         if self.doParamFit:
             for param in xparams+yparams+['integral']:
                 if self.do2D:
@@ -1394,6 +1438,10 @@ class HaaLimits2D(HaaLimits):
                         #    shifts = {shift: {'up': fitFuncs[shift+'Up'][h][param], 'down': fitFuncs[shift+'Down'][h][param],} for shift in shifts},
                         #)
                         # here is converting to a spline first
+                        #print "fitFuncs:", fitFuncs[''][h][param]
+                        #if 'integral' in name:
+                        #    amasses = self.AMASSES
+                        #    values = [integrals[h][a] for h in Hs for a in As[h]]   
                         spline = Models.Spline(name,
                             MH = 'MA',
                             masses = amasses,
@@ -1810,6 +1858,8 @@ class HaaLimits2D(HaaLimits):
             integral = hist.sumEntries('{0}>{2} && {0}<{3} && {1}>{4} && {1}<{5}'.format(xVar,yVar,*self.XRANGE+self.YRANGE)) * scale
             integralerr = getDatasetIntegralError(hist,'{0}>{2} && {0}<{3} && {1}>{4} && {1}<{5}'.format(xVar,yVar,*self.XRANGE+self.YRANGE)) * scale
 
+        #args = data.get()
+        #print "DEBUG!!!", args.find('visFourbodyMass').getMax(), args.find('visFourbodyMass').getMin()
         fr = model.fitTo(data,ROOT.RooFit.Minimizer("Minuit2"),ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
 
         workspace.var(xVar).setBins(self.XBINNING)
@@ -1903,7 +1953,7 @@ class HaaLimits2D(HaaLimits):
                         for shift in ['']+self.BACKGROUNDSHIFTS:
                             if shift:
                                 s = workspace.var(shift)
-    
+                                #print "DEBUG:", shift
                                 s.setVal(1)
                                 i = integral.getValV()
                                 dh = pdf.generateBinned(args, i, True)
@@ -2579,24 +2629,25 @@ class HaaLimits2D(HaaLimits):
     def GetInitialValuesDG(self, region="FP"):
         if 'PP' in region: 
             initialValues = {
-                "h125a3p6": { "mean": 93.5, "sigma1": 14.2, "sigma2": 10.1},
-                "h125a4"  : { "mean": 90.1, "sigma1": 15.1, "sigma2": 10.1}, #89.5 15.6 12.5 2.07
-                "h125a5"  : { "mean": 94.2, "sigma1": 17.0, "sigma2": 10.0},
-                "h125a6"  : { "mean": 93.1, "sigma1": 15.6, "sigma2": 11.9},
-                "h125a7"  : { "mean": 93.3, "sigma1": 16.5, "sigma2": 11.7},
-                "h125a8"  : { "mean": 92.5, "sigma1": 16.2, "sigma2": 12.1},#Rough
-                "h125a9"  : { "mean": 91.2, "sigma1": 16.2, "sigma2": 12.1},#Change 1
-                "h125a10" : { "mean": 89.5, "sigma1": 15.5, "sigma2": 11.5},#Change 1 88.5 15.1 11.1 2.14 89.5 15.5 11.5 2.09 
-                "h125a11" : { "mean": 93.2, "sigma1": 16.0, "sigma2": 15.5},#Change 1
-                "h125a12" : { "mean": 92.1, "sigma1": 16.0, "sigma2": 12.4},#Rough
-                "h125a13" : { "mean": 91.8, "sigma1": 15.9, "sigma2": 12.5},
-                "h125a14" : { "mean": 94.5, "sigma1": 16.8, "sigma2": 11.6},#Change 1
-                "h125a15" : { "mean": 91.2, "sigma1": 15.5, "sigma2": 11.9},#Change 1
-                "h125a17" : { "mean": 91.1, "sigma1": 15.2, "sigma2": 12.2},
-                "h125a18" : { "mean": 91.0, "sigma1": 15.3, "sigma2": 12.3},#Rough
-                "h125a19" : { "mean": 90.7, "sigma1": 15.4, "sigma2": 12.4},
-                "h125a20" : { "mean": 89.5, "sigma1": 15.5, "sigma2": 11.6},#Rough
-                "h125a21" : { "mean": 91.3, "sigma1": 14.5, "sigma2": 12.3},
+                "h125a3p6": { "mean": 100,"sigma1": 15.1, "sigma2": 11.1 },
+                "h125a4"  : { "mean": 100,"sigma1": 15.1, "sigma2": 11.1 }, #89.5 15.6 12.5 2.07
+                "h125a5"  : { "mean": 100,"sigma1": 15.1, "sigma2": 11.1 },
+                "h125a6"  : { "mean": 100,"sigma1": 15.1, "sigma2": 11.1 },
+                "h125a7"  : { "mean": 100,"sigma1": 15.1, "sigma2": 11.1 },
+                "h125a8"  : { "mean": 100,"sigma1": 15.1, "sigma2": 11.1 },#Rough
+                "h125a9"  : { "mean": 100, "sigma1": 15.1, "sigma2": 11.5 },#Change 1
+                "h125a10" : { "mean": 100, "sigma1": 15.1, "sigma2": 11.5 },#Change 1 88.5 15.1 11.1 2.14 89.5 15.5 11.5 2.09 
+                "h125a11" : { "mean": 100, "sigma1": 15.1, "sigma2": 11.1 },#Change 1
+                "h125a12" : { "mean": 100, "sigma1": 15.1, "sigma2": 11.5 },#Rough
+                "h125a13" : { "mean": 100, "sigma1": 15.1, "sigma2": 11.5 },
+                "h125a14" : { "mean": 100, "sigma1": 15.1, "sigma2": 11.5 },#Change 1
+                "h125a15" : { "mean": 100, "sigma1": 15.1, "sigma2": 11.5 },#Change 1
+                "h125a16" : { "mean": 100, "sigma1": 15.1, "sigma2": 11.5 },#Change 1
+                "h125a17" : { "mean": 100, "sigma1": 15.1, "sigma2": 11.5 },
+                "h125a18" : { "mean": 100, "sigma1": 15.1, "sigma2": 11.5 },#Rough
+                "h125a19" : { "mean": 100, "sigma1": 15.1, "sigma2": 11.5 },
+                "h125a20" : { "mean": 100, "sigma1": 15.1, "sigma2": 11.5 },#Rough
+                "h125a21" : { "mean": 100, "sigma1": 15.1, "sigma2": 11.5 },
                 "h200a5"  : { "mean": 140, "sigma1": 27.0, "sigma2": 20.0},
                 "h200a9"  : { "mean": 140, "sigma1": 26.2, "sigma2": 22.1},
                 "h200a15" : { "mean": 140, "sigma1": 25.5, "sigma2": 22.9},
@@ -2633,24 +2684,25 @@ class HaaLimits2D(HaaLimits):
             }
         elif 'FP' in region: 
             initialValues = {
-                "h125a3p6": { "mean": 93.4, "sigma1": 13.5, "sigma2": 13.0},
-                "h125a4"  : { "mean": 89.5, "sigma1": 15.5, "sigma2": 10.1},#Change 1 86.5 15.5 10.1 1.58 | 89.5 15.5 10.1 1.409 
-                "h125a5"  : { "mean": 91.1, "sigma1": 15.5, "sigma2": 11.5},#Change 1 89.1 15.5 11.5 1.94 | 91.1 15.5 11.5 1.79 
-                "h125a6"  : { "mean": 94.9, "sigma1": 15.9, "sigma2": 12.8},
-                "h125a7"  : { "mean": 89.4, "sigma1": 15.3, "sigma2": 12.1},#Change 1 87.4 15.3 12.1 1.71 | 89.4 15.3 12.1 1.38
-                "h125a8"  : { "mean": 91.5, "sigma1": 15.5, "sigma2": 12.1},#Change 1 89.3 15.1 12.2 2.24 90.2 15.3 12.1 2.15
-                "h125a9"  : { "mean": 92.5, "sigma1": 15.5, "sigma2": 11.5},#Change 1                1.06(Bad Fit)
-                "h125a10" : { "mean": 88.5, "sigma1": 15.5, "sigma2": 10.1},#Change 1 87.5 15.5 11.9 1.98 88.5 15.5 11.9 1.92
-                "h125a11" : { "mean": 89.5, "sigma1": 14.9, "sigma2": 15.9},#Change 1 89.5 14.9 15.9 1.38
-                "h125a12" : { "mean": 92.5, "sigma1": 15.5, "sigma2": 11.5},#Change 1 90.9 12.1 10.1 3.18 | 83.9 15.5 10.1 3.24 
-                "h125a13" : { "mean": 94.5, "sigma1": 11.1, "sigma2": 16.5},#Change 1 97.1 13.1 12.1 4.11 | 97.1 11.1 12.1 4.11
-                "h125a14" : { "mean": 88.3, "sigma1": 15.5, "sigma2": 11.5},#Change 1 87.3 15.2 11.5 1.85/1.76 88.3 15.5 11.5 1.63
-                "h125a15" : { "mean": 90.8, "sigma1": 18.5, "sigma2": 11.5}, #Change 1 88.8 15.5 11.5 2.54  90.8 9.1 10.5 2.477
-                "h125a17" : { "mean": 90.9, "sigma1": 18.5, "sigma2": 11.5}, #Change 1 88.9 15.5 11.1 2.42  90.9 14.5 9.1 2.42
-                "h125a18" : { "mean": 86.1, "sigma1": 15.5, "sigma2": 11.5},#Change 1`86.1 15.5 11.5 1.62
-                "h125a19" : { "mean": 90.1, "sigma1": 14.1, "sigma2": 15.1},#Change 1 89.0 15.2 11.1 2.12
-                "h125a20" : { "mean": 89.2, "sigma1": 15.1, "sigma2": 10.1},#Change F 88.6 14.1 15.5 1.01   
-                "h125a21" : { "mean": 87.7, "sigma1": 15.5, "sigma2": 12.4},#Change F 86.7 15.5 12.4 1.17 89.7 16.5 11.1 1.21 
+                "h125a3p6": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1 },
+                "h125a4"  : { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1 },#Change 1 86.5 15.5 10.1 1.58 | 89.5 15.5 10.1 1.409 
+                "h125a5"  : { "mean": 92.5, "sigma1": 15.1, "sigma2": 10.5 },#Change 1 89.1 15.5 11.5 1.94 | 91.1 15.5 11.5 1.79 
+                "h125a6"  : { "mean": 92.5, "sigma1": 15.1, "sigma2": 10.5 },
+                "h125a7"  : { "mean": 89.5,"sigma1": 15.1, "sigma2": 11.1 },#Change 1 87.4 15.3 12.1 1.71 | 89.4 15.3 12.1 1.38
+                "h125a8"  : { "mean": 89.5,"sigma1": 15.1, "sigma2": 11.1 },#Change 1 89.3 15.1 12.2 2.24 90.2 15.3 12.1 2.15
+                "h125a9"  : { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1 },#Change 1                1.06(Bad Fit)
+                "h125a10" : { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1 },#Change 1 87.5 15.5 11.9 1.98 88.5 15.5 11.9 1.92
+                "h125a11" : { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.5 },#Change 1 89.5 14.9 15.9 1.38
+                "h125a12" : { "mean": 90.5, "sigma1": 15.1, "sigma2": 11.1 },#Change 1 90.9 12.1 10.1 3.18 | 83.9 15.5 10.1 3.24 
+                "h125a13" : { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1 },#Change 1 97.1 13.1 12.1 4.11 | 97.1 11.1 12.1 4.11
+                "h125a14" : { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1 },#Change 1 87.3 15.2 11.5 1.85/1.76 88.3 15.5 11.5 1.63
+                "h125a15" : { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1 }, #Change 1 88.8 15.5 11.5 2.54  90.8 9.1 10.5 2.477
+                "h125a16" : { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1 }, #Change 1 88.8 15.5 11.5 2.54  90.8 9.1 10.5 2.477
+                "h125a17" : { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1 }, #Change 1 88.9 15.5 11.1 2.42  90.9 14.5 9.1 2.42
+                "h125a18" : { "mean": 89.5, "sigma1": 15.1, "sigma2": 12.1 },#Change 1`86.1 15.5 11.5 1.62
+                "h125a19" : { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1 },#Change 1 89.0 15.2 11.1 2.12
+                "h125a20" : { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1 },#Change F 88.6 14.1 15.5 1.01   
+                "h125a21" : { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1 },#Change F 86.7 15.5 12.4 1.17 89.7 16.5 11.1 1.21 
                 "h200a5"  : { "mean": 140, "sigma1": 27.0, "sigma2": 20.0},
                 "h200a9"  : { "mean": 140, "sigma1": 26.2, "sigma2": 22.1},
                 "h200a15" : { "mean": 140, "sigma1": 25.5, "sigma2": 22.9},
@@ -2713,17 +2765,20 @@ class HaaLimits2D(HaaLimits):
     def GetInitialValuesDV(self, region="FP"):
          if 'PP' in region:
             initialValues = {
-                "h125a4": { "mean": 92.1,"sigma1": 15.1, "sigma2": 11.1, "width1":1.15 , "width2": 4.00 }, #1.00
-                "h125a5": { "mean": 89.1,"sigma1": 15.1, "sigma2": 11.1, "width1":1.50 , "width2": 1.25 },
-                "h125a7": { "mean": 89.1,"sigma1": 15.1, "sigma2": 11.1, "width1":1.50 , "width2": 1.20 },
-                "h125a8": { "mean": 89.1,"sigma1": 15.1, "sigma2": 11.1, "width1":1.50 , "width2": 1.15 },
-                "h125a9": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.75 , "width2": 1.25},
-                "h125a10": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.75 , "width2": 1.25},
-                "h125a11": { "mean": 92.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.50 , "width2": 1.25},
+                "h125a3p6": {"mean": 92.1,"sigma1": 15.1, "sigma2": 11.1, "width1":0.1 , "width2": 0.1 },
+                "h125a4": { "mean": 92.1,"sigma1": 15.1, "sigma2": 11.1, "width1":0.1 , "width2": 0.1 }, #1.00
+                "h125a5": { "mean": 89.1,"sigma1": 15.1, "sigma2": 11.1, "width1":0.1 , "width2": 0.1 },
+                "h125a6": { "mean": 89.1,"sigma1": 15.1, "sigma2": 11.1, "width1":0.1 , "width2": 1.25 },
+                "h125a7": { "mean": 89.1,"sigma1": 15.1, "sigma2": 11.1, "width1":0.1 , "width2": 1.20 },
+                "h125a8": { "mean": 89.1,"sigma1": 15.1, "sigma2": 11.1, "width1":0.1 , "width2": 1.15 },
+                "h125a9": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.5, "width1":0.1 , "width2": 1.25},
+                "h125a10": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.5, "width1":0.1 , "width2": 1.25},
+                "h125a11": { "mean": 92.5, "sigma1": 15.1, "sigma2": 11.1, "width1":0.1 , "width2": 1.25},
                 "h125a12": { "mean": 91.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.50 , "width2": 1.15},
                 "h125a13": { "mean": 90.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.50 , "width2": 1.15},
-                "h125a14": { "mean": 90.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.75 , "width2": 4.20}, #1.20
+                "h125a14": { "mean": 90.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.75 , "width2": 1.20}, #1.20
                 "h125a15": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.55 , "width2": 1.25},
+                "h125a16": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.55 , "width2": 1.25},
                 "h125a17": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.60 , "width2": 1.20},
                 "h125a18": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.50 , "width2": 1.15},
                 "h125a19": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.5, "width1":1.50 , "width2": 1.10},
@@ -2732,8 +2787,10 @@ class HaaLimits2D(HaaLimits):
                 }
          elif 'FP' in region:
              initialValues = {
+                 "h125a3p6": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.5 , "width2": 1.0},
                  "h125a4": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.5 , "width2": 1.0},
                  "h125a5": { "mean": 92.5, "sigma1": 15.1, "sigma2": 10.5, "width1":1.60 , "width2": 1.00},
+                 "h125a6": { "mean": 92.5, "sigma1": 15.1, "sigma2": 10.5, "width1":1.60 , "width2": 1.00},
                  "h125a7": { "mean": 89.5,"sigma1": 15.1, "sigma2": 11.1, "width1":1.55 , "width2": 1.20 },
                  "h125a8": { "mean": 89.5,"sigma1": 15.1, "sigma2": 11.1, "width1":1.50 , "width2": 1.15 },
                  "h125a9": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.50 , "width2": 1.10},
@@ -2743,6 +2800,7 @@ class HaaLimits2D(HaaLimits):
                  "h125a13": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.50 , "width2": 1.15},
                  "h125a14": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.75 , "width2": 1.20},
                  "h125a15": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.55 , "width2": 1.20},
+                 "h125a16": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.55 , "width2": 1.20},
                  "h125a17": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.75 , "width2": 1.00},
                  "h125a18": { "mean": 89.5, "sigma1": 15.1, "sigma2": 12.1, "width1":2.20, "width2": 1.10},
                  "h125a19": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.85, "width2": 1.00},
@@ -2754,7 +2812,8 @@ class HaaLimits2D(HaaLimits):
     def GetInitialValuesDVh(self, region="FP"):
         if 'PP' in region:
             initialValues = {
-                "h125a4": { "mean": 92.1,"sigma1": 15.1, "sigma2": 11.1, "width1":1.15 , "width2": 4.00 }, #1.00
+                "h125a3p6": { "mean": [112, 90, 120],"sigma1": [22, 15, 30], "sigma2": [6.7, 6.0, 7], "width1":[8.0, 7, 9] , "width2": [20, 15, 25] }, 
+                "h125a4": { "mean": [112, 90, 120],"sigma1": [22, 15, 30], "sigma2": [6.7, 6.0, 7], "width1":[8.0, 7, 9] , "width2": [20, 15, 25] }, #1.00
                 "h125a5": { "mean": [112, 90, 120], "sigma1": [22, 15, 30], "sigma2": [6.7, 6.0, 7], "width1":[8.0, 7, 9] , "width2": [19, 15, 25] },
                 "h125a7": { "mean": [112, 90, 120], "sigma1": [22, 15, 30], "sigma2": [1, 0., 10], "width1":[8.0, 5, 12] , "width2": [20, 15, 25] },
                 "h125a8": { "mean": 89.1,"sigma1": 15.1, "sigma2": 11.1, "width1":1.50 , "width2": 1.15 },
@@ -2773,6 +2832,7 @@ class HaaLimits2D(HaaLimits):
                 }
         elif 'FP' in region:
             initialValues = {
+                 "h125a3p6": { "mean": 92.1,"sigma1": 15.1, "sigma2": 11.1, "width1":1.15 , "width2": 4.00 }, 
                 "h125a4": { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1, "width1":1.5 , "width2": 1.0},
                 "h125a5": { "mean": [106, 100, 110], "sigma1": [22, 15, 35], "sigma2": [0.1, 0, 1], "width1": [37, 0.1, 50] , "width2": [55, 10, 100] },
                 "h125a7": { "mean": [106, 100, 110], "sigma1": [22, 15, 35], "sigma2": [0.1, 0, 1], "width1": [37, 0.1, 50] , "width2": [55, 10, 100] },

@@ -30,9 +30,9 @@ class HaaLimits(Limits):
 
     # permanent parameters
     HMASSES = [125] #,200,250,300,400,500,750,1000]
-    AMASSES = [4,5,7,8,9,10,11,12,13,14,15,17,18,19,20,21]
     HAMAP = {
-        125 : [4,5,7,8,9,10,11,12,13,14,15,17,18,19,20,21],
+        125 : ['3p6','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21'],
+        #125 : ['5', '18'],
         200 : [5,9,15],
         250 : [5,9,15],
         300 : [5,7,9,11,13,15,17,19,21],
@@ -50,7 +50,7 @@ class HaaLimits(Limits):
 
     XVAR = 'CMS_haa_x'
 
-    SIGNAME = 'HToAAH{h}A{a}'
+    SIGNAME = 'hm{h}_am{a}'
     SPLINENAME = 'ggH_haa_{h}'
     ALABEL = 'm_{a}'
     ARANGE = [0,25]
@@ -140,7 +140,7 @@ class HaaLimits(Limits):
         return float(str(a).replace('p','.'))
 
     def aToStr(self,a):
-        return str(a).replace('.','p') if '.' in str(a) and not str(a).endswith('0') else int(a)
+        return str(a).replace('.','p') if '.' in str(a) and not str(a).endswith('0') else str(int(a))
 
     def aSorted(self,As):
         avals = sorted([self.aToFloat(a) for a in As])
@@ -354,9 +354,11 @@ class HaaLimits(Limits):
         doPoly = False
         doPolyExpo = False
 
+        print "tag:", tag
+
         # continuum background
         if doPoly:
-            if self.XRANGE[0]<4 and  'control' in region:
+            if self.XRANGE[0]<4 and 'control' in region:
                 order = 5
             else:
                 order = 1
@@ -376,19 +378,20 @@ class HaaLimits(Limits):
             cont.build(workspace,nameC)
 
         else:
-            if self.XRANGE[0]<4:
+            if (self.XRANGE[0]<4 and tag == 'control') or (self.XRANGE[0]<4 and "TauHad" in tag):
+            #if self.XRANGE[0]<4:
                 nameC1 = 'cont1{}'.format('_'+tag if tag else '')
                 #nameC1 = 'cont1'
                 cont1 = Models.Exponential(nameC1,
                     x = xVar,
-                    lamb = kwargs.pop('lambda_{}'.format(nameC1),[-2,-4,0]), #-2,-3,-1
+                    lamb = kwargs.pop('lambda_{}'.format(nameC1),[-2,-4,0]), #-2,-4,0
                 )
                 cont1.build(workspace,nameC1)
 
                 nameC2 = 'cont2{}'.format('_'+tag if tag else '')
                 cont2 = Models.Exponential(nameC2,
                     x = xVar,
-                    lamb = kwargs.pop('lambda_{}'.format(nameC2),[-0.6,-2,0]), #-5
+                    lamb = kwargs.pop('lambda_{}'.format(nameC2),[-0.6,-2,0]), #-0.6,-2,0
                 )
 
                 #nameC2 = 'cont_poly{}'.format('_'+tag if tag else '')
@@ -411,7 +414,7 @@ class HaaLimits(Limits):
                 #nameC = 'cont'
                 cont = Models.Exponential(nameC,
                     x = xVar,
-                    lamb = kwargs.pop('lambda_{}'.format(nameC),[-2,-4,0]),
+                    lamb = kwargs.pop('lambda_{}'.format(nameC),[-1,-4,2]), #-2,-4,0
                 )
                 cont.build(workspace,nameC)
     
@@ -1010,11 +1013,14 @@ class HaaLimits(Limits):
                 prim.SetX2NDC(0.9)
                 prim.SetY1NDC(0.6)
                 prim.SetY2NDC(0.9)
-                print prim.GetX1NDC(), prim.GetX2NDC(), prim.GetY1NDC(), prim.GetY2NDC()
+                #print prim.GetX1NDC(), prim.GetX2NDC(), prim.GetY1NDC(), prim.GetY2NDC()
         mi = xFrame.GetMinimum()
         ma = xFrame.GetMaximum()
         if mi<0:
             xFrame.SetMinimum(0.1)
+        #if ma>10000:
+        #    xFrame.SetMaximum(10000)
+        print xRange, region, "xFrame", mi, ma
         ratiopad.cd()
         xFrame2.Draw()
         prims = ratiopad.GetListOfPrimitives()
@@ -1048,9 +1054,18 @@ class HaaLimits(Limits):
         name = 'data_prefit_{}{}'.format(region,'_'+shift if shift else '')
         hist = self.histMap[region][shift]['dataNoSig']
         if hist.InheritsFrom('TH1'):
+            #hist.GetXaxis().SetRangeUser(*self.XRANGE)
+            #binning = array('d',[2.5, 2.75, 3., 3.25, 3.5, 3.75, 4., 5, 6, 7, 8.5])
+            #hist.Rebin(10, "rebin", binning)
             integral = hist.Integral(hist.FindBin(self.XRANGE[0]),hist.FindBin(self.XRANGE[1])) * scale
             integralerr = getHistogramIntegralError(hist,hist.FindBin(self.XRANGE[0]),hist.FindBin(self.XRANGE[1])) * scale
+            #if region == 'control':
             data = ROOT.RooDataHist(name,name,ROOT.RooArgList(workspace.var(xVar)),hist)
+            #else:
+            #    tmpData = ROOT.RooDataHist('tmp+'+name,'tmp+'+name,ROOT.RooArgList(workspace.var(xVar)),hist)
+            #binning = ROOT.RooBinning(10, array('d',[2.5, 2.75, 3., 3.25, 3.5, 3.75, 4., 5, 6, 7, 8.5]))
+            #tmpHist = tmpData.createHistogram("tmp",xVar,ROOT.RooArgList(binning))
+            #data = ROOT.RooDataHist(name,name,ROOT.RooArgList(workspace.var(xVar)),tmpHist)
         else:
             integral = hist.sumEntries('{0}>{1} && {0}<{2}'.format(xVar,*self.XRANGE)) * scale
             integralerr = getDatasetIntegralError(hist,'{0}>{1} && {0}<{2}'.format(xVar,*self.XRANGE)) * scale
@@ -1060,6 +1075,7 @@ class HaaLimits(Limits):
         fr = model.fitTo(data, ROOT.RooFit.Save(), ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
 
         workspace.var(xVar).setBins(self.XBINNING)
+        #workspace.var(xVar).setBins(binning)
 
         if region=='control':
             if self.XRANGE[0]<4:
@@ -1138,7 +1154,8 @@ class HaaLimits(Limits):
                 x.setBins(self.XBINNING)
                 
                 # save binned data
-                if doBinned:
+                #if doBinned:
+                if False:
     
                     bgs = self.getComponentFractions(workspace.pdf('bg_{}'.format(region)))
                     
@@ -1151,7 +1168,7 @@ class HaaLimits(Limits):
                         for shift in ['']+self.BACKGROUNDSHIFTS:
                             if shift:
                                 s = workspace.var(shift)
-    
+                                print shift
                                 s.setVal(1)
                                 i = integral.getValV()
                                 dh = pdf.generateBinned(args, i, True)
@@ -1297,9 +1314,20 @@ class HaaLimits(Limits):
             #channel = region.split("_")[0]
             paramValue = vals[region][''][param]
             paramShifts = {}
-            for shift in self.BACKGROUNDSHIFTS:
-                shiftValueUp   = vals[region][shift+'Up'  ][param] - paramValue
-                shiftValueDown = paramValue - vals[region][shift+'Down'][param]
+            if ('TauMuTauE' in channel or 'TauMuTauMu' in channel or 'TauETauE' in channel) and 'cont' in param:
+                backgroundshifts = self.BACKGROUNDSHIFTS + ['modelling']
+            else:
+                backgroundshifts = self.BACKGROUNDSHIFTS
+            for shift in backgroundshifts:
+                if shift == 'modelling':
+                    shiftValueUp = paramValue*1.2
+                    shiftValueDown = paramValue*0.8
+                else:
+                    shiftValueUp   = vals[region][shift+'Up'][param] - paramValue
+                    shiftValueDown = paramValue - vals[region][shift+'Down'][param]
+                #if ('TauMuTauE' in channel or 'TauMuTauMu' in channel or 'TauETauE' in channel) and 'cont' in param:
+                #    shiftValueUp = paramValue*1.2
+                #    shiftValueDown = paramValue*0.8
                 paramShifts[channel+"_"+shift] = {'up': shiftValueUp, 'down': shiftValueDown}
             #if self.FIXFP or 'TauMuTauE' in channel:
             if self.FIXFP:
@@ -1308,11 +1336,20 @@ class HaaLimits(Limits):
                     shifts = paramShifts,
                 )
                 paramModel.build(workspace, param)
-            elif 'TauMuTauE' in channel or 'TauMuTauMu' in channel:
-                value = vals[region][''][param]
-                err   = errs[region][''][param]
-                workspace.factory('{}[{},{},{}]'.format(param,value,value-10*err,value+10*err))
-                paramModel = None
+            elif 'TauMuTauE' in channel or 'TauMuTauMu' in channel or 'TauETauE' in channel:
+                #value = vals[region][''][param]
+                #err   = errs[region][''][param]
+                #workspace.factory('{}[{},{},{}]'.format(param,value,value-10*err,value+10*err))
+                #paramModel = None
+                print param, paramValue, paramShifts
+                paramModel = Models.Param(param,
+                        value  = paramValue,
+                        shifts = paramShifts,
+                    )
+                paramModel.build(workspace, param)
+
+                if self.workspace.var(channel+'_modelling'): self.addSystematic(channel+'_modelling', 'param', systematics=[0,1])
+                
             else:
                 ppRegion = region.replace('FP','PP')
                 fpRegion = region.replace('PP','FP')
@@ -1359,7 +1396,7 @@ class HaaLimits(Limits):
         integral_params = []
         for component in components:
             print "Building component integrals...", region, component
-            channel = region.split("_")[0]
+            #channel = region.split("_")[0]
             subint = 1.
             suberr2 = 0.
             # TODO: errors are way larger than they should be, need to look into this
@@ -1406,7 +1443,7 @@ class HaaLimits(Limits):
                         value  = paramValue,
                     )
                     param.build(workspace, name)
-            elif 'TauMuTauE' in channel or 'TauMuTauMu' in channel:
+            elif 'TauMuTauE' in channel or 'TauMuTauMu' in channel or 'TauETauE' in channel:
                 controlIntegrals = allintegrals if region=='control' else self.control_integralValues
                 if '2S' in component:
                     rname = 'relNorm_{}'.format(component)
@@ -1430,8 +1467,14 @@ class HaaLimits(Limits):
                     param.build(workspace, name)
                 else:
                     # unconstrained for control, FP, but initialized to best fit value
-                    value = allintegrals[component]
-                    workspace.factory('{}[{},{},{}]'.format(name,value,value*0.5,value*1.5))
+                    #value = allintegrals[component]
+                    #workspace.factory('{}[{},{},{}]'.format(name,value,value*0.5,value*1.5))
+                    #print name, paramShifts, [name.replace(region,fpRegion)], scale
+                    param = Models.Param(name,
+                        value  = paramValue,
+                        shifts = paramShifts,
+                    )
+                    param.build(workspace, name)
             else:
                 controlIntegrals = allintegrals if region=='control' else self.control_integralValues
                 # 2S and 3S set to a scale factor times 1S that is common to all regions
@@ -2015,12 +2058,14 @@ class HaaLimits(Limits):
 
     def _addShapeSystematic(self,doBinned=False):
         #for shift in self.SHIFTS+['QCDscale_ggH']:
-        print "shifts:", self.SHIFTS, "doBinned:", doBinned, self.CHANNELS
+        #print "shifts:", self.SHIFTS, "doBinned:", doBinned, self.CHANNELS
         for shift in self.SHIFTS:
             for channel in self.CHANNELS:
                 #print self.workspace.var(shift)
                 if shift=='QCDscale_ggH' and not self.QCDSHIFTS: continue
-                if shift in self.BACKGROUNDSHIFTS and doBinned:
+                #if shift in self.BACKGROUNDSHIFTS and doBinned:
+                #if shift in self.BACKGROUNDSHIFTS:
+                if False:
                     syst = {}
                     for proc in self.bgProcesses:
                         for region in self.REGIONS:
