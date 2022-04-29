@@ -1,6 +1,6 @@
 import logging
 from array import array
-import ROOT
+import ROOT, sys
 
 from CombineLimitsRunII.Plotter.LimitPlotter import LimitPlotter
 
@@ -29,67 +29,7 @@ amasses_full = [x*.1 for x in range(36,210,1)] + [21.0]
 #if doGrid:
 #    amasses_full = [3.6] + [x*.1 for x in range(40,210,5)] + [21.0]
 
-#hdfs_dir = '/hdfs/store/user/dntaylor/2018-05-17_MuMuTauTauLimits_v3' # added control
-#hdfs_dir = '/hdfs/store/user/dntaylor/2018-06-05_MuMuTauTauLimits_v1' # added control
-#hdfs_dir = '/hdfs/store/user/dntaylor/2018-06-08_MuMuTauTauLimits_v1' # added chi2 cut
-#hdfs_dir = '/hdfs/store/user/dntaylor/2018-06-18_MuMuTauTauLimits_v2' # exclude < 3.5
-#hdfs_dir = '/hdfs/store/user/dntaylor/2018-08-17_MuMuTauTauLimits_v1' # mm only, with separating Jpis/upsilon peaks
-#hdfs_dir = '/hdfs/store/user/dntaylor/2018-08-30_MuMuTauTauLimits_v1' # mm and tt
-#hdfs_dir = '/hdfs/store/user/dntaylor/2018-09-02_MuMuTauTauLimits_v1' # mm tt h
-#hdfs_dir = '/hdfs/store/user/dntaylor/2018-09-02_MuMuTauTauLimits_v2' # mm tt h
-#hdfs_dir = '/hdfs/store/user/dntaylor/2018-09-04_MuMuTauTauLimits_v1' # mm tt h, tt modelled by landua + upsilon=gaussian
-#hdfs_dir = '/hdfs/store/user/dntaylor/2018-09-04_MuMuTauTauLimits_v2' # mm tt h, tt modelled by landua only
-#hdfs_dir = '/hdfs/store/user/dntaylor/2018-09-06_MuMuTauTauLimits_v1' # mm tt h, tt modelled by landua + upsilon=gaussian, add 300 750
-#hdfs_dir = '/hdfs/store/user/dntaylor/2018-09-09_MuMuTauTauLimits_v1' # mm tt h, tt sig l+g
-#hdfs_dir = '/hdfs/store/user/dntaylor/2018-09-27_MuMuTauTauLimits_v1' # mm tt h, tt sig l+g, new fits, especially tt
-#hdfs_dir = '/hdfs/store/user/dntaylor/2018-10-02_MuMuTauTauLimits_v1' # mm tt h, h switch to DB
-#hdfs_dir = '/hdfs/store/user/dntaylor/2018-10-10_MuMuTauTauLimits_v1' # fix 2d limits
-#hdfs_dir = '/hdfs/store/user/dntaylor/2018-10-15_MuMuTauTauLimits_v1' # h no err*exp
-#hdfs_dir = '/hdfs/store/user/dntaylor/2018-10-22_MuMuTauTauLimits_v1' # fix to 2D again, PP only
-#hdfs_dir = '/hdfs/store/user/dntaylor/2018-10-23_MuMuTauTauLimits_v1' # fix to 2D again, PP and FP
-#hdfs_dir = '/hdfs/store/user/dntaylor/2018-10-25_MuMuTauTauLimits_v2' # fix to 2D again, PP and FP, binned asimov
-#hdfs_dir = '/hdfs/store/user/dntaylor/2018-12-14_MuMuTauTauLimits_v1' # new fitting mode
-#hdfs_dir = '/hdfs/store/user/dntaylor/2018-12-18_MuMuTauTauLimits_v1' # fix to tt/h modes
-#hdfs_dir = '/hdfs/store/user/dntaylor/2019-01-02_MuMuTauTauLimits_v2' # only a few uncertainties, fix to normalization
-#hdfs_dir = '/hdfs/store/user/dntaylor/2019-01-03_MuMuTauTauLimits_v1' # trying to remove binning
-#hdfs_dir = '/hdfs/store/user/dntaylor/2019-01-07_MuMuTauTauLimits_v1' # switch to splines rather than fit functions in 1D fits
-#hdfs_dir = '/hdfs/store/user/dntaylor/2019-01-08_MuMuTauTauLimits_v1' # remove fake rate
-#hdfs_dir = '/hdfs/store/user/dntaylor/2019-01-09_MuMuTauTauLimits_v1' # remove MuonEn
-#hdfs_dir = '/hdfs/store/user/dntaylor/2019-01-09_MuMuTauTauLimits_v2' # remove fake and allow lambda to float
-#hdfs_dir = '/hdfs/store/user/dntaylor/2019-01-09_MuMuTauTauLimits_v3' # do binning again
-#hdfs_dir = '/hdfs/store/user/dntaylor/2019-01-09_MuMuTauTauLimits_v4' # widen mm h
-#hdfs_dir = '/hdfs/store/user/dntaylor/2019-01-10_MuMuTauTauLimits_v1' # back with all systs
-#hdfs_dir = '/hdfs/store/user/dntaylor/2019-02-05_MuMuTauTauLimits_v1' # changing names, note, binning messed up again, rerun
-#hdfs_dir = '/hdfs/store/user/dntaylor/2019-02-06_MuMuTauTauLimits_v1' # fixed binning
-#hdfs_dir = '/hdfs/store/user/dntaylor/2019-02-08_MuMuTauTauLimits_v1' # fixed binning, unblinded
-#hdfs_dir = '/hdfs/store/user/dntaylor/2019-02-11_MuMuTauTauLimits_v1' # fixed systs
-#hdfs_dir = '/hdfs/store/user/dntaylor/2019-02-20_MuMuTauTauLimits_v1' # freely floating normalizations in FP/control
-#hdfs_dir = '/hdfs/store/user/dntaylor/2019-03-06_MuMuTauTauLimits_v1' # update tau SF
-#hdfs_dir = '/hdfs/store/user/dntaylor/2019-04-01_MuMuTauTauLimits_v1' # add DM
-#hdfs_dir = '/hdfs/store/user/dntaylor/2019-04-03_MuMuTauTauLimits_v1' # two exp background for mm h
-#hdfs_dir = '/hdfs/store/user/dntaylor/2019-05-13_MuMuTauTauLimits_v2' # add neglected uncertainty
-#hdfs_dir = '/hdfs/store/user/dntaylor/2019-05-14_MuMuTauTauLimits_v1' # add regions back
-#hdfs_dir = '/hdfs/store/user/dntaylor/2019-05-15_MuMuTauTauLimits_noMuonEnTauEn_v1' # no muon or tau en
-#hdfs_dir = '/hdfs/store/user/dntaylor/2019-05-16_MuMuTauTauLimits_noQCD_v1' # no qcd
-#hdfs_dir = '/hdfs/store/user/dntaylor/2019-05-17_MuMuTauTauLimits_v1' # back to normal 
-#hdfs_dir = '/hdfs/store/user/dntaylor/2019-07-16_MuMuTauTauLimits_v1' # switch to poly
-#hdfs_dir = '/hdfs/store/user/dntaylor/2019-07-17_MuMuTauTauLimits_v1' # switch to different poly for control and signal
-#hdfs_dir = '/hdfs/store/user/dntaylor/2019-07-21_MuMuTauTauLimits_v1' # and try double expo again
-#hdfs_dir = '/hdfs/store/user/dntaylor/2019-07-27_MuMuTauTauLimits_v1' # with new muon en and tau fake rate
-#hdfs_dir = '/hdfs/store/user/dntaylor/2019-07-30_MuMuTauTauLimits_v1' # fix tau en
-#hdfs_dir = '/hdfs/store/user/dntaylor/2019-08-26_MuMuTauTauLimits_v1' # back to expos, wider upsilon
-#hdfs_dir = '/hdfs/store/user/dntaylor/2019-08-27_MuMuTauTauLimits_v1' # lower lowmass top edge to 8.5
-#hdfs_dir = '/hdfs/store/user/dntaylor/2019-09-18_MuMuTauTauLimits_v1' # to fixed slope
-#hdfs_dir='/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017/Limits/TauETauHad'
-#hdfs_dir='/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017Deep/TauMuTauHad/Limits/mediumDeepVSjet/'
-hdfs_dir='root://cmseos.fnal.gov//eos/uscms/store/user/zhangj/HaaLimits/'
-
-# this is the double expo test
-if doDouble:
-    #hdfs_dir = '/hdfs/store/user/dntaylor/2019-10-18_MuMuTauTauLimits_DoubleExpo_v1' # test
-    hdfs_dir = '/hdfs/store/user/dntaylor/2019-10-21_MuMuTauTauLimits_DoubleExpo_v1' # fixed upsilon
-    #hdfs_dir = '/hdfs/store/user/dntaylor/2019-11-01_MuMuTauTauLimits_DoubleExpoNewCont_veryVerbose_v1' # combine cont1/cont2
-    #hdfs_dir = '/hdfs/store/user/dntaylor/2019-11-05_MuMuTauTauLimits_DoubleExpoNewContFakeNorm_veryVerbose_v1' # combine cont1/cont2, fake as norm only
+hdfs_dir='root://cmseos.fnal.gov//eos/uscms/store/user/zhangj/HaaLimits/Limits/'
 
 #grid_dir = '/hdfs/store/user/dntaylor/2019-08-14_MuMuTauTauLimits_MergedGridPacks_v1'
 #grid_dir = '/hdfs/store/user/dntaylor/2019-10-20_MuMuTauTauLimits_MergedGridPacks_v1'
@@ -112,7 +52,35 @@ hs_grid_dir = '/hdfs/store/user/dntaylor/2019-11-27_MuMuTauTauLimits_MergedGridP
 #higgsCombineHtoAAH125A20_mm_h_parametric_highmassWith1DFitsDVteth.AsymptoticLimits.mH125.root 
 
 #tag = 'with1DFits'
-tag = 'REGIONWith1DFits_TauHadTauHad_DoubleExpo_DV_0p3'
+#tag = 'REGIONWith1DFits_TauHadTauHad_DoubleExpo_DV_0p3'
+#tag = 'REGION_TauMuTauHad_2017CutV2_deepTauID_medium_DV'
+#tag = 'REGION_TauHadTauHad_2016_boostedDitau_medium_doubleExpo_DV'
+#tag = 'REGION_TauHadTauHad_2016_2017_2018_boostedDitau_medium_doubleExpo_DV'
+#tag = 'REGION_TauMuTauE_MuIso_loose_EleId_loose'
+#tag = 'REGION_TauMuTauMu_MuIso_loose'
+#tag =  'REGION_TauMuTauHad_No_dR_Mtt_2017_MVAMedium_DV'
+#tag = 'REGION_TauMuTauHad_2017_MVAMedium_DV'
+#tag = 'REGION_TauETauHad_2016_2017_2018_MVAMedium_DV'
+#tag = 'REGION_TauETauHad_2018_MVAMedium_DV'
+#tag = 'REGION_TauMuTauHad_Order2_2016_2017_2018_MVAMedium_DV_DoubleExpo'
+#tag = 'REGION_TauETauHad_2016_2017_2018_MVAMedium_DV'
+#tag = 'REGION_TauMuTauHad_TauETauHad_2016_2017_2018_MVAMedium_DV_DoubleExpo'
+#tag = 'REGION_TauHadTauHad_2016_2017_2018_MVAMedium_DV_DoubleExpo'
+#tag = 'REGION_TauHadTauHad_2018_MVAMedium_DG_DoubleExpo'
+#tag = 'REGION_TauMuTauE_2018_looseMuIso_tightEleId_DG'
+#tag = 'REGION_TauMuTauE_Order_Scale_2018_looseMuIso_tightEleId_1d'
+#tag = 'REGION_TauMuTauE_Order_Scale_2018_looseMuIso_tightEleId_DG'
+#tag = 'REGION_TauMuTauHad_Order2_2016_2017_2018_MVAMedium_DG_DoubleExpo_wFake'
+#tag = 'REGION_TauETauHad_2016_2017_2018_MVAMedium_DG_DoubleExpo_wFake'
+tag = 'REGION_TauMuTauHad_Order2_2016_2017_2018_MVAMedium_DG_DoubleExpo_wFake'
+#tag = 'REGION_TauMuTauHad_TauMuTauE_2016_2017_2018_MVAMedium_DG_DoubleExpo'
+#tag = 'REGION_TauMuTauE_Order_Scale_2016_2017_2018_looseMuIso_tightEleId_1d'
+
+#prefix = 'mmmt_mm_parametric'
+#prefix = 'mmmt_mm_h_parametric'
+prefix = 'mmmt_mm_h_parametric_unbinned'
+
+
 if doDouble: tag = 'REGIONWith1DFitsDoubleExpoDVmediumDeepVSjet'
 if doDM: 
     tag += 'DM'
@@ -135,6 +103,7 @@ modes = []
 #for var in ['tt','h']:
 for var in ['h']:
     modes += ['mmmt_mm_{}_parametric_unbinned_{}'.format(var,tag)]
+    #modes += ['mmmt_mm_parametric_{}'.format(tag)]
 
 if doGrid:
     modes = ['mmmt_mm_h_parametric_unbinned_{}'.format(tag)]
@@ -195,8 +164,8 @@ if doGrid:
 
 #modelfile = 'brato30mumutautau_alltypes_temp.root'
 #modeltfile = ROOT.TFile.Open(modelfile)
-mfile = 'braa2mmtt.root'
-mtfile = ROOT.TFile.Open(mfile)
+#mfile = 'braa2mmtt.root'
+#mtfile = ROOT.TFile.Open(mfile)
 
 modeltypes = [1,2,3,4]
 tanbs = [1,1.5,2,3,20,50]
@@ -204,11 +173,11 @@ goodtanbs = [x*0.01 for x in range(5,505,5)]
 goodtanbsfull = [x*0.01 for x in range(50,5050,50)]
 modelbrname = 'Model Type=   {}/tanB={}'
 
-def getModels2D():
-    models = {}
-    for m in modeltypes:
-        models[m] = mtfile.Get('model_type{}'.format(m))
-    return models
+#def getModels2D():
+#    models = {}
+#    for m in modeltypes:
+#        models[m] = mtfile.Get('model_type{}'.format(m))
+#    return models
 
 def getModels(scale=1):
 
@@ -384,13 +353,13 @@ def readQs(mode,h,a):
 
     else:
 
-        
+        print 'mode:', mode
         if 'parametric' in mode:
-            #tfile = ROOT.TFile.Open('{hdfs}/{m}/{h}/higgsCombineHToAAH{h}A{a:.1f}_{m}.AsymptoticLimits.mH{h}.root'.format(hdfs=hdfs_dir,h=h,a=a,m=mode,astr=astr))
-            #/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017/Limits/TauMuTauHad/highmass/125/
-            #tfile = ROOT.TFile.Open('{hdfs}/{m}/{h}/{a}/higgsCombineHtoAAH125AX_mm_h_parametric_{m}With1DFits1ExpoDVmediumDeepVSjet.AsymptoticLimits.mH{h}.root'.format(hdfs=hdfs_dir,h=h,a=a,m=mode.split('_')[-1].split('W')[0]))
-            regionmode = mode.split('_')[5].replace('With1DFits','')
-            tfile = ROOT.TFile.Open('{hdfs}higgsCombinem{h}_ma{a}_{mode}_TauHadTauHad_0p7_DoubleExpo_DV.AsymptoticLimits.mH125.root'.format(hdfs=hdfs_dir, h=h, a=a, mode=regionmode))
+            if 'lowmass' in mode: regionmode = 'lowmass'
+            elif 'upsilon' in mode: regionmode = 'upsilon'
+            elif 'highmass' in mode: regionmode = 'highmass'
+            else: sys.exit("Unknown Region Mode!!!")
+            tfile = ROOT.TFile.Open('{hdfs}higgsCombine{pf}_m{h}_ma{a}_{mode}.AsymptoticLimits.mH125.root'.format(hdfs=hdfs_dir, pf=prefix, h=h, a=a, mode=tag.replace('REGION',regionmode)))
             print tfile
         else:
             tfile = ROOT.TFile.Open('{hdfs}/{m}/{h}/higgsCombineHToAAH{h}A{a}_{m}.AsymptoticLimits.mH{h}.root'.format(hdfs=hdfs_dir,h=h,a=a,m=mode))
@@ -400,6 +369,7 @@ def readQs(mode,h,a):
             logging.error('Failed to open {} {} {}'.format(mode,h,a))
             return [], []
         qs = []
+        print tree
         for i, row in enumerate(tree):
             qs += [row.limit]
             good += [True]
@@ -418,7 +388,7 @@ for m in allModes:
     print m
     if 'REGION' in m:
         mlow = m.replace('REGION','lowmass')
-        dfile = ROOT.TFile.Open('datacards_shape/MuMuTauTau/{m}.root'.format(m=mlow))
+        dfile = ROOT.TFile.Open('datacards_shape/MuMuTauTau/mmmt_mm_h_parametric_unbinned_lowmass_TauMuTauHad_2017_MVAMedium_DV.root')  ### only needed to get the xsecs
         regionModes = [m.replace('REGION',x) for x in ['lowmass','upsilon','highmass']]
     else:
         dfile = ROOT.TFile.Open('datacards_shape/MuMuTauTau/{m}.root'.format(m=m))
@@ -476,7 +446,7 @@ for m in allModes:
                 #if 'hkf' in thisMode:
                 #    thisMode = thisMode + '_chi2H{}'.format(h)
                 #print "thisMode",thisMode
-                
+
                 qs, goodqs[rm][h][a] = readQs(thisMode,h,a)
                 if a==thisas[0] or a==thisas[-1]: # override
                     goodqs[rm][h][a] = [True]*6
@@ -616,7 +586,7 @@ for m in allModes:
             plotMethod(       goodas[m][h], quartilesxsecsm[m][h],'{pdir}/{m}-limits/{h}_xsec_sm_log_smooth'.format(pdir=pdir,h=h,m=m),  goodqs=goodqs[m][h], xaxis='m_{a} (GeV)', smooth=True, yaxis=label,blind=b,logy=1,ymin=ymin,ymax=ymax,legendpos=lpos,numcol=1,plotunity=False,leftmargin=0.20,legendtitle=legendtitle,additionaltext=additionaltext,isprelim=isprelim)
 
         ymin = 0
-        ymax = 5e-3
+        ymax = 1e-3
         if h==300: ymax = 2e-3
         if h==750: ymax = 2e-2
         plotMethod(       goodas[m][h], quartilesbr[m][h],  '{pdir}/{m}-limits/{h}_br'.format(pdir=pdir,h=h,m=m),               goodqs=goodqs[m][h], xaxis='m_{a} (GeV)',              yaxis=thisbr,blind=b,logy=0,ymin=ymin,ymax=ymax,legendpos=lpos,numcol=1,plotunity=False,leftmargin=0.20,legendtitle=legendtitle,additionaltext=additionaltext,isprelim=isprelim)

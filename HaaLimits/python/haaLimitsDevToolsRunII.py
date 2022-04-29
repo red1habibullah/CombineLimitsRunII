@@ -11,17 +11,6 @@ import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 ROOT.gROOT.SetBatch()
 
-# Change integration precision
-# BAD!!!
-#ROOT.RooAbsReal.defaultIntegratorConfig().setEpsAbs(1e-6)
-#ROOT.RooAbsReal.defaultIntegratorConfig().setEpsRel(1e-6)
-
-#from DevTools.Plotter.NtupleWrapper import NtupleWrapper
-#from DevTools.Utilities.utilities import *
-#from DevTools.Plotter.haaUtils import *
-#from DevTools.Plotter.xsec import getXsec
-#from CombineLimits.HaaLimits.HaaLimits import HaaLimits
-#from CombineLimits.HaaLimits.HaaLimits2D import HaaLimits2D
 from CombineLimitsRunII.HaaLimits.HaaLimitsNew import HaaLimits
 from CombineLimitsRunII.HaaLimits.HaaLimits2DNew import HaaLimits2D
 
@@ -32,7 +21,6 @@ from RunIIDatasetUtils import *
 
 tdrstyle.setTDRStyle()
 
-#logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 ROOT.RooMsgService.instance().setGlobalKillBelow(ROOT.RooFit.WARNING)
 
@@ -56,24 +44,26 @@ varHists = {
 
 if noSigSys:
     sigSysType=[]
+    #sigSysType=['tauScale']
 
 if noBgSys:
-    bgSysType=[]
+    bgSysType=['fake']
+    #bgSysType=[]
 
-sysType = list(dict.fromkeys(sigSysType+bgSysType))
-shifts = [u+s for u in sysType for s in ['Up','Down']]
+#sysType = list(dict.fromkeys(sigSysType+bgSysType))
+#shifts = [u+s for u in sysType for s in ['Up','Down']]
+sigShifts = [u+s for u in sigSysType for s in ['Up','Down']]
+bgShifts = [u+s for u in bgSysType for s in ['Up','Down']]
 
 hmasses = [125]
 
-amasses = [4,5,7,9,10,11,12,13,14,15,17,18,19,20,21]
-#amasses = [5, 7, 18, 20]
+amasses = ['3p6','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21']
+#amasses = ['5', '18']
 hamap = {
     125:amasses
     } 
 
-signame = 'HToAAH{h}A{a}'
-# ggsigname = 'ggHToAAH{h}A{a}'
-# vbfsigname = 'vbfHToAAH{h}A{a}'
+signame = 'hm{h}_am{a}'
 
 ### Something that are not used up to Dec. 2020
 systLabels = {
@@ -84,6 +74,14 @@ systLabels = {
     'fake'  : 'CMS_fake_t',
     'btag'  : 'CMS_btag_comb',
     'pu'    : 'CMS_pu',
+}
+plotLabels = {
+    'TauETauE'    : 'm_{#mu#mu#tau_{e}#tau_{e}}',
+    'TauMuTauE'   : 'm_{#mu#mu#tau_{#mu}#tau_{e}}',
+    'TauMuTauMu'  : 'm_{#mu#mu#tau_{#mu}#tau_{#mu}}',
+    'TauETauHad'  : 'm_{#mu#mu#tau_{e}#tau_{h}}',
+    'TauMuTauHad' : 'm_{#mu#mu#tau_{#mu}#tau_{h}}',
+    'TauHadTauHad': 'm_{#mu#muj}',
 }
 rebinning = {
     #'mm' : 5, # 10 MeV -> 50 MeV
@@ -123,6 +121,7 @@ def parse_command_line(argv):
     parser.add_argument('--do2DInterpolation', action='store_true', help='interpolate v MH and MA')
     parser.add_argument('--fitParams', action='store_true', help='fit parameters')
     parser.add_argument('--doubleExpo', action='store_true', help='Use double expo')
+    parser.add_argument('--landau', action='store_true', help='Use landau')
     parser.add_argument('--higgs', type=int, default=125, choices=[125,300,750])
     parser.add_argument('--pseudoscalar', type=int, default=7, choices=[5,7,9,11,13,15,17,19,21])
     parser.add_argument('--yFitFunc', type=str, default='', choices=['G','V','CB','DCB','DG','DV','DVh','B','G2','G3','errG','L','MB'])
@@ -150,7 +149,7 @@ if __name__ == "__main__":
     xBinWidth = 0.05
     if do2D:
         yVar=varHists[sys.argv[2]]
-        yBinWidth = 0.25 if var[1]=='tt' else 10
+        yBinWidth = 0.25 if var[1]=='tt' else 2
 
     if do2D and var[1]=='tt': yRange = [0.75,30]
     if args.yRange: yRange = args.yRange
@@ -205,11 +204,11 @@ if __name__ == "__main__":
     
     thesesamples = backgrounds
     if not skipSignal: thesesamples = backgrounds + signals
-    print "thesesamples:", thesesamples, "shifts:", shifts, "var", var, "**regionArgs[PP]", regionArgs["PP"]
+    print "thesesamples:", thesesamples, "sigShifts:", sigShifts, "bgShifts:", bgShifts, "var", var, "**regionArgs[PP]", regionArgs["PP"]
 
     j=0
     for channel in channels:
-        if channel == 'TauMuTauE' or channel == 'TauMuTauMu':
+        if 'TauMuTauE' in channel or 'TauMuTauMu' in channel or 'TauETauE' in channel:
             modes = ['PP']
         else:
             modes = ['PP','FP']
@@ -217,46 +216,57 @@ if __name__ == "__main__":
             modeTag=mode
             mode=channel+'_'+mode
             histMap[mode] = {}
-            for shift in ['']+shifts:
-                histMap[mode][shift] = {}
+            for shift in ['nominal']+bgShifts:
+                if shift == 'nominal': shifttext = ''
+                else: shifttext = shift
+                histMap[mode][shifttext] = {}
                 for proc in thesesamples:
-                    logging.info('Getting {} {} {}'.format(mode,shift,proc))
                     if proc=='datadriven':
+                        logging.info('Getting {} {} {}'.format(mode,shift,proc))
                         if 'PP' in mode:
-                            histMap[mode][shift][proc] = getDatadrivenHist(proc,channel,doUnbinned=True,var=var,shift=shift,do2D=do2D,**regionArgs[modeTag])
+                            histMap[mode][shifttext][proc] = getDatadrivenHist(proc,channel,doUnbinned=True,var=var,shift=shift,do2D=do2D,**regionArgs[modeTag])
+                            #print "nBins", histMap[mode][shifttext][proc], histMap[mode][shifttext][proc].GetNbinsX()
                         else:
                             ### As datadriven so try to load appropriate RooDatasets ###
-                            histMap[mode][shift][proc] = getDatadrivenHist('data',channel,doUnbinned=True,var=var,shift=shift,do2D=do2D,**regionArgs[modeTag])
-                    else:
-                        if proc in signals:
-                            oldXRange = xRange
-                            xRange = [0,30]
-                            histMap[mode][shift][proc] = getSignalHist(proc,channel,doUnbinned=True,var=var,shift=shift,do2D=do2D,**regionArgs[modeTag])
+                            histMap[mode][shifttext][proc] = getDatadrivenHist('data',channel,doUnbinned=True,var=var,shift=shift,do2D=do2D,**regionArgs[modeTag])
                             
-                        xRange = oldXRange
-                    #print proc
-
                 logging.info('Getting {} observed {}'.format(mode, shift))
+                #if not histMap[mode][shifttext]: histMap[mode][shift] = {}
                 samples = backgrounds
                 if addSignal: samples = backgrounds + [signalToAdd]
                 hists = []
                 histsNoSig = []
-                #print "observed:",samples, blind
+                print "observed:",samples
                 for proc in samples:
                     j+=1
-                    hists += [histMap[mode][shift][proc].Clone('hist'+str(j))]
+                    hists += [histMap[mode][shifttext][proc].Clone('hist'+str(j))]
                     j+=1
                     if proc!=signalToAdd:
-                        histsNoSig += [histMap[mode][shift][proc].Clone('hist'+str(j))]
+                        histsNoSig += [histMap[mode][shifttext][proc].Clone('hist'+str(j))]
                 #if doUnbinned:
                 hist = sumDatasets('obs{}{}'.format(mode,shift),*hists)
                 histNoSig = sumDatasets('obsNoSig{}{}'.format(mode,shift),*histsNoSig)
                 
                 j+=1
-                histMap[mode][shift]['data'] = hist.Clone('hist'+str(j))
+                histMap[mode][shifttext]['data'] = hist.Clone('hist'+str(j))
                 j+=1
-                histMap[mode][shift]['dataNoSig'] = histNoSig.Clone('hist'+str(j))
-
+                histMap[mode][shifttext]['dataNoSig'] = histNoSig.Clone('hist'+str(j))
+            #print "DEBUG1", histMap
+            
+            for shift in ['nominal']+sigShifts:
+                if shift == 'nominal': shifttext = ''
+                else: shifttext = shift
+                if not shifttext in histMap[mode].keys(): histMap[mode][shifttext] = {}
+                for proc in thesesamples:
+                    if not proc=='datadriven':
+                        logging.info('Getting {} {} {}'.format(mode,shift,proc))
+                        if proc in signals:
+                            oldXRange = xRange
+                            xRange = [0,30]
+                            histMap[mode][shifttext][proc] = getSignalHist(proc,channel,doUnbinned=True,var=var,shift=shift,do2D=do2D,**regionArgs[modeTag])
+                            
+                        xRange = oldXRange
+            #print "DEBUG2", histMap
 
     for mode in ['control']:
         histMap[mode] = {}
@@ -266,7 +276,7 @@ if __name__ == "__main__":
             if shift: continue
             
             logging.info('Getting {} observed'.format(mode))
-            hist = getControlHist('control',doUnbinned=doUnbinned,var=var)
+            hist = getControlHist('control',channel,doUnbinned=doUnbinned,var=var)
             j+=1
             histMap[mode][shift]['data'] = hist.Clone('hist'+str(j))
             j+=1
@@ -315,7 +325,7 @@ if __name__ == "__main__":
     if 'h' in var:
         haaLimits.YCORRELATION = correlation
     haaLimits.SKIPPLOTS = skipPlots
-    haaLimits.SHIFTS = bgSysType
+    haaLimits.SHIFTS = bgSysType + sigSysType
     haaLimits.SIGNALSHIFTS = sigSysType
     haaLimits.BACKGROUNDSHIFTS = bgSysType
     haaLimits.QCDSHIFTS = [systLabels.get(shift,shift) for shift in qcdShifts]
@@ -328,12 +338,17 @@ if __name__ == "__main__":
     haaLimits.CHANNELS = channels
     if do2D: 
         haaLimits.YVAR = yVar
-        haaLimits.YRANGE = yRange
-        haaLimits.YBINNING = int((yRange[1]-yRange[0])/yBinWidth)
+        #haaLimits.YRANGE = yRange
+        haaLimits.YRANGE = [0, 1000]
+        #haaLimits.YBINNING = int((yRange[1]-yRange[0])/yBinWidth)
+        haaLimits.YBINNING = int(1000./yBinWidth)
         haaLimits.DOUBLEEXPO = args.doubleExpo
+        haaLimits.LANDAU = args.landau
     #print "xVar:", xVar, "xRange:", xRange, "yVar:", yVar, "yRange:", yRange
     if 'tt' in var: haaLimits.YLABEL = 'm_{#tau_{#mu}#tau_{h}}'
-    if 'h' in var or 'hkf' in var: haaLimits.YLABEL = 'm_{#mu#mu#tau_{#mu}#tau_{h}}'
+    if 'h' in var or 'hkf' in var:
+        channelT = channels[0].split('_')[0]
+        haaLimits.YLABEL = plotLabels[channelT]
     haaLimits.initializeWorkspace()
     haaLimits.addControlModels()
     haaLimits.addBackgroundModels(fixAfterControl=True)
@@ -367,8 +382,3 @@ if __name__ == "__main__":
     haaLimits.save(name=name)
     print "DONE!!!"
     
-    #status = main()
-    #sys.exit(status)
-#/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017Deep/TauMuTauE/RooDatasets/Data/TauMuTauE_sideBand_MuIso_loose_EleId_loose.root
-#/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017Deep/TauMuTauE/RooDatasets/DataDriven/TauMuTauE_signalRegion_MuIso_loose_EleId_loose.root
-#/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017Deep/TauMuTauE/RooDatasets/SignalMC/TauMuTauE_HaaMC_am9_tightMuIso_tightEleId_signalRegion.root 

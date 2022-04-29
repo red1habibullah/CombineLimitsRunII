@@ -86,15 +86,16 @@ def doubleVoigtian(x, p):
     
 
 if __name__ == "__main__":
-
+    signame = 'hm{h}_am{a}'
+    
     #whichFunc = "DCB"
     whichFunc = "DV"
 
-    channels = ['TauHadTauHad']
+    channels = ['TauHadTauHad_2018']
 
     modes = ['signalRegion', 'sideBand']
 
-    amasses = [4,5,7,9,10,11,12,13,14,15,17,18,19,20,21]
+    amasses = [5,7,9,10,11,12,13,14,15,17,18,19,20,21]
     hamap = {
         125:amasses
     } 
@@ -151,7 +152,8 @@ if __name__ == "__main__":
             mode=channel+'_'+mode
             histMap[mode] = {}
             for proc in signals:
-                histMap[mode][proc] = getSignalHist(proc,channel,doUnbinned=True,region=modeTag)
+                #histMap[mode][proc] = getSignalHist(proc,channel,doUnbinned=True,region=modeTag)
+                histMap[mode][proc] = getSignalHist(proc,channel,doUnbinned=True,var='visFourbodyMass',shift='nominal',region=modeTag)
     
 
     for channel in channels:
@@ -161,8 +163,8 @@ if __name__ == "__main__":
             for proc in signals:
                 #print "debug", mode, proc
                 region = mode.split("_")[-1]
-                amass = proc.split("A")[-1]
-                if not "A5" in proc and not "A18" in proc: continue
+                amass = proc.split("_")[-1].replace('am','')
+                if not "am5" in proc and not "am18" in proc: continue
                 args = histMap[mode][proc].get()
                 xVar = args.find('invMassMuMu')
                 yVar = args.find('visFourbodyMass')

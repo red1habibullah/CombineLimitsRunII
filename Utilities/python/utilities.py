@@ -40,8 +40,8 @@ def which(program):
 
 def getLumi():
     #return 35867.060 # full 2016
-    return 41529 # full 2017 
-
+    #return 41529 # full 2017 
+    return 137000 # full run 2
     
 def runCommand(command):
     return subprocess.Popen(command,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT).communicate()[0]
