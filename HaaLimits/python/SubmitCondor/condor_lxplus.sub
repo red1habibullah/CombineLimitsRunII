@@ -1,0 +1,12 @@
+universe = vanilla
+executable = run_condor_TauMuTauE.sh
+output = ./condorOut/condor_h$ENV(HMASS)_ma$ENV(AMASS)_$ENV(MREGION)_$ENV(CHANNEL)_$ENV(WPE)_$ENV(WPM).stdout
+error = ./condorOut/condor_h$ENV(HMASS)_ma$ENV(AMASS)_$ENV(MREGION)_$ENV(CHANNEL)_$ENV(WPE)_$ENV(WPM).stderr
+log = ./condorOut/condor_h$ENV(HMASS)_ma$ENV(AMASS)_$ENV(MREGION)_$ENV(CHANNEL)_$ENV(WPE)_$ENV(WPM).log
+arguments = $ENV(HMASS) $ENV(AMASS) datacards_shape/MuMuTauTau/mmmt_mm_parametric_$ENV(MREGION)_$ENV(CHANNEL)_MuIso_$ENV(WPM)_EleId_$ENV(WPE)_Mu2Cut_HToAAH$ENV(HMASS)AX.txt m$ENV(HMASS)_ma$ENV(AMASS)_$ENV(MREGION)_$ENV(CHANNEL)_MuIso_$ENV(WPM)_EleId_$ENV(WPE)_Mu2Cut higgsCombinem$ENV(HMASS)_ma$ENV(AMASS)_$ENV(MREGION)_$ENV(CHANNEL)_MuIso_$ENV(WPM)_EleId_$ENV(WPE)_Mu2Cut.AsymptoticLimits.mH$ENV(HMASS).root
++JobFlavour  = "nextweek"
+RequestCpus = 4
+x509userproxy = $ENV(X509_USER_PROXY)
+use_x509userproxy = True
+getenv= True
+queue 1
