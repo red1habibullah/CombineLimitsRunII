@@ -29,15 +29,15 @@ class HaaLimits(Limits):
     '''
 
     # permanent parameters
-    HMASSES = [125] #,200,250,300,400,500,750,1000]
+    HMASSES = [125,250,500] #,200,250,300,400,500,750,1000]
     HAMAP = {
         125 : ['3p6','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21'],
         #125 : ['5', '18'],
         200 : [5,9,15],
-        250 : [5,9,15],
+        250 : [5,10,15,20],
         300 : [5,7,9,11,13,15,17,19,21],
         400 : [5,9,15],
-        500 : [5,9,15],
+        500 : [5,10,15,20],
         750 : [5,7,9,11,13,15,17,19,21],
         1000: [5,9,15],
     }
@@ -620,7 +620,7 @@ class HaaLimits(Limits):
             legend.SetFillColor(0)
             legend.SetNColumns(len(self.HMASSES))
 
-            for h in [125]: #,300,750]:
+            for h in [125,250,500]: #,300,750]:
                 xs = [yvals[i] for i in range(len(xvals)) if xvals[i]==h]
                 ys = [zvals[i] for i in range(len(xvals)) if xvals[i]==h]
 
@@ -1902,7 +1902,9 @@ class HaaLimits(Limits):
 
     def addCrossSection(self):
         # add higgs cross section
-        tfile = ROOT.TFile.Open('/uscms/home/jingyu/nobackup/Haa/HaaLimits/CMSSW_10_2_13/src/CombineLimits/Limits/data/Higgs_YR4_BSM_13TeV.root')
+        #tfile = ROOT.TFile.Open('/uscms/home/jingyu/nobackup/Haa/HaaLimits/CMSSW_10_2_13/src/CombineLimits/Limits/data/Higgs_YR4_BSM_13TeV.root')
+        tfile = ROOT.TFile.Open('/afs/cern.ch/work/r/rhabibul/CombineRunII_final/CMSSW_10_2_13/src/CombineLimitsRunII/Limits/data/Higgs_YR4_BSM_13TeV.root')
+        
         ws = tfile.Get('YR4_BSM_13TeV')
         ggF = ws.function('xsec_ggF_N3LO')
         vbf = ws.function('xsec_VBF')
@@ -1911,7 +1913,7 @@ class HaaLimits(Limits):
         vbf_pdfalpha = ws.function('pdfalpha_err_VBF')
 
         # add gg+VBF/gg acceptance correction
-        accfile = ROOT.TFile.Open('/uscms/home/jingyu/nobackup/Haa/HaaLimits/CMSSW_10_2_13/src/CombineLimitsRunII/HaaLimits/data/acceptance.root')
+        accfile = ROOT.TFile.Open('/afs/cern.ch/work/r/rhabibul/CombineRunII_final/CMSSW_10_2_13/src/CombineLimitsRunII/HaaLimits/data/acceptance.root')
         acc = accfile.Get('acceptance')
         accgraph = accfile.Get('acceptance_graph')
         accgraph.Fit(acc)
@@ -1939,7 +1941,7 @@ class HaaLimits(Limits):
                     self.addRateParam(name,regionText,proc+'_'+regionText)
 
         # alternative SM xsec
-        tfile = ROOT.TFile.Open('/uscms/home/jingyu/nobackup/Haa/HaaLimits/CMSSW_10_2_13/src/CombineLimits/Limits/data/Higgs_YR4_SM_13TeV.root')
+        tfile = ROOT.TFile.Open('/afs/cern.ch/work/r/rhabibul/CombineRunII_final/CMSSW_10_2_13/src/CombineLimitsRunII/Limits/data/Higgs_YR4_SM_13TeV.root')
         ws = tfile.Get('YR4_SM_13TeV')
         ggF = ws.function('xsec_ggF_N3LO')
         vbf = ws.function('xsec_VBF')

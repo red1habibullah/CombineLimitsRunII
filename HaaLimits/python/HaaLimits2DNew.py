@@ -624,11 +624,14 @@ class HaaLimits2D(HaaLimits):
         thisxrange = [0.8*aval, 1.2*aval]
         thisyrange = [0.2*h, 1.2*h] if self.YRANGE[1]>100 else [self.YRANGE[0], 1.2*aval]
         if self.YRANGE[1]>100:
-            if "TauHadTauHad" in region:
+            if "TauHadTauHad" in region and h==125:
                 thisyrange = [1, 300]
-            else:
+            elif "TauHadTauHad" not in region and h==125:
                 thisyrange = [20, 180]
-        #print "yRange:", thisyrange
+            else:
+                thisyrange = [0,700]
+                
+        print "yRange:", thisyrange
         ws = ROOT.RooWorkspace('sig')
         ws.factory('{0}[{1}, {2}]'.format(self.XVAR,*thisxrange)) 
         ws.var(self.XVAR).setUnit('GeV')
@@ -711,16 +714,63 @@ class HaaLimits2D(HaaLimits):
                 )
             elif yFitFunc == "DG":
                 #print "DEBUG !!!"
-                modely = Models.DoubleSidedGaussian('sigy',
+                if h == 125 and 'TauHadTauHad' in region:
+                    modely = Models.DoubleSidedGaussian('sigy',
+                                                        x = self.YVAR,
+                                                        #mean  =  [93 ,80, 110],
+                                                        #sigma1 = [15, 10, 30],
+                                                        #sigma2 = [25, 10, 3]
+                                                        mean    = [initialValuesDG["h"+str(h)+"a"+str(a)]["mean"],80,120],
+                                                        sigma1  = [initialValuesDG["h"+str(h)+"a"+str(a)]["sigma1"],10,50],
+                                                        sigma2  = [initialValuesDG["h"+str(h)+"a"+str(a)]["sigma2"],10,50],
+                                                        yMax = self.YRANGE[1],
+                                                        )
+                elif h==125 and 'TauHadTauHad' not in region:
+                    modely = Models.DoubleSidedGaussian('sigy',
+                                                         x = self.YVAR,
+                                                        #mean  =  [93 ,80, 110],                                                                                                                                                                                               
+                                                        #sigma1 = [15, 10, 30],                                                                                                                                                                                                
+                                                        #sigma2 = [25, 10, 3]                                                                                                                                                                                                  
+                                                        mean    = [initialValuesDG["h"+str(h)+"a"+str(a)]["mean"],80,120],
+                                                        sigma1  = [initialValuesDG["h"+str(h)+"a"+str(a)]["sigma1"],10,50],
+                                                        sigma2  = [initialValuesDG["h"+str(h)+"a"+str(a)]["sigma2"],10,50],
+                                                        yMax = self.YRANGE[1],
+                                                    )
+                elif h==250 and 'TauHadTauHad' in region:
+                    modely = Models.DoubleSidedGaussian('sigy',
+                                                         x = self.YVAR,
+                                                        #mean  =  [93 ,80, 110],                                                                                                                                                                                               
+                                                        #sigma1 = [15, 10, 30],                                                                                                                                                                                                
+                                                        #sigma2 = [25, 10, 3]                                                                                                                                                                                                  
+                                                        mean    = [initialValuesDG["h"+str(h)+"a"+str(a)]["mean"],75,300],
+                                                        sigma1  = [initialValuesDG["h"+str(h)+"a"+str(a)]["sigma1"],10,50],
+                                                        sigma2  = [initialValuesDG["h"+str(h)+"a"+str(a)]["sigma2"],10,50],
+                                                        yMax = self.YRANGE[1],
+                                                    )
+                elif h==500 and 'TauHadTauHad' in region:
+                    modely = Models.DoubleSidedGaussian('sigy',
+                                                        x = self.YVAR,
+                                                        #mean  =  [93 ,80, 110],                                                                                                                                                                                               
+                                                        #sigma1 = [15, 10, 30],                                                                                                                                                                                                
+                                                        #sigma2 = [25, 10, 3]                                                                                                                                                                                                  
+                                                        mean    = [initialValuesDG["h"+str(h)+"a"+str(a)]["mean"],50,550],
+                                                        sigma1  = [initialValuesDG["h"+str(h)+"a"+str(a)]["sigma1"],10,100],
+                                                        sigma2  = [initialValuesDG["h"+str(h)+"a"+str(a)]["sigma2"],10,100],
+                                                        yMax = self.YRANGE[1],
+                                                    )
+                    
+
+                
+                else:
+                    modely = Models.DoubleSidedGaussian('sigy',
                     x = self.YVAR,
-                    #mean  =  [93 ,80, 110],
-                    #sigma1 = [15, 10, 30],
-                    #sigma2 = [25, 10, 30],
-                    mean    = [initialValuesDG["h"+str(h)+"a"+str(a)]["mean"],80,120],
-                    sigma1  = [initialValuesDG["h"+str(h)+"a"+str(a)]["sigma1"],10,50],
-                    sigma2  = [initialValuesDG["h"+str(h)+"a"+str(a)]["sigma2"],10,50],
-                    yMax = self.YRANGE[1],
-                )
+                 
+                                                        mean    = [initialValuesDG["h"+str(h)+"a"+str(a)]["mean"],0.3*h,1.25*h],
+                                                        sigma1  = [initialValuesDG["h"+str(h)+"a"+str(a)]["sigma1"],10,100],
+                                                        sigma2  = [initialValuesDG["h"+str(h)+"a"+str(a)]["sigma2"],10,100],
+                                                        yMax = self.YRANGE[1],
+                                                    )
+                
                 #print "YRANGE:", self.YRANGE
             elif yFitFunc == "DV":
                 modely = Models.DoubleSidedVoigtian('sigy',
@@ -1246,7 +1296,7 @@ class HaaLimits2D(HaaLimits):
             legend.SetFillColor(0)
             legend.SetNColumns(len(self.HMASSES))
 
-            for h in [125]: #,300,750]:
+            for h in [125,250,500]: #,300,750]:
                 xs = [yvals[i] for i in range(len(xvals)) if xvals[i]==h]
                 ys = [zvals[i] for i in range(len(xvals)) if xvals[i]==h]
                 errorxs = [0 for i in range(len(xvals)) if xvals[i]==h]
@@ -2358,7 +2408,7 @@ class HaaLimits2D(HaaLimits):
               "h750a5"  : { "mean_ttgaus": 2.51, "sigma_ttgaus": 2.00, "mu_ttland": 1.87, "sigma_ttland": 0.35},# Can Be improved 
               "h750a7"  : { "mean_ttgaus": 3.01, "sigma_ttgaus": 2.00, "mu_ttland": 1.80, "sigma_ttland": 0.35},# Can Be improved 
               "h750a9"  : { "mean_ttgaus": 4.00, "sigma_ttgaus": 2.00, "mu_ttland": 1.90, "sigma_ttland": 0.35},# Can Be improved 
-              "h750a11" : { "mean_ttgaus": 6.64, "sigma_ttgaus": 1.97, "mu_ttland": 1.78, "sigma_ttland": 0.41},
+              "h75011" : { "mean_ttgaus": 6.64, "sigma_ttgaus": 1.97, "mu_ttland": 1.78, "sigma_ttland": 0.41},
               "h750a13" : { "mean_ttgaus": 8.00, "sigma_ttgaus": 2.00, "mu_ttland": 2.00, "sigma_ttland": 0.50},
               "h750a15" : { "mean_ttgaus": 8.90, "sigma_ttgaus": 2.80, "mu_ttland": 2.20, "sigma_ttland": 0.60},
               "h750a17" : { "mean_ttgaus": 10.1, "sigma_ttgaus": 2.98, "mu_ttland": 2.30, "sigma_ttland": 0.63},
@@ -2651,9 +2701,10 @@ class HaaLimits2D(HaaLimits):
                 "h200a5"  : { "mean": 140, "sigma1": 27.0, "sigma2": 20.0},
                 "h200a9"  : { "mean": 140, "sigma1": 26.2, "sigma2": 22.1},
                 "h200a15" : { "mean": 140, "sigma1": 25.5, "sigma2": 22.9},
-                "h250a5"  : { "mean": 140, "sigma1": 27.0, "sigma2": 20.0},
-                "h250a9"  : { "mean": 140, "sigma1": 26.2, "sigma2": 22.1},
-                "h250a15" : { "mean": 140, "sigma1": 25.5, "sigma2": 22.9},
+                "h250a5"  : { "mean": 200, "sigma1": 25.0, "sigma2": 26.5}, #Good fit @185 39 25
+                "h250a10"  : { "mean": 200, "sigma1": 24.0, "sigma2": 24.1},#Good fit @181 40 27
+                "h250a15" : { "mean": 200, "sigma1": 23.5, "sigma2": 24.9}, #Good fit @184 42 28 
+                "h250a20" : { "mean": 200, "sigma1": 24.5, "sigma2": 25.1}, #Good fit @177 38 29
                 "h300a5"  : { "mean": 215, "sigma1": 44.4, "sigma2": 26.4},
                 "h300a7"  : { "mean": 211, "sigma1": 44.7, "sigma2": 29.6},
                 "h300a9"  : { "mean": 209, "sigma1": 49.0, "sigma2": 39.5},
@@ -2666,9 +2717,10 @@ class HaaLimits2D(HaaLimits):
                 "h400a5"  : { "mean": 240, "sigma1": 67.0, "sigma2": 40.0},
                 "h400a9"  : { "mean": 240, "sigma1": 66.2, "sigma2": 42.1},
                 "h400a15" : { "mean": 240, "sigma1": 65.5, "sigma2": 42.9},
-                "h500a5"  : { "mean": 340, "sigma1": 87.0, "sigma2": 50.0},
-                "h500a9"  : { "mean": 340, "sigma1": 86.2, "sigma2": 52.1},
-                "h500a15" : { "mean": 340, "sigma1": 85.5, "sigma2": 52.9},
+                "h500a5"  : { "mean": 370, "sigma1": 87.0, "sigma2": 50.0},
+                "h500a10"  : { "mean": 370, "sigma1": 86.2, "sigma2": 52.1},
+                "h500a15" : { "mean": 370, "sigma1": 85.5, "sigma2": 52.9},
+                "h500a20" : { "mean": 370, "sigma1": 85.5, "sigma2": 52.9},                
                 "h750a5"  : { "mean": 522, "sigma1": 121, "sigma2": 68},
                 "h750a7"  : { "mean": 510, "sigma1": 130, "sigma2": 75},
                 "h750a9"  : { "mean": 508, "sigma1": 133, "sigma2": 80},
@@ -2703,12 +2755,13 @@ class HaaLimits2D(HaaLimits):
                 "h125a19" : { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1 },#Change 1 89.0 15.2 11.1 2.12
                 "h125a20" : { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1 },#Change F 88.6 14.1 15.5 1.01   
                 "h125a21" : { "mean": 89.5, "sigma1": 15.1, "sigma2": 11.1 },#Change F 86.7 15.5 12.4 1.17 89.7 16.5 11.1 1.21 
-                "h200a5"  : { "mean": 140, "sigma1": 27.0, "sigma2": 20.0},
-                "h200a9"  : { "mean": 140, "sigma1": 26.2, "sigma2": 22.1},
+                "h200a5"  : { "mean": 200, "sigma1": 24.0, "sigma2": 25.0},
+                "h200a9"  : { "mean": 140, "sigma1": 26.2, "sigma2": 24.1},
                 "h200a15" : { "mean": 140, "sigma1": 25.5, "sigma2": 22.9},
-                "h250a5"  : { "mean": 140, "sigma1": 27.0, "sigma2": 20.0},
-                "h250a9"  : { "mean": 140, "sigma1": 26.2, "sigma2": 22.1},
-                "h250a15" : { "mean": 140, "sigma1": 25.5, "sigma2": 22.9},
+                "h250a5"  : { "mean": 200, "sigma1": 35.0, "sigma2": 23.0},  #Good fit? @170 40 38
+                "h250a10"  : { "mean": 200, "sigma1": 35.2, "sigma2": 23.1}, #Bad fit  @159 36 47 
+                "h250a15" : { "mean": 200, "sigma1": 35.5, "sigma2": 23.9},  #Bad fit  @156 35 49 
+                "h250a20" : { "mean": 200, "sigma1": 35.5, "sigma2": 24.1},  #Bad fit  @163 38 42 
                 "h300a5"  : { "mean": 215, "sigma1": 47.0, "sigma2": 27.7},
                 "h300a7"  : { "mean": 211, "sigma1": 51.0, "sigma2": 27.0},
                 "h300a9"  : { "mean": 210, "sigma1": 49.0, "sigma2": 29.0},
@@ -2721,9 +2774,10 @@ class HaaLimits2D(HaaLimits):
                 "h400a5"  : { "mean": 240, "sigma1": 67.0, "sigma2": 40.0},
                 "h400a9"  : { "mean": 240, "sigma1": 66.2, "sigma2": 42.1},
                 "h400a15" : { "mean": 240, "sigma1": 65.5, "sigma2": 42.9},
-                "h500a5"  : { "mean": 340, "sigma1": 87.0, "sigma2": 50.0},
-                "h500a9"  : { "mean": 340, "sigma1": 86.2, "sigma2": 52.1},
-                "h500a15" : { "mean": 340, "sigma1": 85.5, "sigma2": 52.9},
+                "h500a5"  : { "mean": 400, "sigma1": 89.0, "sigma2": 40.0},
+                "h500a10"  : { "mean": 400, "sigma1": 90.1, "sigma2": 41.1},
+                "h500a15" : { "mean": 400, "sigma1": 90.5, "sigma2": 40.1},
+                "h500a20" : { "mean": 400, "sigma1": 90.5, "sigma2": 42.9},
                 "h750a5"  : { "mean": 511, "sigma1": 148, "sigma2": 65},
                 "h750a7"  : { "mean": 507, "sigma1": 150, "sigma2": 69},
                 "h750a9"  : { "mean": 504, "sigma1": 148, "sigma2": 73},
