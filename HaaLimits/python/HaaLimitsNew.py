@@ -237,6 +237,7 @@ class HaaLimits(Limits):
         nameU1b = 'upsilon1S'
         workspace.factory('{0}[{1}, {2}, {3}]'.format('mean_{}'.format(nameU1b), *[9.5,9.3,9.7]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('sigma_{}'.format(nameU1b),*[0.05,0,0.3]))
+        #workspace.factory('{0}[{1}, {2}, {3}]'.format('sigma_{}'.format(nameU1b),*[0.05,0,0.3]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('width_{}'.format(nameU1b),*[0.1,0.01,1]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('a_{}'.format( nameU1b),*[2,0.001,10]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('n_{}'.format( nameU1b),*[2,0.001,20]))
@@ -262,6 +263,7 @@ class HaaLimits(Limits):
         nameU2b = 'upsilon2S'
         workspace.factory('{0}[{1}, {2}, {3}]'.format('mean_{}'.format(nameU2b), *[10.0,9.8,10.15]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('sigma_{}'.format(nameU2b),*[0.06,0,0.3]))
+        #workspace.factory('{0}[{1}, {2}, {3}]'.format('sigma_{}'.format(nameU2b),*[0.06,0,10]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('width_{}'.format(nameU2b),*[0.1,0.01,1]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('a_{}'.format( nameU2b),*[2,0.001,10]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('n_{}'.format( nameU2b),*[2,0.001,20]))
@@ -287,6 +289,7 @@ class HaaLimits(Limits):
         nameU3b = 'upsilon3S'
         workspace.factory('{0}[{1}, {2}, {3}]'.format('mean_{}'.format(nameU3b), *[10.3,10.22,10.5]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('sigma_{}'.format(nameU3b),*[0.07,0,0.3]))
+        #workspace.factory('{0}[{1}, {2}, {3}]'.format('sigma_{}'.format(nameU3b),*[0.07,0,10]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('width_{}'.format(nameU3b),*[0.1,0.01,1]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('a_{}'.format( nameU3b),*[2,0.001,10]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('n_{}'.format( nameU3b),*[2,0.001,20]))
@@ -623,11 +626,12 @@ class HaaLimits(Limits):
             for h in [125]: #,300,750]:
                 xs = [yvals[i] for i in range(len(xvals)) if xvals[i]==h]
                 ys = [zvals[i] for i in range(len(xvals)) if xvals[i]==h]
-
+                errorxs = [0 for i in range(len(xvals)) if xvals[i]==h]
+                errorys = [zerrs[i] for i in range(len(xvals)) if xvals[i]==h]
                 g = ROOT.TGraph(len(xs),array('d',xs),array('d',ys))
                 if not self.do2D:
                     g.Fit(fitFuncs[h][param])
-                    g = ROOT.TGraph(len(xs),array('d',xs),array('d',ys)) # override so we dont plot the fits here
+                    g = ROOT.TGraphErrors(len(xs),array('d',xs),array('d',ys),array('d',errorxs),array('d', errorys)) # override so we dont plot the fits here
                 g.SetLineColor(self.COLORS[h])
                 g.SetMarkerColor(self.COLORS[h])
                 g.SetTitle('H({h})'.format(h=h))
@@ -763,6 +767,8 @@ class HaaLimits(Limits):
 
         splines = {}
         params = ['mean','width','sigma']
+        channelText = region.replace('_FP','').replace('_PP','')
+        print "channelText:", channelText
         if self.doParamFit:
             for param in params+['integral']:
                 if self.do2D:
@@ -795,6 +801,7 @@ class HaaLimits(Limits):
                                     'up'  : self.fitToList(fitFuncs[shift+'Up'][h][param],amasses), 
                                     'down': self.fitToList(fitFuncs[shift+'Down'][h][param],amasses),
                                 } for shift in shifts},
+                            channel = channelText,
                         )
                         spline.build(workspace, name)
                         splines[name] = spline
@@ -843,6 +850,7 @@ class HaaLimits(Limits):
                     masses = paramMasses,
                     values = paramValues,
                     shifts = paramShifts,
+                    channel = channelText,
                 )
                 spline.build(workspace, name)
                 splines[name] = spline
@@ -864,6 +872,7 @@ class HaaLimits(Limits):
                         masses = paramMasses,
                         values = paramValues,
                         shifts = paramShifts,
+                        channel = channelText,
                     )
                     spline.build(workspace, name)
                     splines[name] = spline
@@ -909,6 +918,7 @@ class HaaLimits(Limits):
                     masses = paramMasses,
                     values = paramValues,
                     shifts = paramShifts,
+                    channel = channelText,
                 )
                 spline.build(workspace, name)
                 splines[name] = spline
@@ -1052,7 +1062,9 @@ class HaaLimits(Limits):
         xVar = kwargs.pop('xVar',self.XVAR)
         model = workspace.pdf('bg_{}'.format(region))
         name = 'data_prefit_{}{}'.format(region,'_'+shift if shift else '')
-        hist = self.histMap[region][shift]['dataNoSig']
+        #hist = self.histMap[region][shift]['dataNoSig']
+        print "DEBUG5:",region, shift, self.histMap[region][shift].keys()
+        hist = self.histMap[region][shift]['datadriven']
         if hist.InheritsFrom('TH1'):
             #hist.GetXaxis().SetRangeUser(*self.XRANGE)
             #binning = array('d',[2.5, 2.75, 3., 3.25, 3.5, 3.75, 4., 5, 6, 7, 8.5])
@@ -1072,9 +1084,9 @@ class HaaLimits(Limits):
             # TODO add support for xVar
             data = hist.Clone(name)
 
-        fr = model.fitTo(data, ROOT.RooFit.Save(), ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
+        fr = model.fitTo(data, ROOT.RooFit.Minimizer("Minuit2", "Minos"), ROOT.RooFit.Save(), ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
 
-        workspace.var(xVar).setBins(self.XBINNING)
+        workspace.var(xVar).setBins(self.XBINNING*2)
         #workspace.var(xVar).setBins(binning)
 
         if region=='control':
@@ -1151,7 +1163,8 @@ class HaaLimits(Limits):
     
                 x = workspace.var(xVar)
                 print 'Entering workspace with x :',x
-                x.setBins(self.XBINNING)
+                #x.setBins(self.XBINNING)
+                #x.setBins(int(self.XBINNING/10.))
                 
                 # save binned data
                 #if doBinned:
@@ -1191,11 +1204,16 @@ class HaaLimits(Limits):
     
     
                 name = 'data_obs_{}'.format(region)
-                hist = self.histMap[region]['']['data']
+                #hist = self.histMap[region]['']['data']
+                if blind:
+                    hist = self.histMap[region]['']['datadriven']
+                else:
+                    hist = self.histMap[region]['']['data']
                 if blind:
                     # generate a toy data observation from the model
                     model = workspace.pdf('bg_{}'.format(region))
-                    h = self.histMap[region]['']['dataNoSig']
+                    #h = self.histMap[region]['']['dataNoSig']
+                    h = self.histMap[region]['']['datadriven']
                     #print h, h.InheritsFrom('TH1')
                     if h.InheritsFrom('TH1'):
                         integral = h.Integral(h.FindBin(self.XRANGE[0]),h.FindBin(self.XRANGE[1])) * scale
@@ -1209,6 +1227,8 @@ class HaaLimits(Limits):
                     else:
                         print "else condition"
                         data_obs = model.generate(ROOT.RooArgSet(self.workspace.var(xVar)),int(integral))
+                        #print int(self.XBINNING/10.)
+                        #data_obs.get().find(xVar).setBins(int(self.XBINNING/10.))
                         #print data_obs
                     if addSignal:
                         print " addSignal Condition "
@@ -1246,6 +1266,7 @@ class HaaLimits(Limits):
                 #    pass
                 #else:
                 xFrame = self.workspace.var(xVar).frame()
+                #self.workspace.var(xVar).setBins(int(self.XBINNING/10.))
                 data_obs.plotOn(xFrame)
                 canvas = ROOT.TCanvas('c','c',800,800)
                 xFrame.Draw()
@@ -1314,7 +1335,7 @@ class HaaLimits(Limits):
             #channel = region.split("_")[0]
             paramValue = vals[region][''][param]
             paramShifts = {}
-            if ('TauMuTauE' in channel or 'TauMuTauMu' in channel or 'TauETauE' in channel) and 'cont' in param:
+            if self.BACKGROUNDSHIFTS and ('TauMuTauE' in channel or 'TauMuTauMu' in channel or 'TauETauE' in channel) and 'cont' in param:
                 backgroundshifts = self.BACKGROUNDSHIFTS + ['modelling']
             else:
                 backgroundshifts = self.BACKGROUNDSHIFTS
@@ -2058,7 +2079,7 @@ class HaaLimits(Limits):
 
     def _addShapeSystematic(self,doBinned=False):
         #for shift in self.SHIFTS+['QCDscale_ggH']:
-        #print "shifts:", self.SHIFTS, "doBinned:", doBinned, self.CHANNELS
+        print "shifts:", self.SHIFTS, "doBinned:", doBinned, self.CHANNELS
         for shift in self.SHIFTS:
             for channel in self.CHANNELS:
                 #print self.workspace.var(shift)

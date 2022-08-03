@@ -13,10 +13,17 @@ setenv wp MVAMedium
 
 #setenv method DG_DoubleExpo_wFake
 #setenv method 1d
-setenv method DG_DoubleExpo_Spline_wFake
+setenv method DG_DoubleExpo_yRange_wFakeTauScale_unblind
+#setenv method DG_DoubleExpo_Spline_wFakeTauScale
+#setenv method DG_DoubleExpo_yRange_Spline_wFakeTauScaleJEC
 
 foreach region (lowmass upsilon highmass)
-    python combineChannels.py ${prefix}_${region}_${channel}_2016_2017_2018_${wp}_${method}_hm125_amX.txt ${prefix}_${region}_${channel}_2016_${wp}_${method}_hm125_amX.txt ${prefix}_${region}_${channel}_2017_${wp}_${method}_hm125_amX.txt ${prefix}_${region}_${channel}_2018_${wp}_${method}_hm125_amX.txt
+    #python combineChannels.py ${prefix}_${region}_${channel}_2016_2017_2018_${wp}_${method}_hm125_amX.txt ${prefix}_${region}_${channel}_2016_${wp}_${method}_hm125_amX.txt ${prefix}_${region}_${channel}_2017_${wp}_${method}_hm125_amX.txt ${prefix}_${region}_${channel}_2018_${wp}_${method}_hm125_amX.txt
     
-    #python combineChannels.py mmmt_mm_h_parametric_unbinned_${region}_TauMuTauHad_TauMuTauE_2016_2017_2018_MVAMedium_DG_DoubleExpo_hm125_amX.txt mmmt_mm_h_parametric_unbinned_${region}_TauMuTauHad_Order2_2016_2017_2018_MVAMedium_DG_DoubleExpo_wFake_hm125_amX.txt mmmt_mm_parametric_${region}_TauMuTauE_Order_Scale_2016_2017_2018_looseMuIso_tightEleId_1d_hm125_amX.txt   
+    #python combineChannels.py mmmt_mm_h_parametric_unbinned_${region}_TauMuTauHad_TauMuTauE_2016_2017_2018_MVAMedium_DG_DoubleExpo_hm125_amX.txt mmmt_mm_h_parametric_unbinned_${region}_TauMuTauHad_Order2_2016_2017_2018_MVAMedium_DG_DoubleExpo_wFake_hm125_amX.txt mmmt_mm_parametric_${region}_TauMuTauE_Order_Scale_2016_2017_2018_looseMuIso_tightEleId_1d_hm125_amX.txt
+    #python combineChannels.py mmmt_mm_h_parametric_unbinned_${region}_TauMuTauMu_TauMuTauHad_TauETauHad_TauHadTauHad_2016_MVAMedium_DG_DoubleExpo_hm125_amX.txt mmmt_mm_h_parametric_unbinned_${region}_TauMuTauHad_Order2_2016_MVAMedium_DG_DoubleExpo_yRange_wFakeTauScale_hm125_amX.txt mmmt_mm_h_parametric_unbinned_${region}_TauETauHad_2016_MVAMedium_DG_DoubleExpo_Spline_wFakeTauScale_hm125_amX.txt mmmt_mm_h_parametric_unbinned_${region}_TauHadTauHad_2016_MVAMedium_DG_DoubleExpo_Spline_yRange_wFakeTauScale_hm125_amX.txt mmmt_mm_parametric_${region}_TauMuTauMu_2016_looseMuIso_looseMuIso_1d_Spline_wFakeModelling_hm125_amX.txt
+    #python combineChannels.py mmmt_mm_h_parametric_unbinned_${region}_TauMuTauMu_TauMuTauHad_TauETauHad_TauHadTauHad_2016_MVAMedium_DG_DoubleExpo_hm125_amX.txt mmmt_mm_h_parametric_unbinned_${region}_TauMuTauMu_TauMuTauE_TauMuTauHad_TauETauHad_TauHadTauHad_2016_MVAMedium_DG_DoubleExpo_hm125_amX.txt
+
+    python combineChannels.py mmmt_mm_h_parametric_unbinned_${region}_TauMuTauMu_TauMuTauE_TauMuTauHad_TauETauHad_TauHadTauHad_2017_MVAMedium_DG_DoubleExpo_hm125_amX.txt mmmt_mm_h_parametric_unbinned_${region}_TauMuTauHad_Order2_2017_MVAMedium_DG_DoubleExpo_yRange_wFakeTauScale_hm125_amX.txt  mmmt_mm_parametric_${region}_TauMuTauE_Order_Scale_2017_looseMuIso_tightEleId_1d_Spline_wFakeModelling_hm125_amX.txt mmmt_mm_h_parametric_unbinned_${region}_TauETauHad_2017_MVAMedium_DG_DoubleExpo_Spline_wFakeTauScale_hm125_amX.txt mmmt_mm_h_parametric_unbinned_${region}_TauHadTauHad_2017_MVAMedium_DG_DoubleExpo_yRange_Spline_wFakeTauScaleJEC_hm125_amX.txt mmmt_mm_parametric_${region}_TauMuTauMu_Order_Scale_2017_looseMuIso_looseMuIso_1d_Spline_wFakeModelling_hm125_amX.txt
+    sed -i 's/ch1/TauMuTauE_Order_Scale_2017_PP/g' mmmt_mm_h_parametric_unbinned_${region}_TauMuTauMu_TauMuTauE_TauMuTauHad_TauETauHad_TauHadTauHad_2017_MVAMedium_DG_DoubleExpo_hm125_amX.txt
 end

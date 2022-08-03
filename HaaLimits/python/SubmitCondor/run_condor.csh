@@ -24,7 +24,7 @@ echo "  for 3 (datacard): $3"
 echo "  for 4 (name): $4"
 echo "  for 5 (output): $5"
 
-combine -M AsymptoticLimits -m ${1} --setParameters MA=${2} --freezeParameters=MA ${3} -n ${4}
+combine -M AsymptoticLimits -m ${1} --setParameters MA=${2} --freezeParameters=MA ${3} --rMin -3 --rMax 3 -n ${4}
 rm /eos/uscms/store/user/zhangj/HaaLimits/Limits/${5}
 xrdcp ${5} root://cmseos.fnal.gov//eos/uscms/store/user/zhangj/HaaLimits/Limits/${5}
 

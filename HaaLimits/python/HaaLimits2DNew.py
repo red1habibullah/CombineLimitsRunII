@@ -1565,6 +1565,7 @@ class HaaLimits2D(HaaLimits):
                     masses = paramMasses,
                     values = paramValues,
                     shifts = paramShifts,
+                    channel = channelText,
                 )
                 spline.build(workspace, name)
                 splines[name] = spline
@@ -1586,6 +1587,7 @@ class HaaLimits2D(HaaLimits):
                         masses = paramMasses,
                         values = paramValues,
                         shifts = paramShifts,
+                        channel = channelText,
                     )
                     spline.build(workspace, name)
                     splines[name] = spline
@@ -1631,6 +1633,7 @@ class HaaLimits2D(HaaLimits):
                     masses = paramMasses,
                     values = paramValues,
                     shifts = paramShifts,
+                    channel = channelText,
                 )
                 spline.build(workspace, name)
                 splines[name] = spline
@@ -1848,7 +1851,8 @@ class HaaLimits2D(HaaLimits):
 
         model = workspace.pdf('bg_{}_xy'.format(region))
         name = 'data_prefit_{}{}'.format(region,'_'+shift if shift else '')
-        hist = self.histMap[region][shift]['dataNoSig']
+        #hist = self.histMap[region][shift]['dataNoSig']
+        hist = self.histMap[region][shift]['datadriven']
         if hist.InheritsFrom('TH1'):
             integral = hist.Integral() * scale # 2D restricted integral?
             integralerr = getHistogram2DIntegralError(hist) * scale
@@ -1916,6 +1920,7 @@ class HaaLimits2D(HaaLimits):
         scale = kwargs.pop('scale',1)
 
         workspace = self.workspace
+        workspace.Print()
         #print self.REGIONS
 
         for channel in self.CHANNELS:
@@ -1928,7 +1933,7 @@ class HaaLimits2D(HaaLimits):
                 # build the models after doing the prefit stuff
                 prebuiltParams = {p:p for p in self.background_params[region]}
                 self.addVar(xVar, *self.XRANGE, unit='GeV', label=self.XLABEL, workspace=workspace)
-                self.addVar(yVar, *self.YRANGE, unit='GeV', label=self.XLABEL, workspace=workspace)
+                self.addVar(yVar, *self.YRANGE, unit='GeV', label=self.YLABEL, workspace=workspace)
                 self.buildModel(region=region,workspace=workspace,xVar=xVar,yVar=yVar,**prebuiltParams)
                 self.fixXLambda(workspace=self.workspace)
                 self.fixCorrelation(workspace=self.workspace)
@@ -1974,12 +1979,17 @@ class HaaLimits2D(HaaLimits):
                                 dh.SetName(bgname+'_binned')
                                 self.wsimport(dh)
     
+                #print "DEBUG!!!", hist, blind
                 name = 'data_obs_{}'.format(region)
-                hist = self.histMap[region]['']['data']
+                if blind:
+                    hist = self.histMap[region]['']['datadriven']
+                else:
+                    hist = self.histMap[region]['']['data']
                 if blind:
                     # generate a toy data observation from the model
                     model = workspace.pdf('bg_{}_xy'.format(region))
-                    h = self.histMap[region]['']['dataNoSig']
+                    #h = self.histMap[region]['']['dataNoSig']
+                    h = self.histMap[region]['']['datadriven']
                     if h.InheritsFrom('TH1'):
                         integral = h.Integral() * scale # 2D integral?
                     else:
@@ -2011,6 +2021,8 @@ class HaaLimits2D(HaaLimits):
                         data_obs = hist.Clone(name)
                         data_obs.get().find(xVar).setBins(self.XBINNING)
                         data_obs.get().find(yVar).setBins(self.YBINNING)
+                        #print "data_obs:", data_obs
+                        #data_obs.Print("V")
                 self.wsimport(data_obs)
     
                 if hist.InheritsFrom('TH1'):
@@ -2030,6 +2042,8 @@ class HaaLimits2D(HaaLimits):
                     canvas.Print('{}/data_obs_{}_xproj_log.png'.format(self.plotDir,region))
     
                     yFrame = self.workspace.var(yVar).frame()
+                    #print "YLABEL", self.YLABEL
+                    #data_obs.get().find(yVar).setPlotLabel(self.YLABEL)
                     data_obs.plotOn(yFrame)
                     canvas = ROOT.TCanvas('c','c',800,800)
                     yFrame.Draw()
