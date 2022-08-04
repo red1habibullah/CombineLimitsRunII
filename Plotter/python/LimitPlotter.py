@@ -113,7 +113,7 @@ class LimitPlotter(PlotterBase):
                 w.setVal(limits[xvals[i]][4])
                 twoSigmaDS_low.add(ROOT.RooArgSet(xVar,w))
 
-        
+        #print "DEBUG:", smooth
         def fit(savename,ds):
             model.fitTo(ds,ROOT.RooFit.Save(),ROOT.RooFit.SumW2Error(True))
             xFrame = xVar.frame()
@@ -131,10 +131,8 @@ class LimitPlotter(PlotterBase):
             fit('oneSigma_high',oneSigmaDS_high)
             fit('twoSigma_high',twoSigmaDS_high)
 
-
         smoothlog = False
         if smooth: # smooth out the expected bands
-
             # smooth via function
             twoSigmaSmoother_low  = ROOT.TGraphSmooth()
             twoSigmaSmoother_high = ROOT.TGraphSmooth()

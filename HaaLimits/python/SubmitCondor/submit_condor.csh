@@ -13,13 +13,21 @@ cd $CMSSW_BASE/src/CombineLimitsRunII/HaaLimits/python/SubmitCondor
 
 #setenv TFUNC DG
 #setenv TFUNC 1d
+setenv TFUNC 1d_Spline_wFakeModelling
+#setenv TFUNC 1d_Spline_wFakeModelling_unblind
 #setenv TFUNC DG_DoubleExpo_wFake
-setenv TFUNC DG_DoubleExpo_Spline_wFake
+#setenv TFUNC DG_DoubleExpo_Spline_wFake
 #setenv TFUNC DG_DoubleExpo
+#setenv TFUNC DG_DoubleExpo_yRange_wFakeTauScale
+#setenv TFUNC DG_DoubleExpo_Spline_wFakeTauScale
+#setenv TFUNC 1d_Spline_wFakeTauScale
+#setenv TFUNC DG_DoubleExpo_yRange_wFakeTauScale_unblind
+#setenv TFUNC 1d_yRange_Spline_wFakeTauScaleJEC
 
-setenv PREFIX mmmt_mm_h_parametric_unbinned
+#setenv PREFIX mmmt_mm_h_parametric_unbinned
+#setenv PREFIX mmmt_mm_parametric_unbinned
 #setenv PREFIX mmmt_mm_h_parametric
-#setenv PREFIX mmmt_mm_parametric
+setenv PREFIX mmmt_mm_parametric
 
 setenv HMASS 125
 #setenv CHANNEL TauMuTauHad_2017CutV2
@@ -32,16 +40,22 @@ setenv HMASS 125
 #setenv CHANNEL TauETauHad_2018
 #setenv CHANNEL TauHadTauHad_2018
 #setenv CHANNEL TauHadTauHad_2016_2017_2018
-setenv CHANNEL TauMuTauHad_Order2_2016_2017_2018
+#setenv CHANNEL TauMuTauHad_Order2_2016_2017_2018
+#setenv CHANNEL TauMuTauHad_Order2_2018
 #setenv CHANNEL TauMuTauHad_2016_2017_2018
-#setenv CHANNEL TauHadTauHad_2016_2017_2018
-#setenv CHANNEL TauETauHad_2016_2017_2018
+#setenv CHANNEL TauHadTauHad_2016
+#setenv CHANNEL TauETauHad_2016
+#setenv CHANNEL TauMuTauHad_Order2_2016_2017_2018
 #setenv CHANNEL TauMuTauHad_TauETauHad_2016_2017_2018
 #setenv CHANNEL TauMuTauE_Order_Scale_2016_2017_2018
 #setenv CHANNEL TauMuTauHad_TauMuTauE_2016_2017_2018
+#setenv CHANNEL TauMuTauE_Order_Scale_2018
+setenv CHANNEL TauMuTauMu_Order_Scale_2016
+#setenv CHANNEL TauMuTauMu_2016_2017_2018
 
-foreach wp (MVAMedium)
+#foreach wp (MVAMedium)
 #foreach wp (looseMuIso_tightEleId)
+foreach wp (looseMuIso_looseMuIso)
     setenv WP $wp
     foreach r (lowmass upsilon highmass)
 	setenv MREGION $r

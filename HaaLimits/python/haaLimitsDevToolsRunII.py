@@ -43,7 +43,8 @@ varHists = {
 
 
 if noSigSys:
-    sigSysType=[]
+    #sigSysType=[]
+    sigSysType=['tauScale', 'JEC']
     #sigSysType=['tauScale']
 
 if noBgSys:
@@ -146,7 +147,7 @@ if __name__ == "__main__":
     do2D = len(args.fitVars)==2
     var = args.fitVars
     
-    xBinWidth = 0.05
+    xBinWidth = 0.025
     if do2D:
         yVar=varHists[sys.argv[2]]
         yBinWidth = 0.25 if var[1]=='tt' else 2
@@ -181,7 +182,11 @@ if __name__ == "__main__":
     if not args.do2DInterpolation:
         hmasses = [h for h in hmasses if h in [125, 300, 750]]
 
-    backgrounds = ['datadriven']
+    #backgrounds = ['datadriven', 'data']
+    if blind:
+        backgrounds = ['datadriven']
+    else:
+        backgrounds = ['datadriven', 'data']
     
     signals=[signame.format(h='125',a=a) for a in hamap[125]]
     #signals = [signame.format(h=h,a=a) for h in hmasses[0] for a in amasses if a in hamap[h]]
@@ -229,28 +234,33 @@ if __name__ == "__main__":
                         else:
                             ### As datadriven so try to load appropriate RooDatasets ###
                             histMap[mode][shifttext][proc] = getDatadrivenHist('data',channel,doUnbinned=True,var=var,shift=shift,do2D=do2D,**regionArgs[modeTag])
-                            
-                logging.info('Getting {} observed {}'.format(mode, shift))
-                #if not histMap[mode][shifttext]: histMap[mode][shift] = {}
-                samples = backgrounds
-                if addSignal: samples = backgrounds + [signalToAdd]
-                hists = []
-                histsNoSig = []
-                print "observed:",samples
-                for proc in samples:
-                    j+=1
-                    hists += [histMap[mode][shifttext][proc].Clone('hist'+str(j))]
-                    j+=1
-                    if proc!=signalToAdd:
-                        histsNoSig += [histMap[mode][shifttext][proc].Clone('hist'+str(j))]
-                #if doUnbinned:
-                hist = sumDatasets('obs{}{}'.format(mode,shift),*hists)
-                histNoSig = sumDatasets('obsNoSig{}{}'.format(mode,shift),*histsNoSig)
-                
-                j+=1
-                histMap[mode][shifttext]['data'] = hist.Clone('hist'+str(j))
-                j+=1
-                histMap[mode][shifttext]['dataNoSig'] = histNoSig.Clone('hist'+str(j))
+
+            for proc in thesesamples:
+                if proc == 'data':        
+                    logging.info('Getting {} observed {}'.format(mode, shift))
+                    histMap[mode]['']['data'] = getDatadrivenHist('data',channel,doUnbinned=True,var=var,shift='nominal',do2D=do2D,**regionArgs[modeTag])
+                    
+                    #if not histMap[mode][shifttext]: histMap[mode][shift] = {}
+##                     samples = backgrounds
+##                     if addSignal: samples = backgrounds + [signalToAdd]
+##                     hists = []
+##                     histsNoSig = []
+##                     print "observed:",samples, proc
+##                     for proc in samples:
+##                         j+=1
+##                         hists += [histMap[mode][shifttext][proc].Clone('hist'+str(j))]
+##                         j+=1
+##                     if proc!=signalToAdd:
+##                         histsNoSig += [histMap[mode][shifttext][proc].Clone('hist'+str(j))]
+##                 #if doUnbinned:
+##                 hist = sumDatasets('obs{}{}'.format(mode,shift),*hists)
+##                 histNoSig = sumDatasets('obsNoSig{}{}'.format(mode,shift),*histsNoSig)
+##                 #print hist, histNoSig, hists
+##                 
+##                 j+=1
+##                 histMap[mode][shifttext]['data'] = hist.Clone('hist'+str(j))
+##                 j+=1
+##                 histMap[mode][shifttext]['dataNoSig'] = histNoSig.Clone('hist'+str(j))
             #print "DEBUG1", histMap
             
             for shift in ['nominal']+sigShifts:
@@ -265,7 +275,7 @@ if __name__ == "__main__":
                             xRange = [0,30]
                             histMap[mode][shifttext][proc] = getSignalHist(proc,channel,doUnbinned=True,var=var,shift=shift,do2D=do2D,**regionArgs[modeTag])
                             
-                        xRange = oldXRange
+                            xRange = oldXRange
             #print "DEBUG2", histMap
 
     for mode in ['control']:
@@ -280,7 +290,8 @@ if __name__ == "__main__":
             j+=1
             histMap[mode][shift]['data'] = hist.Clone('hist'+str(j))
             j+=1
-            histMap[mode][shift]['dataNoSig'] = hist.Clone('hist'+str(j))
+            #histMap[mode][shift]['dataNoSig'] = hist.Clone('hist'+str(j))
+            histMap[mode][shift]['datadriven'] = hist.Clone('hist'+str(j))
 
     # rescale signal
     scales = {}

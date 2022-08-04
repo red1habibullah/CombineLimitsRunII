@@ -72,13 +72,28 @@ hs_grid_dir = '/hdfs/store/user/dntaylor/2019-11-27_MuMuTauTauLimits_MergedGridP
 #tag = 'REGION_TauMuTauE_Order_Scale_2018_looseMuIso_tightEleId_DG'
 #tag = 'REGION_TauMuTauHad_Order2_2016_2017_2018_MVAMedium_DG_DoubleExpo_wFake'
 #tag = 'REGION_TauETauHad_2016_2017_2018_MVAMedium_DG_DoubleExpo_wFake'
-tag = 'REGION_TauMuTauHad_Order2_2016_2017_2018_MVAMedium_DG_DoubleExpo_wFake'
+#tag = 'REGION_TauMuTauHad_Order2_2016_2017_2018_MVAMedium_DG_DoubleExpo_wFake'
 #tag = 'REGION_TauMuTauHad_TauMuTauE_2016_2017_2018_MVAMedium_DG_DoubleExpo'
 #tag = 'REGION_TauMuTauE_Order_Scale_2016_2017_2018_looseMuIso_tightEleId_1d'
+tag = 'REGION_TauMuTauE_Order_Scale_2018_looseMuIso_tightEleId_1d_Spline_wFakeModelling'
+#tag = 'REGION_TauMuTauE_Order_Scale_2016_2017_2018_looseMuIso_tightEleId_1d_Spline_wFakeModelling_unblind'
+#tag = 'REGION_TauMuTauMu_Order_Scale_2018_looseMuIso_looseMuIso_1d_Spline_wFakeModelling'
+#tag = 'REGION_TauMuTauMu_Order_Scale_2016_2017_2018_looseMuIso_looseMuIso_1d_Spline_wFakeModelling_unblind'
+#tag = 'REGION_TauETauHad_2016_2017_2018_MVAMedium_DG_DoubleExpo_yRange_wFakeTauScale'
+#tag = 'REGION_TauMuTauHad_Order2_2016_MVAMedium_DG_DoubleExpo_yRange_wFakeTauScale'
+#tag = 'REGION_TauHadTauHad_2016_2017_2018_MVAMedium_DG_DoubleExpo_yRange_wFakeTauScale'
+#tag = 'REGION_TauETauHad_2016_2017_2018_MVAMedium_DG_DoubleExpo_yRange_Spline_wFakeTauScale_unblind'
+#tag = 'REGION_TauETauHad_2016_2017_2018_MVAMedium_DG_DoubleExpo_Spline_wFakeTauScale_unblind_v2'
+#tag = 'REGION_TauETauHad_2016_2017_2018_MVAMedium_DG_DoubleExpo_Spline_wFakeTauScale'
+#tag = 'REGION_TauETauHad_2016_MVAMedium_1d_Spline_wFakeTauScale'
+#tag = 'REGION_TauHadTauHad_2016_MVAMedium_1d_yRange_Spline_wFakeTauScaleJEC'
 
-#prefix = 'mmmt_mm_parametric'
-#prefix = 'mmmt_mm_h_parametric'
-prefix = 'mmmt_mm_h_parametric_unbinned'
+
+
+
+prefix = 'mmmt_mm_parametric'
+#prefix = 'mmmt_mm_parametric_unbinned'
+#prefix = 'mmmt_mm_h_parametric_unbinned'
 
 
 if doDouble: tag = 'REGIONWith1DFitsDoubleExpoDVmediumDeepVSjet'
@@ -353,14 +368,14 @@ def readQs(mode,h,a):
 
     else:
 
-        print 'mode:', mode
+        #print 'mode:', mode
         if 'parametric' in mode:
             if 'lowmass' in mode: regionmode = 'lowmass'
             elif 'upsilon' in mode: regionmode = 'upsilon'
             elif 'highmass' in mode: regionmode = 'highmass'
             else: sys.exit("Unknown Region Mode!!!")
             tfile = ROOT.TFile.Open('{hdfs}higgsCombine{pf}_m{h}_ma{a}_{mode}.AsymptoticLimits.mH125.root'.format(hdfs=hdfs_dir, pf=prefix, h=h, a=a, mode=tag.replace('REGION',regionmode)))
-            print tfile
+            #print tfile
         else:
             tfile = ROOT.TFile.Open('{hdfs}/{m}/{h}/higgsCombineHToAAH{h}A{a}_{m}.AsymptoticLimits.mH{h}.root'.format(hdfs=hdfs_dir,h=h,a=a,m=mode))
         try:
@@ -369,7 +384,7 @@ def readQs(mode,h,a):
             logging.error('Failed to open {} {} {}'.format(mode,h,a))
             return [], []
         qs = []
-        print tree
+        #print tree
         for i, row in enumerate(tree):
             qs += [row.limit]
             good += [True]
@@ -385,7 +400,7 @@ regionXs = {
 }
 
 for m in allModes:
-    print m
+    #print m
     if 'REGION' in m:
         mlow = m.replace('REGION','lowmass')
         dfile = ROOT.TFile.Open('datacards_shape/MuMuTauTau/mmmt_mm_h_parametric_unbinned_lowmass_TauMuTauHad_2017_MVAMedium_DV.root')  ### only needed to get the xsecs
@@ -451,7 +466,7 @@ for m in allModes:
                 if a==thisas[0] or a==thisas[-1]: # override
                     goodqs[rm][h][a] = [True]*6
                 if not qs: continue
-                print qs
+                #print qs
                 outline = ':'.join(['{:.3f}'.format(x) for x in qs])
                 logging.info('{0}:{1}: Limits: {2}'.format(h,a,outline))
 
@@ -540,7 +555,8 @@ for m in allModes:
     for h in hmasses:
         #if h == 750 and 'mm_para' not in m: continue
         thisbr = labelbr if h==125 else labelbrbsm
-        lpos = 34 if 'mm_para' in m else 24
+        #lpos = 34 if 'mm_para' in m else 24
+        lpos = 34
 
         #legendtitle = '#splitline{{m_{{H}} = {h} GeV}}{{95% CL upper limits}}'.format(h=h)
         legendtitle = '95% CL upper limits'
@@ -586,7 +602,7 @@ for m in allModes:
             plotMethod(       goodas[m][h], quartilesxsecsm[m][h],'{pdir}/{m}-limits/{h}_xsec_sm_log_smooth'.format(pdir=pdir,h=h,m=m),  goodqs=goodqs[m][h], xaxis='m_{a} (GeV)', smooth=True, yaxis=label,blind=b,logy=1,ymin=ymin,ymax=ymax,legendpos=lpos,numcol=1,plotunity=False,leftmargin=0.20,legendtitle=legendtitle,additionaltext=additionaltext,isprelim=isprelim)
 
         ymin = 0
-        ymax = 1e-3
+        ymax = 5e-3
         if h==300: ymax = 2e-3
         if h==750: ymax = 2e-2
         plotMethod(       goodas[m][h], quartilesbr[m][h],  '{pdir}/{m}-limits/{h}_br'.format(pdir=pdir,h=h,m=m),               goodqs=goodqs[m][h], xaxis='m_{a} (GeV)',              yaxis=thisbr,blind=b,logy=0,ymin=ymin,ymax=ymax,legendpos=lpos,numcol=1,plotunity=False,leftmargin=0.20,legendtitle=legendtitle,additionaltext=additionaltext,isprelim=isprelim)
