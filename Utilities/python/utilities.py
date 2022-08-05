@@ -44,7 +44,6 @@ def getLumi():
     return 59830 # full 2018
     #return 137640 # full run 2
 
-    
 def runCommand(command):
     return subprocess.Popen(command,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT).communicate()[0]
 

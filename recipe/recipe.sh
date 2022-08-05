@@ -6,7 +6,7 @@ git clone https://github.com/cms-analysis/HiggsAnalysis-CombinedLimit.git HiggsA
 pushd HiggsAnalysis/CombinedLimit
 
 git fetch origin
-git checkout v8.1.0
+git checkout v8.2.0
 
 popd
 

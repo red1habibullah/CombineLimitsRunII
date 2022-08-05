@@ -29,7 +29,8 @@ amasses_full = [x*.1 for x in range(36,210,1)] + [21.0]
 #if doGrid:
 #    amasses_full = [3.6] + [x*.1 for x in range(40,210,5)] + [21.0]
 
-hdfs_dir='root://cmseos.fnal.gov//eos/uscms/store/user/zhangj/HaaLimits/Limits/'
+#hdfs_dir='root://cmseos.fnal.gov//eos/uscms/store/user/zhangj/HaaLimits/Limits/'
+hdfs_dir='./'
 
 #grid_dir = '/hdfs/store/user/dntaylor/2019-08-14_MuMuTauTauLimits_MergedGridPacks_v1'
 #grid_dir = '/hdfs/store/user/dntaylor/2019-10-20_MuMuTauTauLimits_MergedGridPacks_v1'
@@ -75,20 +76,10 @@ hs_grid_dir = '/hdfs/store/user/dntaylor/2019-11-27_MuMuTauTauLimits_MergedGridP
 #tag = 'REGION_TauMuTauHad_Order2_2016_2017_2018_MVAMedium_DG_DoubleExpo_wFake'
 #tag = 'REGION_TauMuTauHad_TauMuTauE_2016_2017_2018_MVAMedium_DG_DoubleExpo'
 #tag = 'REGION_TauMuTauE_Order_Scale_2016_2017_2018_looseMuIso_tightEleId_1d'
-tag = 'REGION_TauMuTauE_Order_Scale_2018_looseMuIso_tightEleId_1d_Spline_wFakeModelling'
-#tag = 'REGION_TauMuTauE_Order_Scale_2016_2017_2018_looseMuIso_tightEleId_1d_Spline_wFakeModelling_unblind'
-#tag = 'REGION_TauMuTauMu_Order_Scale_2018_looseMuIso_looseMuIso_1d_Spline_wFakeModelling'
-#tag = 'REGION_TauMuTauMu_Order_Scale_2016_2017_2018_looseMuIso_looseMuIso_1d_Spline_wFakeModelling_unblind'
-#tag = 'REGION_TauETauHad_2016_2017_2018_MVAMedium_DG_DoubleExpo_yRange_wFakeTauScale'
-#tag = 'REGION_TauMuTauHad_Order2_2016_MVAMedium_DG_DoubleExpo_yRange_wFakeTauScale'
-#tag = 'REGION_TauHadTauHad_2016_2017_2018_MVAMedium_DG_DoubleExpo_yRange_wFakeTauScale'
-#tag = 'REGION_TauETauHad_2016_2017_2018_MVAMedium_DG_DoubleExpo_yRange_Spline_wFakeTauScale_unblind'
-#tag = 'REGION_TauETauHad_2016_2017_2018_MVAMedium_DG_DoubleExpo_Spline_wFakeTauScale_unblind_v2'
-#tag = 'REGION_TauETauHad_2016_2017_2018_MVAMedium_DG_DoubleExpo_Spline_wFakeTauScale'
-#tag = 'REGION_TauETauHad_2016_MVAMedium_1d_Spline_wFakeTauScale'
-#tag = 'REGION_TauHadTauHad_2016_MVAMedium_1d_yRange_Spline_wFakeTauScaleJEC'
-
-
+#tag = 'REGION_TauHadTauHad_2016_MVAMedium_DG_DoubleExpo_Spline_yRange_wFakeTauScale_unblind'
+#tag = 'REGION_TauMuTauHad_TauETauHad_TauHadTauHad_TauMuTauE_2016_MVAMedium_DG_DoubleExpo'
+tag = 'REGION_TauMuTauMu_TauMuTauE_TauMuTauHad_TauETauHad_TauHadTauHad_2017_MVAMedium_DG_DoubleExpo'
+#tag = 'REGION_TauHadTauHad_2018_MVAMedium_DG_DoubleExpo_yRange_Spline_wFakeTauScaleJEC'
 
 
 prefix = 'mmmt_mm_parametric'
@@ -394,7 +385,7 @@ def readQs(mode,h,a):
     #/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017/Limits/TauMuTauHad/highmass/125/
 
 regionXs = {
-    'lowmass' : [3.6,8],
+    'lowmass' : [3.8,8],
     'upsilon' : [8,11.5],
     'highmass': [11.5,21],
 }
@@ -602,7 +593,11 @@ for m in allModes:
             plotMethod(       goodas[m][h], quartilesxsecsm[m][h],'{pdir}/{m}-limits/{h}_xsec_sm_log_smooth'.format(pdir=pdir,h=h,m=m),  goodqs=goodqs[m][h], xaxis='m_{a} (GeV)', smooth=True, yaxis=label,blind=b,logy=1,ymin=ymin,ymax=ymax,legendpos=lpos,numcol=1,plotunity=False,leftmargin=0.20,legendtitle=legendtitle,additionaltext=additionaltext,isprelim=isprelim)
 
         ymin = 0
+<<<<<<< Updated upstream
         ymax = 5e-3
+=======
+        ymax = 2e-3
+>>>>>>> Stashed changes
         if h==300: ymax = 2e-3
         if h==750: ymax = 2e-2
         plotMethod(       goodas[m][h], quartilesbr[m][h],  '{pdir}/{m}-limits/{h}_br'.format(pdir=pdir,h=h,m=m),               goodqs=goodqs[m][h], xaxis='m_{a} (GeV)',              yaxis=thisbr,blind=b,logy=0,ymin=ymin,ymax=ymax,legendpos=lpos,numcol=1,plotunity=False,leftmargin=0.20,legendtitle=legendtitle,additionaltext=additionaltext,isprelim=isprelim)
