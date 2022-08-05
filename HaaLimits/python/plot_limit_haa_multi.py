@@ -593,11 +593,7 @@ for m in allModes:
             plotMethod(       goodas[m][h], quartilesxsecsm[m][h],'{pdir}/{m}-limits/{h}_xsec_sm_log_smooth'.format(pdir=pdir,h=h,m=m),  goodqs=goodqs[m][h], xaxis='m_{a} (GeV)', smooth=True, yaxis=label,blind=b,logy=1,ymin=ymin,ymax=ymax,legendpos=lpos,numcol=1,plotunity=False,leftmargin=0.20,legendtitle=legendtitle,additionaltext=additionaltext,isprelim=isprelim)
 
         ymin = 0
-<<<<<<< Updated upstream
-        ymax = 5e-3
-=======
         ymax = 2e-3
->>>>>>> Stashed changes
         if h==300: ymax = 2e-3
         if h==750: ymax = 2e-2
         plotMethod(       goodas[m][h], quartilesbr[m][h],  '{pdir}/{m}-limits/{h}_br'.format(pdir=pdir,h=h,m=m),               goodqs=goodqs[m][h], xaxis='m_{a} (GeV)',              yaxis=thisbr,blind=b,logy=0,ymin=ymin,ymax=ymax,legendpos=lpos,numcol=1,plotunity=False,leftmargin=0.20,legendtitle=legendtitle,additionaltext=additionaltext,isprelim=isprelim)
