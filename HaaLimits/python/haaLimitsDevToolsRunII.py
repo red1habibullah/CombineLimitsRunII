@@ -56,11 +56,13 @@ if noBgSys:
 sigShifts = [u+s for u in sigSysType for s in ['Up','Down']]
 bgShifts = [u+s for u in bgSysType for s in ['Up','Down']]
 
-hmasses = [125]
+#hmasses = [125]
+hmasses = [1000]
 
-amasses = ['3p6','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21']
-#amasses = ['5', '18']
+#amasses = ['3p6','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21']
+amasses = ['10', '20', '30', '40']
 hamap = {
+    1000:amasses,
     125:amasses
     } 
 
@@ -180,7 +182,7 @@ if __name__ == "__main__":
 
     #global hmasses
     if not args.do2DInterpolation:
-        hmasses = [h for h in hmasses if h in [125, 300, 750]]
+        hmasses = [h for h in hmasses if h in [125, 300, 750, 1000]]
 
     #backgrounds = ['datadriven', 'data']
     if blind:
@@ -188,7 +190,8 @@ if __name__ == "__main__":
     else:
         backgrounds = ['datadriven', 'data']
     
-    signals=[signame.format(h='125',a=a) for a in hamap[125]]
+    #signals=[signame.format(h='125',a=a) for a in hamap[125]]
+    signals=[signame.format(h='1000',a=a) for a in hamap[1000]]
     #signals = [signame.format(h=h,a=a) for h in hmasses[0] for a in amasses if a in hamap[h]]
     #ggsignals = [ggsigname.format(h=h,a=a) for h in hmasses for a in amasses if a in hamap[h]]
     #vbfsignals = [vbfsigname.format(h=h,a=a) for h in vbfhmasses for a in vbfamasses]
@@ -234,6 +237,7 @@ if __name__ == "__main__":
                         else:
                             ### As datadriven so try to load appropriate RooDatasets ###
                             histMap[mode][shifttext][proc] = getDatadrivenHist('data',channel,doUnbinned=True,var=var,shift=shift,do2D=do2D,**regionArgs[modeTag])
+                        print "DEBUG!!!", histMap[mode][shifttext][proc].get().find('visFourbodyMass').getMax()
 
             for proc in thesesamples:
                 if proc == 'data':        
@@ -272,7 +276,7 @@ if __name__ == "__main__":
                         logging.info('Getting {} {} {}'.format(mode,shift,proc))
                         if proc in signals:
                             oldXRange = xRange
-                            xRange = [0,30]
+                            xRange = [0,50]
                             histMap[mode][shifttext][proc] = getSignalHist(proc,channel,doUnbinned=True,var=var,shift=shift,do2D=do2D,**regionArgs[modeTag])
                             
                             xRange = oldXRange
@@ -344,15 +348,16 @@ if __name__ == "__main__":
     haaLimits.HMASSES = [chi2Mass] if chi2Mass else hmasses
     haaLimits.HAMAP = hamap
     haaLimits.XRANGE = xRange
+    haaLimits.ARANGE = [3, 50]
     haaLimits.XBINNING = int((xRange[1]-xRange[0])/xBinWidth)
     haaLimits.XVAR = xVar
     haaLimits.CHANNELS = channels
     if do2D: 
         haaLimits.YVAR = yVar
         #haaLimits.YRANGE = yRange
-        haaLimits.YRANGE = [0, 1000]
+        haaLimits.YRANGE = [0, 2000]
         #haaLimits.YBINNING = int((yRange[1]-yRange[0])/yBinWidth)
-        haaLimits.YBINNING = int(1000./yBinWidth)
+        haaLimits.YBINNING = int(2000./yBinWidth)
         haaLimits.DOUBLEEXPO = args.doubleExpo
         haaLimits.LANDAU = args.landau
     #print "xVar:", xVar, "xRange:", xRange, "yVar:", yVar, "yRange:", yRange
@@ -365,7 +370,7 @@ if __name__ == "__main__":
     haaLimits.addBackgroundModels(fixAfterControl=True)
     if skipSignal: sys.exit()
     if not skipSignal:
-        haaLimits.XRANGE = [0,30] # override for signal splines
+        haaLimits.XRANGE = [0,50] # override for signal splines
         if project:
             haaLimits.addSignalModels(scale=scales)
         elif 'tt' in var:

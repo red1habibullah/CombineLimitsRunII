@@ -39,7 +39,7 @@ class HaaLimits(Limits):
         400 : [5,9,15],
         500 : [5,9,15],
         750 : [5,7,9,11,13,15,17,19,21],
-        1000: [5,9,15],
+        1000: ['10','20','30','40'],
     }
 
     HBINNING = 25 # GeV
@@ -381,7 +381,7 @@ class HaaLimits(Limits):
             cont.build(workspace,nameC)
 
         else:
-            if (self.XRANGE[0]<4 and tag == 'control') or (self.XRANGE[0]<4 and "TauHad" in tag):
+            if (self.XRANGE[0]<4 and tag == 'control') or (self.XRANGE[0]<4 and "TauHad" in tag) or self.XRANGE[0]>10.9:
             #if self.XRANGE[0]<4:
                 nameC1 = 'cont1{}'.format('_'+tag if tag else '')
                 #nameC1 = 'cont1'
@@ -1923,7 +1923,7 @@ class HaaLimits(Limits):
 
     def addCrossSection(self):
         # add higgs cross section
-        tfile = ROOT.TFile.Open('/uscms/home/jingyu/nobackup/Haa/HaaLimits/CMSSW_10_2_13/src/CombineLimits/Limits/data/Higgs_YR4_BSM_13TeV.root')
+        tfile = ROOT.TFile.Open('/afs/cern.ch/work/z/zhangj/private/RunIILimits/CMSSW_10_2_13/src/CombineLimits/Limits/data/Higgs_YR4_BSM_13TeV.root')
         ws = tfile.Get('YR4_BSM_13TeV')
         ggF = ws.function('xsec_ggF_N3LO')
         vbf = ws.function('xsec_VBF')
@@ -1932,7 +1932,7 @@ class HaaLimits(Limits):
         vbf_pdfalpha = ws.function('pdfalpha_err_VBF')
 
         # add gg+VBF/gg acceptance correction
-        accfile = ROOT.TFile.Open('/uscms/home/jingyu/nobackup/Haa/HaaLimits/CMSSW_10_2_13/src/CombineLimitsRunII/HaaLimits/data/acceptance.root')
+        accfile = ROOT.TFile.Open('/afs/cern.ch/work/z/zhangj/private/RunIILimits/CMSSW_10_2_13/src/CombineLimitsRunII/HaaLimits/data/acceptance.root')
         acc = accfile.Get('acceptance')
         accgraph = accfile.Get('acceptance_graph')
         accgraph.Fit(acc)
@@ -1960,7 +1960,7 @@ class HaaLimits(Limits):
                     self.addRateParam(name,regionText,proc+'_'+regionText)
 
         # alternative SM xsec
-        tfile = ROOT.TFile.Open('/uscms/home/jingyu/nobackup/Haa/HaaLimits/CMSSW_10_2_13/src/CombineLimits/Limits/data/Higgs_YR4_SM_13TeV.root')
+        tfile = ROOT.TFile.Open('/afs/cern.ch/work/z/zhangj/private/RunIILimits/CMSSW_10_2_13/src/CombineLimits/Limits/data/Higgs_YR4_SM_13TeV.root')
         ws = tfile.Get('YR4_SM_13TeV')
         ggF = ws.function('xsec_ggF_N3LO')
         vbf = ws.function('xsec_VBF')

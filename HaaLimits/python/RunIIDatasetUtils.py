@@ -27,11 +27,12 @@ def initUtils(args):
     project = args.project
 
     global maxyRange
-    maxyRange = [0, 1000]
+    maxyRange = [0, 2000]
 
     global baseDir
     #global desc
-    baseDir = '/eos/uscms/store/user/rhabibul/BoostedRooDatasets/'
+    baseDir = '/eos/user/z/zhangj/HaaAnalysis/RooDatasets/'
+    #baseDir = '/eos/cms/store/user/rhabibul/BoostedRooDatasets/'
     #desc = 'MVAMedium'
 
 ###### Utility to get Roodatasets ########################
@@ -156,7 +157,7 @@ def getDataset(File,channel,type,shift,do2D,xVar='invMassMuMu',yVar='visFourbody
         else:
             weightname='eventWeight'
             # For signal dataset, use a different xRange, yRange, and selection
-            dataset =getRooDataset(File,selection=selDatasets['visFourbodyMass'],xRange=[0,30],weight=weightname,yRange=maxyrange,project='',xVar=xVar,yVar=yVar,shift=shift)
+            dataset =getRooDataset(File,selection=selDatasets['visFourbodyMass'],xRange=[0,50],weight=weightname,yRange=maxyrange,project='',xVar=xVar,yVar=yVar,shift=shift)
     
     elif "TauMuTauE" in channel or "TauMuTauMu" in channel or "TauETauE" in channel:
         print File
@@ -178,9 +179,10 @@ def getDataset(File,channel,type,shift,do2D,xVar='invMassMuMu',yVar='visFourbody
     return dataset
 
 def getXsec(proc,mode):
-    prefix='root://cmseos.fnal.gov/'
-    smtfilename=prefix+'/uscms/home/jingyu/nobackup/Haa/HaaLimits/CMSSW_10_2_13/src/CombineLimits/Limits/data/Higgs_YR4_SM_13TeV.root'
-    bsmtfilename=prefix+'/uscms/home/jingyu/nobackup/Haa/HaaLimits/CMSSW_10_2_13/src/CombineLimits/Limits/data/Higgs_YR4_SM_13TeV.root'
+    #prefix='root://cmseos.fnal.gov/'
+    prefix = ''
+    smtfilename=prefix+'/afs/cern.ch/work/z/zhangj/private/RunIILimits/CMSSW_10_2_13/src/CombineLimits/Limits/data/Higgs_YR4_SM_13TeV.root'
+    bsmtfilename=prefix+'/afs/cern.ch/work/z/zhangj/private/RunIILimits/CMSSW_10_2_13/src/CombineLimits/Limits/data/Higgs_YR4_BSM_13TeV.root'
 
     smtfile=ROOT.TFile(smtfilename)
     bsmtfile=ROOT.TFile(bsmtfilename)
@@ -193,6 +195,7 @@ def getXsec(proc,mode):
     # this was input as SM for 125 and BSM for others
     ws = smws if h==125 else bsmws
     #ws = bsmws
+    #print ws, bsmws
     names = {
         'gg' : 'xsec_ggF_N3LO',
         'vbf': 'xsec_VBF',

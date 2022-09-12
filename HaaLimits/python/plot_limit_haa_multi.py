@@ -78,13 +78,13 @@ hs_grid_dir = '/hdfs/store/user/dntaylor/2019-11-27_MuMuTauTauLimits_MergedGridP
 #tag = 'REGION_TauMuTauE_Order_Scale_2016_2017_2018_looseMuIso_tightEleId_1d'
 #tag = 'REGION_TauHadTauHad_2016_MVAMedium_DG_DoubleExpo_Spline_yRange_wFakeTauScale_unblind'
 #tag = 'REGION_TauMuTauHad_TauETauHad_TauHadTauHad_TauMuTauE_2016_MVAMedium_DG_DoubleExpo'
-tag = 'REGION_TauMuTauMu_TauMuTauE_TauMuTauHad_TauETauHad_TauHadTauHad_2017_MVAMedium_DG_DoubleExpo'
-#tag = 'REGION_TauHadTauHad_2018_MVAMedium_DG_DoubleExpo_yRange_Spline_wFakeTauScaleJEC'
+tag = 'REGION_TauMuTauMu_TauMuTauE_TauMuTauHad_TauETauHad_TauHadTauHad_2016_2017_2018_MVAMedium_DG_DoubleExpo'
+#tag = 'REGION_TauHadTauHad_2016_2017_2018_MVAMedium_DG_DoubleExpo_yRange_Spline_wFakeTauScaleJEC'
 
 
-prefix = 'mmmt_mm_parametric'
+#prefix = 'mmmt_mm_parametric'
 #prefix = 'mmmt_mm_parametric_unbinned'
-#prefix = 'mmmt_mm_h_parametric_unbinned'
+prefix = 'mmmt_mm_h_parametric_unbinned'
 
 
 if doDouble: tag = 'REGIONWith1DFitsDoubleExpoDVmediumDeepVSjet'
