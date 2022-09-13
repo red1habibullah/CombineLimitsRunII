@@ -30,7 +30,7 @@ amasses_full = [x*.1 for x in range(36,210,1)] + [21.0]
 #    amasses_full = [3.6] + [x*.1 for x in range(40,210,5)] + [21.0]
 
 #hdfs_dir='root://cmseos.fnal.gov//eos/uscms/store/user/zhangj/HaaLimits/Limits/'
-hdfs_dir='./'
+hdfs_dir='./combineOutput/'
 
 #grid_dir = '/hdfs/store/user/dntaylor/2019-08-14_MuMuTauTauLimits_MergedGridPacks_v1'
 #grid_dir = '/hdfs/store/user/dntaylor/2019-10-20_MuMuTauTauLimits_MergedGridPacks_v1'
@@ -78,8 +78,9 @@ hs_grid_dir = '/hdfs/store/user/dntaylor/2019-11-27_MuMuTauTauLimits_MergedGridP
 #tag = 'REGION_TauMuTauE_Order_Scale_2016_2017_2018_looseMuIso_tightEleId_1d'
 #tag = 'REGION_TauHadTauHad_2016_MVAMedium_DG_DoubleExpo_Spline_yRange_wFakeTauScale_unblind'
 #tag = 'REGION_TauMuTauHad_TauETauHad_TauHadTauHad_TauMuTauE_2016_MVAMedium_DG_DoubleExpo'
-tag = 'REGION_TauMuTauMu_TauMuTauE_TauMuTauHad_TauETauHad_TauHadTauHad_2016_2017_2018_MVAMedium_DG_DoubleExpo'
+#tag = 'REGION_TauMuTauMu_TauMuTauE_TauMuTauHad_TauETauHad_TauHadTauHad_2016_2017_2018_MVAMedium_DG_DoubleExpo'
 #tag = 'REGION_TauHadTauHad_2016_2017_2018_MVAMedium_DG_DoubleExpo_yRange_Spline_wFakeTauScaleJEC'
+tag = 'REGION_TauHadTauHad_V3_2018_MVAMedium_DG_DoubleExpo_yRange_Spline_wFakeTauScaleJEC'
 
 
 #prefix = 'mmmt_mm_parametric'

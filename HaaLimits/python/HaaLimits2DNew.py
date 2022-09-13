@@ -547,7 +547,7 @@ class HaaLimits2D(HaaLimits):
                 'bg_{}_x'.format(region),
             )
         else:
-            if self.XRANGE[0]<4 and not (doPoly or doPolyExpo):
+            if (self.XRANGE[0]<4 or self.XRANGE[0]>10.9) and not (doPoly or doPolyExpo):
                 #print "JINGYU6:", "doPoly", doPoly, "doPolyExpo", doPolyExpo
                 cont1 = Models.Prod('cont1',
                     'cont1_{}_x'.format(region),
@@ -565,7 +565,7 @@ class HaaLimits2D(HaaLimits):
                 name = 'cont2_{}_xy'.format(region)
                 cont2.build(workspace,name)
 
-                #print "JINGYU6:", cont2, name
+                print "JINGYU6:", cont2, name
             else:
                 cont1 = Models.Prod('cont',
                     'cont1_{}_x'.format(region),

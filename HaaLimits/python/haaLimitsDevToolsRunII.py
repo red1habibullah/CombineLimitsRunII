@@ -44,8 +44,8 @@ varHists = {
 
 if noSigSys:
     #sigSysType=[]
-    sigSysType=['tauScale', 'JEC']
-    #sigSysType=['tauScale']
+    #sigSysType=['tauScale', 'JEC']
+    sigSysType=['tauScale']
 
 if noBgSys:
     bgSysType=['fake']
@@ -56,11 +56,11 @@ if noBgSys:
 sigShifts = [u+s for u in sigSysType for s in ['Up','Down']]
 bgShifts = [u+s for u in bgSysType for s in ['Up','Down']]
 
-#hmasses = [125]
-hmasses = [1000]
+hmasses = [125]
+#hmasses = [1000]
 
-#amasses = ['3p6','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21']
-amasses = ['10', '20', '30', '40']
+amasses = ['3p6','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21']
+#amasses = ['10', '20', '30', '40']
 hamap = {
     1000:amasses,
     125:amasses
@@ -190,8 +190,8 @@ if __name__ == "__main__":
     else:
         backgrounds = ['datadriven', 'data']
     
-    #signals=[signame.format(h='125',a=a) for a in hamap[125]]
-    signals=[signame.format(h='1000',a=a) for a in hamap[1000]]
+    signals=[signame.format(h='125',a=a) for a in hamap[125]]
+    #signals=[signame.format(h='1000',a=a) for a in hamap[1000]]
     #signals = [signame.format(h=h,a=a) for h in hmasses[0] for a in amasses if a in hamap[h]]
     #ggsignals = [ggsigname.format(h=h,a=a) for h in hmasses for a in amasses if a in hamap[h]]
     #vbfsignals = [vbfsigname.format(h=h,a=a) for h in vbfhmasses for a in vbfamasses]
