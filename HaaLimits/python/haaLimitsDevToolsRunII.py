@@ -41,28 +41,17 @@ varHists = {
     'hkf': 'hMassKinFit',
 }
 
-
-if noSigSys:
-    #sigSysType=[]
-    #sigSysType=['tauScale', 'JEC']
-    sigSysType=['tauScale']
-
-if noBgSys:
-    bgSysType=['fake']
-    #bgSysType=[]
-
-#sysType = list(dict.fromkeys(sigSysType+bgSysType))
-#shifts = [u+s for u in sysType for s in ['Up','Down']]
-sigShifts = [u+s for u in sigSysType for s in ['Up','Down']]
-bgShifts = [u+s for u in bgSysType for s in ['Up','Down']]
-
 hmasses = [125]
-#hmasses = [1000]
+#hmasses = [125, 250, 500, 750, 1000]
+#hmasses = [125, 1000]
 
 amasses = ['3p6','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21']
 #amasses = ['10', '20', '30', '40']
 hamap = {
-    1000:amasses,
+    1000:['10', '20', '30', '40'],
+    750:['10', '15', '20', '25', '30'],
+    500:['5', '10', '15', '20'],
+    250:['5', '10', '15', '20'],
     125:amasses
     } 
 
@@ -148,12 +137,44 @@ if __name__ == "__main__":
     
     do2D = len(args.fitVars)==2
     var = args.fitVars
-    
-    xBinWidth = 0.025
-    if do2D:
-        yVar=varHists[sys.argv[2]]
-        yBinWidth = 0.25 if var[1]=='tt' else 2
 
+    if 'TauHadTauHad' in args.channel[0]:
+        xBinWidth = 0.02
+        if do2D:
+            yVar=varHists[sys.argv[2]]
+            yBinWidth = 0.25 if var[1]=='tt' else 2
+            sigSysType=['JEC']
+    elif 'TauETauHad' in args.channel[0] or 'TauMuTauHad' in args.channel[0]:
+        print "DEBUG1"
+        xBinWidth = 0.05
+        if do2D:
+            yVar=varHists[sys.argv[2]]
+            yBinWidth = 0.25 if var[1]=='tt' else 5
+            sigSysType=['tauIDScale']
+    elif 'TauMuTauE' in args.channel[0]:
+        print "DEBUG2"
+        xBinWidth = 0.05
+        if do2D:
+            yVar=varHists[sys.argv[2]]
+            yBinWidth = 0.25 if var[1]=='tt' else 5
+            sigSysType = ['electronIDScale']
+    elif 'TauMuTauMu' in args.channel[0]:
+        xBinWidth = 0.05
+        if do2D:
+            yVar=varHists[sys.argv[2]]
+            yBinWidth = 0.25 if var[1]=='tt' else 5
+            sigSysType=['muonIsoScale']
+    else:
+        print "Systematic type unidentified"
+        sys.exit()
+
+    print "sigSysType:", do2D, args.channel[0], sigSysType
+
+    bgSysType=['fake']
+
+    sigShifts = [u+s for u in sigSysType for s in ['Up','Down']]
+    bgShifts = [u+s for u in bgSysType for s in ['Up','Down']]
+    
     if do2D and var[1]=='tt': yRange = [0.75,30]
     if args.yRange: yRange = args.yRange
     xRange = args.xRange
@@ -190,9 +211,9 @@ if __name__ == "__main__":
     else:
         backgrounds = ['datadriven', 'data']
     
-    signals=[signame.format(h='125',a=a) for a in hamap[125]]
+    #signals=[signame.format(h='125',a=a) for a in hamap[125, 1000]]
     #signals=[signame.format(h='1000',a=a) for a in hamap[1000]]
-    #signals = [signame.format(h=h,a=a) for h in hmasses[0] for a in amasses if a in hamap[h]]
+    signals = [signame.format(h=h,a=a) for h in hmasses for a in hamap[h]]
     #ggsignals = [ggsigname.format(h=h,a=a) for h in hmasses for a in amasses if a in hamap[h]]
     #vbfsignals = [vbfsigname.format(h=h,a=a) for h in vbfhmasses for a in vbfamasses]
     signalToAdd = signame.format(**signalParams)
@@ -210,16 +231,18 @@ if __name__ == "__main__":
         'FP': {'region':'sideBand','sources':['B','D'],},
     }
     
-    thesesamples = backgrounds
-    if not skipSignal: thesesamples = backgrounds + signals
+    #thesesamples = backgrounds
+    #if not skipSignal: thesesamples = backgrounds + signals
+    thesesamples = backgrounds + signals
     print "thesesamples:", thesesamples, "sigShifts:", sigShifts, "bgShifts:", bgShifts, "var", var, "**regionArgs[PP]", regionArgs["PP"]
 
     j=0
     for channel in channels:
         if 'TauMuTauE' in channel or 'TauMuTauMu' in channel or 'TauETauE' in channel:
-            modes = ['PP']
+            modes = ['PP','FP']
         else:
             modes = ['PP','FP']
+        modes = ['PP']
         for mode in modes:
             modeTag=mode
             mode=channel+'_'+mode
@@ -237,35 +260,12 @@ if __name__ == "__main__":
                         else:
                             ### As datadriven so try to load appropriate RooDatasets ###
                             histMap[mode][shifttext][proc] = getDatadrivenHist('data',channel,doUnbinned=True,var=var,shift=shift,do2D=do2D,**regionArgs[modeTag])
-                        print "DEBUG!!!", histMap[mode][shifttext][proc].get().find('visFourbodyMass').getMax()
+                        #print "DEBUG!!!", histMap[mode][shifttext][proc].get().find('visFourbodyMass').getMax()
 
             for proc in thesesamples:
                 if proc == 'data':        
                     logging.info('Getting {} observed {}'.format(mode, shift))
                     histMap[mode]['']['data'] = getDatadrivenHist('data',channel,doUnbinned=True,var=var,shift='nominal',do2D=do2D,**regionArgs[modeTag])
-                    
-                    #if not histMap[mode][shifttext]: histMap[mode][shift] = {}
-##                     samples = backgrounds
-##                     if addSignal: samples = backgrounds + [signalToAdd]
-##                     hists = []
-##                     histsNoSig = []
-##                     print "observed:",samples, proc
-##                     for proc in samples:
-##                         j+=1
-##                         hists += [histMap[mode][shifttext][proc].Clone('hist'+str(j))]
-##                         j+=1
-##                     if proc!=signalToAdd:
-##                         histsNoSig += [histMap[mode][shifttext][proc].Clone('hist'+str(j))]
-##                 #if doUnbinned:
-##                 hist = sumDatasets('obs{}{}'.format(mode,shift),*hists)
-##                 histNoSig = sumDatasets('obsNoSig{}{}'.format(mode,shift),*histsNoSig)
-##                 #print hist, histNoSig, hists
-##                 
-##                 j+=1
-##                 histMap[mode][shifttext]['data'] = hist.Clone('hist'+str(j))
-##                 j+=1
-##                 histMap[mode][shifttext]['dataNoSig'] = histNoSig.Clone('hist'+str(j))
-            #print "DEBUG1", histMap
             
             for shift in ['nominal']+sigShifts:
                 if shift == 'nominal': shifttext = ''
@@ -280,9 +280,10 @@ if __name__ == "__main__":
                             histMap[mode][shifttext][proc] = getSignalHist(proc,channel,doUnbinned=True,var=var,shift=shift,do2D=do2D,**regionArgs[modeTag])
                             
                             xRange = oldXRange
-            #print "DEBUG2", histMap
+            #print histMap.keys()
 
-    for mode in ['control']:
+    year = channels[0].split('_')[-1]
+    for mode in ['control_'+year]:
         histMap[mode] = {}
         for shift in ['']:
             #shiftLabel = systLabels.get(shift,shift)
@@ -297,6 +298,7 @@ if __name__ == "__main__":
             #histMap[mode][shift]['dataNoSig'] = hist.Clone('hist'+str(j))
             histMap[mode][shift]['datadriven'] = hist.Clone('hist'+str(j))
 
+    #print "DEBUG2", histMap.keys()
     # rescale signal
     scales = {}
     for proc in signals:
@@ -355,9 +357,9 @@ if __name__ == "__main__":
     if do2D: 
         haaLimits.YVAR = yVar
         #haaLimits.YRANGE = yRange
-        haaLimits.YRANGE = [0, 2000]
+        haaLimits.YRANGE = [0, 1200]
         #haaLimits.YBINNING = int((yRange[1]-yRange[0])/yBinWidth)
-        haaLimits.YBINNING = int(2000./yBinWidth)
+        haaLimits.YBINNING = int(1200./yBinWidth)
         haaLimits.DOUBLEEXPO = args.doubleExpo
         haaLimits.LANDAU = args.landau
     #print "xVar:", xVar, "xRange:", xRange, "yVar:", yVar, "yRange:", yRange
@@ -367,8 +369,9 @@ if __name__ == "__main__":
         haaLimits.YLABEL = plotLabels[channelT]
     haaLimits.initializeWorkspace()
     haaLimits.addControlModels()
-    haaLimits.addBackgroundModels(fixAfterControl=True)
+    haaLimits.addBackgroundModels(fixAfterControl=True, addSignal=args.addSignal)
     if skipSignal: sys.exit()
+    #sys.exit()
     if not skipSignal:
         haaLimits.XRANGE = [0,50] # override for signal splines
         if project:
@@ -395,6 +398,7 @@ if __name__ == "__main__":
     if args.unbinned: name += '_unbinned'
     if args.tag: name += '_{}'.format(args.tag)
     if args.addSignal: name += '_wSig'
+    print "name:", name
     haaLimits.save(name=name)
     print "DONE!!!"
     

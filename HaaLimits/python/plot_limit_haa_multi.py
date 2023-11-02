@@ -24,13 +24,18 @@ hmasses = [125] #[125,300,750]
 #hmasses = [125,300]
 #hmasses = [750] # for now since it is done
 amasses_full = [x*.1 for x in range(36,210,1)] + [21.0]
+amasses_full.remove(10.4)
+print amasses_full
+#amasses_full.remove(7.8)
 #amasses_full = [x*.1 for x in range(35,210,2)] + [21.1]
 #amasses_full = [x*.1 for x in range(36,210,2)] + [21.0]
 #if doGrid:
 #    amasses_full = [3.6] + [x*.1 for x in range(40,210,5)] + [21.0]
 
 #hdfs_dir='root://cmseos.fnal.gov//eos/uscms/store/user/zhangj/HaaLimits/Limits/'
-hdfs_dir='./combineOutput/'
+#hdfs_dir='./combineOutput/'
+#hdfs_dir='./testPPFPfeb2023/'
+hdfs_dir='./testPPonlyfeb2023/'
 
 #grid_dir = '/hdfs/store/user/dntaylor/2019-08-14_MuMuTauTauLimits_MergedGridPacks_v1'
 #grid_dir = '/hdfs/store/user/dntaylor/2019-10-20_MuMuTauTauLimits_MergedGridPacks_v1'
@@ -52,39 +57,16 @@ grid_dir = '/hdfs/store/user/dntaylor/2019-12-10_MuMuTauTauLimits_MergedGridPack
 hs_grid_dir = '/hdfs/store/user/dntaylor/2019-11-27_MuMuTauTauLimits_MergedGridPacks_HighStat_v1' # current high stat for better sigma bands --fullGrid, rMax
 #higgsCombineHtoAAH125A20_mm_h_parametric_highmassWith1DFitsDVteth.AsymptoticLimits.mH125.root 
 
-#tag = 'with1DFits'
-#tag = 'REGIONWith1DFits_TauHadTauHad_DoubleExpo_DV_0p3'
-#tag = 'REGION_TauMuTauHad_2017CutV2_deepTauID_medium_DV'
-#tag = 'REGION_TauHadTauHad_2016_boostedDitau_medium_doubleExpo_DV'
-#tag = 'REGION_TauHadTauHad_2016_2017_2018_boostedDitau_medium_doubleExpo_DV'
-#tag = 'REGION_TauMuTauE_MuIso_loose_EleId_loose'
-#tag = 'REGION_TauMuTauMu_MuIso_loose'
-#tag =  'REGION_TauMuTauHad_No_dR_Mtt_2017_MVAMedium_DV'
-#tag = 'REGION_TauMuTauHad_2017_MVAMedium_DV'
-#tag = 'REGION_TauETauHad_2016_2017_2018_MVAMedium_DV'
-#tag = 'REGION_TauETauHad_2018_MVAMedium_DV'
-#tag = 'REGION_TauMuTauHad_Order2_2016_2017_2018_MVAMedium_DV_DoubleExpo'
-#tag = 'REGION_TauETauHad_2016_2017_2018_MVAMedium_DV'
-#tag = 'REGION_TauMuTauHad_TauETauHad_2016_2017_2018_MVAMedium_DV_DoubleExpo'
-#tag = 'REGION_TauHadTauHad_2016_2017_2018_MVAMedium_DV_DoubleExpo'
-#tag = 'REGION_TauHadTauHad_2018_MVAMedium_DG_DoubleExpo'
-#tag = 'REGION_TauMuTauE_2018_looseMuIso_tightEleId_DG'
-#tag = 'REGION_TauMuTauE_Order_Scale_2018_looseMuIso_tightEleId_1d'
-#tag = 'REGION_TauMuTauE_Order_Scale_2018_looseMuIso_tightEleId_DG'
-#tag = 'REGION_TauMuTauHad_Order2_2016_2017_2018_MVAMedium_DG_DoubleExpo_wFake'
-#tag = 'REGION_TauETauHad_2016_2017_2018_MVAMedium_DG_DoubleExpo_wFake'
-#tag = 'REGION_TauMuTauHad_Order2_2016_2017_2018_MVAMedium_DG_DoubleExpo_wFake'
-#tag = 'REGION_TauMuTauHad_TauMuTauE_2016_2017_2018_MVAMedium_DG_DoubleExpo'
-#tag = 'REGION_TauMuTauE_Order_Scale_2016_2017_2018_looseMuIso_tightEleId_1d'
-#tag = 'REGION_TauHadTauHad_2016_MVAMedium_DG_DoubleExpo_Spline_yRange_wFakeTauScale_unblind'
-#tag = 'REGION_TauMuTauHad_TauETauHad_TauHadTauHad_TauMuTauE_2016_MVAMedium_DG_DoubleExpo'
-#tag = 'REGION_TauMuTauMu_TauMuTauE_TauMuTauHad_TauETauHad_TauHadTauHad_2016_2017_2018_MVAMedium_DG_DoubleExpo'
-#tag = 'REGION_TauHadTauHad_2016_2017_2018_MVAMedium_DG_DoubleExpo_yRange_Spline_wFakeTauScaleJEC'
-tag = 'REGION_TauHadTauHad_V3_2018_MVAMedium_DG_DoubleExpo_yRange_Spline_wFakeTauScaleJEC'
+
+#tag = 'REGION_TauMuTauHad_V2_2017_MVAMedium_DG_DoubleExpo_yRange_wFakeTauScaleFit_PPonly_V3'
+#tag = 'REGION_TauHadTauHad_V3_2017_MVAMedium_DG_DoubleExpo_yRange_wFakeJECFit_PPonly_V3'
+#tag = 'REGION_TauMuTauMu_2017_MVAMedium_DG_wFakeTauScaleFit_PPonly_V3'
+#tag = 'REGION_TauMuTauE_2017_MVAMedium_DG_wFakeTauScaleFit_PPonly_V3'
+#tag = 'REGION_TauETauHad_2017_MVAMedium_DG_yRange_wFakeTauScaleFit_PPonly_V3'
+#tag = 'REGION_allchs_2016_V3'
+tag = 'REGION_allchs_V3'
 
 
-#prefix = 'mmmt_mm_parametric'
-#prefix = 'mmmt_mm_parametric_unbinned'
 prefix = 'mmmt_mm_h_parametric_unbinned'
 
 
@@ -258,7 +240,7 @@ def load_br():
 
 #models = getModels()
 #modelsAlt = getModelsAlt()
-#modelsQ = load_br()
+modelsQ = load_br()
 
 # overwrite tanbs for use with quarkonia
 tanbs = tanbsq
@@ -386,7 +368,7 @@ def readQs(mode,h,a):
     #/eos/uscms/store/user/rhabibul/HtoAA/HtoAA2017/Limits/TauMuTauHad/highmass/125/
 
 regionXs = {
-    'lowmass' : [3.8,8],
+    'lowmass' : [3.6,8],
     'upsilon' : [8,11.5],
     'highmass': [11.5,21],
 }
@@ -395,7 +377,7 @@ for m in allModes:
     #print m
     if 'REGION' in m:
         mlow = m.replace('REGION','lowmass')
-        dfile = ROOT.TFile.Open('datacards_shape/MuMuTauTau/mmmt_mm_h_parametric_unbinned_lowmass_TauMuTauHad_2017_MVAMedium_DV.root')  ### only needed to get the xsecs
+        dfile = ROOT.TFile.Open('datacards_shape/MuMuTauTau/mmmt_mm_h_parametric_unbinned_lowmass_TauMuTauHad_V2_2018_MVAMedium_DG_DoubleExpo_yRange_wFakeTauScaleFit_PPonly.root')  ### only needed to get the xsecs
         regionModes = [m.replace('REGION',x) for x in ['lowmass','upsilon','highmass']]
     else:
         dfile = ROOT.TFile.Open('datacards_shape/MuMuTauTau/{m}.root'.format(m=m))
@@ -460,7 +442,8 @@ for m in allModes:
                 if not qs: continue
                 #print qs
                 outline = ':'.join(['{:.3f}'.format(x) for x in qs])
-                logging.info('{0}:{1}: Limits: {2}'.format(h,a,outline))
+                #logging.info('{0}:{1}: Limits: {2}'.format(h,a,outline))
+                print '{0} {1}'.format(a,qs[2])
 
                 good = True
                 if m in toSkip:
@@ -506,12 +489,13 @@ for m in allModes:
                     quartilesxsecsm[rm][h][a] = [q * hxsec_sm[h] * br for q in qs]
                     quartilesbr[rm][h][a] = [q * br * hxsec[h]/hxsec_sm[h] for q in qs]
                     tanbmodels[rm][h][a] = {}
-                    # for model in modeltypes:
-                    #     quartilesmodels[rm][h][a][model] = {}
-                    #     for tanb in tanbs:
-                    #         s = get_model_scale(a,model,tanb)
-                    #         quartilesmodels[rm][h][a][model][tanb] = [q * s * hxsec[h]/hxsec_sm[h] for q in qs]
-                    #     tanbmodels[rm][h][a][model] = get_tanb_graph(a,model)
+                    #print "DEBUG", qs,tanbs,modeltypes
+                    for model in modeltypes:
+                        quartilesmodels[rm][h][a][model] = {}
+                        for tanb in tanbs:
+                            s = get_model_scale(a,model,tanb)
+                            quartilesmodels[rm][h][a][model][tanb] = [q * s * hxsec[h]/hxsec_sm[h] for q in qs]
+                        tanbmodels[rm][h][a][model] = get_tanb_graph(a,model)
                 
 
     

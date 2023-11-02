@@ -13,8 +13,10 @@ echo "  for 3 (datacard): $3"
 echo "  for 4 (name): $4"
 echo "  for 5 (output): $5"
 
-combine -M AsymptoticLimits -m ${1} --setParameters MA=${2} --rMin 0 --rMax 1 --freezeParameters=MA ${3} -n ${4}
+combine -M AsymptoticLimits -v 2 --noFitAsimov -m ${1} --setParameters MA=${2} --rMin -3 --rMax 3 --X-rtd TMCSO_AdaptivePseudoAsimov=0 --X-rtd TMCSO_PseudoAsimov=0 --freezeParameters=MA ${3} -n ${4}
 
+#combine -M AsymptoticLimits -v 2 --noFitAsimov -m ${1} --setParameters MA=${2} --rMin -3 --rMax 3 --freezeParameters=MA ${3} -n ${4}
 
+#combine -M AsymptoticLimits -v 2 -m ${1} --setParameters MA=${2} --rMin -3 --rMax 3 --freezeParameters=MA ${3} -n ${4}
 
-
+mv ${5} testPPonlyfeb2023

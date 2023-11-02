@@ -349,14 +349,19 @@ class Limits(object):
 
     def _printMultipleCards(self,filename,bins,processes,blind,addSignal,saveWorkspace,suffix):
         shapes = []
+        print "_printMultipleCards"
+        print "processes", processes
         if isinstance(bins,dict):
             for k,v in bins.iteritems():
                 shapes += self._printMultipleCards(filename,v,processes,blind,addSignal,saveWorkspace,'{0}_{1}'.format(suffix,k))
         elif isinstance(processes,dict):
             for k,v in processes.iteritems():
+                print "DEBUG2", filename, k, v, addSignal, '{0}_{1}'.format(suffix,k)
                 shapes += self._printMultipleCards(filename,bins,v,blind,addSignal,saveWorkspace,'{0}_{1}'.format(suffix,k))
         else:
+            print "printSingleCard"
             shapes += self._printSingleCard(filename,bins,processes,blind,addSignal,saveWorkspace,suffix)
+        print "shapes:", shapes
 
         return shapes
 
@@ -371,18 +376,24 @@ class Limits(object):
         channels = self.channels
 
         backgroundsOrig = self.backgrounds
+
+        signalName = ['ggH_haa'+suffix.replace("_amX", "").replace("hm", "")]
         
         if bins==['all']: bins = self.bins
         #if processes==['all']: processes = self.processes.keys()
-        signals = [x+'_'+y for x in self.signals for y in channels]
+        #signals = [x+'_'+y for x in self.signals for y in channels]
+        signals = [x+'_'+y for x in signalName for y in channels]
         backgrounds = [x+'_'+y for x in self.backgrounds for y in channels]
-        control = [x.split('_')[0]+'_'+'control' for x in self.backgrounds]
+        year = channels[0].split('_')[-1]
+        control = [x.split('_')[0]+'_'+'control'+'_'+year for x in self.backgrounds]
+        #control = [x.split('_')[0]+'_'+'control' for x in self.backgrounds]
         shapes = []
 
-        #print "DEBUG0", signals
+        #print "DEBUG0", signals, bins
         #print "DEBUG0", backgroundsOrig
 
-        nsignals=len(self.signals)
+        #nsignals=len(self.signals)
+        nsignals = len(signals)
         nbackgrounds=len(self.backgrounds)
         
         # setup bins
@@ -442,8 +453,9 @@ class Limits(object):
         for bin in bins:
             #print "----------------"
             #print "bin:", bin
+            print "processesOrdered", processesOrdered
             for process in processesOrdered:
-                if bin == 'control':
+                if 'control' in bin:
                     processText = process
                 else:                    
                     processText = process+'_'+bin.split('_')[-1]
@@ -467,6 +479,7 @@ class Limits(object):
                     processNumbers[colpos] = '{0:<10}'.format(0)
                     #print "processNumbers[colpos]", colpos, processNumbers[colpos]
                 else:
+                    print "processNumbers[colpos]", backgroundsOrig, process, process.split('_')[0], '{0:<10}'.format(backgroundsOrig.index(process.split('_')[0])+1)
                     processNumbers[colpos] = '{0:<10}'.format(backgroundsOrig.index(process.split('_')[0])+1)
                     #print "processNumbers[colpos]", colpos, processNumbers[colpos]
                 #processNumbers[colpos] = '{0:<10}'.format(processesOrdered.index(process)-len(signals)+1)
@@ -714,6 +727,8 @@ class Limits(object):
 
             # rateParams
             for norm in norms:
+                print "norm", norm
+                if "ggH_haa_" in norm[0] and signalName[0] not in norm[0]: continue
                 logging.debug('Rate param: {0}'.format([str(x) for x in norm]))
                 f.write(getparamline(norm))
 

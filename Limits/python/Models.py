@@ -451,15 +451,37 @@ class Param(object):
                 args.Add(av)
         else:
             shiftFormula = '{}'.format(value)
-        #print "DEBUG:", paramName, shifts
         for shift in shifts:
             up = shifts[shift]['up']
             down = shifts[shift]['down']
-            if isinstance(value,basestring) or  abs(up/value)>uncertainty or abs(down/value)>uncertainty:
+            if isinstance(value,basestring) or abs(up/value)>0.0 or abs(down/value)>0.0:
                 ws.factory('{}[0,-10,10]'.format(shift))
-                shiftFormula += ' + TMath::Max(0,@{shift})*({up}) + TMath::Min(0,@{shift})*({down})'.format(shift=len(args),up=up,down=down)
-                #print "shiftFormula:", shiftFormula
+                #if "integral" in paramName or "erfScale" in paramName:
+                if "integral" in paramName:
+                    shiftFormula += ' + TMath::Max(0,TMath::Exp(@{shift})-1)*({up}) + TMath::Min(0,TMath::Exp(@{shift})-1)*({down})'.format(shift=len(args),up=up,down=down)
+                else:
+                    shiftFormula += ' + TMath::Max(0,@{shift})*({up}) + TMath::Min(0,@{shift})*({down})'.format(shift=len(args),up=up,down=down)
                 args.Add(ws.var(shift))
+        if uncertainty > 0:
+        #if uncertainty > 0 and not 'lambda_conty' in paramName and not 'erf' in paramName:
+            if abs(uncertainty/value) > 0.2:
+                uncertainty = abs(0.2*value)
+            uncrtTxt = "uncrt_"+paramName
+            #if 'lambda_conty' in paramName or 'bg1' in paramName or 'erf' in paramName:
+            #if 'lambda_conty' in paramName or 'erf' in paramName:
+            #    uncrtTxt = "uncrt_modelcor"
+            ws.factory('{}[0,-10,10]'.format(uncrtTxt))
+            uncrt = uncertainty
+            #if "integral" in paramName or "erfScale" in paramName:
+            if "integral" in paramName:
+                shiftFormula += ' + TMath::Max(0,TMath::Exp(@{shift})-1)*({up}) + TMath::Min(0,TMath::Exp(@{shift})-1)*({down})'.format(shift=len(args),up=uncrt,down=uncrt)
+            else:
+                #if 'erf' in paramName:
+                #    shiftFormula += ' + TMath::Max(0,@{shift})*({down}) + TMath::Min(0,@{shift})*({up})'.format(shift=len(args),up=uncrt,down=uncrt)
+                #else:
+                shiftFormula += ' + TMath::Max(0,@{shift})*({up}) + TMath::Min(0,@{shift})*({down})'.format(shift=len(args),up=uncrt,down=uncrt)
+            args.Add(ws.var(uncrtTxt))
+        
         arglist = ROOT.RooArgList(args)
         param = ROOT.RooFormulaVar(paramName, paramName, shiftFormula, arglist)
         getattr(ws, "import")(param, ROOT.RooFit.RecycleConflictNodes())
@@ -479,7 +501,7 @@ class Spline(object):
         channel = self.kwargs.get('channel', '')
         uncertainty = self.kwargs.get('uncertainty',0.000)
         splineName = label
-        #print "Building splines:", ws.var("tauScale")
+        print "Building splines:", label
         if shifts:
             if isinstance(values,list):
                 args = ROOT.TList()
@@ -490,22 +512,62 @@ class Spline(object):
                 for shift in shifts:
                     up = [u-c for u,c in zip(shifts[shift]['up'],values)]
                     down = [c-d for d,c in zip(shifts[shift]['down'],values)]
+                    #print "Shift", shift
+                    #print zip(shifts[shift]['up'],values)
+                    #print zip(shifts[shift]['down'],values)
+                    #print zip(up, values)
+                    #print zip(down, values)
                     upName = '{0}_{1}Up'.format(splineName,shift)
                     downName = '{0}_{1}Down'.format(splineName,shift)
                     if any([ v == 0 for v in values]):
                         logging.warning('Zero value for {}: {}'.format(splineName, ' '.join(['{}'.format(v) for v in values])))
-                    if any([abs(u/v)>uncertainty if v else u for u,v in zip(up,values)]) or any([abs(d/v)>uncertainty if v else d for d,v in zip(down,values)]):
-                        shiftText = channel+'_'+shift
+                    if any([abs(u/v)>0.0 if v else u for u,v in zip(up,values)]) or any([abs(d/v)>0.0 if v else d for d,v in zip(down,values)]):
+                        if shift == 'tauIDScale':
+                            shiftText = shift+'_'+channel.split('_')[-1]
+                        else:
+                            shiftText = channel+'_'+shift
                         ws.factory('{}[0,-10,10]'.format(shiftText))
                         #ws.factory('{}[0,-10,10]'.format(shift))
+                        
                         splineUp   = buildSpline(ws,upName,  self.mh,masses,up)
                         splineDown = buildSpline(ws,downName,self.mh,masses,down)
-                        shiftFormula += ' + TMath::Max(0,@{shift})*@{up} + TMath::Min(0,@{shift})*@{down}'.format(shift=len(args),up=len(args)+1,down=len(args)+2)
+                        
+                        #if 'integral' in splineName:
+                        if False:
+                            shiftFormula += ' + TMath::Max(0,TMath::Exp(@{shift})-1)*({up}) + TMath::Min(0,TMath::Exp(@{shift})-1)*({down})'.format(shift=len(args),up=len(args)+1,down=len(args)+2)
+                        else:
+                            shiftFormula += ' + TMath::Max(0,@{shift})*@{up} + TMath::Min(0,@{shift})*@{down}'.format(shift=len(args),up=len(args)+1,down=len(args)+2)
                         
                         #print "Building splines:", ws.var(shiftText)
                         args.Add(ws.var(shiftText))
                         args.Add(splineUp)
                         args.Add(splineDown)
+                if isinstance(uncertainty,list):
+                #if False:
+                #if not 'mean_sigx' in splineName or not 'integral' in splineName:
+                #if 'integral' in splineName:
+                    up = uncertainty
+                    down = uncertainty
+                    #print "Uncertainty:"
+                    #print zip(up,values)
+                    #print zip(down,values)
+                    upName = '{0}_{1}Up'.format(splineName,"uncrt")
+                    downName = '{0}_{1}Down'.format(splineName,"uncrt")
+                    shiftText = 'uncrt_'+splineName
+                    ws.factory('{}[0,-10,10]'.format(shiftText))
+                    #ws.factory('{}[0,-10,10]'.format(shift))
+                    splineUp   = buildSpline(ws,upName,  self.mh,masses,up)
+                    splineDown = buildSpline(ws,downName,self.mh,masses,down)
+                    #if 'integral' in splineName or 'mean' in splineName or 'sigma' in splineName or 'width' in splineName:
+                    #if 'integral' in splineName:
+                    if False:
+                        shiftFormula += ' + TMath::Max(0,TMath::Exp(@{shift})-1)*({up}) + TMath::Min(0,TMath::Exp(@{shift})-1)*({down})'.format(shift=len(args),up=len(args)+1,down=len(args)+2)
+                    else:
+                        shiftFormula += ' + TMath::Max(0,@{shift})*@{up} + TMath::Min(0,@{shift})*@{down}'.format(shift=len(args),up=len(args)+1,down=len(args)+2)
+                    args.Add(ws.var(shiftText))
+                    args.Add(splineUp)
+                    args.Add(splineDown)
+                
                 arglist = ROOT.RooArgList(args)
                 spline = ROOT.RooFormulaVar(splineName, splineName, shiftFormula, arglist)
             else:

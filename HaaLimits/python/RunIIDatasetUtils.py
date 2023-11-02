@@ -147,7 +147,8 @@ def getDataset(File,channel,type,shift,do2D,xVar='invMassMuMu',yVar='visFourbody
 
     print "getDataset:", type
     print File
-    if "TauMuTauHad" in channel or "TauETauHad" in channel or "TauHadTauHad" in channel:
+    #if "TauMuTauHad" in channel or "TauETauHad" in channel or "TauHadTauHad" in channel:
+    if True:
         if project and 'datadriven' in type:
             dataset =getRooDatasetFake(File,selection=selDatasets['invMassMuMu'],xRange=thisxrange,weight='fakeRateEfficiency',yRange=maxyrange,project=xVar,xVar=xVar,yVar=yVar)
         elif not project and 'datadriven' in type:
@@ -159,15 +160,15 @@ def getDataset(File,channel,type,shift,do2D,xVar='invMassMuMu',yVar='visFourbody
             # For signal dataset, use a different xRange, yRange, and selection
             dataset =getRooDataset(File,selection=selDatasets['visFourbodyMass'],xRange=[0,50],weight=weightname,yRange=maxyrange,project='',xVar=xVar,yVar=yVar,shift=shift)
     
-    elif "TauMuTauE" in channel or "TauMuTauMu" in channel or "TauETauE" in channel:
-        print File
-        if 'datadriven' in type:
-            print type
-            dataset=getHisto(File,do2D,channel,xRange=thisxrange,process='datadriven')
-        elif 'data' in type:
-            dataset= getHisto(File,do2D,channel,xRange=thisxrange,process='data')
-        else:
-            dataset=getHisto(File,do2D,channel,xRange=thisxrange,process='signal')
+##     elif "TauMuTauE" in channel or "TauMuTauMu" in channel or "TauETauE" in channel:
+##         print File
+##         if 'datadriven' in type:
+##             print type
+##             dataset=getHisto(File,do2D,channel,xRange=thisxrange,process='datadriven')
+##         elif 'data' in type:
+##             dataset= getHisto(File,do2D,channel,xRange=thisxrange,process='data')
+##         else:
+##             dataset=getHisto(File,do2D,channel,xRange=thisxrange,process='signal')
     else:
         raise ValueError('Channel Unknown in getDataset')
 

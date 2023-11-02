@@ -43,7 +43,7 @@ class HaaLimits(Limits):
     }
 
     HBINNING = 25 # GeV
-    ABINNING = 0.1 # GeV
+    ABINNING = 1 # GeV
 
     SPLITBGS = True # False doesnt work!
     SKIPPLOTS = False
@@ -70,6 +70,7 @@ class HaaLimits(Limits):
     QCDSHIFTS = [] # note, max/min of all (excluding 0.5/2)
 
     FIXFP = False
+    DROPFP = True
 
     COLORS = {
         125 : ROOT.kBlack,
@@ -162,6 +163,13 @@ class HaaLimits(Limits):
         workspace = kwargs.pop('workspace',self.workspace)
         xVar = kwargs.pop('xVar',self.XVAR)
         tag = kwargs.pop('tag',region)
+        if '2016' in tag:
+            year = '2016'
+        elif '2017' in tag:
+            year = '2017'
+        else:
+            year = '2018'
+        #year = tag.split('_')[-1]
 
         bgRes = Models.Voigtian
         #bgRes = Models.BreitWigner
@@ -170,7 +178,7 @@ class HaaLimits(Limits):
         #bgResDCB = Models.DoubleCrystalBall
 
         # jpsi
-        nameJ1b = 'jpsi1S'
+        nameJ1b = 'jpsi1S_'+year
         
         workspace.factory('{0}[{1}, {2}, {3}]'.format('mean_{}'.format(nameJ1b), *[3.1,2.9,3.2]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('sigma_{}'.format(nameJ1b),*[0.035,0.001,0.5]))
@@ -193,10 +201,14 @@ class HaaLimits(Limits):
             a2 = 'a2_{}'.format(nameJ1b),
             n2 = 'n2_{}'.format(nameJ1b),
         )
-        nameJ1 = '{}{}'.format(nameJ1b,'_'+tag if tag else '')
+        #if 'control' in tag:
+        #    nameJ1 = '{}{}'.format(nameJ1b,'_'+tag.replace('_2016','').replace('_2017','').replace('_2018','') if tag else '')
+        #else:
+        nameJ1 = '{}{}'.format(nameJ1b.replace('_2016','').replace('_2017','').replace('_2018',''),'_'+tag if tag else '')
         jpsi1S.build(workspace,nameJ1)
+        print "nameJ1", nameJ1
     
-        nameJ2b = 'jpsi2S'
+        nameJ2b = 'jpsi2S_'+year
         workspace.factory('{0}[{1}, {2}, {3}]'.format('mean_{}'.format(nameJ2b), *[3.7,3.6,3.8]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('sigma_{}'.format(nameJ2b),*[0.04,0.001,0.5]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('width_{}'.format(nameJ2b),*[0.01,0.001,0.5]))
@@ -218,9 +230,12 @@ class HaaLimits(Limits):
             a2 = 'a2_{}'.format(nameJ2b),
             n2 = 'n2_{}'.format(nameJ2b),
         )
-        nameJ2 = '{}{}'.format(nameJ2b,'_'+tag if tag else '')
+        #if 'control' in tag:
+        #    nameJ2 = '{}{}'.format(nameJ2b,'_'+tag.replace('_2016','').replace('_2017','').replace('_2018','') if tag else '')
+        #else:
+        nameJ2 = '{}{}'.format(nameJ2b.replace('_2016','').replace('_2017','').replace('_2018',''),'_'+tag if tag else '')
         jpsi2S.build(workspace,nameJ2)
-
+        print "nameJ2", nameJ2
 
         if self.XRANGE[0]<3.3:
             #jpsi = {'extended': True}
@@ -230,11 +245,14 @@ class HaaLimits(Limits):
             jpsi[nameJ1] = '{}_frac'.format(nameJ1b)
             jpsi[nameJ2] = '{}_frac'.format(nameJ2b)
             jpsi = Models.Sum('jpsi', **jpsi)
+            #if 'control' in region:
+            #    nameJ = 'jpsi_{}{}'.format(year, '_'+tag.replace('_2016','').replace('_2017','').replace('_2018','') if tag else '')
+            #else:
             nameJ = 'jpsi{}'.format('_'+tag if tag else '')
             jpsi.build(workspace,nameJ)
 
         # upsilon
-        nameU1b = 'upsilon1S'
+        nameU1b = 'upsilon1S_'+year
         workspace.factory('{0}[{1}, {2}, {3}]'.format('mean_{}'.format(nameU1b), *[9.5,9.3,9.7]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('sigma_{}'.format(nameU1b),*[0.05,0,0.3]))
         #workspace.factory('{0}[{1}, {2}, {3}]'.format('sigma_{}'.format(nameU1b),*[0.05,0,0.3]))
@@ -257,10 +275,11 @@ class HaaLimits(Limits):
             a2 = 'a2_{}'.format(nameU1b),
             n2 = 'n2_{}'.format(nameU1b),
         )
-        nameU1 = '{}{}'.format(nameU1b,'_'+tag if tag else '')
+        nameU1 = '{}{}'.format(nameU1b.replace('_2016','').replace('_2017','').replace('_2018',''),'_'+tag if tag else '')
         upsilon1S.build(workspace,nameU1)
+        print  "nameU1", nameU1
     
-        nameU2b = 'upsilon2S'
+        nameU2b = 'upsilon2S_'+year
         workspace.factory('{0}[{1}, {2}, {3}]'.format('mean_{}'.format(nameU2b), *[10.0,9.8,10.15]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('sigma_{}'.format(nameU2b),*[0.06,0,0.3]))
         #workspace.factory('{0}[{1}, {2}, {3}]'.format('sigma_{}'.format(nameU2b),*[0.06,0,10]))
@@ -283,10 +302,14 @@ class HaaLimits(Limits):
             a2 = 'a2_{}'.format(nameU2b),
             n2 = 'n2_{}'.format(nameU2b),
         )
-        nameU2 = '{}{}'.format(nameU2b,'_'+tag if tag else '')
+        #if 'control' in region:
+        #    nameU2 = '{}{}'.format(nameU2b,'_'+tag.replace('_2016','').replace('_2017','').replace('_2018','') if tag else '')
+        #else:
+        nameU2 = '{}{}'.format(nameU2b.replace('_2016','').replace('_2017','').replace('_2018',''),'_'+tag if tag else '')
         upsilon2S.build(workspace,nameU2)
+        print "nameU2", nameU2
     
-        nameU3b = 'upsilon3S'
+        nameU3b = 'upsilon3S_'+year
         workspace.factory('{0}[{1}, {2}, {3}]'.format('mean_{}'.format(nameU3b), *[10.3,10.22,10.5]))
         workspace.factory('{0}[{1}, {2}, {3}]'.format('sigma_{}'.format(nameU3b),*[0.07,0,0.3]))
         #workspace.factory('{0}[{1}, {2}, {3}]'.format('sigma_{}'.format(nameU3b),*[0.07,0,10]))
@@ -309,7 +332,10 @@ class HaaLimits(Limits):
             a2 = 'a2_{}'.format(nameU3b),
             n2 = 'n2_{}'.format(nameU3b),
         )
-        nameU3 = '{}{}'.format(nameU3b,'_'+tag if tag else '')
+        #if 'control' in region:
+        #    nameU3 = '{}{}'.format(nameU3b,'_'+tag.replace('_2016','').replace('_2017','').replace('_2018','') if tag else '')
+        #else:
+        nameU3 = '{}{}'.format(nameU3b.replace('_2016','').replace('_2017','').replace('_2018',''),'_'+tag if tag else '')
         upsilon3S.build(workspace,nameU3)
 
         #upsilon = {'recursive': True}
@@ -320,8 +346,11 @@ class HaaLimits(Limits):
         #nameU = 'upsilon_{}'.format(region)
         #upsilon.build(workspace,nameU)
 
-        nameU23b = 'upsilon23'.format('_'+tag if tag else '')
-        nameU23 = '{}{}'.format(nameU23b,'_'+tag if tag else '')
+        nameU23b = 'upsilon23_'+year
+        #if 'control' in region:
+        #    nameU23 = '{}{}'.format(nameU23b,'_'+tag.replace('_2016','').replace('_2017','').replace('_2018','') if tag else '')
+        #else:
+        nameU23 = '{}{}'.format(nameU23b.replace('_2016','').replace('_2017','').replace('_2018',''),'_'+tag if tag else '')
         workspace.factory('{0}_frac[{1},{2},{3}]'.format(nameU2b,*[0.5,0,1]))
         workspace.factory('{0}_frac[{1},{2},{3}]'.format(nameU3b,*[0.5,0,1]))
         #upsilon23 = {'extended': True}
@@ -330,9 +359,13 @@ class HaaLimits(Limits):
         upsilon23[nameU3] = '{}_frac'.format(nameU3b)
         upsilon23 = Models.Sum(nameU23, **upsilon23)
         upsilon23.build(workspace,nameU23)
+        print "nameU23", nameU23
 
-        nameUb = 'upsilon'
-        nameU = '{}{}'.format(nameUb,'_'+tag if tag else '')
+        nameUb = 'upsilon_'+year
+        #if 'control' in region:
+        #    nameU = '{}{}'.format(nameUb,'_'+tag.replace('_2016','').replace('_2017','').replace('_2018','') if tag else '')
+        #else:
+        nameU = '{}{}'.format(nameUb.replace('_2016','').replace('_2017','').replace('_2018',''),'_'+tag if tag else '')
         workspace.factory('{0}_frac[{1},{2},{3}]'.format(nameU1b,*[0.75,0,1]))
         workspace.factory('{0}_frac[{1},{2},{3}]'.format(nameU23b,*[0.5,0,1]))
         #upsilon = {'extended': True}
@@ -365,7 +398,7 @@ class HaaLimits(Limits):
                 order = 5
             else:
                 order = 1
-            nameC = 'cont{}'.format('_'+tag if tag else '')
+            nameC = 'cont_{}'.format(tag if tag else '')
             cont = Models.Chebychev(nameC,
                                     x = xVar,
                                     order = order,
@@ -373,7 +406,7 @@ class HaaLimits(Limits):
             cont.build(workspace,nameC)
 
         elif doPolyExpo:
-            nameC = 'cont{}'.format('_'+tag if tag else '')
+            nameC = 'cont_{}'.format(tag if tag else '')
             cont = Models.ExpoPoly(nameC,
                 x = xVar,
                 order = 3,
@@ -381,9 +414,12 @@ class HaaLimits(Limits):
             cont.build(workspace,nameC)
 
         else:
-            if (self.XRANGE[0]<4 and tag == 'control') or (self.XRANGE[0]<4 and "TauHad" in tag) or self.XRANGE[0]>10.9:
+            #if (self.XRANGE[0]<4 and tag == 'control')
+            if (self.XRANGE[0]<4 and 'control' in tag) or (self.XRANGE[0]<4 and "TauHad" in tag):
+            #if (self.XRANGE[0]<4 and tag == 'control') or (self.XRANGE[0]<4 and "TauHad" in tag) or self.XRANGE[0]>10.9:
             #if self.XRANGE[0]<4:
-                nameC1 = 'cont1{}'.format('_'+tag if tag else '')
+            #if False:
+                nameC1 = 'cont1_{}'.format(tag if tag else '')
                 #nameC1 = 'cont1'
                 cont1 = Models.Exponential(nameC1,
                     x = xVar,
@@ -391,7 +427,7 @@ class HaaLimits(Limits):
                 )
                 cont1.build(workspace,nameC1)
 
-                nameC2 = 'cont2{}'.format('_'+tag if tag else '')
+                nameC2 = 'cont2_{}'.format(tag if tag else '')
                 cont2 = Models.Exponential(nameC2,
                     x = xVar,
                     lamb = kwargs.pop('lambda_{}'.format(nameC2),[-0.6,-2,0]), #-0.6,-2,0
@@ -405,7 +441,7 @@ class HaaLimits(Limits):
                 
                 cont2.build(workspace,nameC2)
 
-                nameC = 'cont{}'.format('_'+tag if tag else '')
+                nameC = 'cont_{}'.format(tag if tag else '')
                 #cont = {'extended': True}
                 cont = {'recursive': True}
                 cont[nameC1] = [0.70,0,1]
@@ -413,7 +449,7 @@ class HaaLimits(Limits):
                 cont = Models.Sum(nameC, **cont)
                 cont.build(workspace,nameC)
             else:
-                nameC = 'cont1{}'.format('_'+tag if tag else '')
+                nameC = 'cont1_{}'.format(tag if tag else '')
                 #nameC = 'cont'
                 cont = Models.Exponential(nameC,
                     x = xVar,
@@ -722,6 +758,19 @@ class HaaLimits(Limits):
         yvals = [fit.Eval(x) for x in xvals]
         return yvals
 
+    def fitErrorToList(self, fit, res, xvals, param):
+        #print fit, res
+        #print res.Print('V')
+        #yvals = [fit.IntegralError(x-0.5, x+0.5, res.GetParams(), res.GetCovarianceMatrix().GetMatrixArray(), 0.01) for x in xvals]
+        if 'mean_sigx' in param:
+            yvals = [0.001 for x in xvals]
+        elif 'sigx' in param:
+            yvals = [0.01 for x in xvals]
+        else:
+            yvals = [0.05*fit.Eval(x) for x in xvals]
+        return yvals
+        
+
     def buildSpline(self,vals,errs,integrals,integralerrs,region,shifts=[],**kwargs):
         '''
         Get the signal spline for a given Higgs mass.
@@ -947,6 +996,7 @@ class HaaLimits(Limits):
     def plotModelX(self,workspace,xVar,data,model,region,shift='',**kwargs):
         xRange = kwargs.pop('xRange',[])
         postfix = kwargs.pop('postfix','')
+        fr = kwargs.pop('result','')
 
         if xRange:
             xFrame = workspace.var(xVar).frame(ROOT.RooFit.Range(*xRange))
@@ -954,24 +1004,24 @@ class HaaLimits(Limits):
             xFrame = workspace.var(xVar).frame()
         data.plotOn(xFrame)
         if not self.SKIPPLOTS:
-            if region == 'control':
+            if 'control' in region:
                 model.plotOn(xFrame,ROOT.RooFit.Components('cont_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
                 model.plotOn(xFrame,ROOT.RooFit.Components('cont1_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
                 model.plotOn(xFrame,ROOT.RooFit.Components('cont2_{}'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
             else:
-                model.plotOn(xFrame,ROOT.RooFit.Components('cont_{}_x'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
-                model.plotOn(xFrame,ROOT.RooFit.Components('cont1_{}_x'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
-                model.plotOn(xFrame,ROOT.RooFit.Components('cont2_{}_x'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+                model.plotOn(xFrame, ROOT.RooFit.Components('cont_{}_x'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+                model.plotOn(xFrame, ROOT.RooFit.Components('cont1_{}_x'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
+                model.plotOn(xFrame, ROOT.RooFit.Components('cont2_{}_x'.format(region)),ROOT.RooFit.LineStyle(ROOT.kDashed))
             #model.plotOn(xFrame,ROOT.RooFit.Components('cont'),ROOT.RooFit.LineStyle(ROOT.kDashed))
             #model.plotOn(xFrame,ROOT.RooFit.Components('cont1'),ROOT.RooFit.LineStyle(ROOT.kDashed))
             #model.plotOn(xFrame,ROOT.RooFit.Components('cont2'),ROOT.RooFit.LineStyle(ROOT.kDashed))
-            if self.XRANGE[0]<4 and region=='control':
+            if self.XRANGE[0]<4 and 'control' in region:
                 # jpsi
                 model.plotOn(xFrame,ROOT.RooFit.Components('jpsi1S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
                 model.plotOn(xFrame,ROOT.RooFit.Components('jpsi2S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
                 #model.plotOn(xFrame,ROOT.RooFit.Components('jpsi1S'),ROOT.RooFit.LineColor(ROOT.kRed))
                 #model.plotOn(xFrame,ROOT.RooFit.Components('jpsi2S'),ROOT.RooFit.LineColor(ROOT.kRed))
-            elif self.XRANGE[0]<11 and region=='control':    
+            elif self.XRANGE[0]<11 and 'control' in region:    
                 model.plotOn(xFrame,ROOT.RooFit.Components('upsilon1S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
                 model.plotOn(xFrame,ROOT.RooFit.Components('upsilon2S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
                 model.plotOn(xFrame,ROOT.RooFit.Components('upsilon3S_{}'.format(region)),ROOT.RooFit.LineColor(ROOT.kRed))
@@ -979,7 +1029,10 @@ class HaaLimits(Limits):
             #model.plotOn(xFrame,ROOT.RooFit.Components('upsilon2S'),ROOT.RooFit.LineColor(ROOT.kRed))
             #model.plotOn(xFrame,ROOT.RooFit.Components('upsilon3S'),ROOT.RooFit.LineColor(ROOT.kRed))
             # combined model
+            if not 'control' in region:
+                model.plotOn(xFrame,ROOT.RooFit.VisualizeError(fr, 1, True), ROOT.RooFit.NormRange("Full"), ROOT.RooFit.LineStyle(ROOT.kDashed), ROOT.RooFit.FillColor(ROOT.kOrange))
             model.plotOn(xFrame)
+            data.plotOn(xFrame)
         model.paramOn(xFrame,ROOT.RooFit.Layout(0.7,0.9,0.95))
         xFrame.getAttFill().SetFillStyle(0)
 
@@ -1063,9 +1116,18 @@ class HaaLimits(Limits):
         model = workspace.pdf('bg_{}'.format(region))
         name = 'data_prefit_{}{}'.format(region,'_'+shift if shift else '')
         #hist = self.histMap[region][shift]['dataNoSig']
-        print "DEBUG5:",region, shift, self.histMap[region][shift].keys()
+        #print "DEBUG5:",region, shift, self.histMap[region][shift].keys()
         hist = self.histMap[region][shift]['datadriven']
+
+        addSignal = kwargs.pop('addSignal', False)
+        mh = kwargs.pop('h','125')
+        ma = kwargs.pop('a','15')
+        if addSignal:
+            #print region, self.histMap[region]['']
+            hist_wSig = self.histMap[region]['']['hm{}_am{}'.format(mh, ma)]
+        
         if hist.InheritsFrom('TH1'):
+            
             #hist.GetXaxis().SetRangeUser(*self.XRANGE)
             #binning = array('d',[2.5, 2.75, 3., 3.25, 3.5, 3.75, 4., 5, 6, 7, 8.5])
             #hist.Rebin(10, "rebin", binning)
@@ -1079,17 +1141,23 @@ class HaaLimits(Limits):
             #tmpHist = tmpData.createHistogram("tmp",xVar,ROOT.RooArgList(binning))
             #data = ROOT.RooDataHist(name,name,ROOT.RooArgList(workspace.var(xVar)),tmpHist)
         else:
+            #print "DEBUG6", hist.sumEntries('{0}>{1} && {0}<{2}'.format(xVar,*self.XRANGE)) * scale
+            if addSignal:
+                hist.append(hist_wSig)
             integral = hist.sumEntries('{0}>{1} && {0}<{2}'.format(xVar,*self.XRANGE)) * scale
             integralerr = getDatasetIntegralError(hist,'{0}>{1} && {0}<{2}'.format(xVar,*self.XRANGE)) * scale
             # TODO add support for xVar
             data = hist.Clone(name)
+            #print "DEBUG6", data.sumEntries('{0}>{1} && {0}<{2}'.format(xVar,*self.XRANGE)) * scale
 
-        fr = model.fitTo(data, ROOT.RooFit.Minimizer("Minuit2", "Minos"), ROOT.RooFit.Save(), ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
+        print "---Fitting Background---"
+        fr = model.fitTo(data, ROOT.RooFit.Minimizer("Minuit", "Migrad"), ROOT.RooFit.Save(), ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
 
         workspace.var(xVar).setBins(self.XBINNING*2)
         #workspace.var(xVar).setBins(binning)
+        #workspace.Print()
 
-        if region=='control':
+        if 'control' in region:
             if self.XRANGE[0]<4:
                 self.plotModelX(workspace,xVar,data,model,region,shift,xRange=[2.5,5],postfix='jpsi')
             elif self.XRANGE[0]<11: 
@@ -1329,14 +1397,18 @@ class HaaLimits(Limits):
         logging.debug(', '.join([region,str(vals),str(errs),str(integrals),str(integralerrs),str(kwargs)]))
         workspace = kwargs.pop('workspace',self.workspace)
         params = {}
+        print vals
+        print errs
         for param in vals[region]['']:
             if 'frac' in param and not param == "bg1_"+region+"_y_frac" : continue
-            print "Building params...", region, param, self.FIXFP
+            print "Building params...", region, param, self.FIXFP, self.DROPFP
             #channel = region.split("_")[0]
             paramValue = vals[region][''][param]
             paramShifts = {}
+            paramUncert = errs[region][''][param]
             if self.BACKGROUNDSHIFTS and ('TauMuTauE' in channel or 'TauMuTauMu' in channel or 'TauETauE' in channel) and 'cont' in param:
-                backgroundshifts = self.BACKGROUNDSHIFTS + ['modelling']
+                #backgroundshifts = self.BACKGROUNDSHIFTS + ['modelling']
+                backgroundshifts = self.BACKGROUNDSHIFTS
             else:
                 backgroundshifts = self.BACKGROUNDSHIFTS
             for shift in backgroundshifts:
@@ -1344,32 +1416,39 @@ class HaaLimits(Limits):
                     shiftValueUp = paramValue*1.2
                     shiftValueDown = paramValue*0.8
                 else:
+                    print "param:", param
+                    print vals[region][''][param]
+                    print vals[region][shift+'Up'][param]
+                    print vals[region][shift+'Down'][param]
                     shiftValueUp   = vals[region][shift+'Up'][param] - paramValue
                     shiftValueDown = paramValue - vals[region][shift+'Down'][param]
                 #if ('TauMuTauE' in channel or 'TauMuTauMu' in channel or 'TauETauE' in channel) and 'cont' in param:
                 #    shiftValueUp = paramValue*1.2
                 #    shiftValueDown = paramValue*0.8
                 paramShifts[channel+"_"+shift] = {'up': shiftValueUp, 'down': shiftValueDown}
-            #if self.FIXFP or 'TauMuTauE' in channel:
-            if self.FIXFP:
+            if self.FIXFP or self.DROPFP:
+            #if self.FIXFP:
                 paramModel = Models.Param(param,
                     value  = paramValue,
                     shifts = paramShifts,
+                    uncertainty = paramUncert,
                 )
                 paramModel.build(workspace, param)
-            elif 'TauMuTauE' in channel or 'TauMuTauMu' in channel or 'TauETauE' in channel:
-                #value = vals[region][''][param]
-                #err   = errs[region][''][param]
-                #workspace.factory('{}[{},{},{}]'.format(param,value,value-10*err,value+10*err))
-                #paramModel = None
-                print param, paramValue, paramShifts
-                paramModel = Models.Param(param,
-                        value  = paramValue,
-                        shifts = paramShifts,
-                    )
-                paramModel.build(workspace, param)
-
-                if self.workspace.var(channel+'_modelling'): self.addSystematic(channel+'_modelling', 'param', systematics=[0,1])
+                if self.workspace.var('uncrt_'+param): self.addSystematic('uncrt_'+param, 'param', systematics=[0,1])
+                if self.workspace.var('uncrt_modelcor'): self.addSystematic('uncrt_modelcor', 'param', systematics=[0,1])
+##             elif 'TauMuTauHad' in channel or 'TauMuTauMu' in channel or 'TauETauE' in channel:
+##                 #value = vals[region][''][param]
+##                 #err   = errs[region][''][param]
+##                 #workspace.factory('{}[{},{},{}]'.format(param,value,value-10*err,value+10*err))
+##                 #paramModel = None
+##                 print param, paramValue, paramShifts
+##                 paramModel = Models.Param(param,
+##                         value  = paramValue,
+##                         shifts = paramShifts,
+##                     )
+##                 paramModel.build(workspace, param)
+## 
+##                 if self.workspace.var(channel+'_modelling'): self.addSystematic(channel+'_modelling', 'param', systematics=[0,1])
                 
             else:
                 ppRegion = region.replace('FP','PP')
@@ -1437,10 +1516,11 @@ class HaaLimits(Limits):
             component = self.rstrip(component,'_'+region)
             allerrors[component] = suberr
 
-            print "subint integrals:",subint, integrals
+            print "subint integrals(errs):",subint, integrals, integralerrs
 
             if isinstance(integrals,dict):
                 paramValue = subint*integrals['']
+                paramUncertainty = subint*integralerrs['']
                 paramShifts = {}
                 for shift in self.BACKGROUNDSHIFTS:
                     shiftValueUp   = subint*integrals[shift+'Up'  ] - paramValue
@@ -1448,27 +1528,16 @@ class HaaLimits(Limits):
                     paramShifts[channel+"_"+shift] = {'up': shiftValueUp, 'down': shiftValueDown}
             else:
                 paramValue = subint*integrals
+                paramUncertainty = subint*integralerrs
             allintegrals[component] = paramValue
 
             name = 'integral_{}_{}'.format(component,region)
             integral_params += [name]
-            if self.FIXFP:
-                if isinstance(integrals,dict):
-                    param = Models.Param(name,
-                        value  = paramValue,
-                        shifts = paramShifts,
-                    )
-                    param.build(workspace, name)
-                else:
-                    param = Models.Param(name,
-                        value  = paramValue,
-                    )
-                    param.build(workspace, name)
-            elif 'TauMuTauE' in channel or 'TauMuTauMu' in channel or 'TauETauE' in channel:
-                controlIntegrals = allintegrals if region=='control' else self.control_integralValues
+            if self.FIXFP or self.DROPFP:
+                controlIntegrals = allintegrals if 'control' in region else self.control_integralValues
                 if '2S' in component:
-                    rname = 'relNorm_{}'.format(component)
-                    if region=='control':
+                    rname = 'relNorm_{}'.format(component)+"_"+self.CHANNELS[0].split('_')[-1]
+                    if 'control' in region:
                         rvalue = controlIntegrals[component]/controlIntegrals[component.replace('2S','1S')]
                         workspace.factory('{}[{},{},{}]'.format(rname,rvalue,rvalue*0.5,rvalue*1.5))
                     param = Models.Param(name,
@@ -1477,8 +1546,8 @@ class HaaLimits(Limits):
                     )
                     param.build(workspace, name)
                 elif '3S' in component:
-                    rname = 'relNorm_{}'.format(component)
-                    if region=='control':
+                    rname = 'relNorm_{}'.format(component)+"_"+self.CHANNELS[0].split('_')[-1]
+                    if 'control' in region:
                         rvalue = controlIntegrals[component]/controlIntegrals[component.replace('3S','1S')]
                         workspace.factory('{}[{},{},{}]'.format(rname,rvalue,rvalue*0.5,rvalue*1.5))
                     param = Models.Param(name,
@@ -1486,18 +1555,54 @@ class HaaLimits(Limits):
                                          valueArgs = [rname,name.replace('3S','1S')],
                     )
                     param.build(workspace, name)
-                else:
-                    # unconstrained for control, FP, but initialized to best fit value
-                    #value = allintegrals[component]
-                    #workspace.factory('{}[{},{},{}]'.format(name,value,value*0.5,value*1.5))
-                    #print name, paramShifts, [name.replace(region,fpRegion)], scale
+                elif isinstance(integrals,dict):
                     param = Models.Param(name,
                         value  = paramValue,
                         shifts = paramShifts,
+                        uncertainty = paramUncertainty,
                     )
                     param.build(workspace, name)
+                    
+                else:
+                    param = Models.Param(name,
+                        value  = paramValue,
+                    )
+                    param.build(workspace, name)
+                if self.workspace.var('uncrt_'+name): self.addSystematic('uncrt_'+name, 'param', systematics=[0,1])
+##             elif 'TauMuTauE' in channel or 'TauMuTauMu' in channel or 'TauETauE' in channel:
+##                 controlIntegrals = allintegrals if region=='control' else self.control_integralValues
+##                 if '2S' in component:
+##                     rname = 'relNorm_{}'.format(component)
+##                     if region=='control':
+##                         rvalue = controlIntegrals[component]/controlIntegrals[component.replace('2S','1S')]
+##                         workspace.factory('{}[{},{},{}]'.format(rname,rvalue,rvalue*0.5,rvalue*1.5))
+##                     param = Models.Param(name,
+##                                          value = '@0*@1',
+##                                          valueArgs = [rname,name.replace('2S','1S')],
+##                     )
+##                     param.build(workspace, name)
+##                 elif '3S' in component:
+##                     rname = 'relNorm_{}'.format(component)
+##                     if region=='control':
+##                         rvalue = controlIntegrals[component]/controlIntegrals[component.replace('3S','1S')]
+##                         workspace.factory('{}[{},{},{}]'.format(rname,rvalue,rvalue*0.5,rvalue*1.5))
+##                     param = Models.Param(name,
+##                                          value = '@0*@1',
+##                                          valueArgs = [rname,name.replace('3S','1S')],
+##                     )
+##                     param.build(workspace, name)
+##                 else:
+##                     # unconstrained for control, FP, but initialized to best fit value
+##                     #value = allintegrals[component]
+##                     #workspace.factory('{}[{},{},{}]'.format(name,value,value*0.5,value*1.5))
+##                     #print name, paramShifts, [name.replace(region,fpRegion)], scale
+##                     param = Models.Param(name,
+##                         value  = paramValue,
+##                         shifts = paramShifts,
+##                     )
+##                     param.build(workspace, name)
             else:
-                controlIntegrals = allintegrals if region=='control' else self.control_integralValues
+                controlIntegrals = allintegrals if 'control' in region else self.control_integralValues
                 # 2S and 3S set to a scale factor times 1S that is common to all regions
                 fpRegion = region.replace('PP','FP')
                 ppRegion = region.replace('FP','PP')
@@ -1515,7 +1620,7 @@ class HaaLimits(Limits):
                 else:
                     if '2S' in component:
                         rname = 'relNorm_{}'.format(component)
-                        if region=='control':
+                        if 'control' in region:
                             rvalue = controlIntegrals[component]/controlIntegrals[component.replace('2S','1S')]
                             workspace.factory('{}[{},{},{}]'.format(rname,rvalue,rvalue*0.5,rvalue*1.5))
                         param = Models.Param(name,
@@ -1525,7 +1630,7 @@ class HaaLimits(Limits):
                         param.build(workspace, name)
                     elif '3S' in component:
                         rname = 'relNorm_{}'.format(component)
-                        if region=='control':
+                        if 'control' in region:
                             rvalue = controlIntegrals[component]/controlIntegrals[component.replace('3S','1S')]
                             workspace.factory('{}[{},{},{}]'.format(rname,rvalue,rvalue*0.5,rvalue*1.5))
                         param = Models.Param(name,
@@ -1536,7 +1641,7 @@ class HaaLimits(Limits):
                     else:
                         # unconstrained for control, FP, but initialized to best fit value
                         value = allintegrals[component]
-                        workspace.factory('{}[{},{},{}]'.format(name,value,value*0.5,value*1.5))
+                        workspace.factory('{}[{},{},{}]'.format(name,value,value*0.5,value*2))
 
         # sum all integrals
         name = 'integral_bg_{}'.format(region)
@@ -1614,33 +1719,37 @@ class HaaLimits(Limits):
 
     def fix(self,fix=True,**kwargs):
         workspace = kwargs.pop('workspace',self.workspace)
+        year = kwargs.pop('year','2018')
         #workspace.arg('lambda_cont1').setConstant(fix)
         #workspace.arg('lambda_cont2').setConstant(fix)
-        workspace.arg('mean_upsilon1S').setConstant(fix)
-        workspace.arg('mean_upsilon2S').setConstant(fix)
-        workspace.arg('mean_upsilon3S').setConstant(fix)
-        workspace.arg('sigma_upsilon1S').setConstant(fix)
-        workspace.arg('sigma_upsilon2S').setConstant(fix)
-        workspace.arg('sigma_upsilon3S').setConstant(fix)
-        workspace.arg('width_upsilon1S').setConstant(fix)
-        workspace.arg('width_upsilon2S').setConstant(fix)
-        workspace.arg('width_upsilon3S').setConstant(fix)
-        workspace.arg('upsilon1S_frac').setConstant(fix) 
-        workspace.arg('upsilon2S_frac').setConstant(fix) 
-        workspace.arg('upsilon3S_frac').setConstant(fix) 
-        workspace.arg('upsilon23_frac').setConstant(fix) 
-        workspace.arg('mean_jpsi1S').setConstant(fix)
-        workspace.arg('mean_jpsi2S').setConstant(fix)
-        workspace.arg('sigma_jpsi1S').setConstant(fix)
-        workspace.arg('sigma_jpsi2S').setConstant(fix)
-        workspace.arg('width_jpsi1S').setConstant(fix)
-        workspace.arg('width_jpsi2S').setConstant(fix)
-        if self.XRANGE[0]<3.3: workspace.arg('jpsi1S_frac').setConstant(fix) 
-        if self.XRANGE[0]<4: workspace.arg('jpsi2S_frac').setConstant(fix) 
+        print 'mean_upsilon1S_'+year
+        print workspace.arg('mean_upsilon1S_'+year)
+        workspace.Print()
+        workspace.arg('mean_upsilon1S_'+year).setConstant(fix)
+        workspace.arg('mean_upsilon2S_'+year).setConstant(fix)
+        workspace.arg('mean_upsilon3S_'+year).setConstant(fix)
+        workspace.arg('sigma_upsilon1S_'+year).setConstant(fix)
+        workspace.arg('sigma_upsilon2S_'+year).setConstant(fix)
+        workspace.arg('sigma_upsilon3S_'+year).setConstant(fix)
+        workspace.arg('width_upsilon1S_'+year).setConstant(fix)
+        workspace.arg('width_upsilon2S_'+year).setConstant(fix)
+        workspace.arg('width_upsilon3S_'+year).setConstant(fix)
+        workspace.arg('upsilon1S_'+year+'_frac').setConstant(fix) 
+        workspace.arg('upsilon2S_'+year+'_frac').setConstant(fix) 
+        workspace.arg('upsilon3S_'+year+'_frac').setConstant(fix) 
+        workspace.arg('upsilon23_'+year+'_frac').setConstant(fix) 
+        workspace.arg('mean_jpsi1S_'+year).setConstant(fix)
+        workspace.arg('mean_jpsi2S_'+year).setConstant(fix)
+        workspace.arg('sigma_jpsi1S_'+year).setConstant(fix)
+        workspace.arg('sigma_jpsi2S_'+year).setConstant(fix)
+        workspace.arg('width_jpsi1S_'+year).setConstant(fix)
+        workspace.arg('width_jpsi2S_'+year).setConstant(fix)
+        if self.XRANGE[0]<3.3: workspace.arg('jpsi1S_'+year+'_frac').setConstant(fix) 
+        if self.XRANGE[0]<4: workspace.arg('jpsi2S_'+year+'_frac').setConstant(fix) 
         #workspace.arg('upsilon_frac').setConstant(fix) 
         #if self.XRANGE[0]<3.3: workspace.arg('jpsi_frac').setConstant(fix) 
 
-    def addBackgroundModels(self, fixAfterControl=False, fixAfterFP=False, load=False, skipFit=False, **kwargs):
+    def addBackgroundModels(self, fixAfterControl=False, fixAfterFP=False, load=False, skipFit=False, addSignal=False, **kwargs):
         workspace = self.buildWorkspace('bg')
         self.initializeWorkspace(workspace=workspace)
         self.buildModel(region='control', workspace=workspace)
@@ -1667,7 +1776,7 @@ class HaaLimits(Limits):
                         if load:
                             v, e, i, ie = self.loadBackgroundFit(region,workspace=workspace)
                         else:
-                            v, e, i, ie = self.fitBackground(region=region, workspace=workspace, **kwargs)
+                            v, e, i, ie = self.fitBackground(region=region, workspace=workspace, addSignal=addSignal, **kwargs)
                         vals[region][shift] = v
                         errs[region][shift] = e
                         integrals[region][shift] = i
@@ -1678,8 +1787,8 @@ class HaaLimits(Limits):
                             vUp, eUp, iUp, ieUp = self.loadBackgroundFit(region,shift+'Up',workspace=workspace)
                             vDown, eDown, iDown, ieDown = self.loadBackgroundFit(region,shift+'Down',workspace=workspace)
                         if not skipFit:
-                            vUp, eUp, iUp, ieUp = self.fitBackground(region=region, shift=shift+'Up', workspace=workspace, **kwargs)
-                            vDown, eDown, iDown, ieDown = self.fitBackground(region=region, shift=shift+'Down', workspace=workspace, **kwargs
+                            vUp, eUp, iUp, ieUp = self.fitBackground(region=region, shift=shift+'Up', workspace=workspace, addSignal=addSignal, **kwargs)
+                            vDown, eDown, iDown, ieDown = self.fitBackground(region=region, shift=shift+'Down', workspace=workspace, addSignal=addSignal, **kwargs
                             )
                         vals[region][shift+'Up'] = vUp
                         errs[region][shift+'Up'] = eUp
@@ -2095,7 +2204,10 @@ class HaaLimits(Limits):
                             #print "basename:", basename
                     self.addSystematic(shift,'shape',systematics=syst)
                 else:
-                    if self.workspace.var(channel+'_'+shift): self.addSystematic(channel+'_'+shift, 'param', systematics=[0,1])
+                    if shift == "tauIDScale":
+                        if self.workspace.var(shift+'_'+channel.split('_')[-1]): self.addSystematic(shift+'_'+channel.split('_')[-1], 'param', systematics=[0,1])
+                    else:
+                        if self.workspace.var(channel+'_'+shift): self.addSystematic(channel+'_'+shift, 'param', systematics=[0,1])
     
     def _addAcceptanceSystematic(self):
         accproc = self.sigProcesses
@@ -2113,6 +2225,15 @@ class HaaLimits(Limits):
         }
         #print "lumisyst", lumisyst
         self.addSystematic('lumi_13TeV','lnN',systematics=lumisyst)
+
+    def _addSignalIntepolationSystematic(self):
+        # lumi: 2.5% 2016
+        lumiproc = self.sigProcesses
+        lumisyst = {
+            (lumiproc,tuple(c+'_'+r for r in self.REGIONS for c in self.CHANNELS)) : 1.05,
+        }
+        #print "lumisyst", lumisyst
+        self.addSystematic('uncert_sigInter','lnN',systematics=lumisyst)
 
     def _addMuonSystematic(self, **kwargs):
         # from z: 1 % + 0.5 % + 0.5 % per muon for id + iso + trig (pt>20)
