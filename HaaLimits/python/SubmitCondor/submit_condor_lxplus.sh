@@ -22,16 +22,17 @@ export PREFIX=mmmt_mm_h_parametric_unbinned
 
 #export channel=TauHadTauHad_V3
 #export channel=TauMuTauHad_V2
-#export channel=TauMuTauE
+export channel=TauMuTauE
 #export channel=TauMuTauMu
-export channel=TauETauHad
+#export channel=TauETauHad
 
-export TFUNC=DG_yRange_wFakeTauScaleFit_PPonly
+#export TFUNC=DG_yRange_wFakeTauScaleFit_PPonly
 #export TFUNC=DG_DoubleExpo_yRange_wFakeTauScaleFit_PPonly
 #export TFUNC=DG_DoubleExpo_yRange_wFakeJECFit_PPonly
-#export TFUNC=DG_wFakeTauScaleFit_PPonly
+export TFUNC=DG_wFakeTauScaleFit_PPonly
 
 for year in 2016 2017 2018
+#for year in 2018
 do
     for wp in MVAMedium
     do    

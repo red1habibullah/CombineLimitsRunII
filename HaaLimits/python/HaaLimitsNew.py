@@ -414,23 +414,20 @@ class HaaLimits(Limits):
             cont.build(workspace,nameC)
 
         else:
-            #if (self.XRANGE[0]<4 and tag == 'control')
+            #if (self.XRANGE[0]<4 and 'control' in tag) or (self.XRANGE[0]<4 and "TauHad" in tag) or self.XRANGE[0] > 10:
             if (self.XRANGE[0]<4 and 'control' in tag) or (self.XRANGE[0]<4 and "TauHad" in tag):
-            #if (self.XRANGE[0]<4 and tag == 'control') or (self.XRANGE[0]<4 and "TauHad" in tag) or self.XRANGE[0]>10.9:
-            #if self.XRANGE[0]<4:
-            #if False:
                 nameC1 = 'cont1_{}'.format(tag if tag else '')
                 #nameC1 = 'cont1'
                 cont1 = Models.Exponential(nameC1,
                     x = xVar,
-                    lamb = kwargs.pop('lambda_{}'.format(nameC1),[-2,-4,0]), #-2,-4,0
+                    lamb = kwargs.pop('lambda_{}'.format(nameC1),[-0.1,-1,0]), #-2,-4,0
                 )
                 cont1.build(workspace,nameC1)
 
                 nameC2 = 'cont2_{}'.format(tag if tag else '')
                 cont2 = Models.Exponential(nameC2,
                     x = xVar,
-                    lamb = kwargs.pop('lambda_{}'.format(nameC2),[-0.6,-2,0]), #-0.6,-2,0
+                    lamb = kwargs.pop('lambda_{}'.format(nameC2),[0.1,-0.1,0.2]), #-0.6,-2,0
                 )
 
                 #nameC2 = 'cont_poly{}'.format('_'+tag if tag else '')
@@ -1951,10 +1948,6 @@ class HaaLimits(Limits):
 
         sigs = [self.SPLINENAME] if self.do2D else [self.SPLINENAME.format(h=h) for h in self.HMASSES]
 
-        #if self.SPLITBGS:
-        #    self.bgs = bgs
-        #else:
-        #    self.bgs = ['bg']
         self.bgs = bgs
         self.sigs = sigs
 
@@ -2172,18 +2165,32 @@ class HaaLimits(Limits):
         self.addSystematic('pdf_gg', 'param', systematics=[0,1])
 
         ## theory
-        #syst = {}
-        #if 125 in self.HMASSES: syst[((self.SPLINENAME.format(h=125),), tuple(self.REGIONS))] = (1+(0.046*48.52+0.004*3.779)/(48.52+3.779)    , 1+(-0.067*48.52-0.003*3.779)/(48.52+3.779))
-        #if 300 in self.HMASSES: syst[((self.SPLINENAME.format(h=300),), tuple(self.REGIONS))] = (1+(0.015*6.59+0.003*1.256)/(6.59+1.256)      , 1+(-0.032*6.59-0.001*1.256)/(6.59+1.256))
-        #if 750 in self.HMASSES: syst[((self.SPLINENAME.format(h=750),), tuple(self.REGIONS))] = (1+(0.020*0.4969+0.003*0.1915)/(0.4969+0.1915), 1+(-0.037*0.4969-0.004*0.1915)/(0.4969+0.1915))
-        #self.addSystematic('higgs_theory','lnN',systematics=syst)
+##         syst = {}
+##         if 125 in self.HMASSES: syst[((self.SPLINENAME.format(h=125),), tuple(self.REGIONS))] = (1+(0.046*48.52+0.004*3.779)/(48.52+3.779), 1+(-0.067*48.52-0.003*3.779)/(48.52+3.779))
+##         if 300 in self.HMASSES: syst[((self.SPLINENAME.format(h=300),), tuple(self.REGIONS))] = (1+(0.015*6.59+0.003*1.256)/(6.59+1.256), 1+(-0.032*6.59-0.001*1.256)/(6.59+1.256))
+##         if 750 in self.HMASSES: syst[((self.SPLINENAME.format(h=750),), tuple(self.REGIONS))] = (1+(0.020*0.4969+0.003*0.1915)/(0.4969+0.1915), 1+(-0.037*0.4969-0.004*0.1915)/(0.4969+0.1915))
+##         self.addSystematic('higgs_theory','lnN',systematics=syst)
+## 
+##         ## pdf+alpha_s
+##         syst = {}
+##         if 125 in self.HMASSES: syst[((self.SPLINENAME.format(h=125),), tuple(self.REGIONS))] = 1+(0.032*48.52+0.021*3.779)/(48.52+3.779)
+##         if 300 in self.HMASSES: syst[((self.SPLINENAME.format(h=300),), tuple(self.REGIONS))] = 1+(0.030*6.59+0.014*1.256)/(6.59+1.256)
+##         if 750 in self.HMASSES: syst[((self.SPLINENAME.format(h=750),), tuple(self.REGIONS))] = 1+(0.040*0.4969+0.022*0.1915)/(0.4969+0.1915)
+##         self.addSystematic('pdf_alpha','lnN',systematics=syst)
 
-        ## pdf+alpha_s
-        #syst = {}
-        #if 125 in self.HMASSES: syst[((self.SPLINENAME.format(h=125),), tuple(self.REGIONS))] = 1+(0.032*48.52+0.021*3.779)/(48.52+3.779)
-        #if 300 in self.HMASSES: syst[((self.SPLINENAME.format(h=300),), tuple(self.REGIONS))] = 1+(0.030*6.59+0.014*1.256)/(6.59+1.256)
-        #if 750 in self.HMASSES: syst[((self.SPLINENAME.format(h=750),), tuple(self.REGIONS))] = 1+(0.040*0.4969+0.022*0.1915)/(0.4969+0.1915)
-        #self.addSystematic('pdf_alpha','lnN',systematics=syst)
+        lumiproc = self.sigProcesses
+        print "sigProcesses", self.sigProcesses
+        theorysyst = {
+            (lumiproc,tuple(c+'_'+r for r in self.REGIONS for c in self.CHANNELS)) : (1+(0.046*48.52+0.004*3.779)/(48.52+3.779), 1+(-0.067*48.52-0.003*3.779)/(48.52+3.779)),
+        }
+        self.addSystematic('higgs_theory','lnN',systematics=theorysyst)
+
+        #pdfsyst = {
+        #    (lumiproc,tuple(c+'_'+r for r in self.REGIONS for c in self.CHANNELS)) : 1+(0.032*48.52+0.021*3.779)/(48.52+3.779),
+        #}
+        #self.addSystematic('pdf_alpha','lnN',systematics=pdfsyst)
+
+        return
 
 
     def _addShapeSystematic(self,doBinned=False):
@@ -2218,13 +2225,38 @@ class HaaLimits(Limits):
         self.addSystematic('CMS_haa_acc','lnN',systematics=accsyst)
 
     def _addLumiSystematic(self):
-        # lumi: 2.5% 2016
+        # lumi: 1.2% 2016, 2.3% 2017, 2.5% 2018
+        if '2016' in self.CHANNELS[0]:
+            uncert = 1.012
+            txt = '_2016'
+        elif '2017' in self.CHANNELS[0]:
+            uncert = 1.023
+            txt = '_2017'
+        elif '2018' in self.CHANNELS[0]:
+            uncert = 1.025
+            txt = '_2018'
         lumiproc = self.sigProcesses
         lumisyst = {
-            (lumiproc,tuple(c+'_'+r for r in self.REGIONS for c in self.CHANNELS)) : 1.025,
+            (lumiproc,tuple(c+'_'+r for r in self.REGIONS for c in self.CHANNELS)) : uncert,
         }
-        #print "lumisyst", lumisyst
-        self.addSystematic('lumi_13TeV','lnN',systematics=lumisyst)
+        self.addSystematic('lumi_13TeV{}'.format(txt),'lnN',systematics=lumisyst)
+
+    def _addMinBiasSystematic(self):
+        # min bias: 1.2% 2016, 2.3% 2017, 2.5% 2018
+        if '2016' in self.CHANNELS[0]:
+            uncert = 1.05
+            txt = '_2016'
+        elif '2017' in self.CHANNELS[0]:
+            uncert = 1.01
+            txt = '_2017'
+        elif '2018' in self.CHANNELS[0]:
+            uncert = 1.01
+            txt = '_2018'
+        lumiproc = self.sigProcesses
+        mbsyst = {
+            (lumiproc,tuple(c+'_'+r for r in self.REGIONS for c in self.CHANNELS)) : uncert,
+        }
+        self.addSystematic('minbias_13TeV{}'.format(txt),'lnN',systematics=mbsyst)
 
     def _addSignalIntepolationSystematic(self):
         # lumi: 2.5% 2016
@@ -2238,10 +2270,33 @@ class HaaLimits(Limits):
     def _addMuonSystematic(self, **kwargs):
         # from z: 1 % + 0.5 % + 0.5 % per muon for id + iso + trig (pt>20)
         muproc = self.sigProcesses
+        print "DEBUG muon syst", self.REGIONS, self.CHANNELS
+        if '2016' in self.CHANNELS[0]:
+            txt = '_2016'
+        elif '2017' in self.CHANNELS[0]:
+            txt = '_2017'
+        elif '2018' in self.CHANNELS[0]:
+            txt = '_2018'
+        if ('TauMuTauE' in self.CHANNELS[0] or 'TauMuTauHad' in self.CHANNELS[0]) and '2016' in self.CHANNELS[0]:
+            uncert = 1.10
+        elif 'TauMuTauMu' in self.CHANNELS[0] and '2016' in self.CHANNELS[0]:
+            uncert = 1.11
+        elif ('TauHadTauHad' in self.CHANNELS[0] or 'TauETauHad' in self.CHANNELS[0]) and '2016' in self.CHANNELS[0]:
+            uncert = 1.08
+        elif ('TauMuTauE' in self.CHANNELS[0] or 'TauMuTauHad' in self.CHANNELS[0]):
+            uncert = 1.08
+        elif 'TauMuTauMu' in self.CHANNELS[0]:
+            uncert = 1.10
+        elif ('TauHadTauHad' in self.CHANNELS[0] or 'TauETauHad' in self.CHANNELS[0]):
+            uncert = 1.05
+        #musyst = {
+        #    (muproc,tuple(c+'_'+r for r in self.REGIONS for c in self.CHANNELS)) : 1+math.sqrt(sum([0.01**2,0.005**2]*2+[0.01**2]+[0.005**2])), # 2 lead have iso, tau_mu doesnt, plus iso
+        #}
         musyst = {
-            (muproc,tuple(c+'_'+r for r in self.REGIONS for c in self.CHANNELS)) : 1+math.sqrt(sum([0.01**2,0.005**2]*2+[0.01**2]+[0.005**2])), # 2 lead have iso, tau_mu doesnt, plus iso
+            (muproc,tuple(c+'_'+r for r in self.REGIONS for c in self.CHANNELS)) : uncert, # 2 lead have iso, tau_mu doesnt, plus iso
         }
-        self.addSystematic('CMS_eff_m','lnN',systematics=musyst)
+        print musyst
+        self.addSystematic('CMS_eff_m{}'.format(txt),'lnN',systematics=musyst)
         
     def _addTauSystematic(self):
         # 5% on sf 0.99 (VL/L) 0.97 (M) 0.95 (T) 0.93 (VT)

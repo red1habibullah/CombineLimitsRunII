@@ -145,8 +145,8 @@ if __name__ == "__main__":
             yBinWidth = 0.25 if var[1]=='tt' else 2
             sigSysType=['JEC']
     elif 'TauETauHad' in args.channel[0] or 'TauMuTauHad' in args.channel[0]:
-        print "DEBUG1"
         xBinWidth = 0.05
+        #xBinWidth = 1.
         if do2D:
             yVar=varHists[sys.argv[2]]
             yBinWidth = 0.25 if var[1]=='tt' else 5

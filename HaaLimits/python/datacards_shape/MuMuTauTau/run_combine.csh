@@ -18,7 +18,7 @@ setenv method DG_yRange_wFakeTauScale
 #setenv method DG_DoubleExpo_Spline_wFakeTauScale
 #setenv method DG_DoubleExpo_yRange_Spline_wFakeTauScaleJEC
 
-setenv year 2016
+setenv year 2018
 
 foreach region (lowmass upsilon highmass)
 #foreach region (lowmass)

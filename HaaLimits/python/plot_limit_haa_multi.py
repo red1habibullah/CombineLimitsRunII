@@ -25,7 +25,7 @@ hmasses = [125] #[125,300,750]
 #hmasses = [750] # for now since it is done
 amasses_full = [x*.1 for x in range(36,210,1)] + [21.0]
 amasses_full.remove(10.4)
-print amasses_full
+#print amasses_full
 #amasses_full.remove(7.8)
 #amasses_full = [x*.1 for x in range(35,210,2)] + [21.1]
 #amasses_full = [x*.1 for x in range(36,210,2)] + [21.0]
@@ -35,7 +35,7 @@ print amasses_full
 #hdfs_dir='root://cmseos.fnal.gov//eos/uscms/store/user/zhangj/HaaLimits/Limits/'
 #hdfs_dir='./combineOutput/'
 #hdfs_dir='./testPPFPfeb2023/'
-hdfs_dir='./testPPonlyfeb2023/'
+hdfs_dir='./testPPonlyNov2023/'
 
 #grid_dir = '/hdfs/store/user/dntaylor/2019-08-14_MuMuTauTauLimits_MergedGridPacks_v1'
 #grid_dir = '/hdfs/store/user/dntaylor/2019-10-20_MuMuTauTauLimits_MergedGridPacks_v1'
@@ -58,13 +58,13 @@ hs_grid_dir = '/hdfs/store/user/dntaylor/2019-11-27_MuMuTauTauLimits_MergedGridP
 #higgsCombineHtoAAH125A20_mm_h_parametric_highmassWith1DFitsDVteth.AsymptoticLimits.mH125.root 
 
 
-#tag = 'REGION_TauMuTauHad_V2_2017_MVAMedium_DG_DoubleExpo_yRange_wFakeTauScaleFit_PPonly_V3'
-#tag = 'REGION_TauHadTauHad_V3_2017_MVAMedium_DG_DoubleExpo_yRange_wFakeJECFit_PPonly_V3'
-#tag = 'REGION_TauMuTauMu_2017_MVAMedium_DG_wFakeTauScaleFit_PPonly_V3'
-#tag = 'REGION_TauMuTauE_2017_MVAMedium_DG_wFakeTauScaleFit_PPonly_V3'
-#tag = 'REGION_TauETauHad_2017_MVAMedium_DG_yRange_wFakeTauScaleFit_PPonly_V3'
-#tag = 'REGION_allchs_2016_V3'
-tag = 'REGION_allchs_V3'
+tag = 'REGION_TauMuTauHad_V2_2016_MVAMedium_DG_DoubleExpo_yRange_wFakeTauScaleFit_PPonly_V6'
+#tag = 'REGION_TauHadTauHad_V3_2016_MVAMedium_DG_DoubleExpo_yRange_wFakeJECFit_PPonly_V6'
+#tag = 'REGION_TauMuTauMu_2016_MVAMedium_DG_wFakeTauScaleFit_PPonly_V6'
+#tag = 'REGION_TauMuTauE_2016_MVAMedium_DG_wFakeTauScaleFit_PPonly_V6'
+#tag = 'REGION_TauETauHad_2016_MVAMedium_DG_yRange_wFakeTauScaleFit_PPonly_V6'
+#tag = 'REGION_allchs_2016_V6'
+#tag = 'REGION_allchs_V6'
 
 
 prefix = 'mmmt_mm_h_parametric_unbinned'
@@ -443,7 +443,8 @@ for m in allModes:
                 #print qs
                 outline = ':'.join(['{:.3f}'.format(x) for x in qs])
                 #logging.info('{0}:{1}: Limits: {2}'.format(h,a,outline))
-                print '{0} {1}'.format(a,qs[2])
+                print '{0}:{1}: Limits: {2}'.format(h,a,outline)
+                #print '{0} {1}'.format(a,qs[2])
 
                 good = True
                 if m in toSkip:

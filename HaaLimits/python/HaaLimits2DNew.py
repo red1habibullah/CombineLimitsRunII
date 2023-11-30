@@ -93,7 +93,6 @@ class HaaLimits2D(HaaLimits):
             bgs = {}
             for rname in resonances+continuums:
                 nameE = 'erf_{}{}'.format(rname,'_'+tag if tag else '')
-                #print "JINGYU3:", rname, nameE, self.YCORRELATION
                 if rname=='cont1' and self.YCORRELATION:
                     # build the correlation model for the y variable parameters
                     erfShiftName = kwargs.pop('erfShift_{}'.format(nameE),'erfShift_{}'.format(nameE))
@@ -310,14 +309,11 @@ class HaaLimits2D(HaaLimits):
         bg.build(workspace,name)
 
     def _buildXModel(self,region,**kwargs):
-        print "||||", region
         super(HaaLimits2D,self).buildModel(region,**kwargs)
 
     def buildModel(self,region,**kwargs):
         workspace = kwargs.pop('workspace',self.workspace)
         #tag = kwargs.pop('tag',region)
-
-        print "DEBUG|||"
         
         # build the x variable
         self._buildXModel(region+'_x',workspace=workspace,**kwargs)
@@ -333,7 +329,7 @@ class HaaLimits2D(HaaLimits):
 
         # the 2D model
         if self.SPLITY:
-            if self.XRANGE[0]<4 and not (doPoly or doPolyExpo):
+            if (self.XRANGE[0]<4) and not (doPoly or doPolyExpo):
                 if self.YCORRELATION:
                     cont1 = Models.Prod('cont1',
                         'bg_cont1_{}_y|{}'.format(region,xVar),
@@ -524,9 +520,8 @@ class HaaLimits2D(HaaLimits):
                 'bg_{}_x'.format(region),
             )
         else:
-            if (self.XRANGE[0]<4 or self.XRANGE[0]>10.9) and not (doPoly or doPolyExpo):
-                #print "JINGYU6:", "doPoly", doPoly, "doPolyExpo", doPolyExpo
-            #if False:
+            #if (self.XRANGE[0]<4 or self.XRANGE[0]>10) and not (doPoly or doPolyExpo):
+            if (self.XRANGE[0]<4) and not (doPoly or doPolyExpo):
                 cont1 = Models.Prod('cont1',
                     'cont1_{}_x'.format(region),
                     'bg_{}_y'.format(region),
@@ -543,7 +538,6 @@ class HaaLimits2D(HaaLimits):
                 name = 'cont2_{}_xy'.format(region)
                 cont2.build(workspace,name)
 
-                print "JINGYU6:", cont2, name
             else:
                 cont1 = Models.Prod('cont',
                     'cont1_{}_x'.format(region),
@@ -1031,7 +1025,6 @@ class HaaLimits2D(HaaLimits):
         if results:
             for param in results:
                 ws.var(param).setVal(results[param])
-        print histMap.keys()
         hist = histMap[self.SIGNAME.format(h=h,a=a)]
         saveDir = '{}/{}'.format(self.plotDir,shift if shift else 'central')
         args = hist.get()
@@ -1828,8 +1821,6 @@ class HaaLimits2D(HaaLimits):
         postfix = kwargs.pop('postfix','')
         fr = kwargs.pop('result','')
 
-        #print "DEBUG 1831", region
-        #fr.Print()
         if yRange:
             yFrame = workspace.var(yVar).frame(ROOT.RooFit.Range(*yRange))
         else:
@@ -3013,8 +3004,9 @@ class HaaLimits2D(HaaLimits):
         print "sigProcesses:", self.sigProcesses
         print "bgProcesses:", self.bgProcesses
         self._addLumiSystematic()
-        if "TauMu" in self.CHANNELS[0]:
-            self._addMuonSystematic()
+        self._addMinBiasSystematic()
+        #if "TauMu" in self.CHANNELS[0]:
+        self._addMuonSystematic()
         self._addAcceptanceSystematic()
         self._addHiggsSystematic()
         #self._addSignalIntepolationSystematic()
