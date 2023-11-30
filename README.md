@@ -12,3 +12,9 @@ git cms-init
 git clone git@github.com:dntaylor/CombineLimits.git
 ./CombineLimits/recipe/recipe.sh
 ```
+
+To produce datacard, 
+```
+cd CombineLimitsRunII/HaaLimits/python/
+./run_fit.csh
+```
